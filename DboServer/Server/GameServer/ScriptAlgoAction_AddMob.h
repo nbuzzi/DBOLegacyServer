@@ -75,6 +75,10 @@ private:
 	BYTE						m_byFaintBuffApplyType;
 	float						m_fFaintBuffRange;
 
+	TBLIDX						m_sDropItem_tblIdx;
+
+	DWORD						m_sDropItem_amount;
+
 
 };
 
