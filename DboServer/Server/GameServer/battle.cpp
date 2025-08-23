@@ -5,47 +5,38 @@
 #include "CPlayer.h"
 #include "FormulaTable.h"
 
+////////////////////////////////////////////////
+//  BATTLE VARIABLES
+/////////////////////////////////////////////////
+
+#define CRITICAL_RATE_CAP 90.f
+#define DODGE_RATE_CAP 90.f
+#define RESIST_RATE_CAP 90.f
+#define BLOCK_RATE_CAP 20.f
+
 
 bool BattleIsCrit(CCharacterAtt* pAttackerAtt, CCharacterAtt* pTargetAtt, bool bIsPhysical)
 {
 	float fRate = 0.0f;
-	float fVar;
-	float fVar2;
+	float fCriticalModifier;
+	float fStatusBonus;
 	float fCritRate;
 
-	if (bIsPhysical == false)
+	if (bIsPhysical)
 	{
 		fCritRate = (float)pAttackerAtt->GetEnergyCriticalRate();
-
-	
-		fVar = CFormulaTable::m_afRate[9100][1] + (pAttackerAtt->GetCon() / CFormulaTable::m_afRate[9100][2]);
-
-		fVar2 = (float)pAttackerAtt->GetCon();
 	}
 	else
 	{
 		fCritRate = (float)pAttackerAtt->GetPhysicalCriticalRate();
-
-		fVar = CFormulaTable::m_afRate[9100][1] + (pAttackerAtt->GetEng() / CFormulaTable::m_afRate[9100][2]);
-
-		fVar2 = (float)pAttackerAtt->GetEng();
 	}
 
-	fRate = fCritRate - (fCritRate * (pTargetAtt->GetCriticalBlockSuccessRate() / 100.f)) + fVar2 / fVar;
+	fRate = fCritRate - (fCritRate * (pTargetAtt->GetCriticalBlockSuccessRate() / 100.f)) + fStatusBonus / fCriticalModifier;
 
-	//if (0.0f >= fCritBlockRate)
-	//{
-	//	fRate = fCritRate;
-	//}
-	//else
-	//{
-	//	fRate = fCritRate - (fCritRate * (fCritBlockRate / 100.f));
-	//}
-
-	//NTL_PRINT(PRINT_APP, "fRate = %f, fVar = %f, fVar2 = %f, fCritRate = %f, CritBlockRate = %f", fRate, fVar, fVar2, fCritRate, pTargetAtt->GetCriticalBlockSuccessRate());
-
-	if (fRate > 90.0f)
-		fRate = 90.0f;
+	if (fRate > CRITICAL_RATE_CAP)
+	{
+		fRate = CRITICAL_RATE_CAP;
+	}
 
 	return Dbo_CheckProbabilityF(fRate);
 }
@@ -55,13 +46,16 @@ bool BattleIsCrit(CCharacterAtt* pAttackerAtt, CCharacterAtt* pTargetAtt, bool b
 //--------------------------------------------------------------------------------------//
 bool BattleIsDodge(bool bTargetPC, WORD hitrate, WORD dodge, BYTE byAttackerLv, BYTE byTargetLv)
 {
-	float fRate = 100.0f - (CFormulaTable::m_afRate[3700][1] * float((float)hitrate / (float)MAX(hitrate + dodge, 1)) * float(float(byAttackerLv + 1) / float(byAttackerLv + byTargetLv)) * 100.0f);
-	
-	if (fRate > 90.f)
-		fRate = 90.0f;
+	float fDodgeRateFormula = CFormulaTable::m_afRate[3700][1];
+	float fHitDodgeRatio = float(hitrate) / float(MAX(hitrate + dodge, 1));
+	float fLevelRatio = float(byAttackerLv + 1) / float(byAttackerLv + byTargetLv);
 
-	//if(bTargetPC)
-		//NTL_PRINT(PRINT_APP, "BattleIsDodge: dodge percent %f, hitrate %u, dodge %u, byAttackerLv %u, byTargetLv %u \n", fRate, hitrate, dodge, byAttackerLv, byTargetLv);
+	float fRate = 100.0f - (fDodgeRateFormula * fHitDodgeRatio * fLevelRatio * 100.0f);
+
+	if (fRate > DODGE_RATE_CAP)
+	{
+		fRate = DODGE_RATE_CAP;
+	}
 
 	return Dbo_CheckProbabilityF(fRate);
 }
@@ -72,27 +66,31 @@ bool BattleIsDodge(bool bTargetPC, WORD hitrate, WORD dodge, BYTE byAttackerLv, 
 //--------------------------------------------------------------------------------------//
 bool BattleIsResist(WORD wSuccessRate, WORD wResistRate, BYTE byAttackerLv, BYTE byTargetLv)
 {
-	float fRate = 100.0f - (CFormulaTable::m_afRate[3900][1] * float((float)wSuccessRate / (float)MAX(wSuccessRate + wResistRate, 1)) * float(float(byAttackerLv + 1) / float(byAttackerLv + byTargetLv)) * 100.0f);
+	float fCurseResistFormula = CFormulaTable::m_afRate[3900][1];
+	float fSuccessResistRatio = float(wSuccessRate) / float(MAX(wSuccessRate + wResistRate, 1));
+	float fLevelRatio = float(byAttackerLv + 1) / float(byAttackerLv + byTargetLv);
+	float fRate = 100.0f - (fCurseResistFormula * fSuccessResistRatio * fLevelRatio * 100.0f);
 
-	if (fRate > 90.f)
-		fRate = 90.f;
-
-	//NTL_PRINT(PRINT_APP, "BattleIsResist: curse resist percent %f, wSuccessRate %u, wResistRate %u, byAttackerLv %u, byTargetLv %u \n", fRate, wSuccessRate, wResistRate, byAttackerLv, byTargetLv);
+	if (fRate > RESIST_RATE_CAP)
+	{
+		fRate = RESIST_RATE_CAP;
+	}
 
 	return Dbo_CheckProbabilityF(fRate);
 }
 
 bool BattleIsBlock(WORD wDefenceRate, BYTE byAttackerLv, BYTE byTargetLv)
 {
-	//float fRate = ((float)wDefenceRate - ((float)byTargetLv / ((float)byAttackerLv * 0.13f)) + 0.02f) / 3.5f;
 	float fRate = ((float)wDefenceRate * 2.f + (byTargetLv - byAttackerLv)) / 200.f;
-	if (fRate > 20.f)
-		fRate = 20.f;
 
-	//NTL_PRINT(PRINT_APP, "fRate:%f, wDefenceRate:%u, byAttackerLv:%u, byTargetLv:%u", fRate, wDefenceRate, byAttackerLv, byTargetLv);
+	if (fRate > BLOCK_RATE_CAP)
+	{
+		fRate = BLOCK_RATE_CAP;
+	}
 
 	return Dbo_CheckProbabilityF(fRate);
 }
+
 
 //-----------------------------------------------------------------------------------------------------------//
 //											CALCULATE SKILL DAMAGE
@@ -184,6 +182,7 @@ void CalcSkillDamage(CCharacterObject* pCaster, CCharacterObject* victim, sSKILL
 	}
 }
 
+
 //--------------------------------------------------------------------------------------//
 //		
 //--------------------------------------------------------------------------------------//
@@ -240,7 +239,7 @@ void CalcSpecialSkillDamage(CCharacterObject* pCaster, CCharacterObject* victim,
 
 	resultvalue = (fFinalDamage <= 1.f) ? 1.f : fFinalDamage;
 
-	resultvalue = CalcCritBonus(resultvalue, cCasterAtt, skilltbl->bySkill_Type, rAttackResult, fCritDefRate, false);
+	resultvalue = CalcCritBonus(resultvalue, cCasterAtt, skilltbl->bySkill_Type, rAttackResult, fCritDefRate);
 
 	// Reflect Damage
 	rfReflectDmg += (int)GetSkillReflectDamage(resultvalue, skilltbl->bySkill_Type, cVictimAtt);
@@ -254,6 +253,7 @@ void CalcSpecialSkillDamage(CCharacterObject* pCaster, CCharacterObject* victim,
 	rLpEpRecover.dwTargetEpRecoveredWhenHit += (DWORD)(cVictimAtt->GetEpRecoveryWhenHit() + (resultvalue * cVictimAtt->GetEpRecoveryWhenHitInPercent() / 100.0f));
 	rLpEpRecover.bIsEpRecoveredWhenHit = rLpEpRecover.dwTargetEpRecoveredWhenHit > 0;
 }
+
 
 void CalcSkillDotDamage(CCharacterObject* pCaster, CCharacterObject* victim, sSKILL_TBLDAT* skilltbl, BYTE byEffectNr, WORD wDefence, float fBaseSkillDmg, float fBonusDmg, float& resultvalue, BYTE rAttackResult, BYTE byEffectCode)
 {
@@ -343,6 +343,7 @@ void CalcSkillDotDamage(CCharacterObject* pCaster, CCharacterObject* victim, sSK
 	resultvalue = CalcCritBonus(resultvalue, pCaster->GetCharAtt(), skilltbl->bySkill_Type, rAttackResult, fCritDefRate);
 }
 
+
 void CalcLifeStealDamage(CCharacterObject* pCaster, CCharacterObject* victim, sSKILL_TBLDAT* skilltbl, BYTE byEffectNr, float fBaseSkillDmg, float& resultvalue)
 {
 	CCharacterAtt* cCasterAtt = pCaster->GetCharAtt();
@@ -405,6 +406,7 @@ float CalcMeleeDamage(CCharacter* pkAttacker, CCharacter* pkVictim)
 	return (fFinalDamage <= 1.f) ? 1.f : fFinalDamage;
 }
 
+
 void CalcDirectHeal(CCharacterObject* pCaster, sSKILL_TBLDAT* skilltbl, BYTE byEffectNr, float& resultvalue)
 {
 	CCharacterAtt* cCasterAtt = pCaster->GetCharAtt();
@@ -423,6 +425,7 @@ void CalcDirectHeal(CCharacterObject* pCaster, sSKILL_TBLDAT* skilltbl, BYTE byE
 	resultvalue += cCasterAtt->GetDirectHealPowerBonus();
 }
 
+
 void CalcHealOverTime(CCharacterObject* pCaster, sSKILL_TBLDAT* skilltbl, BYTE byEffectNr, float& resultvalue)
 {
 	CCharacterAtt* cCasterAtt = pCaster->GetCharAtt();
@@ -437,6 +440,7 @@ void CalcHealOverTime(CCharacterObject* pCaster, sSKILL_TBLDAT* skilltbl, BYTE b
 	// Add Static Bonus
 	resultvalue += cCasterAtt->GetHotPowerBonus();
 }
+
 
 //--------------------------------------------------------------------------------------//
 //		INCREASES THE AGGRO FROM MONSTER WHICH ARE ATTACKING pTARGET (USED WHEN PCASTER HEAL PTARGET)
@@ -504,41 +508,26 @@ float GetSkillReflectDamage(float fDmg, BYTE bySkillType, CCharacterAtt* pVictim
 float GetAttributeBonusRate(bool bIsPc, bool bSubWeapon, BYTE byOffence, BYTE byDefence, BYTE bySubOffence, sAVATAR_ATTRIBUTE& sOffenceAttribute, sAVATAR_ATTRIBUTE& sDefenceAttribute)
 {
 	float fAttributeBonusRate = 0.0f;
-	BYTE byAttrOffence;
+	BYTE byAttrOffence = byOffence;
 
-	
-		byAttrOffence = byOffence;
-		fAttributeBonusRate = NtlGetBattleAttributeBonusRate(byOffence, byDefence);
-	
+	fAttributeBonusRate = NtlGetBattleAttributeBonusRate(byOffence, byDefence);
 
-	switch (byAttrOffence)
+	if (IsValidAttribute(byOffence))
 	{
-		case BATTLE_ATTRIBUTE_HONEST: fAttributeBonusRate += sOffenceAttribute.fHonestOffense - sDefenceAttribute.fHonestDefense; break;
-		case BATTLE_ATTRIBUTE_STRANGE: fAttributeBonusRate += sOffenceAttribute.fStrangeOffense - sDefenceAttribute.fStrangeDefense; break;
-		case BATTLE_ATTRIBUTE_WILD: fAttributeBonusRate += sOffenceAttribute.fWildOffense - sDefenceAttribute.fWildDefense; break;
-		case BATTLE_ATTRIBUTE_ELEGANCE: fAttributeBonusRate += sOffenceAttribute.fEleganceOffense - sDefenceAttribute.fEleganceDefense; break;
-		case BATTLE_ATTRIBUTE_FUNNY: fAttributeBonusRate += sOffenceAttribute.fFunnyOffense - sDefenceAttribute.fFunnyDefense; break;
-
-		default:
-		{
-			switch (byDefence)
-			{
-				case BATTLE_ATTRIBUTE_HONEST: fAttributeBonusRate -= sDefenceAttribute.fHonestDefense; break;
-				case BATTLE_ATTRIBUTE_STRANGE: fAttributeBonusRate -= sDefenceAttribute.fStrangeDefense; break;
-				case BATTLE_ATTRIBUTE_WILD: fAttributeBonusRate -= sDefenceAttribute.fWildDefense; break;
-				case BATTLE_ATTRIBUTE_ELEGANCE: fAttributeBonusRate -= sDefenceAttribute.fEleganceDefense; break;
-				case BATTLE_ATTRIBUTE_FUNNY: fAttributeBonusRate -= sDefenceAttribute.fFunnyDefense; break;
-
-				default: break;
-			}
-		}
-		break;
+		fAttributeBonusRate += GetOffenceAttribute(byOffence, sOffenceAttribute) - GetDefenceAttribute(byOffence, sDefenceAttribute);
+	}
+	else if (IsValidAttribute(byDefence))
+	{
+		fAttributeBonusRate -= GetDefenceAttribute(byDefence, sDefenceAttribute);
 	}
 
-	//printf("fAttributeBonusRate %f, byAttrOffence %f, byDefence %f \n", fAttributeBonusRate, byAttrOffence, byDefence);
+	// Increase cap if attacker is a mob
+	if (!bIsPc && fAttributeBonusRate <= -70.0f) {
+		fAttributeBonusRate = -70.0f;
+	}
+
 	return fAttributeBonusRate;
 }
-
 
 ////////////////////////////////////////////////
 //  Helper Methods
@@ -600,7 +589,6 @@ float CalcCritBonus(float fResultValue, CCharacterAtt* pCasterAtt, BYTE bySkill_
 	return fResultValue + fCritDmgBonus;
 }
 
-
 float CalcMinDamage(float fDamage, float fLevel)
 {
 	return fDamage * (CFormulaTable::m_afRate[3500][1] + (fLevel * CFormulaTable::m_afRate[3500][2]));
@@ -655,3 +643,4 @@ float GetDefenceAttribute(BYTE byAttr, sAVATAR_ATTRIBUTE& sDefenceAttribute)
 		return 0.0f;
 	}
 }
+

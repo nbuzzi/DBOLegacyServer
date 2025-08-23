@@ -1,0 +1,34 @@
+--KamsamaTempleByGaen
+GameStage(0)
+--[
+
+	-- Add MRPOPONPC
+	Action( "add npc" )
+	--[
+		Param( "index", 1381111 )
+		Param( "loc x", -354.681 )
+		Param( "loc y", 167.521 )
+		Param( "loc z", -4.263 )
+		Param( "dir x", 0.097 )
+		Param( "dir z", 0.995 )
+		Param( "stand alone", "true" )
+	--]
+	End()
+	
+
+	-- Add DENDENPC
+	Action( "add npc" )
+	--[
+		Param( "index", 1381113 )
+		Param( "loc x", -350.681 )
+		Param( "loc y", 166.521 )
+		Param( "loc z", -4.262 )
+		Param( "dir x", 0.097 )
+		Param( "dir z", 0.995 )
+		Param( "stand alone", "true" )
+	--]
+	End()
+	
+
+--]
+End()
