@@ -168,7 +168,7 @@ void CCharacter::AttackAction(CCharacter* pVictim)
 
 	//check reflect
 	//check reflect
-	fReflectedDamage = GetReflectDamage(fDmg, byAttackType, pVictim->GetCharAtt());
+	fReflectedDamage = GetReflectDamage(fDmg, byAttackType, pVictim->GetCharAtt()->GetPhysicalReflection(), pVictim->GetCharAtt()->GetEnergyReflection());
 
 	//if (reducedDmg > 0)
 	//	fDmg = reducedDmg;
