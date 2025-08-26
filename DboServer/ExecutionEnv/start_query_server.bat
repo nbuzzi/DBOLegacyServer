@@ -1,3 +1,3 @@
-start QueryServer.exe
+start QueryServer.exe .\\config\\QueryServer.ini
 
 exit

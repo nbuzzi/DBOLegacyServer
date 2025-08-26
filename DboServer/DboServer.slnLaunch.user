@@ -1,0 +1,32 @@
+[
+  {
+    "Name": "New Profile",
+    "Projects": [
+      {
+        "Path": "Server\\MasterServer\\MasterServer.vcxproj",
+        "Action": "Start",
+        "DebugTarget": "Local Windows Debugger"
+      },
+      {
+        "Path": "Server\\AuthServer\\AuthServer.vcxproj",
+        "Action": "Start",
+        "DebugTarget": "Local Windows Debugger"
+      },
+      {
+        "Path": "Server\\CharServer\\CharServer.vcxproj",
+        "Action": "Start",
+        "DebugTarget": "Local Windows Debugger"
+      },
+      {
+        "Path": "Server\\ChatServer\\ChatServer.vcxproj",
+        "Action": "Start",
+        "DebugTarget": "Local Windows Debugger"
+      },
+      {
+        "Path": "Server\\GameServer\\GameServer.vcxproj",
+        "Action": "Start",
+        "DebugTarget": "Local Windows Debugger"
+      }
+    ]
+  }
+]

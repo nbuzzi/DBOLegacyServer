@@ -3,6 +3,6 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LocalDebuggerCommandArguments>.\\config\\CharServer.ini</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerWorkingDirectory>C:\Users\Marco Rafael\Desktop\DBOGLOBAL\DboServer\ExecutionEnv</LocalDebuggerWorkingDirectory>
+    <LocalDebuggerWorkingDirectory>D:\projects\dbo-legacy\OpenDBO-Core\DboServer\ExecutionEnv</LocalDebuggerWorkingDirectory>
   </PropertyGroup>
 </Project>

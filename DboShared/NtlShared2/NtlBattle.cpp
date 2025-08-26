@@ -256,6 +256,8 @@ bool IsInBattleArena(TBLIDX worldTblidx, CNtlVector& vCurLoc, bool isPowerTourna
 {
 	if (worldTblidx == 1 /*&& vCurLoc.y >= -97.268f*/ && (vCurLoc.x < 5792 && vCurLoc.z < 788 && vCurLoc.x > 5752 && vCurLoc.z > 748))
 		return true;
+	else if (worldTblidx == 1 && (vCurLoc.x > 4480 && vCurLoc.z > 4060 && vCurLoc.x < 4530 && vCurLoc.z < 4080))
+		return true;
 	else if (worldTblidx == 510000 && isPowerTournament == false)
 		return true;
 

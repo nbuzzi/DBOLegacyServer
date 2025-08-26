@@ -32,7 +32,7 @@ public:
 
 	void				Unlock();
 
-	CRITICAL_SECTION *	GetRealMutex();
+	CRITICAL_SECTION* GetRealMutex();
 
 private:
 
@@ -43,7 +43,7 @@ private:
 class CNtlAutoMutex
 {
 public:
-	CNtlAutoMutex(CNtlMutex * pMutex);
+	CNtlAutoMutex(CNtlMutex* pMutex);
 
 	virtual ~CNtlAutoMutex(void);
 
@@ -54,7 +54,7 @@ public:
 
 private:
 
-	CNtlMutex *			m_pMutex;
+	CNtlMutex* m_pMutex;
 
 	bool				m_bLocked;
 };
@@ -62,32 +62,36 @@ private:
 
 inline CNtlMutex::CNtlMutex(DWORD dwSpinCount)
 {
-	::InitializeCriticalSectionAndSpinCount( &m_mutex, dwSpinCount );
+	if (&m_mutex != NULL)
+		::InitializeCriticalSectionAndSpinCount(&m_mutex, dwSpinCount);
 }
 
 inline CNtlMutex::~CNtlMutex()
 {
-	::DeleteCriticalSection( &m_mutex );
+	if (&m_mutex != NULL)
+		::DeleteCriticalSection(&m_mutex);
 }
 
 inline void CNtlMutex::Lock()
 {
-	::EnterCriticalSection( &m_mutex );
+	if (&m_mutex != NULL)
+		::EnterCriticalSection(&m_mutex);
 }
 
 inline void CNtlMutex::Unlock()
 {
-	::LeaveCriticalSection( &m_mutex );
+	if (&m_mutex != NULL)
+		::LeaveCriticalSection(&m_mutex);
 }
 
-inline CRITICAL_SECTION * CNtlMutex::GetRealMutex()
+inline CRITICAL_SECTION* CNtlMutex::GetRealMutex()
 {
 	return &m_mutex;
 }
 
 
-inline CNtlAutoMutex::CNtlAutoMutex(CNtlMutex *pMutex)
-:m_pMutex( pMutex ), m_bLocked( false )
+inline CNtlAutoMutex::CNtlAutoMutex(CNtlMutex* pMutex)
+	:m_pMutex(pMutex), m_bLocked(false)
 {
 }
 
@@ -98,7 +102,7 @@ inline CNtlAutoMutex::~CNtlAutoMutex()
 
 inline void CNtlAutoMutex::Lock()
 {
-	if( !m_bLocked )
+	if (!m_bLocked)
 	{
 		m_pMutex->Lock();
 		m_bLocked = true;
@@ -107,7 +111,7 @@ inline void CNtlAutoMutex::Lock()
 
 inline void CNtlAutoMutex::Unlock()
 {
-	if( m_bLocked )
+	if (m_bLocked)
 	{
 		m_bLocked = false;
 		m_pMutex->Unlock();
@@ -122,16 +126,16 @@ inline void CNtlAutoMutex::Unlock()
 class CNtlLock
 {
 public:
-	CNtlLock(CNtlMutex * pMutex);
+	CNtlLock(CNtlMutex* pMutex);
 	virtual ~CNtlLock(void);
 
 private:
 
-	CNtlMutex *			m_mutex;
+	CNtlMutex* m_mutex;
 };
 
 
-inline CNtlLock::CNtlLock(CNtlMutex *pMutex)
+inline CNtlLock::CNtlLock(CNtlMutex* pMutex)
 	:m_mutex(pMutex)
 {
 	m_mutex->Lock();
