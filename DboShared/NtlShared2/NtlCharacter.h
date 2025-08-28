@@ -689,7 +689,7 @@ const int			NTL_MAX_NEWBIE_QUICKSLOT_COUNT = 5;  // »ý¼º½Ã ºÎ¿©°¡´É Äü½½·Ô
 
 const DWORD			NTL_DELETE_CHAR_CHECK_TICK = 1000; //Check Delete waiting time
 
-const DWORD			NTL_MAX_WAGU_WAGU_SHOPPOINTS = 2000; //maximal wagu shop points
+const DWORD			NTL_MAX_WAGU_WAGU_SHOPPOINTS = 1000000000; //maximal wagu shop points
 
 const DWORD			NTL_MAX_NETPY_SHOPPOINTS = 50000; //maximal NetPy shop points
 

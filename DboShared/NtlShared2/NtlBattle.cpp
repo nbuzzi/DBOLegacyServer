@@ -18,6 +18,51 @@
 #include <crtdbg.h>
 #include <stdlib.h>
 
+static bool PointInPolygonXZ(const std::vector<std::pair<float, float>>& poly, const CNtlVector& p)
+{
+	bool inside = false;
+	const size_t n = poly.size();
+	for (size_t i = 0, j = n - 1; i < n; j = i++)
+	{
+		const float xi = poly[i].first, zi = poly[i].second;
+		const float xj = poly[j].first, zj = poly[j].second;
+
+		const bool intersect = ((zi > p.z) != (zj > p.z)) &&
+			(p.x < ((xj - xi) * (p.z - zi) / ((zj - zi) != 0.f ? (zj - zi) : 1e-6f) + xi));
+
+		if (intersect) inside = !inside;
+	}
+	return inside;
+}
+
+static const std::vector<std::pair<float, float>> kTatami = {
+	{4521.230f,4061.800f},
+	{4517.420f,4071.060f},
+	{4515.290f,4075.800f},
+	{4511.670f,4084.540f},
+	{4506.670f,4096.250f},
+	{4506.580f,4096.480f},
+	{4499.730f,4093.470f},
+	{4491.690f,4090.070f},
+	{4483.650f,4086.850f},
+	{4475.080f,4083.040f},
+	{4472.230f,4081.810f},
+	{4474.810f,4075.530f},
+	{4477.610f,4068.950f},
+	{4481.340f,4060.220f},
+	{4483.960f,4054.120f},
+	{4485.750f,4049.990f},
+	{4486.750f,4047.650f},
+	{4486.870f,4047.360f},
+	{4490.810f,4049.000f},
+	{4498.020f,4052.040f},
+	{4503.750f,4054.480f},
+	{4509.420f,4056.910f},
+	{4515.610f,4059.620f},
+	{4518.460f,4060.810f},
+	{4520.920f,4061.840f}
+};
+
 
 //-----------------------------------------------------------------------------------
 // static variable
@@ -254,11 +299,21 @@ float GetBattleAttributeEffectApplyValue(BYTE byAtt)
 //-----------------------------------------------------------------------------------
 bool IsInBattleArena(TBLIDX worldTblidx, CNtlVector& vCurLoc, bool isPowerTournament)
 {
-	if (worldTblidx == 1 /*&& vCurLoc.y >= -97.268f*/ && (vCurLoc.x < 5792 && vCurLoc.z < 788 && vCurLoc.x > 5752 && vCurLoc.z > 748))
+	// Korin
+	if (worldTblidx == 1 && (vCurLoc.x < 5792 && vCurLoc.z < 788 && vCurLoc.x > 5752 && vCurLoc.z > 748))
 		return true;
-	else if (worldTblidx == 1 && (vCurLoc.x > 4480 && vCurLoc.z > 4060 && vCurLoc.x < 4530 && vCurLoc.z < 4080))
-		return true;
-	else if (worldTblidx == 510000 && isPowerTournament == false)
+
+	// Arena 2 – Tatami (AABB rápido + polígono preciso)
+	if (worldTblidx == 1) {
+		if (vCurLoc.x > 4472.23f && vCurLoc.x < 4521.23f &&
+			vCurLoc.z > 4047.36f && vCurLoc.z < 4096.48f)
+		{
+			if (PointInPolygonXZ(kTatami, vCurLoc))
+				return true;
+		}
+	}
+
+	if (worldTblidx == 510000 && isPowerTournament == false)
 		return true;
 
 	return false;
