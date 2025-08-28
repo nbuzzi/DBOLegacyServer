@@ -607,6 +607,7 @@ void CChatServerSession::RecvGuildChangeNameRes(CNtlPacket* pPacket, CQueryServe
 			if (pCache->RemoveItem(req->itemId))
 			{
 				GetCharDB.Execute("DELETE FROM items WHERE id=%I64u", req->itemId);
+				ERR_LOG(LOG_GENERAL, "[ITEM-DELETED] CChatServerSession::RecvGuildChangeNameRes - Item %I64u removed from char %u to change guild name", req->itemId, req->charId);
 
 				GetLogDB.Execute("INSERT INTO guild_name_change_log (GuildID,CurrentName,NewName) VALUES (%u,\"%ls\",\"%ls\")", req->guildId, pGuild->wszName, req->wszGuildName);
 
@@ -911,143 +912,165 @@ void CChatServerSession::RecvAuctionHouseSellReq(CNtlPacket* pPacket, CQueryServ
 	res->wResultCode = GAME_SUCCESS;
 
 	CPlayerCache* pCache = g_pPlayerCache->GetCharacter(req->charId);
-	if (pCache)
-	{
-		if (pCache->GetZeni() >= req->dwFee)
-		{
-			if (sITEM_DATA* pItem = pCache->GetItemData(req->itemId))
-			{
-				if (pItem->byStackcount > req->byCount) // if we have more stack count than we sell
-				{
-					// create new item
-					sITEM_DATA rItemData;
-					memcpy(&rItemData, pItem, sizeof(sITEM_DATA));
-					rItemData.charId = 0;
-					rItemData.byStackcount = req->byCount;
-					rItemData.itemId = g_pItemManager->CreateItem(rItemData);
+	if (!pCache) { res->wResultCode = QUERY_FAIL; goto send_resp; }
 
-
-					sTENKAICHIDAISIJYOU_DATA* pData = new sTENKAICHIDAISIJYOU_DATA;
-					pData->nItem = g_pAH->AcquireID();
-					pData->charId = req->charId;
-					pData->byTabType = req->byTabType;
-					pData->byItemType = req->byItemType;
-					pData->byItemLevel = req->byItemLevel;
-					NTL_SAFE_WCSCPY(pData->awchItemName, req->awchItemName);
-					NTL_SAFE_WCSCPY(pData->awchSeller, req->awchSeller);
-					pData->dwPrice = req->dwPrice;
-					pData->nStartSellTime = req->nStartSellTime;
-					pData->nEndSellTime = req->nEndSellTime;
-					pData->itemId = rItemData.itemId;
-					pData->itemNo = pItem->itemNo;
-					pData->byCount = req->byCount;
-					pData->dwNeed_Class_Bit_Flag = req->dwClassBitFlag;
-					pData->byRank = pItem->byRank;
-					pData->byGrade = pItem->byGrade;
-					pData->byCurrentDurability = pItem->byCurrentDurability;
-					pData->byBattleAttribute = pItem->byBattleAttribute;
-					NTL_SAFE_WCSCPY(pData->awchMaker, pItem->awchMaker);
-					memcpy(&pData->sOptionSet, &pItem->sOptionSet, sizeof(sITEM_OPTION_SET));
-					pData->nUseEndTime = pItem->nUseEndTime;
-					pData->byRestrictState = pItem->byRestrictState;
-
-					//ADD ITEM TO AH MAP
-					g_pAH->InsertItem(pData);
-
-					// add in DB
-					char sql[4096];
-					auto name = to_utf8(req->awchItemName);
-					auto seller = to_utf8(req->awchSeller);
-
-					int n = _snprintf_s(sql, sizeof(sql), _TRUNCATE,
-						"INSERT INTO auctionhouse "
-						"(id, CharID, TabType, ItemName, Seller, Price, ItemID, TimeStart, TimeEnd, ItemLevel, NeedClass, ItemType) "
-						"VALUES (%I64u, %u, %u, N'%s', N'%s', %u, %I64u, %I64u, %I64u, %u, %u, %u)",
-						req->itemId, req->charId, req->byTabType,
-						name.c_str(), seller.c_str(),
-						req->dwPrice, req->itemId, req->nStartSellTime, req->nEndSellTime,
-						req->byItemLevel, req->dwClassBitFlag, req->byItemType
-					);
-
-					// update stack count from original item
-					pItem->byStackcount -= req->byCount;
-					GetCharDB.Execute("UPDATE items SET count=%u WHERE id=%I64u", pItem->byStackcount, pItem->itemId);
-
-					//update player zeni & db
-					pCache->SetZeni(pCache->GetZeni() - req->dwFee);
-					GetCharDB.Execute("UPDATE characters SET Money=%u WHERE CharID=%u", pCache->GetZeni(), req->charId);
-
-					// packet
-					memcpy(&res->sData, pData, sizeof(sTENKAICHIDAISIJYOU_DATA));
-				}
-				else if (pItem->byStackcount == req->byCount)
-				{
-					sTENKAICHIDAISIJYOU_DATA* pData = new sTENKAICHIDAISIJYOU_DATA;
-					pData->nItem = g_pAH->AcquireID();
-					pData->charId = req->charId;
-					pData->byTabType = req->byTabType;
-					pData->byItemType = req->byItemType;
-					pData->byItemLevel = req->byItemLevel;
-					NTL_SAFE_WCSCPY(pData->awchItemName, req->awchItemName);
-					NTL_SAFE_WCSCPY(pData->awchSeller, req->awchSeller);
-					pData->dwPrice = req->dwPrice;
-					pData->nStartSellTime = req->nStartSellTime;
-					pData->nEndSellTime = req->nEndSellTime;
-					pData->itemId = req->itemId;
-					pData->itemNo = pItem->itemNo;
-					pData->byCount = req->byCount;
-					pData->dwNeed_Class_Bit_Flag = req->dwClassBitFlag;
-					pData->byRank = pItem->byRank;
-					pData->byGrade = pItem->byGrade;
-					pData->byCurrentDurability = pItem->byCurrentDurability;
-					pData->byBattleAttribute = pItem->byBattleAttribute;
-					NTL_SAFE_WCSCPY(pData->awchMaker, pItem->awchMaker);
-					memcpy(&pData->sOptionSet, &pItem->sOptionSet, sizeof(sITEM_OPTION_SET));
-					pData->nUseEndTime = pItem->nUseEndTime;
-					pData->byRestrictState = pItem->byRestrictState;
-					//ADD ITEM TO AH MAP
-					g_pAH->InsertItem(pData);
-
-					//delete & remove item from seller
-					pCache->RemoveItem(req->itemId);
-
-					//unset owner
-					GetCharDB.Execute("UPDATE items SET owner_id=0 WHERE id=%I64u", req->itemId);
-
-					char sql[4096];
-					auto name = to_utf8(req->awchItemName);
-					auto seller = to_utf8(req->awchSeller);
-
-					int n = _snprintf_s(sql, sizeof(sql), _TRUNCATE,
-						"INSERT INTO auctionhouse "
-						"(id, CharID, TabType, ItemName, Seller, Price, ItemID, TimeStart, TimeEnd, ItemLevel, NeedClass, ItemType) "
-						"VALUES (%I64u, %u, %u, N'%s', N'%s', %u, %I64u, %I64u, %I64u, %u, %u, %u)",
-						req->itemId, req->charId, req->byTabType,
-						name.c_str(), seller.c_str(),
-						req->dwPrice, req->itemId, req->nStartSellTime, req->nEndSellTime,
-						req->byItemLevel, req->dwClassBitFlag, req->byItemType
-					);
-
-					GetCharDB.Execute(sql);
-
-					//update player zeni & db
-					pCache->SetZeni(pCache->GetZeni() - req->dwFee);
-					GetCharDB.Execute("UPDATE characters SET Money=%u WHERE CharID=%u", pCache->GetZeni(), req->charId);
-
-					// packet
-					memcpy(&res->sData, pData, sizeof(sTENKAICHIDAISIJYOU_DATA));
-				}
-				else res->wResultCode = TENKAICHIDAISIJYOU_CANNOT_LACK_OF_ITEM_STACK;
-			}
-			else res->wResultCode = TENKAICHIDAISIJYOU_CANNOT_INVALID_ITEM;
-		}
-		else res->wResultCode = TENKAICHIDAISIJYOU_CANNOT_SELL_NO_MONEY;
+	if (pCache->GetZeni() < req->dwFee) {
+		res->wResultCode = TENKAICHIDAISIJYOU_CANNOT_SELL_NO_MONEY;
+		goto send_resp;
 	}
-	else res->wResultCode = QUERY_FAIL;
 
+	{
+		sITEM_DATA* pItem = pCache->GetItemData(req->itemId);
+		if (!pItem) { res->wResultCode = TENKAICHIDAISIJYOU_CANNOT_INVALID_ITEM; goto send_resp; }
+
+		// Preparar nombres
+		char sql[4096];
+		auto name = to_utf8(req->awchItemName);
+		auto seller = to_utf8(req->awchSeller);
+
+		if (pItem->byStackcount > req->byCount)
+		{
+			// SPLIT STACK
+			sITEM_DATA rItemData;
+			memcpy(&rItemData, pItem, sizeof(sITEM_DATA));
+			rItemData.charId = 0;
+			rItemData.byStackcount = req->byCount;
+			rItemData.itemId = g_pItemManager->CreateItem(rItemData); // instancia nueva
+
+			// Armar lote
+			sTENKAICHIDAISIJYOU_DATA* pData = new sTENKAICHIDAISIJYOU_DATA;
+			pData->nItem = g_pAH->AcquireID();             // LOT ID
+			pData->charId = req->charId;
+			pData->byTabType = req->byTabType;
+			pData->byItemType = req->byItemType;
+			pData->byItemLevel = req->byItemLevel;
+			NTL_SAFE_WCSCPY(pData->awchItemName, req->awchItemName);
+			NTL_SAFE_WCSCPY(pData->awchSeller, req->awchSeller);
+			pData->dwPrice = req->dwPrice;
+			pData->nStartSellTime = req->nStartSellTime;
+			pData->nEndSellTime = req->nEndSellTime;
+			pData->itemId = rItemData.itemId;              // instancia creada
+			pData->itemNo = pItem->itemNo;
+			pData->byCount = req->byCount;
+			pData->dwNeed_Class_Bit_Flag = req->dwClassBitFlag;
+			pData->byRank = pItem->byRank;
+			pData->byGrade = pItem->byGrade;
+			pData->byCurrentDurability = pItem->byCurrentDurability;
+			pData->byBattleAttribute = pItem->byBattleAttribute;
+			NTL_SAFE_WCSCPY(pData->awchMaker, pItem->awchMaker);
+			memcpy(&pData->sOptionSet, &pItem->sOptionSet, sizeof(sITEM_OPTION_SET));
+			pData->nUseEndTime = pItem->nUseEndTime;
+			pData->byRestrictState = pItem->byRestrictState;
+
+			// INSERT en DB usando LOT ID correcto
+			int n = _snprintf_s(sql, sizeof(sql), _TRUNCATE,
+				"INSERT INTO auctionhouse "
+				"(id, CharID, TabType, ItemName, Seller, Price, ItemID, TimeStart, TimeEnd, ItemLevel, NeedClass, ItemType) "
+				"VALUES (%I64u, %u, %u, N'%s', N'%s', %u, %I64u, %I64u, %I64u, %u, %u, %u)",
+				pData->nItem, req->charId, req->byTabType,
+				name.c_str(), seller.c_str(),
+				req->dwPrice, pData->itemId, req->nStartSellTime, req->nEndSellTime,
+				req->byItemLevel, req->dwClassBitFlag, req->byItemType
+			);
+
+			bool ok = GetCharDB.Execute(sql);
+			if (!ok) {
+				ERR_LOG(LOG_GENERAL, "[AH-SELL] insert_fail (split) char=%u lot=%I64u item=%I64u",
+					req->charId, (unsigned long long)pData->nItem, (unsigned long long)pData->itemId);
+				delete pData;
+				res->wResultCode = QUERY_FAIL;
+				goto send_resp;
+			}
+
+			// Reflejar en memoria y actualizar stack original
+			g_pAH->InsertItem(pData);
+			pItem->byStackcount -= req->byCount;
+			GetCharDB.Execute("UPDATE items SET count=%u WHERE id=%I64u", pItem->byStackcount, pItem->itemId);
+
+			// Cobrar fee
+			pCache->SetZeni(pCache->GetZeni() - req->dwFee);
+			GetCharDB.Execute("UPDATE characters SET Money=%u WHERE CharID=%u", pCache->GetZeni(), req->charId);
+
+			memcpy(&res->sData, pData, sizeof(sTENKAICHIDAISIJYOU_DATA));
+			ERR_LOG(LOG_GENERAL, "[AH-SELL] listed(split) char=%u lot=%I64u item=%I64u price=%u count=%u",
+				req->charId, (unsigned long long)pData->nItem, (unsigned long long)pData->itemId, req->dwPrice, req->byCount);
+		}
+		else if (pItem->byStackcount == req->byCount)
+		{
+			// FULL STACK
+			sTENKAICHIDAISIJYOU_DATA* pData = new sTENKAICHIDAISIJYOU_DATA;
+			pData->nItem = g_pAH->AcquireID();             // LOT ID
+			pData->charId = req->charId;
+			pData->byTabType = req->byTabType;
+			pData->byItemType = req->byItemType;
+			pData->byItemLevel = req->byItemLevel;
+			NTL_SAFE_WCSCPY(pData->awchItemName, req->awchItemName);
+			NTL_SAFE_WCSCPY(pData->awchSeller, req->awchSeller);
+			pData->dwPrice = req->dwPrice;
+			pData->nStartSellTime = req->nStartSellTime;
+			pData->nEndSellTime = req->nEndSellTime;
+			pData->itemId = req->itemId;                   // instancia existente
+			pData->itemNo = pItem->itemNo;
+			pData->byCount = req->byCount;
+			pData->dwNeed_Class_Bit_Flag = req->dwClassBitFlag;
+			pData->byRank = pItem->byRank;
+			pData->byGrade = pItem->byGrade;
+			pData->byCurrentDurability = pItem->byCurrentDurability;
+			pData->byBattleAttribute = pItem->byBattleAttribute;
+			NTL_SAFE_WCSCPY(pData->awchMaker, pItem->awchMaker);
+			memcpy(&pData->sOptionSet, &pItem->sOptionSet, sizeof(sITEM_OPTION_SET));
+			pData->nUseEndTime = pItem->nUseEndTime;
+			pData->byRestrictState = pItem->byRestrictState;
+
+			int n = _snprintf_s(sql, sizeof(sql), _TRUNCATE,
+				"INSERT INTO auctionhouse "
+				"(id, CharID, TabType, ItemName, Seller, Price, ItemID, TimeStart, TimeEnd, ItemLevel, NeedClass, ItemType) "
+				"VALUES (%I64u, %u, %u, N'%s', N'%s', %u, %I64u, %I64u, %I64u, %u, %u, %u)",
+				pData->nItem, req->charId, req->byTabType,
+				name.c_str(), seller.c_str(),
+				req->dwPrice, pData->itemId, req->nStartSellTime, req->nEndSellTime,
+				req->byItemLevel, req->dwClassBitFlag, req->byItemType
+			);
+
+			bool ok = GetCharDB.Execute(sql);
+			if (!ok) {
+				ERR_LOG(LOG_GENERAL, "[AH-SELL] insert_fail (full) char=%u lot=%I64u item=%I64u",
+					req->charId, (unsigned long long)pData->nItem, (unsigned long long)pData->itemId);
+				delete pData;
+				res->wResultCode = QUERY_FAIL;
+				goto send_resp;
+			}
+
+			// Ahora sí: reflejar en memoria + sacar del inventor
+			g_pAH->InsertItem(pData);
+
+			pCache->RemoveItem(req->itemId);
+			ERR_LOG(LOG_GENERAL, "[ITEM-DELETED] CChatServerSession::RecvAuctionHouseSellReq - Item %I64u removed from char %u to be sold in AH",
+				req->itemId, req->charId);
+
+			// unset owner en DB
+			GetCharDB.Execute("UPDATE items SET owner_id=0 WHERE id=%I64u", req->itemId);
+
+			// Cobrar fee
+			pCache->SetZeni(pCache->GetZeni() - req->dwFee);
+			GetCharDB.Execute("UPDATE characters SET Money=%u WHERE CharID=%u", pCache->GetZeni(), req->charId);
+
+			// packet
+			memcpy(&res->sData, pData, sizeof(sTENKAICHIDAISIJYOU_DATA));
+
+			ERR_LOG(LOG_GENERAL, "[AH-SELL] listed(full) char=%u lot=%I64u item=%I64u price=%u",
+				req->charId, (unsigned long long)pData->nItem, (unsigned long long)pData->itemId, req->dwPrice);
+		}
+		else {
+			res->wResultCode = TENKAICHIDAISIJYOU_CANNOT_LACK_OF_ITEM_STACK;
+		}
+	}
+
+send_resp:
 	packet.SetPacketLen(sizeof(sQT_TENKAICHIDAISIJYOU_SELL_RES));
 	app->Send(GetHandle(), &packet);
 }
+
 
 void CChatServerSession::RecvAuctionHouseSellCancelReq(CNtlPacket* pPacket, CQueryServer* app)
 {
@@ -1058,33 +1081,55 @@ void CChatServerSession::RecvAuctionHouseSellCancelReq(CNtlPacket* pPacket, CQue
 	res->wOpCode = QT_TENKAICHIDAISIJYOU_SELL_CANCEL_RES;
 	res->charId = req->charId;
 	res->wResultCode = GAME_SUCCESS;
-	res->nItem = req->nItem;
+	res->nItem = req->nItem; // lot id
 	res->mailId = INVALID_MAILID;
 
 	CPlayerCache* pCache = g_pPlayerCache->GetCharacter(req->charId);
-	if (pCache)
-	{
-		if (sTENKAICHIDAISIJYOU_DATA* pData = g_pAH->GetItem(req->nItem))
-		{
-			int mailtextsize = (int)wcslen(req->wchText);
-			DBOTIME createtime = time(NULL);
-			DBOTIME endtime = createtime + (10 * 86400); // 10 days
-			SYSTEMTIME ti;
-			GetLocalTime(&ti);
-
-			//enter email to database
-			GetCharDB.Execute("INSERT INTO mail (CharID, SenderType, MailType, TextSize, Text, itemId, FromName, CreateTime, EndTime, RemainDay,year,month,day,hour,minute,second) VALUES (%u,%u,%u,%u,\"%ls\",%I64u,'System',%I64u,%I64u,%u,%u,%u,%u,%u,%u,%u)",
-				req->charId, eMAIL_SENDER_TYPE_SYSTEM, eMAIL_TYPE_ITEM, mailtextsize, req->wchText, pData->itemId, createtime, endtime, 10, ti.wYear, ti.wMonth, ti.wDay, ti.wHour, ti.wMinute, ti.wSecond);
-
-			//delete & remove from AH & DB
-			delete pData;
-			g_pAH->EraseItem(req->nItem);
-			GetCharDB.Execute("DELETE FROM auctionhouse WHERE id=%I64u", req->nItem);
-		}
-		else res->wResultCode = TENKAICHIDAISIJYOU_CANNOT_NOT_EXIST;
+	if (!pCache) {
+		res->wResultCode = QUERY_FAIL;
+		goto send_resp;
 	}
-	else res->wResultCode = QUERY_FAIL;
 
+	{
+		sTENKAICHIDAISIJYOU_DATA* pData = g_pAH->GetItem(req->nItem);
+		if (!pData) {
+			res->wResultCode = TENKAICHIDAISIJYOU_CANNOT_NOT_EXIST;
+			goto send_resp;
+		}
+
+		int mailtextsize = (int)wcslen(req->wchText);
+		DBOTIME createtime = time(NULL);
+		DBOTIME endtime = createtime + (10 * 86400);
+		SYSTEMTIME ti; GetLocalTime(&ti);
+
+		bool ok = true;
+
+		// Mail al vendedor (devuelve ítem por correo)
+		ok = ok && GetCharDB.Execute(
+			"INSERT INTO mail (CharID, SenderType, MailType, TextSize, Text, itemId, FromName, CreateTime, EndTime, RemainDay,year,month,day,hour,minute,second) "
+			"VALUES (%u,%u,%u,%u,\"%ls\",%I64u,'System',%I64u,%I64u,%u,%u,%u,%u,%u,%u,%u)",
+			req->charId, eMAIL_SENDER_TYPE_SYSTEM, eMAIL_TYPE_ITEM, mailtextsize, req->wchText,
+			pData->itemId, createtime, endtime, 10, ti.wYear, ti.wMonth, ti.wDay, ti.wHour, ti.wMinute, ti.wSecond);
+
+		// Borrar lote en DB por LOT ID (clave)
+		ok = ok && GetCharDB.Execute("DELETE FROM auctionhouse WHERE id=%I64u", req->nItem);
+
+		if (!ok) {
+			ERR_LOG(LOG_GENERAL, "[AH-CANCEL] fail char=%u lot=%I64u item=%I64u",
+				req->charId, (unsigned long long)req->nItem, (unsigned long long)pData->itemId);
+			res->wResultCode = QUERY_FAIL;
+			goto send_resp;
+		}
+
+		// Limpiar memoria
+		delete pData;
+		g_pAH->EraseItem(req->nItem);
+
+		ERR_LOG(LOG_GENERAL, "[AH-CANCEL] ok char=%u lot=%I64u item=%I64u",
+			req->charId, (unsigned long long)req->nItem, (unsigned long long)pData->itemId);
+	}
+
+send_resp:
 	packet.SetPacketLen(sizeof(sQT_TENKAICHIDAISIJYOU_SELL_CANCEL_RES));
 	app->Send(GetHandle(), &packet);
 }
@@ -1098,52 +1143,86 @@ void CChatServerSession::RecvAuctionHouseBuyReq(CNtlPacket* pPacket, CQueryServe
 	res->wOpCode = QT_TENKAICHIDAISIJYOU_BUY_RES;
 	res->charId = req->charId;
 	res->dwMoney = req->dwMoney;
-	res->nItem = req->nItem;
+	res->nItem = req->nItem; // lot id
 	res->wResultCode = GAME_SUCCESS;
 
 	CPlayerCache* pCache = g_pPlayerCache->GetCharacter(req->charId);
-	if (pCache)
-	{
-		if (pCache->GetZeni() >= req->dwMoney)
-		{
-			if (sTENKAICHIDAISIJYOU_DATA* pData = g_pAH->GetItem(req->nItem))
-			{
-				GetLogDB.Execute("INSERT INTO auctionhouse_log (Seller,Buyer,Price,ItemTblidx,ItemID) VALUES (%u,%u,%u,%u,%I64u)", req->sellcharId, res->charId, req->dwMoney, pData->itemNo, pData->itemId);
-
-				//insert into log
-
-				DBOTIME createtime = time(NULL);
-				DBOTIME endtime = createtime + (10 * 86400); // 10 days
-
-				SYSTEMTIME ti;
-				GetLocalTime(&ti);
-
-				int buyTextSize = (int)wcslen(req->wchBuyText);
-				int sellTextSize = (int)wcslen(req->wchSellText);
-
-				//enter email to database <buyer>
-				GetCharDB.Execute("INSERT INTO mail (CharID, SenderType, MailType, TextSize, Text, itemId, FromName, CreateTime, EndTime, RemainDay,year,month,day,hour,minute,second) VALUES (%u,%u,%u,%u,\"%ls\",%I64u,'System',%I64u,%I64u,%u,%u,%u,%u,%u,%u,%u)",
-					req->charId, eMAIL_SENDER_TYPE_SYSTEM, eMAIL_TYPE_ITEM, buyTextSize, req->wchBuyText, pData->itemId, createtime, endtime, 10, ti.wYear, ti.wMonth, ti.wDay, ti.wHour, ti.wMinute, ti.wSecond);
-
-				//enter email to database <seller>
-				GetCharDB.Execute("INSERT INTO mail (CharID, SenderType, MailType, TextSize, Text, Zenny, FromName, CreateTime, EndTime, RemainDay,year,month,day,hour,minute,second) VALUES (%u,%u,%u,%u,\"%ls\",%u,'System',%I64u,%I64u,%u,%u,%u,%u,%u,%u,%u)",
-					req->sellcharId, eMAIL_SENDER_TYPE_SYSTEM, eMAIL_TYPE_ZENNY, sellTextSize, req->wchSellText, req->dwMoney, createtime, endtime, 10, ti.wYear, ti.wMonth, ti.wDay, ti.wHour, ti.wMinute, ti.wSecond);
-
-				//delete & remove from AH & DB
-				delete pData;
-				g_pAH->EraseItem(req->nItem);
-				GetCharDB.Execute("DELETE FROM auctionhouse WHERE id=%I64u", req->nItem);
-
-				//remove & update zeni from buyer
-				pCache->SetZeni(pCache->GetZeni() - req->dwMoney);
-				GetCharDB.Execute("UPDATE characters SET Money=%u WHERE CharID=%u", pCache->GetZeni(), req->charId);
-			}
-			else res->wResultCode = TENKAICHIDAISIJYOU_CANNOT_NOT_EXIST;
-		}
-		else res->wResultCode = TENKAICHIDAISIJYOU_CANNOT_BUY_NO_MONEY;
+	if (!pCache) {
+		res->wResultCode = QUERY_FAIL;
+		goto send_resp;
 	}
-	else res->wResultCode = QUERY_FAIL;
 
+	if (pCache->GetZeni() < req->dwMoney) {
+		res->wResultCode = TENKAICHIDAISIJYOU_CANNOT_BUY_NO_MONEY;
+		goto send_resp;
+	}
+
+	{
+		sTENKAICHIDAISIJYOU_DATA* pData = g_pAH->GetItem(req->nItem); // lot id
+		if (!pData) {
+			res->wResultCode = TENKAICHIDAISIJYOU_CANNOT_NOT_EXIST;
+			goto send_resp;
+		}
+
+		// (Opcional) BEGIN/COMMIT – si tu wrapper soporta transacciones simples:
+		GetCharDB.Execute("BEGIN TRANSACTION");
+
+		bool ok = true;
+
+		// Log de compra
+		ok = ok && GetLogDB.Execute(
+			"INSERT INTO auctionhouse_log (Seller,Buyer,Price,ItemTblidx,ItemID) VALUES (%u,%u,%u,%u,%I64u)",
+			req->sellcharId, res->charId, req->dwMoney, pData->itemNo, pData->itemId);
+
+		// Tiempos y textos
+		DBOTIME createtime = time(NULL);
+		DBOTIME endtime = createtime + (10 * 86400);
+		SYSTEMTIME ti; GetLocalTime(&ti);
+		int buyTextSize = (int)wcslen(req->wchBuyText);
+		int sellTextSize = (int)wcslen(req->wchSellText);
+
+		// Mail al comprador (con el item)
+		ok = ok && GetCharDB.Execute(
+			"INSERT INTO mail (CharID, SenderType, MailType, TextSize, Text, itemId, FromName, CreateTime, EndTime, RemainDay,year,month,day,hour,minute,second) "
+			"VALUES (%u,%u,%u,%u,\"%ls\",%I64u,'System',%I64u,%I64u,%u,%u,%u,%u,%u,%u,%u)",
+			req->charId, eMAIL_SENDER_TYPE_SYSTEM, eMAIL_TYPE_ITEM, buyTextSize, req->wchBuyText,
+			pData->itemId, createtime, endtime, 10, ti.wYear, ti.wMonth, ti.wDay, ti.wHour, ti.wMinute, ti.wSecond);
+
+		// Mail al vendedor (zenny)
+		ok = ok && GetCharDB.Execute(
+			"INSERT INTO mail (CharID, SenderType, MailType, TextSize, Text, Zenny, FromName, CreateTime, EndTime, RemainDay,year,month,day,hour,minute,second) "
+			"VALUES (%u,%u,%u,%u,\"%ls\",%u,'System',%I64u,%I64u,%u,%u,%u,%u,%u,%u,%u)",
+			req->sellcharId, eMAIL_SENDER_TYPE_SYSTEM, eMAIL_TYPE_ZENNY, sellTextSize, req->wchSellText,
+			req->dwMoney, createtime, endtime, 10, ti.wYear, ti.wMonth, ti.wDay, ti.wHour, ti.wMinute, ti.wSecond);
+
+		// Cobro al buyer (cache + DB)
+		if (ok) {
+			pCache->SetZeni(pCache->GetZeni() - req->dwMoney);
+			ok = ok && GetCharDB.Execute("UPDATE characters SET Money=%u WHERE CharID=%u", pCache->GetZeni(), req->charId);
+		}
+
+		// Borrar lote en DB por LOT ID (clave)
+		if (ok) {
+			ok = ok && GetCharDB.Execute("DELETE FROM auctionhouse WHERE id=%I64u", req->nItem);
+		}
+
+		if (ok) {
+			GetCharDB.Execute("COMMIT");
+			ERR_LOG(LOG_GENERAL, "[AH-BUY] ok buyer=%u lot=%I64u item=%I64u price=%u",
+				req->charId, (unsigned long long)req->nItem, (unsigned long long)pData->itemId, req->dwMoney);
+
+			// Limpiar memoria (post-commit)
+			delete pData;
+			g_pAH->EraseItem(req->nItem);
+		}
+		else {
+			GetCharDB.Execute("ROLLBACK");
+			ERR_LOG(LOG_GENERAL, "[AH-BUY] fail buyer=%u lot=%I64u", req->charId, (unsigned long long)req->nItem);
+			res->wResultCode = QUERY_FAIL;
+		}
+	}
+
+send_resp:
 	packet.SetPacketLen(sizeof(sQT_TENKAICHIDAISIJYOU_BUY_RES));
 	app->Send(GetHandle(), &packet);
 }

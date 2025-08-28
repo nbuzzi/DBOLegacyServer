@@ -38,6 +38,7 @@ CPlayerItemContainer::~CPlayerItemContainer()
 		if (pItem)
 		{
 			g_pItemManager->RemoveItem(it->first);
+			ERR_LOG(LOG_USER, "[ITEM-DELETED] ::~CPlayerItemContainer - WARNING: item not removed from player %u. ItemID %u", m_pOwner->GetCharID(), pItem->GetItemID());
 			SAFE_DELETE(pItem);
 		}
 		else
@@ -137,62 +138,89 @@ void CPlayerItemContainer::AddItem(CItem* pItem)
 	}
 }
 
-void CPlayerItemContainer::MoveItem(CItem* pItem, BYTE byCurPlace, BYTE byNewPlace, BYTE byOldPos, BYTE byNewPos)
+enum EContainerGroup { CG_CHAR, CG_BANK, CG_GUILD, CG_UNKNOWN };
+
+static inline EContainerGroup GetGroup(BYTE place)
 {
-	//check if move item inventory <-> inventory
-	if (
-		(IsInvenContainer(byCurPlace) || IsBagContainer(byCurPlace) || IsEquipContainer(byCurPlace))
-		&& (IsInvenContainer(byNewPlace) || IsBagContainer(byNewPlace) || IsEquipContainer(byNewPlace))
-		)
-	{
-		return;
-	}
-
-	//check if move item bank <-> bank
-	else if (IsBankContainer(byCurPlace) && IsBankContainer(byNewPlace))
-	{
-		return;
-	}
-
-	//check if move item guild bank <-> guild bank
-	else if (IsGuildContainer(byCurPlace) && IsGuildContainer(byNewPlace))
-	{
-		return;
-	}
-
-	//remove from old place
-	if (IsInvenContainer(byCurPlace) || IsBagContainer(byCurPlace) || IsEquipContainer(byCurPlace))
-	{
-		m_map_CharItems.erase(pItem->GetID());
-	}
-
-	else if (IsBankContainer(byCurPlace))
-	{
-		m_map_BankItems.erase(pItem->GetID());
-	}
-
-	else if (IsGuildContainer(byCurPlace))
-	{
-		m_map_GuildBankItems.erase(pItem->GetID());
-	}
-
-	//add to new place
-	if (IsInvenContainer(byNewPlace) || IsBagContainer(byNewPlace) || IsEquipContainer(byNewPlace))
-	{
-		m_map_CharItems.insert({ pItem->GetID() , pItem });
-	}
-
-	else if (IsBankContainer(byNewPlace))
-	{
-		m_map_BankItems.insert({ pItem->GetID() , pItem });
-	}
-
-	else if (IsGuildContainer(byNewPlace))
-	{
-		m_map_GuildBankItems.insert({ pItem->GetID() , pItem });
-	}
+	if (IsInvenContainer(place) || IsBagContainer(place) || IsEquipContainer(place)) return CG_CHAR;
+	if (IsBankContainer(place)) return CG_BANK;
+	if (IsGuildContainer(place)) return CG_GUILD;
+	return CG_UNKNOWN;
 }
 
+void CPlayerItemContainer::MoveItem(CItem* pItem, BYTE byCurPlace, BYTE byNewPlace, BYTE byOldPos, BYTE byNewPos)
+{
+	if (!pItem) return;
+
+	// Log de inicio
+	ERR_LOG(LOG_USER,
+		"[INV-MOVE] start itemId=%I64u h=%u from(%u,%u) -> to(%u,%u)",
+		pItem->GetItemID(), pItem->GetID(),
+		byCurPlace, byOldPos, byNewPlace, byNewPos);
+
+	const EContainerGroup fromG = GetGroup(byCurPlace);
+	const EContainerGroup toG = GetGroup(byNewPlace);
+
+	// 1) Actualizar mapas SOLO si cambia el "grupo" (char/bank/guild)
+	if (fromG != toG)
+	{
+		// quitar de origen
+		if (fromG == CG_CHAR) { m_map_CharItems.erase(pItem->GetID()); }
+		else if (fromG == CG_BANK) { m_map_BankItems.erase(pItem->GetID()); }
+		else if (fromG == CG_GUILD) { m_map_GuildBankItems.erase(pItem->GetID()); }
+
+		// agregar a destino
+		if (toG == CG_CHAR) { m_map_CharItems.insert({ pItem->GetID(), pItem }); }
+		else if (toG == CG_BANK) { m_map_BankItems.insert({ pItem->GetID(), pItem }); }
+		else if (toG == CG_GUILD) { m_map_GuildBankItems.insert({ pItem->GetID(), pItem }); }
+	}
+	// Si no cambia de grupo (p.ej. inventario?inventario, equip?inventario, etc.),
+	// NO hace falta tocar los mapas: están indexados por handle y siguen válidos.
+
+	// 2) Mantener estado de EQUIP: brief y flag
+	const bool fromEquip = IsEquipContainer(byCurPlace);
+	const bool toEquip = IsEquipContainer(byNewPlace);
+
+	if (fromEquip && !toEquip)
+	{
+		UnsetItemBrief(byOldPos);
+		pItem->SetEquipped(false);
+	}
+	else if (!fromEquip && toEquip)
+	{
+		SetItemBrief(byNewPos, &pItem->GetItemData());
+		pItem->SetEquipped(true);
+	}
+	else if (toEquip && fromEquip && byOldPos != byNewPos)
+	{
+		// se mueve dentro de equip: refrescar brief en nueva pos
+		UnsetItemBrief(byOldPos);
+		SetItemBrief(byNewPos, &pItem->GetItemData());
+		pItem->SetEquipped(true);
+	}
+
+	// 3) Mantener estado de BOLSAS activas (bag slots)
+	const bool movedIntoBagSlot = (byNewPlace == CONTAINER_TYPE_BAGSLOT) && pItem->IsBag();
+	const bool movedOutOfBagSlot = (byCurPlace == CONTAINER_TYPE_BAGSLOT) && pItem->IsBag();
+
+	if (movedOutOfBagSlot)
+	{
+		// limpiar el slot anterior si coincide
+		if (byOldPos < NTL_MAX_BAGSLOT_COUNT && m_arr_ActiveBags[byOldPos] == pItem)
+			m_arr_ActiveBags[byOldPos] = nullptr;
+	}
+	if (movedIntoBagSlot)
+	{
+		if (byNewPos < NTL_MAX_BAGSLOT_COUNT)
+			m_arr_ActiveBags[byNewPos] = pItem;
+		else
+			ERR_LOG(LOG_USER, "[INV-MOVE] bagslot OOB pos=%u itemId=%I64u", byNewPos, pItem->GetItemID());
+	}
+
+	ERR_LOG(LOG_USER,
+		"[INV-MOVE] done itemId=%I64u from(%u,%u) -> to(%u,%u) equip=%d",
+		pItem->GetItemID(), byCurPlace, byOldPos, byNewPlace, byNewPos, (int)pItem->IsEquipped());
+}
 
 CItem* CPlayerItemContainer::GetItem(BYTE byPlace, BYTE byPos)
 {
@@ -237,6 +265,7 @@ CItem* CPlayerItemContainer::GetItem(BYTE byPlace, BYTE byPos)
 
 void CPlayerItemContainer::RemoveItem(BYTE byPlace, HOBJECT hHandle)
 {
+	ERR_LOG(LOG_USER, "[ITEM-DELETED] CPlayerItemContainer::RemoveItem - Removing item. User %u, place %u, handle %u \n", m_pOwner->GetCharID(), byPlace, hHandle);
 	m_mapItemsWithDuration.erase(hHandle); //remove from duration
 
 	if (IsBagContainer(byPlace) || IsInvenContainer(byPlace) || IsEquipContainer(byPlace)) //check if place is from bag/inventory. Search char items
@@ -419,38 +448,35 @@ BYTE CPlayerItemContainer::CountEmptyInventory()
 	return count;
 }
 
-
 bool CPlayerItemContainer::IsBagEmpty(BYTE byBagPos)
 {
 	if (byBagPos >= NTL_MAX_BAGSLOT_COUNT)
 		return false;
 
-	CItem* pBag = m_arr_ActiveBags[byBagPos]; //get bag
-	if (pBag == NULL || pBag->IsExpired() == true) //check if bag exist
+	CItem* pBag = m_arr_ActiveBags[byBagPos];
+	if (pBag == NULL || pBag->IsExpired() == true)
 	{
-		false; //bag dont exist, return false.
+		return false;
 	}
 
-	if (pBag->GetPlace() == 0 && pBag->GetPos() == byBagPos)
+	if (pBag->GetPlace() == CONTAINER_TYPE_BAGSLOT && pBag->GetPos() == byBagPos)
 	{
-		for (TItemsMap::iterator it = m_map_CharItems.begin(); it != m_map_CharItems.end(); it++)
+		for (TItemsMap::iterator it = m_map_CharItems.begin(); it != m_map_CharItems.end(); ++it)
 		{
 			CItem* pItem = it->second;
 			if (pItem->GetPlace() == byBagPos + 1)
-			{
 				return false;
-			}
 		}
 	}
 	else
 	{
-		ERR_LOG(LOG_USER, "ERROR: Player %u has bag in array but place %u/pos %u dont match. byBagPos = %u. pos should be same as byBagPos!!", m_pOwner->GetCharID(), pBag->GetPlace(), pBag->GetPos(), byBagPos);
+		ERR_LOG(LOG_USER, "ERROR: Player %u has bag in array but place %u/pos %u dont match. byBagPos=%u",
+			m_pOwner->GetCharID(), pBag->GetPlace(), pBag->GetPos(), byBagPos);
 		return false;
 	}
 
 	return true;
 }
-
 
 bool CPlayerItemContainer::HasRequiredItem(TBLIDX itemTblidx, BYTE byCount, int nMaxLoopCount/* = ITEM_BULK_DELETE_COUNT*/)
 {

@@ -6,7 +6,6 @@
 #include "NtlPacketQC.h"
 #include "Utils.h"
 
-
 bool sortByPlace(const sITEM_DATA *lhs, const sITEM_DATA *rhs) { return lhs->byPlace < rhs->byPlace; }
 
 
@@ -2227,18 +2226,37 @@ void CPlayerCache::FillQuickTeleportData(sQUICK_TELEPORT_INFO * pInfo, BYTE & rb
 
 bool CPlayerCache::RemoveItem(ITEMID itemId)
 {
-	std::map<ITEMID, sITEM_DATA*>::iterator it = m_mapItems.find(itemId);
-	if (it != m_mapItems.end())
+	ERR_LOG(LOG_USER,
+		"inv_cache start op=RemoveItemCache item=%I64u size_before=%zu",
+		(unsigned long long)itemId, m_mapItems.size());
+
+	auto it = m_mapItems.find(itemId);
+	if (it == m_mapItems.end())
 	{
-		sITEM_DATA* pData = it->second;
-
-		delete pData;
-		m_mapItems.erase(it);
-
-		return true;
+		ERR_LOG(LOG_USER,
+			"inv_cache miss op=RemoveItemCache item=%I64u size_now=%zu",
+			(unsigned long long)itemId, m_mapItems.size());
+		return false;
 	}
 
-	return false;
+	sITEM_DATA* pData = it->second;
+	if (!pData)
+	{
+		ERR_LOG(LOG_USER,
+			"inv_cache null_ptr op=RemoveItemCache item=%I64u size_now=%zu",
+			(unsigned long long)itemId, m_mapItems.size());
+		m_mapItems.erase(it);
+		return false;
+	}
+
+	delete pData;
+	m_mapItems.erase(it);
+
+	ERR_LOG(LOG_USER,
+		"inv_cache ok op=RemoveItemCache item=%I64u size_after=%zu",
+		(unsigned long long)itemId, m_mapItems.size());
+
+	return true;
 }
 
 bool CPlayerCache::SwitchItem(ITEMID itemId, CPlayerCache * pNewOwner, BYTE byNewPlace, BYTE byNewPos)

@@ -206,6 +206,7 @@ CItem* CItem::RemoveFromCharacter()
 
 	//del from map
 	m_pOwner->GetPlayerItemContainer()->RemoveItem(GetPlace(), GetID());
+	ERR_LOG(LOG_USER, "[ITEM-DELETED] CItem::RemoveFromCharacter - Item %u removed from player %u", GetItemID(), m_pOwner->GetCharID());
 
 	m_pOwner = NULL;
 	item_data.byPlace = item_data.byPosition = 0;

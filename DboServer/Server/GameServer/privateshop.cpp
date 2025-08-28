@@ -670,6 +670,8 @@ void CPrivateShop::BuyItem(BYTE* byPos, CPlayer* visitor)
 				/*We need to delete here because item place and pos gets updated in SwitchOwner*/
 				//del item from seller
 				m_pkPC->GetPlayerItemContainer()->RemoveItem(item->sItem.byPlace, item->hItem);
+				ERR_LOG(LOG_GENERAL, "[ITEM-DELETED] CPrivateShop::BuyItem - <PRIVATE-SHOP>Item %I64u(idx: %u) removed from Owner %u after being sold in private shop. Shop ID %u. Shop Pos %u",
+					item->sItem.itemId, item->sItem.itemNo, GetOwner()->GetCharID(), GetOwner()->GetID(), item->byPrivateShopInventorySlotPos);
 				//del from seller end
 
 				// do this before we update sItem

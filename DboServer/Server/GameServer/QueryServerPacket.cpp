@@ -42,56 +42,45 @@ void CQueryServerSession::RecvCreateItemRes(CNtlPacket* pPacket)
 void CQueryServerSession::RecvItemMoveRes(CNtlPacket* pPacket)
 {
 	CGameServer* app = (CGameServer*)g_pApp;
-
-	sQG_ITEM_MOVE_RES * req = (sQG_ITEM_MOVE_RES*)pPacket->GetPacketData();
+	sQG_ITEM_MOVE_RES* req = (sQG_ITEM_MOVE_RES*)pPacket->GetPacketData();
 
 	CPlayer* pOwner = g_pObjectManager->GetPC(req->handle);
-	if (!pOwner || !pOwner->IsInitialized())
-		return; //dont need to log I guess
-
-	if (pOwner->GetCharID() != req->charID)
-		return;
+	if (!pOwner || !pOwner->IsInitialized()) return;
+	if (pOwner->GetCharID() != req->charID)  return;
 
 	if (req->wResultCode == GAME_SUCCESS)
 	{
-		//source item
+		// source por HANDLE (consistente con el request)
 		CItem* pSrcItem = pOwner->GetPlayerItemContainer()->GetItem(req->hSrcItem);
-		if (pSrcItem)
+		if (!pSrcItem)
 		{
-			if (IsBagContainer(req->byDstPlace)) //check if moving bag to bag slot
-			{
-				pOwner->GetPlayerItemContainer()->InsertActiveBag(req->byDstPos, pSrcItem); //add bag to dest bag slot
-			}
+			ERR_LOG(LOG_SYSTEM, "ERROR ITEM NOT FOUND !!! Player %u Place %u Pos %u HOBJECT %u",
+				req->charID, req->bySrcPlace, req->bySrcPos, req->hSrcItem);
+			req->wResultCode = GAME_ITEM_NOT_FOUND;
+		}
+		else
+		{
+			// mover source (los handlers NO gestionan bolsas/equip; lo hace MoveItem)
+			pOwner->GetPlayerItemContainer()->MoveItem(
+				pSrcItem, req->bySrcPlace, req->byDstPlace, req->bySrcPos, req->byDstPos);
 
-			pOwner->GetPlayerItemContainer()->MoveItem(pSrcItem, req->bySrcPlace, req->byDstPlace, req->bySrcPos, req->byDstPos);
-
-			//dest item
+			// swap (si hay ítem destino)
 			if (CItem* pDestItem = pOwner->GetPlayerItemContainer()->GetItem(req->hDstItem))
 			{
-				if (IsBagContainer(req->bySrcPlace)) //check if switch bag
-				{
-					pOwner->GetPlayerItemContainer()->InsertActiveBag(req->bySrcPos, pDestItem);
-				}
+				pOwner->GetPlayerItemContainer()->MoveItem(
+					pDestItem, req->byDstPlace, req->bySrcPlace, req->byDstPos, req->bySrcPos);
 
-				pOwner->GetPlayerItemContainer()->MoveItem(pDestItem, req->byDstPlace, req->bySrcPlace, req->byDstPos, req->bySrcPos);
-
-				//set place/pos for dest item
 				pDestItem->SetPlace(req->bySrcPlace);
 				pDestItem->SetPos(req->bySrcPos);
 				pDestItem->SetLocked(false);
 			}
 			else
 			{
-				//remove reserved place/pos
+				// liberar reserva del slot destino si no hay swap
 				pOwner->GetPlayerItemContainer()->RemoveReservedInventory(req->byDstPlace, req->byDstPos);
-
-				if (IsBagContainer(req->bySrcPlace)) //if not switch bag then remove bag from old pos
-				{
-					pOwner->GetPlayerItemContainer()->RemoveActiveBag(req->bySrcPos);
-				}
 			}
 
-			//set place/post for src item. This has to be last, otherwise the dest item cant be found
+			// actualizar source al final
 			pSrcItem->SetPlace(req->byDstPlace);
 			pSrcItem->SetPos(req->byDstPos);
 			pSrcItem->SetLocked(false);
@@ -99,30 +88,20 @@ void CQueryServerSession::RecvItemMoveRes(CNtlPacket* pPacket)
 			if (req->byDstPlace == CONTAINER_TYPE_EQUIP || req->bySrcPlace == CONTAINER_TYPE_EQUIP)
 				pOwner->GetCharAtt()->CalculateAll();
 		}
-		else
-		{
-			ERR_LOG(LOG_SYSTEM, "ERROR ITEM NOT FOUND !!! Player %u Place %u Pos %u HOBJECT %u", req->charID, req->bySrcPlace, req->bySrcPos, req->hSrcItem);
-			req->wResultCode = GAME_ITEM_NOT_FOUND;
-		}
 	}
 	else
 	{
 		if (CItem* pSrcItem = pOwner->GetPlayerItemContainer()->GetItem(req->hSrcItem))
-		{
 			pSrcItem->SetLocked(false);
-		}
 
 		if (CItem* pDestItem = pOwner->GetPlayerItemContainer()->GetItem(req->hDstItem))
-		{
 			pDestItem->SetLocked(false);
-		}
 		else
 			pOwner->GetPlayerItemContainer()->RemoveReservedInventory(req->byDstPlace, req->byDstPos);
 	}
 
-
 	CNtlPacket packet(sizeof(sGU_ITEM_MOVE_RES));
-	sGU_ITEM_MOVE_RES * res = (sGU_ITEM_MOVE_RES *)packet.GetPacketData();
+	sGU_ITEM_MOVE_RES* res = (sGU_ITEM_MOVE_RES*)packet.GetPacketData();
 	res->wOpCode = GU_ITEM_MOVE_RES;
 	res->wResultCode = req->wResultCode;
 	res->byDestPlace = req->byDstPlace;
@@ -135,27 +114,22 @@ void CQueryServerSession::RecvItemMoveRes(CNtlPacket* pPacket)
 	app->Send(pOwner->GetClientSessionID(), &packet);
 }
 
-void CQueryServerSession::RecvItemMoveStackRes(CNtlPacket * pPacket)
+void CQueryServerSession::RecvItemMoveStackRes(CNtlPacket* pPacket)
 {
 	CGameServer* app = (CGameServer*)g_pApp;
+	sQG_ITEM_MOVE_STACK_RES* req = (sQG_ITEM_MOVE_STACK_RES*)pPacket->GetPacketData();
 
-	sQG_ITEM_MOVE_STACK_RES * req = (sQG_ITEM_MOVE_STACK_RES*)pPacket->GetPacketData();
-	
 	CPlayer* pOwner = g_pObjectManager->FindByChar(req->charID);
-	if (!pOwner || !pOwner->IsInitialized())
-		return; //dont need to log I guess
-
-	if (pOwner->GetID() != req->handle)
-		return;
+	if (!pOwner || !pOwner->IsInitialized()) return;
+	if (pOwner->GetID() != req->handle)       return;
 
 	HOBJECT hDestItem = req->hDstItem;
-
 	CItem* pSrcItem = pOwner->GetPlayerItemContainer()->GetItem(req->hSrcItem);
-	CItem* pDestItem = NULL;
+	CItem* pDestItem = nullptr;
 
 	if (req->wResultCode == GAME_SUCCESS)
 	{
-		if (hDestItem == INVALID_HOBJECT) //check if new item has been created (UNSTACK)
+		if (hDestItem == INVALID_HOBJECT) // UNSTACK ? ítem nuevo
 		{
 			pDestItem = new CItem;
 			pDestItem->SetTbldat(pSrcItem->GetTbldat());
@@ -168,30 +142,32 @@ void CQueryServerSession::RecvItemMoveStackRes(CNtlPacket * pPacket)
 			pDestItem->SetItemID(req->splitItemId);
 
 			pDestItem->AddToCharacter(pOwner);
-
 			g_pItemManager->AddItem(pDestItem);
 
 			hDestItem = pDestItem->GetID();
 
-			//remove reserved
 			pOwner->GetPlayerItemContainer()->RemoveReservedInventory(req->byDstPlace, req->byDstPos);
 		}
-		else //no new item created (STACK) 
+		else // STACK ? actualizar destino
 		{
-			//set stack count from dest item
 			pDestItem = pOwner->GetPlayerItemContainer()->GetItem(req->hDstItem);
-			if(pDestItem)
-				pDestItem->SetStackCount(req->byStackCount2);
+			if (pDestItem) pDestItem->SetStackCount(req->byStackCount2);
 		}
 
+		// actualizar/eliminar source
 		if (req->byStackCount1 > 0)
 		{
-			pSrcItem->SetStackCount(req->byStackCount1);
+			if (pSrcItem) pSrcItem->SetStackCount(req->byStackCount1);
 		}
-		else //if source stack count is 0 then delete it
+		else
 		{
-			pOwner->GetPlayerItemContainer()->RemoveItem(req->bySrcPlace, req->hSrcItem);
-			g_pItemManager->DestroyItem(pSrcItem);
+			if (pSrcItem)
+			{
+				pOwner->GetPlayerItemContainer()->RemoveItem(req->bySrcPlace, req->hSrcItem);
+				ERR_LOG(LOG_USER, "[ITEM-DELETED] RecvItemMoveStackRes - Item %I64u removed from player %u after stack move",
+					pSrcItem->GetItemID(), pOwner->GetCharID());
+				g_pItemManager->DestroyItem(pSrcItem);
+			}
 		}
 	}
 	else
@@ -200,14 +176,11 @@ void CQueryServerSession::RecvItemMoveStackRes(CNtlPacket * pPacket)
 			pOwner->GetPlayerItemContainer()->RemoveReservedInventory(req->byDstPlace, req->byDstPos);
 	}
 
-
-	if (pSrcItem)
-		pSrcItem->SetLocked(false);
-	if (pDestItem)
-		pDestItem->SetLocked(false);
+	if (pSrcItem)  pSrcItem->SetLocked(false);
+	if (pDestItem) pDestItem->SetLocked(false);
 
 	CNtlPacket packet(sizeof(sGU_ITEM_MOVE_STACK_RES));
-	sGU_ITEM_MOVE_STACK_RES * res = (sGU_ITEM_MOVE_STACK_RES *)packet.GetPacketData();
+	sGU_ITEM_MOVE_STACK_RES* res = (sGU_ITEM_MOVE_STACK_RES*)packet.GetPacketData();
 	res->wOpCode = GU_ITEM_MOVE_STACK_RES;
 	res->wResultCode = req->wResultCode;
 	res->hSrcItem = req->hSrcItem;
@@ -322,59 +295,44 @@ void CQueryServerSession::RecvLoadBankData(CNtlPacket* pPacket)
 }
 
 
-void CQueryServerSession::RecvBankMoveRes(CNtlPacket * pPacket)
+void CQueryServerSession::RecvBankMoveRes(CNtlPacket* pPacket)
 {
 	CGameServer* app = (CGameServer*)g_pApp;
-
-	sQG_BANK_MOVE_RES * req = (sQG_BANK_MOVE_RES*)pPacket->GetPacketData();
+	sQG_BANK_MOVE_RES* req = (sQG_BANK_MOVE_RES*)pPacket->GetPacketData();
 
 	CPlayer* pOwner = g_pObjectManager->GetPC(req->handle);
-	if (!pOwner || !pOwner->IsInitialized())
-		return; //dont need to log I guess
-
-	if (pOwner->GetCharID() != req->charID)
-		return;
+	if (!pOwner || !pOwner->IsInitialized()) return;
+	if (pOwner->GetCharID() != req->charID)  return;
 
 	if (req->wResultCode == GAME_SUCCESS)
 	{
-		//source item
+		// acá se busca por place/pos (como tu código original)
 		CItem* pSrcItem = pOwner->GetPlayerItemContainer()->GetItem(req->bySrcPlace, req->bySrcPos);
-		if (pSrcItem)
+		if (!pSrcItem)
 		{
-			if (IsBagContainer(req->byDstPlace)) //check if moving bag to bag slot
-			{
-				pOwner->GetPlayerItemContainer()->InsertActiveBag(req->byDstPos, pSrcItem); //add bag to dest bag slot
-			}
+			ERR_LOG(LOG_SYSTEM, "ERROR ITEM NOT FOUND !!! Player %u Place %u Pos %u HOBJECT %u",
+				req->charID, req->bySrcPlace, req->bySrcPos, req->hSrcItem);
+			req->wResultCode = GAME_ITEM_NOT_FOUND;
+		}
+		else
+		{
+			pOwner->GetPlayerItemContainer()->MoveItem(
+				pSrcItem, req->bySrcPlace, req->byDstPlace, req->bySrcPos, req->byDstPos);
 
-			pOwner->GetPlayerItemContainer()->MoveItem(pSrcItem, req->bySrcPlace, req->byDstPlace, req->bySrcPos, req->byDstPos);
-
-			//dest item
 			if (CItem* pDestItem = pOwner->GetPlayerItemContainer()->GetItem(req->byDstPlace, req->byDstPos))
 			{
-				if (IsBagContainer(req->bySrcPlace)) //check if switch bag
-				{
-					pOwner->GetPlayerItemContainer()->InsertActiveBag(req->bySrcPos, pDestItem);
-				}
+				pOwner->GetPlayerItemContainer()->MoveItem(
+					pDestItem, req->byDstPlace, req->bySrcPlace, req->byDstPos, req->bySrcPos);
 
-				pOwner->GetPlayerItemContainer()->MoveItem(pDestItem, req->byDstPlace, req->bySrcPlace, req->byDstPos, req->bySrcPos);
-
-				//set place/pos for dest item
 				pDestItem->SetPlace(req->bySrcPlace);
 				pDestItem->SetPos(req->bySrcPos);
 				pDestItem->SetLocked(false);
 			}
 			else
 			{
-				//remove reserved place/pos
 				pOwner->GetPlayerItemContainer()->RemoveReservedInventory(req->byDstPlace, req->byDstPos);
-
-				if (IsBagContainer(req->bySrcPlace)) //if not switch bag then remove bag from old pos
-				{
-					pOwner->GetPlayerItemContainer()->RemoveActiveBag(req->bySrcPos);
-				}
 			}
 
-			//set place/post for src item. This has to be last, otherwise the dest item cant be found
 			pSrcItem->SetPlace(req->byDstPlace);
 			pSrcItem->SetPos(req->byDstPos);
 			pSrcItem->SetLocked(false);
@@ -382,29 +340,20 @@ void CQueryServerSession::RecvBankMoveRes(CNtlPacket * pPacket)
 			if (req->byDstPlace == CONTAINER_TYPE_EQUIP || req->bySrcPlace == CONTAINER_TYPE_EQUIP)
 				pOwner->GetCharAtt()->CalculateAll();
 		}
-		else
-		{
-			ERR_LOG(LOG_SYSTEM, "ERROR ITEM NOT FOUND !!! Player %u Place %u Pos %u HOBJECT %u", req->charID, req->bySrcPlace, req->bySrcPos, req->hSrcItem);
-			req->wResultCode = GAME_ITEM_NOT_FOUND;
-		}
 	}
 	else
 	{
 		if (CItem* pSrcItem = pOwner->GetPlayerItemContainer()->GetItem(req->bySrcPlace, req->bySrcPos))
-		{
 			pSrcItem->SetLocked(false);
-		}
 
 		if (CItem* pDestItem = pOwner->GetPlayerItemContainer()->GetItem(req->byDstPlace, req->byDstPos))
-		{
 			pDestItem->SetLocked(false);
-		}
 		else
 			pOwner->GetPlayerItemContainer()->RemoveReservedInventory(req->byDstPlace, req->byDstPos);
 	}
 
 	CNtlPacket packet(sizeof(sGU_BANK_MOVE_RES));
-	sGU_BANK_MOVE_RES * res = (sGU_BANK_MOVE_RES *)packet.GetPacketData();
+	sGU_BANK_MOVE_RES* res = (sGU_BANK_MOVE_RES*)packet.GetPacketData();
 	res->wOpCode = GU_BANK_MOVE_RES;
 	res->handle = req->hNpcHandle;
 	res->wResultCode = req->wResultCode;
@@ -418,28 +367,22 @@ void CQueryServerSession::RecvBankMoveRes(CNtlPacket * pPacket)
 	app->Send(pOwner->GetClientSessionID(), &packet);
 }
 
-
-void CQueryServerSession::RecvBankMoveStackRes(CNtlPacket * pPacket)
+void CQueryServerSession::RecvBankMoveStackRes(CNtlPacket* pPacket)
 {
 	CGameServer* app = (CGameServer*)g_pApp;
-
-	sQG_BANK_MOVE_STACK_RES * req = (sQG_BANK_MOVE_STACK_RES*)pPacket->GetPacketData();
+	sQG_BANK_MOVE_STACK_RES* req = (sQG_BANK_MOVE_STACK_RES*)pPacket->GetPacketData();
 
 	CPlayer* pOwner = g_pObjectManager->GetPC(req->handle);
-	if (!pOwner || !pOwner->IsInitialized())
-		return; //dont need to log I guess
-
-	if (pOwner->GetCharID() != req->charID)
-		return;
+	if (!pOwner || !pOwner->IsInitialized()) return;
+	if (pOwner->GetCharID() != req->charID)  return;
 
 	HOBJECT hDestItem = req->hDstItem;
-
 	CItem* pSrcItem = pOwner->GetPlayerItemContainer()->GetItem(req->bySrcPlace, req->bySrcPos);
-	CItem* pDestItem = NULL;
+	CItem* pDestItem = nullptr;
 
 	if (req->wResultCode == GAME_SUCCESS)
 	{
-		if (hDestItem == INVALID_HOBJECT) //check if new item has been created (UNSTACK)
+		if (hDestItem == INVALID_HOBJECT) // UNSTACK
 		{
 			pDestItem = new CItem;
 			pDestItem->SetTbldat(pSrcItem->GetTbldat());
@@ -452,30 +395,31 @@ void CQueryServerSession::RecvBankMoveStackRes(CNtlPacket * pPacket)
 			pDestItem->SetItemID(req->splitItemId);
 
 			pDestItem->AddToCharacter(pOwner);
-
 			g_pItemManager->AddItem(pDestItem);
 
 			hDestItem = pDestItem->GetID();
 
-			//remove reserved
 			pOwner->GetPlayerItemContainer()->RemoveReservedInventory(req->byDstPlace, req->byDstPos);
 		}
-		else //no new item created (STACK) 
+		else // STACK
 		{
-			//set stack count from dest item
 			pDestItem = pOwner->GetPlayerItemContainer()->GetItem(req->byDstPlace, req->byDstPos);
-
-			pDestItem->SetStackCount(req->byStackCount2);
+			if (pDestItem) pDestItem->SetStackCount(req->byStackCount2);
 		}
 
 		if (req->byStackCount1 > 0)
 		{
-			pSrcItem->SetStackCount(req->byStackCount1);
+			if (pSrcItem) pSrcItem->SetStackCount(req->byStackCount1);
 		}
-		else //if source stack count is 0 then delete it
+		else
 		{
-			pOwner->GetPlayerItemContainer()->RemoveItem(req->bySrcPlace, req->hSrcItem);
-			g_pItemManager->DestroyItem(pSrcItem);
+			if (pSrcItem)
+			{
+				pOwner->GetPlayerItemContainer()->RemoveItem(req->bySrcPlace, req->hSrcItem);
+				ERR_LOG(LOG_USER, "[ITEM-DELETED] RecvBankMoveStackRes - Item %I64u removed from player %u after stack move",
+					pSrcItem->GetItemID(), pOwner->GetCharID());
+				g_pItemManager->DestroyItem(pSrcItem);
+			}
 		}
 	}
 	else
@@ -484,13 +428,11 @@ void CQueryServerSession::RecvBankMoveStackRes(CNtlPacket * pPacket)
 			pOwner->GetPlayerItemContainer()->RemoveReservedInventory(req->byDstPlace, req->byDstPos);
 	}
 
-	if (pSrcItem)
-		pSrcItem->SetLocked(false);
-	if (pDestItem)
-		pDestItem->SetLocked(false);
+	if (pSrcItem)  pSrcItem->SetLocked(false);
+	if (pDestItem) pDestItem->SetLocked(false);
 
 	CNtlPacket packet(sizeof(sGU_BANK_MOVE_STACK_RES));
-	sGU_BANK_MOVE_STACK_RES * res = (sGU_BANK_MOVE_STACK_RES *)packet.GetPacketData();
+	sGU_BANK_MOVE_STACK_RES* res = (sGU_BANK_MOVE_STACK_RES*)packet.GetPacketData();
 	res->wOpCode = GU_BANK_MOVE_STACK_RES;
 	res->handle = req->hNpcHandle;
 	res->hSrcItem = req->hSrcItem;
@@ -505,7 +447,6 @@ void CQueryServerSession::RecvBankMoveStackRes(CNtlPacket * pPacket)
 	packet.SetPacketLen(sizeof(sGU_BANK_MOVE_STACK_RES));
 	app->Send(pOwner->GetClientSessionID(), &packet);
 }
-
 
 void CQueryServerSession::RecvBankBuyRes(CNtlPacket* pPacket)
 {
@@ -989,63 +930,48 @@ void CQueryServerSession::RecvGuildBankLoadRes(CNtlPacket * pPacket)
 	app->Send(pOwner->GetClientSessionID(), &packet);
 }
 
-
-void CQueryServerSession::RecvGuildBankMoveRes(CNtlPacket * pPacket)
+void CQueryServerSession::RecvGuildBankMoveRes(CNtlPacket* pPacket)
 {
 	CGameServer* app = (CGameServer*)g_pApp;
 
-	sQG_GUILD_BANK_MOVE_RES * req = (sQG_GUILD_BANK_MOVE_RES*)pPacket->GetPacketData();
+	sQG_GUILD_BANK_MOVE_RES* req = (sQG_GUILD_BANK_MOVE_RES*)pPacket->GetPacketData();
 
 	CPlayer* pOwner = g_pObjectManager->GetPC(req->handle);
 	if (!pOwner || !pOwner->IsInitialized())
-		return; //dont need to log I guess
+		return;
 
 	if (pOwner->GetCharID() != req->charID)
 		return;
 
 	if (req->wResultCode == GAME_SUCCESS)
 	{
-		//source item
 		CItem* pSrcItem = pOwner->GetPlayerItemContainer()->GetItem(req->bySrcPlace, req->bySrcPos);
 		if (pSrcItem)
 		{
-			ERR_LOG(LOG_USER, "<GUILD_STORAGE>Player: %u move item %I64u. Guild:%u SrcPlace:%u,SrcPos:%u,DstPlace:%u,DstPos:%u", req->charID, pSrcItem->GetItemID(), pOwner->GetGuildID(), req->bySrcPlace, req->bySrcPos, req->byDstPlace, req->byDstPos);
+			ERR_LOG(LOG_USER, "<GUILD_STORAGE>Player:%u move item %I64u. Guild:%u SrcPlace:%u,SrcPos:%u,DstPlace:%u,DstPos:%u",
+				req->charID, pSrcItem->GetItemID(), pOwner->GetGuildID(),
+				req->bySrcPlace, req->bySrcPos, req->byDstPlace, req->byDstPos);
 
-			if (IsBagContainer(req->byDstPlace)) //check if moving item to bag slot
-			{
-				pOwner->GetPlayerItemContainer()->InsertActiveBag(req->byDstPos, pSrcItem); //add bag to dest bag slot
-			}
+			// mover source
+			pOwner->GetPlayerItemContainer()->MoveItem(
+				pSrcItem, req->bySrcPlace, req->byDstPlace, req->bySrcPos, req->byDstPos);
 
-			pOwner->GetPlayerItemContainer()->MoveItem(pSrcItem, req->bySrcPlace, req->byDstPlace, req->bySrcPos, req->byDstPos);
-
-			//dest item
+			// swap si hay destino
 			CItem* pDestItem = pOwner->GetPlayerItemContainer()->GetItem(req->byDstPlace, req->byDstPos);
 			if (pDestItem)
 			{
-				if (IsBagContainer(req->bySrcPlace)) //check if switch bag
-				{
-					pOwner->GetPlayerItemContainer()->InsertActiveBag(req->bySrcPos, pDestItem);
-				}
+				pOwner->GetPlayerItemContainer()->MoveItem(
+					pDestItem, req->byDstPlace, req->bySrcPlace, req->byDstPos, req->bySrcPos);
 
-				pOwner->GetPlayerItemContainer()->MoveItem(pDestItem, req->byDstPlace, req->bySrcPlace, req->byDstPos, req->bySrcPos);
-
-				//set place/pos for dest item
 				pDestItem->SetPlace(req->bySrcPlace);
 				pDestItem->SetPos(req->bySrcPos);
 				pDestItem->SetLocked(false);
 			}
 			else
 			{
-				//remove reserved place/pos
 				pOwner->GetPlayerItemContainer()->RemoveReservedInventory(req->byDstPlace, req->byDstPos);
-
-				if (IsBagContainer(req->bySrcPlace)) //if no dest item then remove bag from old slot
-				{
-					pOwner->GetPlayerItemContainer()->RemoveActiveBag(req->bySrcPos);
-				}
 			}
 
-			//set place/post for src item. This has to be last, otherwise the dest item cant be found
 			pSrcItem->SetPlace(req->byDstPlace);
 			pSrcItem->SetPos(req->byDstPos);
 			pSrcItem->SetLocked(false);
@@ -1055,27 +981,24 @@ void CQueryServerSession::RecvGuildBankMoveRes(CNtlPacket * pPacket)
 		}
 		else
 		{
-			ERR_LOG(LOG_SYSTEM, "ERROR ITEM NOT FOUND !!! Player %u Place %u Pos %u HOBJECT %u", req->charID, req->bySrcPlace, req->bySrcPos, req->hSrcItem);
+			ERR_LOG(LOG_SYSTEM, "ERROR ITEM NOT FOUND !!! Player %u Place %u Pos %u HOBJECT %u",
+				req->charID, req->bySrcPlace, req->bySrcPos, req->hSrcItem);
 			req->wResultCode = GAME_ITEM_NOT_FOUND;
 		}
 	}
 	else
 	{
 		if (CItem* pSrcItem = pOwner->GetPlayerItemContainer()->GetItem(req->bySrcPlace, req->bySrcPos))
-		{
 			pSrcItem->SetLocked(false);
-		}
 
 		if (CItem* pDestItem = pOwner->GetPlayerItemContainer()->GetItem(req->byDstPlace, req->byDstPos))
-		{
 			pDestItem->SetLocked(false);
-		}
 		else
 			pOwner->GetPlayerItemContainer()->RemoveReservedInventory(req->byDstPlace, req->byDstPos);
 	}
 
 	CNtlPacket packet(sizeof(sGU_GUILD_BANK_MOVE_RES));
-	sGU_GUILD_BANK_MOVE_RES * res = (sGU_GUILD_BANK_MOVE_RES *)packet.GetPacketData();
+	sGU_GUILD_BANK_MOVE_RES* res = (sGU_GUILD_BANK_MOVE_RES*)packet.GetPacketData();
 	res->wOpCode = GU_GUILD_BANK_MOVE_RES;
 	res->handle = req->hNpcHandle;
 	res->wResultCode = req->wResultCode;
@@ -1088,7 +1011,6 @@ void CQueryServerSession::RecvGuildBankMoveRes(CNtlPacket * pPacket)
 	packet.SetPacketLen(sizeof(sGU_GUILD_BANK_MOVE_RES));
 	app->Send(pOwner->GetClientSessionID(), &packet);
 }
-
 
 void CQueryServerSession::RecvGuildBankMoveStackRes(CNtlPacket * pPacket)
 {
@@ -1146,6 +1068,7 @@ void CQueryServerSession::RecvGuildBankMoveStackRes(CNtlPacket * pPacket)
 		else //if source stack count is 0 then delete it
 		{
 			pOwner->GetPlayerItemContainer()->RemoveItem(req->bySrcPlace, req->hSrcItem);
+			ERR_LOG(LOG_USER, "[ITEM-DELETED] CQueryServerSession::RecvGuildBankMoveStackRes - <GUILD_STORAGE>Player: %u stack item %I64u. Guild:%u SrcPlace:%u,SrcPos:%u,DstPlace:%u,DstPos:%u", req->charID, pSrcItem->GetItemID(), pOwner->GetGuildID(), req->bySrcPlace, req->bySrcPos, req->byDstPlace, req->byDstPos);
 			g_pItemManager->DestroyItem(pSrcItem);
 		}
 	}
@@ -3075,6 +2998,7 @@ void CQueryServerSession::RecvItemSealRes(CNtlPacket * pPacket)
 			if (req->bySealRemainStack == 0)
 			{
 				pOwner->GetPlayerItemContainer()->RemoveItem(req->bySealPlace, pSealItem->GetID());
+				ERR_LOG(LOG_USER, "[ITEM-DELETED] CQueryServerSession::RecvItemSealRes - Seal item used up. Deleting it. User %u, Item %I64u", req->charId, pSealItem->GetID());
 				g_pItemManager->DestroyItem(pSealItem);
 			}
 			else
