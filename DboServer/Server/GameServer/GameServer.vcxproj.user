@@ -13,6 +13,6 @@
     <RemoteDebuggerCommand>C:\Users\Administrator\Desktop\DBOG</RemoteDebuggerCommand>
     <RemoteDebuggerConnection>RemoteWithoutAuthentication</RemoteDebuggerConnection>
     <LocalDebuggerCommandArguments>.\\config\\GameServer1.ini</LocalDebuggerCommandArguments>
-    <LocalDebuggerWorkingDirectory>D:\projects\dbo-legacy\OpenDBO-Core\DboServer\ExecutionEnv</LocalDebuggerWorkingDirectory>
+    <LocalDebuggerWorkingDirectory>C:\Users\Administrator\Desktop\OpenDBO-Core\DboServer\ExecutionEnv</LocalDebuggerWorkingDirectory>
   </PropertyGroup>
 </Project>
