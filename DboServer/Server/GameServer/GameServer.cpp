@@ -39,7 +39,12 @@
 #include "HoneyBeeEvent.h"
 #include "StoneDropEvent.h"
 #include "Fairy Event.h"
+#include <mmsystem.h>
 
+static void SetSchedulerGranularity()
+{
+	timeBeginPeriod(1); // mejora la precisión de Sleep en Windows
+}
 
 CGameServer::CGameServer()
 {
@@ -252,51 +257,71 @@ int CGameServer::OnCreate()
 
 void CGameServer::Run()
 {
-	DWORD dwNow, dwLastLoop = 0;
+	SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_ABOVE_NORMAL);
+
+	// --- timing setup (una sola vez) ---
+	LARGE_INTEGER freq; QueryPerformanceFrequency(&freq);
+	const LONGLONG qpc_per_tick = freq.QuadPart / 60; // 60 Hz -> ~16.666ms
+
+	LARGE_INTEGER next_qpc; QueryPerformanceCounter(&next_qpc);
+
+	// acumuladores para no hacer logs caros cada frame
+	uint64_t last_report_ms = 0;
+	uint64_t last_mem_ms = 0;
 
 	while (true)
 	{
-		LARGE_INTEGER m_freq, rStart, rEnd, rLoadReport, rMemoryUsage;
+		LARGE_INTEGER qpc_start; QueryPerformanceCounter(&qpc_start);
 
-		QueryPerformanceFrequency(&m_freq);
-		QueryPerformanceCounter(&rStart);
+		// tiempo actual en ms (monotónico)
+		const uint64_t now_ms =
+			(uint64_t)(qpc_start.QuadPart * 1000ULL / freq.QuadPart);
 
-		dwNow = GetTickCount();
-		m_dwCurTickCount = dwNow;
+		// exponé tu “tick count” con este reloj (monotónico y de alta resolución)
+		m_dwCurTickCount = (DWORD)(now_ms & 0xFFFFFFFFu);
 		m_tmCurrentTime = time(NULL);
 
-	//	DoUpdatePerformanceLog(dwNow); //requires too much time
-		DoReportLoad(dwNow);
-		QueryPerformanceCounter(&rLoadReport);
+		// --- tareas con throttling (no cada frame) ---
+		if (now_ms - last_report_ms >= 1000) { // 1 vez por segundo
+			DoReportLoad((DWORD)now_ms);
+			last_report_ms = now_ms;
+		}
+		if (now_ms - last_mem_ms >= 2000) {    // cada 2 s (ajusta a gusto)
+			DoUpdateMemoryUseLog((DWORD)now_ms);
+			last_mem_ms = now_ms;
+		}
 
-		DoUpdateMemoryUseLog( dwNow);
-		QueryPerformanceCounter(&rMemoryUsage);
+		// --- juego / red ---
+		if (GetMasterServerSession()) {
+			m_pGameProcessor->Run((DWORD)now_ms);
+		}
 
-		if(GetMasterServerSession())		//master server is the last one we connect.. So only loop when we are connected to master server
-			m_pGameProcessor->Run(dwNow);
+		// --- medir frame y programar el próximo tick ---
+		LARGE_INTEGER qpc_end; QueryPerformanceCounter(&qpc_end);
 
-		dwLastLoop = GetTickCount();
-		QueryPerformanceCounter(&rEnd);
+		// mueve el deadline del próximo frame
+		next_qpc.QuadPart += qpc_per_tick;
 
-		float fDur = ((float)(rEnd.QuadPart - rStart.QuadPart)) * 1000.f / ((float)m_freq.QuadPart);
+		// si vamos muy atrasados, realinear (evita “colas infinitas”)
+		if (qpc_end.QuadPart - next_qpc.QuadPart > 5 * qpc_per_tick) {
+			next_qpc.QuadPart = qpc_end.QuadPart + qpc_per_tick;
+		}
 
-		/*if (fDur > 200.f)
-		{
-			NTL_PRINT(PRINT_APP, "dwLastLoop %u - m_dwCurTickCount %u = %u > 200.", m_dwCurTickCount, dwLastLoop, dwLastLoop - m_dwCurTickCount);
-			ERR_LOG(LOG_SYSTEM, "MainLoop: Total %f, LoadReport %f, MemoryUsage %f, GameProcess %f",
-				fDur,
-				((float)(rLoadReport.QuadPart - rStart.QuadPart)) * 1000.f / ((float)m_freq.QuadPart),
-				((float)(rMemoryUsage.QuadPart - rLoadReport.QuadPart)) * 1000.f / ((float)m_freq.QuadPart),
-				((float)(rEnd.QuadPart - rMemoryUsage.QuadPart)) * 1000.f / ((float)m_freq.QuadPart)
-			);
-		}*/
+		// sleep preciso hasta el próximo tick
+		LARGE_INTEGER qpc_now; QueryPerformanceCounter(&qpc_now);
+		if (qpc_now.QuadPart < next_qpc.QuadPart) {
+			// coarse sleep
+			const LONGLONG qpc_diff = next_qpc.QuadPart - qpc_now.QuadPart;
+			DWORD ms = (DWORD)((qpc_diff * 1000ULL) / freq.QuadPart);
+			if (ms > 1) ::Sleep(ms - 1);
 
-		Wait(1);
+			// spin corto para afinar (sub-ms)
+			do { QueryPerformanceCounter(&qpc_now); } while (qpc_now.QuadPart < next_qpc.QuadPart);
+		}
 	}
 
 	ERR_LOG(LOG_SYSTEM, "CGameServer::Run(): IsRunnable() == false");
 }
-
 
 int	CGameServer::OnConfiguration(const char * lpszConfigFile)
 {
