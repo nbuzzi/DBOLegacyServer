@@ -72,16 +72,16 @@ void CCharacterAttPC::CalculateAtt()
 	if (m_pPlayerRef->IsAdult())
 	{
 		m_pAttribute.fBaseRunSpeed = m_pAttribute.fLastRunSpeed = pcTbldat->fAdult_Run_Speed;
-		m_pAttribute.fBaseAirSpeed = m_pAttribute.fLastAirSpeed = pcTbldat->fAdult_Fly_Speed;
+		m_pAttribute.fBaseAirSpeed = m_pAttribute.fLastAirSpeed = pcTbldat->fAdult_Fly_Speed + 8.0f;
 		m_pAttribute.fBaseAirDashSpeed = m_pAttribute.fLastAirDashSpeed = pcTbldat->fAdult_Dash_Speed;
-		m_pAttribute.fBaseAirDashAccelSpeed = m_pAttribute.fLastAirDashAccelSpeed = pcTbldat->fAdult_Accel_Speed;
+		m_pAttribute.fBaseAirDashAccelSpeed = m_pAttribute.fLastAirDashAccelSpeed = pcTbldat->fAdult_Accel_Speed + 15.0f;
 	}
 	else
 	{
 		m_pAttribute.fBaseRunSpeed = m_pAttribute.fLastRunSpeed = pcTbldat->fChild_Run_Speed;
-		m_pAttribute.fBaseAirSpeed = m_pAttribute.fLastAirSpeed = pcTbldat->fChild_Fly_Speed;
+		m_pAttribute.fBaseAirSpeed = m_pAttribute.fLastAirSpeed = pcTbldat->fChild_Fly_Speed + 8.0f;
 		m_pAttribute.fBaseAirDashSpeed = m_pAttribute.fLastAirDashSpeed = pcTbldat->fChild_Dash_Speed;
-		m_pAttribute.fBaseAirDashAccelSpeed = m_pAttribute.fLastAirDashAccelSpeed = pcTbldat->fChild_Accel_Speed;
+		m_pAttribute.fBaseAirDashAccelSpeed = m_pAttribute.fLastAirDashAccelSpeed = pcTbldat->fChild_Accel_Speed + 15.0f;
 	}
 
 	m_pAttribute.dwBaseMaxLP = m_pAttribute.dwLastMaxLP += int(CFormulaTable::m_afRate[200 + pcTbldat->byClass + 1][1] + m_pAttribute.wBaseCon * CFormulaTable::m_afRate[200 + pcTbldat->byClass + 1][2]);

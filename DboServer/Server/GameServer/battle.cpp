@@ -104,68 +104,136 @@ bool BattleIsBlock(WORD wDefenceRate, BYTE byAttackerLv, BYTE byTargetLv)
 //--------------------------------------------------------------------------------------//
 void CalcSkillDamage(CCharacterObject* pCaster, CCharacterObject* victim, sSKILL_TBLDAT* skilltbl, BYTE byEffectNr, float fBaseSkillDmg, float& resultvalue, BYTE& rAttackResult, int& rfReflectDmg, sDBO_LP_EP_RECOVERED* pLpEpRecover, bool bIncreaseDmg/* = false*/, bool bAttackFromBehindBonus/* = false*/)
 {
-	float  fFinalDamage = 0.0f, min_damage = 0.0f, max_damage = 0.0f, fAttackerPower = 0.0f, fTargetDefensePower = 0.0f, fCritDmgRate = 0.0f, fCritDefRate = 0.0f;
-	float FinalProp = (int)GetAttributeBonusRate(pCaster->IsPC(), 0, pCaster->GetCharAtt()->GetBattleAttributeOffence(), victim->GetCharAtt()->GetBattleAttributeDefence(), 0, pCaster->GetCharAtt()->GetAvatarAttribute(), victim->GetCharAtt()->GetAvatarAttribute());
-	//printf("Prop %f\n", FinalProp);
+    float  fFinalDamage = 0.0f, min_damage = 0.0f, max_damage = 0.0f, fAttackerPower = 0.0f, fTargetDefensePower = 0.0f, fCritDmgRate = 0.0f, fCritDefRate = 0.0f;
+    float FinalProp = (int)GetAttributeBonusRate(pCaster->IsPC(), 0, pCaster->GetCharAtt()->GetBattleAttributeOffence(), victim->GetCharAtt()->GetBattleAttributeDefence(), 0, pCaster->GetCharAtt()->GetAvatarAttribute(), victim->GetCharAtt()->GetAvatarAttribute());
 
-	/* INFO:
-		- At "value" damage, we do not add weapon offence. See https://youtu.be/cj5E1dOIYfk?t=155 as proof. With weapon offence added we deal much more dmg. Without we deal exact the same damage. State needs to be figured out.
-		- State calculation is / 1.5 instead of 2.0. Watch https://youtu.be/JlBDzAmoNTk?t=317 for more info.
-	*/
+    CCharacterAtt* pCasterAtt = pCaster->GetCharAtt();
 
-	CCharacterAtt* pCasterAtt = pCaster->GetCharAtt();
+    if (skilltbl->bySkill_Effect_Type[byEffectNr] == SYSTEM_EFFECT_APPLY_TYPE_VALUE)
+    {
+		// Determine damage source based on skill requirement
+		if (pCaster->IsPC()) {
+			if (skilltbl->byRequire_Epuip_Slot_Type == EQUIP_SLOT_TYPE_SUB_WEAPON) {
+				// Only sub weapon damage/rank/grade
+				CItem* pSubWeapon = static_cast<CPlayer*>(pCaster)->GetPlayerItemContainer()->GetItem(CONTAINER_TYPE_EQUIP, EQUIP_SLOT_TYPE_SUB_WEAPON);
+				WORD basePhys = pCaster->GetCharAtt()->GetSubWeaponPhysicalOffence();
+				WORD baseEnergy = pCaster->GetCharAtt()->GetSubWeaponEnergyOffence();
+				if (pSubWeapon) {
+					BYTE rank = pSubWeapon->GetRank();
+					BYTE grade = pSubWeapon->GetGrade();
+					float bonus = 1.0f + (rank * 0.10f) + (grade * 0.05f);
+					basePhys = static_cast<WORD>(basePhys * bonus);
+					baseEnergy = static_cast<WORD>(baseEnergy * bonus);
+				}
+				if (skilltbl->bySkill_Type == NTL_SKILL_TYPE_PHYSICAL)
+					fAttackerPower = fBaseSkillDmg + basePhys;
+				else if (skilltbl->bySkill_Type == NTL_SKILL_TYPE_ENERGY)
+					fAttackerPower = fBaseSkillDmg + baseEnergy;
+				else if (skilltbl->bySkill_Type == NTL_SKILL_TYPE_STATE)
+					fAttackerPower = fBaseSkillDmg + float(basePhys + baseEnergy / 2.5f);
 
-	//printf("skilltbl->bySkill_Type %u, skilltbl->bySkill_Effect_Type[byEffectNr] %u \n", skilltbl->bySkill_Type, skilltbl->bySkill_Effect_Type[byEffectNr]);
-	if (skilltbl->bySkill_Effect_Type[byEffectNr] == SYSTEM_EFFECT_APPLY_TYPE_VALUE)
-	{
-		if (skilltbl->bySkill_Type == NTL_SKILL_TYPE_PHYSICAL)
-		{
-			fAttackerPower = fBaseSkillDmg;
+				// Defense and crit
+				if (skilltbl->bySkill_Type == NTL_SKILL_TYPE_PHYSICAL)
+					fTargetDefensePower = (float)victim->GetCharAtt()->GetPhysicalDefence();
+				else if (skilltbl->bySkill_Type == NTL_SKILL_TYPE_ENERGY)
+					fTargetDefensePower = (float)victim->GetCharAtt()->GetEnergyDefence();
+				else if (skilltbl->bySkill_Type == NTL_SKILL_TYPE_STATE)
+					fTargetDefensePower = float(victim->GetCharAtt()->GetPhysicalDefence() + victim->GetCharAtt()->GetEnergyDefence() / 1.5f);
 
-			fTargetDefensePower = (float)victim->GetCharAtt()->GetPhysicalDefence();
-
-			// <armor pen> decrease def
-			//fTargetDefensePower -= pCaster->GetCharAtt()->GetPhysicalArmorPenRate() * fTargetDefensePower / 100.f;
-
-			// critical dmg def
-			fCritDefRate = victim->GetCharAtt()->GetPhysicalCriticalDefenceRate();
-		}
-		else if (skilltbl->bySkill_Type == NTL_SKILL_TYPE_ENERGY)
-		{
-			fAttackerPower = fBaseSkillDmg;
-
-			fTargetDefensePower = (float)victim->GetCharAtt()->GetEnergyDefence();
-
-			// <armor pen> decrease def
-			//fTargetDefensePower -= pCaster->GetCharAtt()->GetEnergyArmorPenRate() * fTargetDefensePower / 100.f;
-
-			// critical dmg def
-			fCritDefRate = victim->GetCharAtt()->GetEnergyCriticalDefenceRate();
-		}
-		else if (skilltbl->bySkill_Type == NTL_SKILL_TYPE_STATE)
-		{
-			if (pCaster->IsPC() && skilltbl->byRequire_Epuip_Slot_Type == EQUIP_SLOT_TYPE_SUB_WEAPON)
-				fAttackerPower = fBaseSkillDmg + float(pCaster->GetCharAtt()->GetSubWeaponPhysicalOffence() + pCaster->GetCharAtt()->GetSubWeaponEnergyOffence() / 2.5f);
-			else
+				if (skilltbl->bySkill_Type == NTL_SKILL_TYPE_PHYSICAL)
+					fCritDefRate = victim->GetCharAtt()->GetPhysicalCriticalDefenceRate();
+				else if (skilltbl->bySkill_Type == NTL_SKILL_TYPE_ENERGY)
+					fCritDefRate = victim->GetCharAtt()->GetEnergyCriticalDefenceRate();
+				else if (skilltbl->bySkill_Type == NTL_SKILL_TYPE_STATE)
+					fCritDefRate = (victim->GetCharAtt()->GetPhysicalCriticalDefenceRate() + victim->GetCharAtt()->GetEnergyCriticalDefenceRate()) / 2.f;
+			} else if (skilltbl->byRequire_Epuip_Slot_Type == EQUIP_SLOT_TYPE_HAND) {
+				// Only glove/main weapon damage/rank/grade
+				CItem* pGlove = static_cast<CPlayer*>(pCaster)->GetPlayerItemContainer()->GetItem(CONTAINER_TYPE_EQUIP, EQUIP_SLOT_TYPE_HAND);
+				if (skilltbl->bySkill_Type == NTL_SKILL_TYPE_PHYSICAL) {
+					WORD base = pCaster->GetCharAtt()->GetPhysicalOffence();
+					if (pGlove) {
+						BYTE rank = pGlove->GetRank();
+						BYTE grade = pGlove->GetGrade();
+						float bonus = 1.0f + (rank * 0.10f) + (grade * 0.05f);
+						base = static_cast<WORD>(base * bonus);
+					}
+					fAttackerPower = fBaseSkillDmg + base;
+					fTargetDefensePower = (float)victim->GetCharAtt()->GetPhysicalDefence();
+					fCritDefRate = victim->GetCharAtt()->GetPhysicalCriticalDefenceRate();
+				} else if (skilltbl->bySkill_Type == NTL_SKILL_TYPE_ENERGY) {
+					WORD base = pCaster->GetCharAtt()->GetEnergyOffence();
+					if (pGlove) {
+						BYTE rank = pGlove->GetRank();
+						BYTE grade = pGlove->GetGrade();
+						float bonus = 1.0f + (rank * 0.10f) + (grade * 0.05f);
+						base = static_cast<WORD>(base * bonus);
+					}
+					fAttackerPower = fBaseSkillDmg + base;
+					fTargetDefensePower = (float)victim->GetCharAtt()->GetEnergyDefence();
+					fCritDefRate = victim->GetCharAtt()->GetEnergyCriticalDefenceRate();
+				} else if (skilltbl->bySkill_Type == NTL_SKILL_TYPE_STATE) {
+					float base = float(pCaster->GetCharAtt()->GetPhysicalOffence() + pCaster->GetCharAtt()->GetEnergyOffence() / 2.5f);
+					if (pGlove) {
+						BYTE rank = pGlove->GetRank();
+						BYTE grade = pGlove->GetGrade();
+						float bonus = 1.0f + (rank * 0.10f) + (grade * 0.05f);
+						base = base * bonus;
+					}
+					fAttackerPower = fBaseSkillDmg + base;
+					fTargetDefensePower = float(victim->GetCharAtt()->GetPhysicalDefence() + victim->GetCharAtt()->GetEnergyDefence() / 1.5f);
+					fCritDefRate = (victim->GetCharAtt()->GetPhysicalCriticalDefenceRate() + victim->GetCharAtt()->GetEnergyCriticalDefenceRate()) / 2.f;
+				}
+			} else {
+				// Skill does not require glove or sub weapon: ignore item bonuses
+				if (skilltbl->bySkill_Type == NTL_SKILL_TYPE_PHYSICAL) {
+					fAttackerPower = fBaseSkillDmg + pCaster->GetCharAtt()->GetPhysicalOffence();
+					fTargetDefensePower = (float)victim->GetCharAtt()->GetPhysicalDefence();
+					fCritDefRate = victim->GetCharAtt()->GetPhysicalCriticalDefenceRate();
+				} else if (skilltbl->bySkill_Type == NTL_SKILL_TYPE_ENERGY) {
+					fAttackerPower = fBaseSkillDmg + pCaster->GetCharAtt()->GetEnergyOffence();
+					fTargetDefensePower = (float)victim->GetCharAtt()->GetEnergyDefence();
+					fCritDefRate = victim->GetCharAtt()->GetEnergyCriticalDefenceRate();
+				} else if (skilltbl->bySkill_Type == NTL_SKILL_TYPE_STATE) {
+					fAttackerPower = fBaseSkillDmg + float(pCaster->GetCharAtt()->GetPhysicalOffence() + pCaster->GetCharAtt()->GetEnergyOffence() / 2.5f);
+					fTargetDefensePower = float(victim->GetCharAtt()->GetPhysicalDefence() + victim->GetCharAtt()->GetEnergyDefence() / 1.5f);
+					fCritDefRate = (victim->GetCharAtt()->GetPhysicalCriticalDefenceRate() + victim->GetCharAtt()->GetEnergyCriticalDefenceRate()) / 2.f;
+				}
+			}
+		} else {
+			// Non-PC caster: use base stats only
+			if (skilltbl->bySkill_Type == NTL_SKILL_TYPE_PHYSICAL) {
+				fAttackerPower = fBaseSkillDmg + pCaster->GetCharAtt()->GetPhysicalOffence();
+				fTargetDefensePower = (float)victim->GetCharAtt()->GetPhysicalDefence();
+				fCritDefRate = victim->GetCharAtt()->GetPhysicalCriticalDefenceRate();
+			} else if (skilltbl->bySkill_Type == NTL_SKILL_TYPE_ENERGY) {
+				fAttackerPower = fBaseSkillDmg + pCaster->GetCharAtt()->GetEnergyOffence();
+				fTargetDefensePower = (float)victim->GetCharAtt()->GetEnergyDefence();
+				fCritDefRate = victim->GetCharAtt()->GetEnergyCriticalDefenceRate();
+			} else if (skilltbl->bySkill_Type == NTL_SKILL_TYPE_STATE) {
 				fAttackerPower = fBaseSkillDmg + float(pCaster->GetCharAtt()->GetPhysicalOffence() + pCaster->GetCharAtt()->GetEnergyOffence() / 2.5f);
-
-			fTargetDefensePower = float(victim->GetCharAtt()->GetPhysicalDefence() + victim->GetCharAtt()->GetEnergyDefence() / 1.5f);
-
-			// <armor pen> decrease def
-			//fTargetDefensePower -= ((pCaster->GetCharAtt()->GetPhysicalArmorPenRate() + pCaster->GetCharAtt()->GetEnergyArmorPenRate()) / 2.f) * fTargetDefensePower / 100.f;
-
-			// critical dmg def
-			fCritDefRate = (victim->GetCharAtt()->GetPhysicalCriticalDefenceRate() + victim->GetCharAtt()->GetEnergyCriticalDefenceRate()) / 2.f;
+				fTargetDefensePower = float(victim->GetCharAtt()->GetPhysicalDefence() + victim->GetCharAtt()->GetEnergyDefence() / 1.5f);
+				fCritDefRate = (victim->GetCharAtt()->GetPhysicalCriticalDefenceRate() + victim->GetCharAtt()->GetEnergyCriticalDefenceRate()) / 2.f;
+			}
 		}
-	}
-	else if (skilltbl->bySkill_Effect_Type[byEffectNr] == SYSTEM_EFFECT_APPLY_TYPE_PERCENT)
+    }
+    else if (skilltbl->bySkill_Effect_Type[byEffectNr] == SYSTEM_EFFECT_APPLY_TYPE_PERCENT)
 	{
 		if (skilltbl->bySkill_Type == NTL_SKILL_TYPE_PHYSICAL)
 		{
-			if (pCaster->IsPC() && skilltbl->byRequire_Epuip_Slot_Type == EQUIP_SLOT_TYPE_SUB_WEAPON)
-				fAttackerPower = (((float)pCaster->GetCharAtt()->GetSubWeaponPhysicalOffence() + (float)pCaster->GetCharAtt()->GetPhysicalOffence() * fBaseSkillDmg) / 100.f);
-			else
+			if (pCaster->IsPC() && skilltbl->byRequire_Epuip_Slot_Type == EQUIP_SLOT_TYPE_SUB_WEAPON) {
+				CItem* pSubWeapon = static_cast<CPlayer*>(pCaster)->GetPlayerItemContainer()->GetItem(CONTAINER_TYPE_EQUIP, EQUIP_SLOT_TYPE_SUB_WEAPON);
+				WORD basePhys = pCaster->GetCharAtt()->GetSubWeaponPhysicalOffence();
+				if (pSubWeapon) {
+					BYTE rank = pSubWeapon->GetRank();
+					BYTE grade = pSubWeapon->GetGrade();
+					float bonus = 1.0f + (rank * 0.10f) + (grade * 0.05f);
+					basePhys = static_cast<WORD>(basePhys * bonus);
+				}
+				fAttackerPower = (((float)basePhys + (float)pCaster->GetCharAtt()->GetPhysicalOffence() * fBaseSkillDmg) / 100.f);
+			}
+			else {
 				fAttackerPower = (((float)pCaster->GetCharAtt()->GetPhysicalOffence() * fBaseSkillDmg) / 100.f);
+			}
 
 			fTargetDefensePower = (float)victim->GetCharAtt()->GetPhysicalDefence();
 
@@ -177,10 +245,20 @@ void CalcSkillDamage(CCharacterObject* pCaster, CCharacterObject* victim, sSKILL
 		}
 		else if (skilltbl->bySkill_Type == NTL_SKILL_TYPE_ENERGY)
 		{
-			if (pCaster->IsPC() && skilltbl->byRequire_Epuip_Slot_Type == EQUIP_SLOT_TYPE_SUB_WEAPON)
-				fAttackerPower = (((float)pCaster->GetCharAtt()->GetSubWeaponEnergyOffence() + (float)pCaster->GetCharAtt()->GetEnergyOffence() * fBaseSkillDmg) / 100.f);
-			else
+			if (pCaster->IsPC() && skilltbl->byRequire_Epuip_Slot_Type == EQUIP_SLOT_TYPE_SUB_WEAPON) {
+				CItem* pSubWeapon = static_cast<CPlayer*>(pCaster)->GetPlayerItemContainer()->GetItem(CONTAINER_TYPE_EQUIP, EQUIP_SLOT_TYPE_SUB_WEAPON);
+				WORD baseEnergy = pCaster->GetCharAtt()->GetSubWeaponEnergyOffence();
+				if (pSubWeapon) {
+					BYTE rank = pSubWeapon->GetRank();
+					BYTE grade = pSubWeapon->GetGrade();
+					float bonus = 1.0f + (rank * 0.10f) + (grade * 0.05f);
+					baseEnergy = static_cast<WORD>(baseEnergy * bonus);
+				}
+				fAttackerPower = (((float)baseEnergy + (float)pCaster->GetCharAtt()->GetEnergyOffence() * fBaseSkillDmg) / 100.f);
+			}
+			else {
 				fAttackerPower = (((float)pCaster->GetCharAtt()->GetEnergyOffence() * fBaseSkillDmg) / 100.f);
+			}
 
 			fTargetDefensePower = (float)victim->GetCharAtt()->GetEnergyDefence();
 
@@ -193,10 +271,22 @@ void CalcSkillDamage(CCharacterObject* pCaster, CCharacterObject* victim, sSKILL
 		else if (skilltbl->bySkill_Type == NTL_SKILL_TYPE_STATE)
 		{
 			float fStateOffence = 0.f;
-			if (pCaster->IsPC() && skilltbl->byRequire_Epuip_Slot_Type == EQUIP_SLOT_TYPE_SUB_WEAPON)
-				fStateOffence = ((float)pCaster->GetCharAtt()->GetSubWeaponPhysicalOffence() + (float)pCaster->GetCharAtt()->GetSubWeaponEnergyOffence()) / 2.5f;
-			else
+			if (pCaster->IsPC() && skilltbl->byRequire_Epuip_Slot_Type == EQUIP_SLOT_TYPE_SUB_WEAPON) {
+				CItem* pSubWeapon = static_cast<CPlayer*>(pCaster)->GetPlayerItemContainer()->GetItem(CONTAINER_TYPE_EQUIP, EQUIP_SLOT_TYPE_SUB_WEAPON);
+				WORD basePhys = pCaster->GetCharAtt()->GetSubWeaponPhysicalOffence();
+				WORD baseEnergy = pCaster->GetCharAtt()->GetSubWeaponEnergyOffence();
+				if (pSubWeapon) {
+					BYTE rank = pSubWeapon->GetRank();
+					BYTE grade = pSubWeapon->GetGrade();
+					float bonus = 1.0f + (rank * 0.10f) + (grade * 0.05f);
+					basePhys = static_cast<WORD>(basePhys * bonus);
+					baseEnergy = static_cast<WORD>(baseEnergy * bonus);
+				}
+				fStateOffence = ((float)basePhys + (float)baseEnergy) / 2.5f;
+			}
+			else {
 				fStateOffence = ((float)pCaster->GetCharAtt()->GetPhysicalOffence() + (float)pCaster->GetCharAtt()->GetEnergyOffence()) / 2.5f;
+			}
 
 			fAttackerPower = (fStateOffence * fBaseSkillDmg) / 100.f;
 			fTargetDefensePower = (float)victim->GetCharAtt()->GetPhysicalDefence() + (float)victim->GetCharAtt()->GetEnergyDefence() / 1.5f;
@@ -549,7 +639,6 @@ void CalcLifeStealDamage(CCharacterObject* pCaster, CCharacterObject* victim, sS
 	//---------------//
 }
 
-
 //--------------------------------------------------------------------------------------//
 //		CALCULATE NORMAL ATTACK DAMAGE
 //--------------------------------------------------------------------------------------//
@@ -559,7 +648,18 @@ float CalcMeleeDamage(CCharacter* pkAttacker, CCharacter* pkVictim)
 	float FinalProp = (int)GetAttributeBonusRate(pkAttacker->IsPC(), 0, pkVictim->GetCharAtt()->GetBattleAttributeOffence(), pkVictim->GetCharAtt()->GetBattleAttributeDefence(), 0, pkAttacker->GetCharAtt()->GetAvatarAttribute(), pkVictim->GetCharAtt()->GetAvatarAttribute());
 	if (pkAttacker->GetAttackType() == BATTLE_ATTACK_TYPE_ENERGY)
 	{
-		fAttackerPower = (float)pkAttacker->GetCharAtt()->GetEnergyOffence();
+		WORD base = pkAttacker->GetCharAtt()->GetEnergyOffence();
+		CItem* pGlove = nullptr;
+		if (pkAttacker->IsPC()) {
+			pGlove = static_cast<CPlayer*>(pkAttacker)->GetPlayerItemContainer()->GetItem(CONTAINER_TYPE_EQUIP, EQUIP_SLOT_TYPE_HAND);
+		}
+		if (pGlove) {
+			BYTE rank = pGlove->GetRank();
+			BYTE grade = pGlove->GetGrade();
+			float bonus = 1.0f + (rank * 0.10f) + (grade * 0.05f);
+			base = static_cast<WORD>(base * bonus);
+		}
+		fAttackerPower = base;
 		fTargetDefensePower = (float)pkVictim->GetCharAtt()->GetEnergyDefence();
 
 		// <armor pen> decrease def
@@ -567,7 +667,18 @@ float CalcMeleeDamage(CCharacter* pkAttacker, CCharacter* pkVictim)
 	}
 	else
 	{
-		fAttackerPower = (float)pkAttacker->GetCharAtt()->GetPhysicalOffence();
+		WORD base = pkAttacker->GetCharAtt()->GetPhysicalOffence();
+		CItem* pGlove = nullptr;
+		if (pkAttacker->IsPC()) {
+			pGlove = static_cast<CPlayer*>(pkAttacker)->GetPlayerItemContainer()->GetItem(CONTAINER_TYPE_EQUIP, EQUIP_SLOT_TYPE_HAND);
+		}
+		if (pGlove) {
+			BYTE rank = pGlove->GetRank();
+			BYTE grade = pGlove->GetGrade();
+			float bonus = 1.0f + (rank * 0.10f) + (grade * 0.05f);
+			base = static_cast<WORD>(base * bonus);
+		}
+		fAttackerPower = base;
 		fTargetDefensePower = (float)pkVictim->GetCharAtt()->GetPhysicalDefence();
 
 		// <armor pen> decrease def

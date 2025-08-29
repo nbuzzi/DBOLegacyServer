@@ -103,6 +103,14 @@ bool CRankbattleBattle::TickProcess(DWORD dwTickCount)
 
 	CGameServer* app = (CGameServer*)g_pApp;
 
+	// Always process skills and buffs for all players every tick, regardless of phase
+	for (auto& entry : m_mapPlayers) {
+		CPlayer* pPlayer = g_pObjectManager->GetPC(entry.first);
+		if (pPlayer && pPlayer->IsInitialized()) {
+			pPlayer->GetBuffManager()->TickProcess(dwTickCount); // Ensure buffs/debuffs tick
+			pPlayer->TickProcess(dwTickCount, 1.0f); // Ensure skills and actions tick
+		}
+	}
 	switch (m_eRoomState)
 	{
 		case RANKBATTLE_ROOMSTATE_NONE:

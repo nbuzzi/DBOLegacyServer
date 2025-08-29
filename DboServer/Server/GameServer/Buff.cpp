@@ -44,8 +44,14 @@ bool CBuff::Create(CCharacter *pOwnerRef, sBUFF_INFO* pBuffInfo, eSYSTEM_EFFECT_
 		m_dwRemainTime[1] = m_sBuffInfo.aBuffParameter[1].buffParameter.dwRemainTime;
 
 		if(m_sBuffInfo.aBuffParameter[0].byBuffParameterType != DBO_BUFF_PARAMETER_TYPE_DEFAULT && m_sBuffInfo.aBuffParameter[0].byBuffParameterType != DBO_BUFF_PARAMETER_TYPE_ACTIVE_LP_EP_AUTO_RECOVER)
-			m_dwRemainTime[0] = UnsignedSafeDecrease<DWORD>(m_sBuffInfo.dwTimeRemaining, NTL_EFFECT_APPLY_INTERVAL);
+			m_dwRemainTime[0] = UnsignedSafeDecrease<DWORD>(m_sBuffInfo.dwTimeRemaining, NTL_EFFECT_APPLY_INTERVAL_BUFF);
 		if (m_sBuffInfo.aBuffParameter[1].byBuffParameterType != DBO_BUFF_PARAMETER_TYPE_DEFAULT && m_sBuffInfo.aBuffParameter[1].byBuffParameterType != DBO_BUFF_PARAMETER_TYPE_ACTIVE_LP_EP_AUTO_RECOVER)
+			m_dwRemainTime[1] = UnsignedSafeDecrease<DWORD>(m_sBuffInfo.dwTimeRemaining, NTL_EFFECT_APPLY_INTERVAL_BUFF);
+
+		// Only use NTL_EFFECT_APPLY_INTERVAL for DOT/HoT effects (every 2 seconds)
+		if(m_sBuffInfo.aBuffParameter[0].byBuffParameterType == DBO_BUFF_PARAMETER_TYPE_DOT || m_sBuffInfo.aBuffParameter[0].byBuffParameterType == DBO_BUFF_PARAMETER_TYPE_HOT)
+			m_dwRemainTime[0] = UnsignedSafeDecrease<DWORD>(m_sBuffInfo.dwTimeRemaining, NTL_EFFECT_APPLY_INTERVAL);
+		if (m_sBuffInfo.aBuffParameter[1].byBuffParameterType == DBO_BUFF_PARAMETER_TYPE_DOT || m_sBuffInfo.aBuffParameter[1].byBuffParameterType == DBO_BUFF_PARAMETER_TYPE_HOT)
 			m_dwRemainTime[1] = UnsignedSafeDecrease<DWORD>(m_sBuffInfo.dwTimeRemaining, NTL_EFFECT_APPLY_INTERVAL);
 
 		if (std::isnan(m_sBuffInfo.aBuffParameter[0].buffParameter.fParameter) || std::isinf(m_sBuffInfo.aBuffParameter[0].buffParameter.fParameter))
@@ -128,6 +134,8 @@ bool CBuff::OnRegistered(bool bIsLoadedBuff, bool bNeedToDisplayMessage)
 		m_pOwnerRef->Broadcast(&packet);
 
 		OnEffectActive();
+		// Instantly apply buff effect on registration
+		TickProcess(0); // Immediate effect application
 
 		// Check if its a curse buff and if have curse reflecton buff
 		if (GetCasterHandle() != INVALID_HOBJECT && IsCurseBuff())
@@ -216,7 +224,7 @@ void CBuff::TickProcess(DWORD dwTickDiff)
 			{
 				if (m_dwRemainTime[i] > m_sBuffInfo.dwTimeRemaining) //check if dot/hot should be applied
 				{
-					m_dwRemainTime[i] = UnsignedSafeDecrease<DWORD>(m_dwRemainTime[i], NTL_EFFECT_APPLY_INTERVAL); //decrease time by 2 seconds because hot/dot only apply every 2 seconds
+					m_dwRemainTime[i] = UnsignedSafeDecrease<DWORD>(m_dwRemainTime[i], NTL_EFFECT_APPLY_INTERVAL); // apply DOT/HoT every 2 seconds
 
 					bDoEffect = true;
 				}
@@ -244,7 +252,7 @@ void CBuff::TickProcess(DWORD dwTickDiff)
 	}
 
 
-	if (bDoEffect)
+	if (bDoEffect || dwTickDiff == 0)
 	{
 		if (OnEffect(dwTickDiff)) //Object can die while "OnEffect" and at death all buffs will be removed.
 			return;
@@ -642,7 +650,7 @@ bool CBuff::OnEffect(DWORD dwTickDiff)
 				{
 					if (pMascot->GetTbldat()->nextMascotTblidx != INVALID_TBLIDX && pMascot->GetExp() < pMascot->GetNeedExp())
 					{
-						sCOMMONCONFIG_VALUE_DATA* commonConfig = g_pTableContainer->GetCommonConfigTable()->FindCommonConfig(m_sBuffInfo.aBuffParameter[0].buffParameter.commonConfigTblidx);
+					 sCOMMONCONFIG_VALUE_DATA* commonConfig = g_pTableContainer->GetCommonConfigTable()->FindCommonConfig(m_sBuffInfo.aBuffParameter[0].buffParameter.commonConfigTblidx);
 
 						m_sBuffInfo.aBuffParameter[0].buffParameter.dwRemainValue -= commonConfig->adwValue[1];
 

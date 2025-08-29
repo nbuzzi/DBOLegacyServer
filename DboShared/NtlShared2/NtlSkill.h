@@ -334,6 +334,8 @@ const int NTL_SYSTEM_EFFECT_2 = 1;
 
 const unsigned int NTL_EFFECT_APPLY_INTERVAL = 2000;		// in millisecs.
 
+const unsigned int NTL_EFFECT_APPLY_INTERVAL_BUFF = 500;		// in millisecs.
+
 const unsigned int NTL_MAX_NUMBER_OF_SKILL_TARGET = 32; //old 8 new 32
 
 const BYTE INVALID_BUFF_GROUP = 0xFF;

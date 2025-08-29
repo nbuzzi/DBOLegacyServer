@@ -45,7 +45,7 @@ void CGameProcessor::Init()
 
 bool CGameProcessor::Create(DWORD dwTimeTick, CGameMain* pGameMain)
 {
-	m_dwTickTime = dwTimeTick;
+	m_dwTickTime = 8; // Lower tick time for higher update rate
 	m_pEventHolder = new EventableObjectHolder(-1);
 	m_pGameMainRef = pGameMain;
 	m_pPacketEvent = new CPacketEvent;
@@ -65,10 +65,10 @@ void CGameProcessor::Run(DWORD dwTickCount)
 
 	if (m_dwTickDiff > 0)
 		m_pEventHolder->Update(m_dwTickDiff);
+	// ...existing code...
 
 	m_pPacketEvent->ProcessEventQueue(); //process packets
 
-	
 	if (m_dwTickCount - m_dwLastTimeGameMainUpdated >= m_dwTickTime)
 	{
 	//	ERR_LOG(LOG_FIRST, "m_dwTickCount %u - m_dwLastTimeGameMainUpdated %u >= m_dwTickTime %u\n", m_dwTickCount, m_dwLastTimeGameMainUpdated, m_dwTickTime);
