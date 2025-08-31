@@ -165,9 +165,18 @@ void CBudokaiManager::RecvInitInfo(WORD wSeasonCount, BUDOKAITIME tmDefaultOpenT
 
 void CBudokaiManager::TickProcess(DWORD dwTickDiff)
 {
-	CGameServer* app = (CGameServer*)g_pApp;
+	static DWORD s_dwBudokaiGlobalDelay = 0;
+	static const DWORD BUDOKAI_EXTRA_DELAY_MS = 3000; // 3 segundos de retraso global
 
+	CGameServer* app = (CGameServer*)g_pApp;
 	DBOTIME curTime = app->GetTime();
+
+	// Acumula el delay global solo la primera vez que se llama TickProcess tras iniciar el Budokai
+	if (s_dwBudokaiGlobalDelay < BUDOKAI_EXTRA_DELAY_MS)
+	{
+		s_dwBudokaiGlobalDelay += dwTickDiff;
+		return; // Espera hasta que se cumpla el retraso
+	}
 
 	if (m_stateInfo.byState != BUDOKAI_STATE_JUNIOR_CLOSE || m_stateInfo.byState != BUDOKAI_STATE_CLOSE)
 	{
@@ -208,11 +217,11 @@ void CBudokaiManager::TickProcess(DWORD dwTickDiff)
 	}
 
 
-	// -- ADULT SOLO BUDOKAI (start every day at 18:00)
+	// -- ADULT SOLO BUDOKAI (start every day at 12:00 UTC, which is 9:00 AM Argentina time)
 	static int lastSoloStartDay = -1;
 	if (m_bAdultBudokaiBegan == false)
 	{
-		if (timeStruct.tm_hour == 18 && timeStruct.tm_min == 0 && timeStruct.tm_sec < 5 && timeStruct.tm_yday != lastSoloStartDay)
+		if (timeStruct.tm_hour == 12 && timeStruct.tm_min == 0 && timeStruct.tm_sec < 5 && timeStruct.tm_yday != lastSoloStartDay)
 		{
 			m_bAdultBudokaiBegan = true;
 			lastSoloStartDay = timeStruct.tm_yday;
@@ -2818,7 +2827,6 @@ void CBudokaiManager::TickProcessMajorMatch(DWORD dwTickDif, BUDOKAITIME curTime
 				else
 					match->m_dwMatchTickCount = 4 * 60 * 1000; // 4 minutes
 
-
 				ERR_LOG(LOG_GENERAL, "BUDOKAI: Update Tournament Major Match. Index %u, byState BUDOKAI_MAJORMATCH_STATE_STAGE_READY -> BUDOKAI_MAJORMATCH_STATE_STAGE_RUN, m_dwMatchTickCount = %u",
 					it->first, match->m_dwMatchTickCount);
 
@@ -4109,7 +4117,7 @@ void CBudokaiManager::TickProcessFinalMatch(DWORD dwTickDif, BUDOKAITIME curTime
 			if (match->m_dwMatchTickCount == 0)
 			{
 				match->m_byMatchState = BUDOKAI_FINALMATCH_STATE_STAGE_RUN;
-				
+                
 				if (m_matchType == BUDOKAI_MATCH_TYPE_INDIVIDIAUL)
 					match->m_dwMatchTickCount = 3 * 60 * 1000; // 3 minutes
 				else
