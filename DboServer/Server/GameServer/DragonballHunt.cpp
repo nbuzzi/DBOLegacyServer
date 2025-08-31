@@ -181,7 +181,7 @@ void CDragonballHunt::TickProcess(DWORD dwTick)
 }
 
 
-void CDragonballHunt::StartEvent(bool bStartByCommand/* = true*/)
+void CDragonballHunt::StartEvent(bool bStartByCommand, BYTE byHours/* = true*/)
 {
 	if (bStartByCommand)
 	{
@@ -192,7 +192,7 @@ void CDragonballHunt::StartEvent(bool bStartByCommand/* = true*/)
 
 		m_bOnOff = true;
 		m_timeStart = app->GetTime();
-		m_timeEnd = m_timeStart + 7200;
+		m_timeEnd = m_timeStart + (byHours * 3600);
 	}
 
 	ERR_LOG(LOG_GENERAL, "<Dragonball Hunt Event> Start %I64u, End %I64u, Duration in seconds %I64u", m_timeStart, m_timeEnd, m_timeEnd - m_timeStart);

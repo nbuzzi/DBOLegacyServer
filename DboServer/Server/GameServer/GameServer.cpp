@@ -261,7 +261,7 @@ void CGameServer::Run()
 
 	// --- timing setup (una sola vez) ---
 	LARGE_INTEGER freq; QueryPerformanceFrequency(&freq);
-	const LONGLONG qpc_per_tick = freq.QuadPart / 120; // 120 Hz -> ~8.33ms (lower interval for higher responsiveness)
+	const LONGLONG qpc_per_tick = freq.QuadPart / 240; // 240 Hz -> ~4.16ms (mayor frecuencia para mejor respuesta)
 
 	LARGE_INTEGER next_qpc; QueryPerformanceCounter(&next_qpc);
 

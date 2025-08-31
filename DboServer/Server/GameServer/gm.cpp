@@ -229,7 +229,19 @@ ACMD(do_big)
 	std::wstring strToken = pToken->PeekNextToken(NULL, &iLine);
 	BYTE fsize = (BYTE)atof(ws2s(strToken).c_str());
 
-	pPlayer->UpdateSizeRate(fsize);
+	pToken->PopToPeek();
+	strToken = pToken->PeekNextToken(NULL, &iLine);
+
+	std::wstring name = std::wstring(strToken.begin(), strToken.end());
+	const wchar_t* wname = name.c_str();
+
+	CPlayer* cTarget = g_pObjectManager->FindByName(wname);
+	if (!cTarget || !cTarget->IsInitialized())
+	{
+		cTarget = pPlayer;
+	}
+
+	cTarget->UpdateSizeRate(fsize);
 }
 
 ACMD(do_start_dbhunt)
@@ -242,9 +254,9 @@ ACMD(do_start_dbhunt)
 		byHours = 24;
 
 	if (byHours == 0)
-		g_pDragonballHuntEvent->StartEvent();
+		g_pDragonballHuntEvent->StartEvent(true);
 	else
-		g_pDragonballHuntEvent->StartEvent(byHours);
+		g_pDragonballHuntEvent->StartEvent(true, byHours);
 
 	NTL_PRINT(PRINT_APP, "Dragonball Hunt Event Started");
 }

@@ -12081,7 +12081,14 @@ void CClientSession::RecvGiftShopBuyReq(CNtlPacket* pPacket)
 				}
 			}
 
-			cPlayer->UpdateWaguPoints(cPlayer->GetWaguPoints() - price);
+			// Deduct WP and ensure it cannot exceed the 2k limit after purchase
+				DWORD newWaguPoints = cPlayer->GetWaguPoints();
+				if (newWaguPoints < price) newWaguPoints = 0;
+				else newWaguPoints -= price;
+				// Prevent any restoration of previous WP balance (exploit fix)
+				// Only deduction and capping allowed
+				if (newWaguPoints > 2000) newWaguPoints = 2000;
+				cPlayer->UpdateWaguPoints(newWaguPoints);
 
 			CGameServer* app = (CGameServer*)g_pApp;
 
@@ -12090,7 +12097,7 @@ void CClientSession::RecvGiftShopBuyReq(CNtlPacket* pPacket)
 			resGQ->wOpCode = GQ_CHAR_WAGUPOINT_UPDATE_REQ;
 			resGQ->charId = cPlayer->GetCharID();
 			resGQ->accountId = cPlayer->GetAccountID();
-			resGQ->dwWaguPoints = cPlayer->GetWaguPoints();
+			resGQ->dwWaguPoints = newWaguPoints;
 			packetGQ.SetPacketLen(sizeof(sGQ_CHAR_WAGUPOINT_UPDATE_REQ));
 			app->SendTo(app->GetQueryServerSession(), &packetGQ);
 		}

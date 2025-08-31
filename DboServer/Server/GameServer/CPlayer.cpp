@@ -1952,7 +1952,6 @@ void CPlayer::SetGuildID(GUILDID id)
 	m_guildId = id;
 }
 
-
 //--------------------------------------------------------------------------------------//
 //		SET GUILD
 //--------------------------------------------------------------------------------------//
@@ -3868,7 +3867,7 @@ bool CPlayer::AttackProgress(DWORD dwTickDiff, float fMultiple)
 
 	AttackAction(pVictim);
 
-	// 3) Calcular duración correcta según clase + arma + cadena
+	// 3) Calcular duraciï¿½n correcta segï¿½n clase + arma + cadena
 	//const float fAnimationTimeMs =
 	//	GetAniTbldat()->GetChainAttackDurationTime(GetTbldat()->byClass, byWeaponType, m_byChainSequence);
 
@@ -3891,10 +3890,10 @@ bool CPlayer::AttackProgress(DWORD dwTickDiff, float fMultiple)
 
 	const float fRequiredMs = fAnimationTimeMs / fAttackAnimMsPerUnit;
 
-	const DWORD now = app->GetCurTickCount(); // asegurate que sea monotónico
-	DWORD next = now + (DWORD)std::ceil(fRequiredMs); // ceil para no “quedarse corto” por truncamiento
+	const DWORD now = app->GetCurTickCount(); // asegurate que sea monotï¿½nico
+	DWORD next = now + (DWORD)std::ceil(fRequiredMs); // ceil para no ï¿½quedarse cortoï¿½ por truncamiento
 
-	// 4) Clamp mínimo a 1 frame del servidor (ej. 16ms si corres ~60Hz)
+	// 4) Clamp mï¿½nimo a 1 frame del servidor (ej. 16ms si corres ~60Hz)
 	static const DWORD kMinGapMs = 16;
 	if (next < now + kMinGapMs)
 		next = now + kMinGapMs;

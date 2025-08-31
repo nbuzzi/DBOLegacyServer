@@ -29,7 +29,7 @@ public:
 
 	void				TickProcess(DWORD dwTick);
 
-	void				StartEvent(bool bStartByCommand = true);
+	void				StartEvent(bool bStartByCommand = true, BYTE byHours = 24);
 
 	void				EndEvent();
 

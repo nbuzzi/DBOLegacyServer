@@ -274,7 +274,17 @@ void CItem::SetItemData(sSHOP_BUY_INVEN* pData, ITEMID itemId)
 	item_data.byPosition = pData->byPos;
 	item_data.byRank = pData->byRank;
 	item_data.byRestrictState = pData->byRestrictState;
-	item_data.byStackcount = pData->byStack;
+
+	// NICO: Validate stack count to prevent duplication exploits
+	if (m_pProto)
+	{
+		BYTE bymaxstack = m_pProto->byMax_Stack;
+		item_data.byStackcount = pData->byStack < bymaxstack ? pData->byStack : bymaxstack;
+	}
+	else
+	{
+		item_data.byStackcount = pData->byStack;
+	}
 	//item_data.charId = //this is set inside function AddToCharacter
 	item_data.itemId = itemId;
 	item_data.itemNo = pData->tblItem;

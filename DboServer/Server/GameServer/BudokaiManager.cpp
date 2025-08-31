@@ -208,42 +208,41 @@ void CBudokaiManager::TickProcess(DWORD dwTickDiff)
 	}
 
 
-	// -- JUNIOR SOLO BUDOKAI
-	if (m_bJuniorBudokaiBegan == false)
+	// -- ADULT SOLO BUDOKAI (start every day at 18:00)
+	static int lastSoloStartDay = -1;
+	if (m_bAdultBudokaiBegan == false)
 	{
-		if (timeStruct.tm_wday == 2 && timeStruct.tm_hour == 14) //check if its tuesday 14 o clock
+		if (timeStruct.tm_hour == 18 && timeStruct.tm_min == 0 && timeStruct.tm_sec < 5 && timeStruct.tm_yday != lastSoloStartDay)
 		{
-			//start junior solo budokai
-			m_bJuniorBudokaiBegan = true;
-			
-			CreateBudokai(BUDOKAI_TYPE_JUNIOR, BUDOKAI_MATCH_TYPE_INDIVIDIAUL, (BUDOKAITIME)curTime, m_pTableInfo);
+			m_bAdultBudokaiBegan = true;
+			lastSoloStartDay = timeStruct.tm_yday;
+			CreateBudokai(BUDOKAI_TYPE_ADULT, BUDOKAI_MATCH_TYPE_INDIVIDIAUL, (BUDOKAITIME)curTime, m_pTableInfo);
 		}
 	}
 	else
 	{
-		if (TickProcessBudokai(dwTickDiff, (BUDOKAITIME)curTime) == true) //if true, then end the budokai
+		if (TickProcessBudokai(dwTickDiff, (BUDOKAITIME)curTime) == true)
 		{
-			//end budokai
-			ERR_LOG(LOG_GENERAL, "BUDOKAI: End Junior-Solo Budokai");
-			m_bJuniorBudokaiBegan = false;
+			ERR_LOG(LOG_GENERAL, "BUDOKAI: End Adult-Solo Budokai");
+			m_bAdultBudokaiBegan = false;
 		}
 	}
 
-	// -- ADULT PARTY BUDOKAI
+	// -- ADULT TEAM BUDOKAI (start every day at 19:00)
+	static int lastTeamStartDay = -1;
 	if (m_bPartyAdultBudokaiBegan == false)
 	{
-		if (timeStruct.tm_wday == 0 && timeStruct.tm_hour == 13) //check if its sunday 13 o clock
+		if (timeStruct.tm_hour == 19 && timeStruct.tm_min == 0 && timeStruct.tm_sec < 5 && timeStruct.tm_yday != lastTeamStartDay)
 		{
-			//start adult party budokai
 			m_bPartyAdultBudokaiBegan = true;
+			lastTeamStartDay = timeStruct.tm_yday;
 			CreateBudokai(BUDOKAI_TYPE_ADULT, BUDOKAI_MATCH_TYPE_TEAM, (BUDOKAITIME)curTime, m_pTableInfo);
 		}
 	}
-	else 
+	else
 	{
-		if (TickProcessBudokai(dwTickDiff, (BUDOKAITIME)curTime) == true) //if true, then end the budokai
+		if (TickProcessBudokai(dwTickDiff, (BUDOKAITIME)curTime) == true)
 		{
-			//end budokai
 			ERR_LOG(LOG_GENERAL, "BUDOKAI: End Adult-Party Budokai");
 			m_bPartyAdultBudokaiBegan = false;
 		}
@@ -3342,14 +3341,14 @@ void CBudokaiManager::UpdateMajorMatchScore(sTOURNAMENT_MATCH * match, BYTE byMa
 	if (wMatchWinner == MATCH_TEAM_TYPE_TEAM1)
 	{
 		match->data.byScore1 += byWins;
-		if (match->data.byScore1 > 2)
-			match->data.byScore1 = 2;
+		if (match->data.byScore1 > 3)
+			match->data.byScore1 = 3;
 	}
 	else
 	{
 		match->data.byScore2 += byWins;
-		if (match->data.byScore2 > 2)
-			match->data.byScore2 = 2;
+		if (match->data.byScore2 > 3)
+			match->data.byScore2 = 3;
 	}
 
 	CNtlPacket packet(sizeof(sGU_MATCH_MAJORMATCH_STAGE_FINISH_NFY));
@@ -3370,7 +3369,7 @@ void CBudokaiManager::UpdateMajorMatchScore(sTOURNAMENT_MATCH * match, BYTE byMa
 	MajorMatchUpdatePlayersState(match, byMatchIndex, MATCH_MEMBER_STATE_NONE);
 
 	//check if match finish
-	if (match->data.byScore1 >= 2 || match->data.byScore2 >= 2)
+	if (match->data.byScore1 >= 3 || match->data.byScore2 >= 3)
 	{
 		ERR_LOG(LOG_GENERAL, "BUDOKAI: Update Tournament Major Match. Index %u. Winner-Team = %u. Score1 = %u, Score2 = %u, byMatchResult = %u ",
 			byMatchIndex, wMatchWinner, match->data.byScore1, match->data.byScore2, byMatchResult);
@@ -4769,14 +4768,14 @@ void CBudokaiManager::UpdateFinalMatchScore(sTOURNAMENT_MATCH * match, BYTE byMa
 	if (wMatchWinner == MATCH_TEAM_TYPE_TEAM1)
 	{
 		match->data.byScore1 += byWins;
-		if (match->data.byScore1 > 3)
-			match->data.byScore1 = 3;
+		if (match->data.byScore1 > 4)
+			match->data.byScore1 = 4;
 	}
 	else
 	{
 		match->data.byScore2 += byWins;
-		if (match->data.byScore2 > 3)
-			match->data.byScore2 = 3;
+		if (match->data.byScore2 > 4)
+			match->data.byScore2 = 4;
 	}
 
 	CNtlPacket packet(sizeof(sGU_MATCH_FINALMATCH_STAGE_FINISH_NFY));
@@ -4797,7 +4796,7 @@ void CBudokaiManager::UpdateFinalMatchScore(sTOURNAMENT_MATCH * match, BYTE byMa
 	FinalMatchUpdatePlayersState(match, byMatchIndex, MATCH_MEMBER_STATE_NONE);
 
 	//check if match finish
-	if (match->data.byScore1 >= 3 || match->data.byScore2 >= 3)
+	if (match->data.byScore1 >= 4 || match->data.byScore2 >= 4)
 	{
 		ERR_LOG(LOG_GENERAL, "BUDOKAI: Update Tournament Final Match. Index %u. Winner-Team = %u. Score1 = %u, Score2 = %u, byMatchResult = %u ",
 			byMatchIndex, wMatchWinner, match->data.byScore1, match->data.byScore2, byMatchResult);
