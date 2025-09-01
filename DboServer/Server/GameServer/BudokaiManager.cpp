@@ -165,18 +165,9 @@ void CBudokaiManager::RecvInitInfo(WORD wSeasonCount, BUDOKAITIME tmDefaultOpenT
 
 void CBudokaiManager::TickProcess(DWORD dwTickDiff)
 {
-	static DWORD s_dwBudokaiGlobalDelay = 0;
-	static const DWORD BUDOKAI_EXTRA_DELAY_MS = 3000; // 3 segundos de retraso global
-
 	CGameServer* app = (CGameServer*)g_pApp;
-	DBOTIME curTime = app->GetTime();
 
-	// Acumula el delay global solo la primera vez que se llama TickProcess tras iniciar el Budokai
-	if (s_dwBudokaiGlobalDelay < BUDOKAI_EXTRA_DELAY_MS)
-	{
-		s_dwBudokaiGlobalDelay += dwTickDiff;
-		return; // Espera hasta que se cumpla el retraso
-	}
+	DBOTIME curTime = app->GetTime();
 
 	if (m_stateInfo.byState != BUDOKAI_STATE_JUNIOR_CLOSE || m_stateInfo.byState != BUDOKAI_STATE_CLOSE)
 	{
@@ -3344,19 +3335,23 @@ bool CBudokaiManager::ProcessMajorMatch(sTOURNAMENT_MATCH * match, BYTE byMatchI
 	return true;
 }
 
+// Score máximo para Major Match y Final Match
+#define BUDOKAI_MAJOR_MATCH_MAX_SCORE 3
+#define BUDOKAI_FINAL_MATCH_MAX_SCORE 4
+
 void CBudokaiManager::UpdateMajorMatchScore(sTOURNAMENT_MATCH * match, BYTE byMatchIndex, BYTE byMatchResult, TEAMTYPE wMatchWinner, BYTE byWins/* = 1*/)
 {
 	if (wMatchWinner == MATCH_TEAM_TYPE_TEAM1)
 	{
 		match->data.byScore1 += byWins;
-		if (match->data.byScore1 > 3)
-			match->data.byScore1 = 3;
+		if (match->data.byScore1 > BUDOKAI_MAJOR_MATCH_MAX_SCORE)
+			match->data.byScore1 = BUDOKAI_MAJOR_MATCH_MAX_SCORE;
 	}
 	else
 	{
 		match->data.byScore2 += byWins;
-		if (match->data.byScore2 > 3)
-			match->data.byScore2 = 3;
+		if (match->data.byScore2 > BUDOKAI_MAJOR_MATCH_MAX_SCORE)
+			match->data.byScore2 = BUDOKAI_MAJOR_MATCH_MAX_SCORE;
 	}
 
 	CNtlPacket packet(sizeof(sGU_MATCH_MAJORMATCH_STAGE_FINISH_NFY));
@@ -3377,7 +3372,7 @@ void CBudokaiManager::UpdateMajorMatchScore(sTOURNAMENT_MATCH * match, BYTE byMa
 	MajorMatchUpdatePlayersState(match, byMatchIndex, MATCH_MEMBER_STATE_NONE);
 
 	//check if match finish
-	if (match->data.byScore1 >= 3 || match->data.byScore2 >= 3)
+	if (match->data.byScore1 >= BUDOKAI_MAJOR_MATCH_MAX_SCORE || match->data.byScore2 >= BUDOKAI_MAJOR_MATCH_MAX_SCORE)
 	{
 		ERR_LOG(LOG_GENERAL, "BUDOKAI: Update Tournament Major Match. Index %u. Winner-Team = %u. Score1 = %u, Score2 = %u, byMatchResult = %u ",
 			byMatchIndex, wMatchWinner, match->data.byScore1, match->data.byScore2, byMatchResult);
@@ -4776,14 +4771,14 @@ void CBudokaiManager::UpdateFinalMatchScore(sTOURNAMENT_MATCH * match, BYTE byMa
 	if (wMatchWinner == MATCH_TEAM_TYPE_TEAM1)
 	{
 		match->data.byScore1 += byWins;
-		if (match->data.byScore1 > 4)
-			match->data.byScore1 = 4;
+		if (match->data.byScore1 > BUDOKAI_FINAL_MATCH_MAX_SCORE)
+			match->data.byScore1 = BUDOKAI_FINAL_MATCH_MAX_SCORE;
 	}
 	else
 	{
 		match->data.byScore2 += byWins;
-		if (match->data.byScore2 > 4)
-			match->data.byScore2 = 4;
+		if (match->data.byScore2 > BUDOKAI_FINAL_MATCH_MAX_SCORE)
+			match->data.byScore2 = BUDOKAI_FINAL_MATCH_MAX_SCORE;
 	}
 
 	CNtlPacket packet(sizeof(sGU_MATCH_FINALMATCH_STAGE_FINISH_NFY));
@@ -4804,7 +4799,7 @@ void CBudokaiManager::UpdateFinalMatchScore(sTOURNAMENT_MATCH * match, BYTE byMa
 	FinalMatchUpdatePlayersState(match, byMatchIndex, MATCH_MEMBER_STATE_NONE);
 
 	//check if match finish
-	if (match->data.byScore1 >= 4 || match->data.byScore2 >= 4)
+	if (match->data.byScore1 >= BUDOKAI_FINAL_MATCH_MAX_SCORE || match->data.byScore2 >= BUDOKAI_FINAL_MATCH_MAX_SCORE)
 	{
 		ERR_LOG(LOG_GENERAL, "BUDOKAI: Update Tournament Final Match. Index %u. Winner-Team = %u. Score1 = %u, Score2 = %u, byMatchResult = %u ",
 			byMatchIndex, wMatchWinner, match->data.byScore1, match->data.byScore2, byMatchResult);
