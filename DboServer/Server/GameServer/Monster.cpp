@@ -53,7 +53,13 @@ void CMonster::Destroy()
 {
 }
 
-void CMonster::CopyToObjectInfo(sOBJECT_INFO * pObjectInfo, CHARACTERID playerCharID)
+void CMonster::SetItemDrop(TBLIDX tblIdx, DWORD amount)
+{
+	m_dropItem_Tblidx = tblIdx;
+	m_sDropItem_amount = amount;
+}
+
+void CMonster::CopyToObjectInfo(sOBJECT_INFO* pObjectInfo, CHARACTERID playerCharID)
 {
 	pObjectInfo->objType = GetObjType();
 
@@ -310,7 +316,7 @@ bool CMonster::DoTransformation(TBLIDX tblidx, ACTIONPATTERNTBLIDX actionPattern
 	LoadSkillTable(bot_profile.sBotSubData.tblidxOnlyOneSkillUse);
 
 	CNtlPacket packet(sizeof(sGU_MONSTER_TRANSFORMED_NFY));
-	sGU_MONSTER_TRANSFORMED_NFY * res = (sGU_MONSTER_TRANSFORMED_NFY *)packet.GetPacketData();
+	sGU_MONSTER_TRANSFORMED_NFY* res = (sGU_MONSTER_TRANSFORMED_NFY*)packet.GetPacketData();
 	res->wOpCode = GU_MONSTER_TRANSFORMED_NFY;
 	res->hSubject = GetID();
 	res->newTblidx = tblidx;
@@ -336,8 +342,8 @@ void CMonster::Spawn(bool bSpawnOnServerStart)
 	SetCurEP(GetCharAtt()->GetMaxEP());
 	SetRunSpeed(tbldat->fRun_Speed);
 
-	m_vecFirstBattleLoc =(GetEnterLoc());
-	m_vecFirstBattleDir =(GetEnterDir());
+	m_vecFirstBattleLoc = (GetEnterLoc());
+	m_vecFirstBattleDir = (GetEnterDir());
 
 	if (!bSpawnOnServerStart)
 	{
@@ -415,7 +421,7 @@ HOBJECT CMonster::ConsiderScanTarget(WORD wRange)
 		if (pWorldCellSibling)
 		{
 			CCharacter* pTarget = (CCharacter*)pWorldCellSibling->GetObjectList()->GetFirst(OBJTYPE_PC);
-			while(pTarget && pTarget->IsInitialized())
+			while (pTarget && pTarget->IsInitialized())
 			{
 				++nLoopCount;
 				if (nLoopCount > 5000)
@@ -423,7 +429,7 @@ HOBJECT CMonster::ConsiderScanTarget(WORD wRange)
 					ERR_LOG(LOG_GENERAL, "INFINITE LOOP FOUND");
 				}
 
-				if(IsTargetAttackble(pTarget, wScanRange))
+				if (IsTargetAttackble(pTarget, wScanRange))
 				{
 					if (IsTargetAttackState(pTarget))
 					{
@@ -482,7 +488,7 @@ bool CMonster::Faint(CCharacterObject* pkKiller, eFAINT_REASON byReason)
 		if (pkKiller && GetCurWorld() && (pkKiller->IsPC() || pkKiller->IsSummonPet()))
 		{
 			CPlayer* pKiller = (pkKiller->IsSummonPet() == false) ? (CPlayer*)pkKiller : ((CSummonPet*)pkKiller)->GetOwner();
-			
+
 			if (pKiller->GetLevel() > DBO_DRAGONBALL_EVENT_DROP_LEVEL_DIFF)
 			{
 				m_byKillerLevel = pKiller->GetLevel();
@@ -501,7 +507,7 @@ bool CMonster::Faint(CCharacterObject* pkKiller, eFAINT_REASON byReason)
 			{
 				int killBonus = 0 + rand() % 10;
 				pKiller->UpdateNetPyPoints(pKiller->GetNetPyPoints() + killBonus, killBonus, true);
-			}			
+			}
 			FaintBuffReward(pKiller);
 
 			if (pKiller->GetTMQ())
@@ -517,7 +523,7 @@ bool CMonster::Faint(CCharacterObject* pkKiller, eFAINT_REASON byReason)
 		}
 
 		/*Info:
-			When we remove script from monster which has respawn then the monster will exist for ever after death 
+			When we remove script from monster which has respawn then the monster will exist for ever after death
 		*/
 		if (BIT_FLAG_TEST(GetSpawnFuncFlag(), SPAWN_FUNC_FLAG_RESPAWN) == false) //Check if can respawn
 		{
@@ -547,15 +553,15 @@ DWORD CalcExp(CMonster* victim, CPlayer* player, DWORD dw_Exp)
 	}
 	else if (l_LevelGap >= 15)
 	{
-		dw_Exp = DWORD((float)dw_Exp*0.1f);
+		dw_Exp = DWORD((float)dw_Exp * 0.1f);
 	}
 	else if (l_LevelGap >= 10)
 	{
-		dw_Exp = DWORD((float)dw_Exp*0.25f);
+		dw_Exp = DWORD((float)dw_Exp * 0.25f);
 	}
 	else if (l_LevelGap >= 5)
 	{
-		dw_Exp = DWORD((float)dw_Exp*0.5f);
+		dw_Exp = DWORD((float)dw_Exp * 0.5f);
 	}
 	//////////////////////////////////////////////////////////////////////////
 	if (victim->GetTblidx() >= 13211201 && victim->GetTblidx() <= 13211207)
@@ -592,7 +598,7 @@ namespace NPartyExpDistribute
 
 	struct FPartyDistributor
 	{
-		CMonster*	c; //defeated target
+		CMonster* c; //defeated target
 		CNtlVector	vPos;
 		WORLDID		worldId;
 		DWORD		_iExp;
@@ -648,7 +654,7 @@ typedef struct SDamageInfo
 			NPartyExpDistribute::FPartyTotaler f(ch);
 			pParty->ForEachOnlineMember(f);
 
-			if(f.member_count > 1)	//only add party bonus if at least 2 member inside range
+			if (f.member_count > 1)	//only add party bonus if at least 2 member inside range
 				dwExp += dwExp * app->GetPartyExpRate() / 100;
 			else
 				dwExp += dwExp * app->GetSoloExpRate() / 100;
@@ -757,7 +763,7 @@ CPlayer* CMonster::DistributeExp()
 		TDamageInfoTable::iterator it4;
 		for (it4 = damage_info_table.begin(); it4 != damage_info_table.end(); ++it4)
 		{
-			TDamageInfo & di = *it4;
+			TDamageInfo& di = *it4;
 
 			float fPercent = (float)di.dwDam / (float)dwTotalDam;
 
@@ -780,9 +786,10 @@ void CMonster::CreateKillReward(bool bItemDrop)
 	if (!pkAttacker || !pkAttacker->IsInitialized())
 		return;
 
+	bool bDynamicWorld = GetCurWorld()->GetTbldat()->bDynamic;
+
 	if (bItemDrop && pkAttacker->IsPC())
 	{
-		bool bDynamicWorld = GetCurWorld()->GetTbldat()->bDynamic;
 		//update quest 
 		if (pkAttacker->GetParty())//update quest for all party members
 		{
@@ -804,7 +811,7 @@ void CMonster::CreateKillReward(bool bItemDrop)
 			return;
 	}
 
-	if (bItemDrop || m_dropItem_ProbabilityTblidx != INVALID_TBLIDX)
+	if (bItemDrop || m_dropItem_ProbabilityTblidx != INVALID_TBLIDX || m_dropItem_Tblidx != INVALID_TBLIDX)
 	{
 		sVECTOR3 pos;
 		GetCurLoc().CopyTo(pos);
@@ -812,6 +819,7 @@ void CMonster::CreateKillReward(bool bItemDrop)
 
 		CItemDrop* item = NULL;
 		std::vector<CItemDrop*> s_vec_item;
+		BOOL bDropCustomItem = m_dropItem_Tblidx != INVALID_TBLIDX && m_dropItem_Tblidx > 0 && bDynamicWorld;
 
 		if (m_dropItem_ProbabilityTblidx != INVALID_TBLIDX)
 			g_pItemManager->CreateItemDrop(m_dropItem_ProbabilityTblidx, s_vec_item);
@@ -819,7 +827,7 @@ void CMonster::CreateKillReward(bool bItemDrop)
 		if (bItemDrop)
 			g_pItemManager->CreateItemDrop(this, pkAttacker, s_vec_item);
 
-		if (s_vec_item.size() > 0)
+		if (!bDropCustomItem && s_vec_item.size() > 0)
 		{
 			if (s_vec_item.size() == 0);
 			else if (s_vec_item.size() == 1)
@@ -886,7 +894,7 @@ void CMonster::CreateKillReward(bool bItemDrop)
 						item->SetOwnership(pkAttacker->GetID(), pkAttacker->GetPartyID());
 						item->StartDestroyEvent();
 						item->AddToGround(GetWorldID(), pos);
-					//	printf("add item to ground. World %u WorldTblidx %u Pos %f %f %f \n", item->GetWorldID(), item->GetWorldTblidx(), item->GetCurLoc().x, item->GetCurLoc().y, item->GetCurLoc().z);
+						//	printf("add item to ground. World %u WorldTblidx %u Pos %f %f %f \n", item->GetWorldID(), item->GetWorldTblidx(), item->GetCurLoc().x, item->GetCurLoc().y, item->GetCurLoc().z);
 					}
 				}
 				else //many different people attacked the monster..
@@ -915,10 +923,31 @@ void CMonster::CreateKillReward(bool bItemDrop)
 						item->SetOwnership(pkAttacker->GetID(), pkAttacker->GetPartyID());
 						item->StartDestroyEvent();
 						item->AddToGround(GetWorldID(), pos);
-					//	printf("add item to ground. World %u WorldTblidx %u Pos %f %f %f \n", item->GetWorldID(), item->GetWorldTblidx(), item->GetCurLoc().x, item->GetCurLoc().y, item->GetCurLoc().z);
+						//	printf("add item to ground. World %u WorldTblidx %u Pos %f %f %f \n", item->GetWorldID(), item->GetWorldTblidx(), item->GetCurLoc().x, item->GetCurLoc().y, item->GetCurLoc().z);
 					}
 				}
 			}
+		}
+		else if (bDropCustomItem)
+		{
+			DWORD nCount = m_sDropItem_amount > 0 ? m_sDropItem_amount : 1;
+
+			for (DWORD i = 0; i < m_sDropItem_amount; i++)
+			{
+				pos.x = GetCurLoc().x + RandomRangeF(-2.0f, 2.0f);
+				pos.y = GetCurLoc().y;
+				pos.z = GetCurLoc().z + RandomRangeF(-2.0f, 2.0f);
+
+				CItemDrop* pBall = g_pItemManager->CreateSingleDrop(100.f, m_dropItem_Tblidx);
+				if (pBall)
+				{
+					pBall->AddToGround(GetWorldID(), pos);
+				}
+			}
+
+			// reset custom drop item
+			m_dropItem_Tblidx = INVALID_TBLIDX;
+			m_sDropItem_amount = 1;
 		}
 	}
 }
@@ -1087,9 +1116,9 @@ void CMonster::FaintBuffReward(CPlayer* pPlayer)
 	}
 }
 
-bool CMonster::IsSightAngle(CCharacter * pTarget)
+bool CMonster::IsSightAngle(CCharacter* pTarget)
 {
-	if(pTarget == NULL)
+	if (pTarget == NULL)
 		return false;
 
 	if (IsPerceiveEnergy(pTarget))
@@ -1105,7 +1134,7 @@ bool CMonster::IsSightAngle(CCharacter * pTarget)
 		CNtlVector v1(GetCurDir());
 		CNtlVector V2(pTarget->GetCurLoc() - GetCurLoc());
 		V2.y = 0.0f;
-		
+
 		if (V2.SafeNormalize())
 		{
 			float fSightAngleRadian = GetDegreeToRadian(90 - (GetTbldat()->wSightAngle >> 1));
