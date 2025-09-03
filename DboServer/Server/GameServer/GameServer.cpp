@@ -610,6 +610,7 @@ BOOL CGameServer::OnCommandInput(std::string& sCmd)
 		printf("startbossspawnevent - start boss spawn event\n");
 		printf("addtitle <charname> <id> - add title to character\n");
 		printf("additem <player> <itemid> <amount> - add item to player\n");
+		printf("setzenny <player> <amount> - set zenny of player\n");
 		printf("\n");
 	}
 	else if (args[0] == "additem" && (args.size() == 4 || args.size() == 3)) {
@@ -649,6 +650,20 @@ BOOL CGameServer::OnCommandInput(std::string& sCmd)
 		else {
 			printf("Player '%s' has no empty inventory slot\n", playerName.c_str());
 		}
+	}
+	else if (args[0] == "setzenny" && args.size() == 3) {
+		std::string playerName = args[1];
+		DWORD amount = static_cast<DWORD>(std::stoul(args[2]));
+
+		WCHAR wszCharName[64] = { 0 };
+		mbstowcs(wszCharName, playerName.c_str(), 63);
+		CPlayer* pTarget = g_pObjectManager->FindByName(wszCharName);
+		if (!pTarget || !pTarget->IsInitialized()) {
+			printf("Player '%s' not found or not initialized\n", playerName.c_str());
+			return TRUE;
+		}
+
+		pTarget->UpdateZeni(ZENNY_CHANGE_TYPE_CHEAT, amount, true);
 	}
 	else if (args[0] == "addtitle" && args.size() == 3) {
 		// addtitle <charname> <id>
