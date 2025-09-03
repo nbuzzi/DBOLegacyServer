@@ -104,7 +104,7 @@ void CBudokaiManager::Init()
 	m_bPartyJuniorBudokaiBegan = false;
 
 	memset(&m_stateInfo, NULL, sizeof(m_stateInfo));
-
+	
 	m_matchStateInfo[BUDOKAI_MATCH_TYPE_INDIVIDIAUL].byState = INVALID_BUDOKAI_MATCHSTATE;
 	m_matchStateInfo[BUDOKAI_MATCH_TYPE_INDIVIDIAUL].tmNextStepTime = 0;
 	m_matchStateInfo[BUDOKAI_MATCH_TYPE_INDIVIDIAUL].tmRemainTime = 0;
@@ -118,7 +118,7 @@ void CBudokaiManager::Init()
 
 	m_pTableInfo = g_pTableContainer->GetBudokaiTable()->GetBudokaiTblInfo();
 
-	/*printf("m_pTableInfo->byOpenTerm %u, m_pTableInfo->byOpenDayOfWeek %u, m_pTableInfo->byOpenHour %u, m_pTableInfo->byOpenMinute %u \n",
+	/*printf("m_pTableInfo->byOpenTerm %u, m_pTableInfo->byOpenDayOfWeek %u, m_pTableInfo->byOpenHour %u, m_pTableInfo->byOpenMinute %u \n", 
 		m_pTableInfo->byOpenTerm, m_pTableInfo->byOpenDayOfWeek, m_pTableInfo->byOpenHour, m_pTableInfo->byOpenMinute);
 
 	printf("m_pTableInfo->byJiniorOpenTerm %u, m_pTableInfo->byJiniorOpenDayOfWeek %u, m_pTableInfo->byJiniorOpenHour %u, m_pTableInfo->byJiniorOpenMinute %u \n",
@@ -215,7 +215,7 @@ void CBudokaiManager::TickProcess(DWORD dwTickDiff)
 		{
 			//start junior solo budokai
 			m_bJuniorBudokaiBegan = true;
-
+			
 			CreateBudokai(BUDOKAI_TYPE_JUNIOR, BUDOKAI_MATCH_TYPE_INDIVIDIAUL, (BUDOKAITIME)curTime, m_pTableInfo);
 		}
 	}
@@ -239,7 +239,7 @@ void CBudokaiManager::TickProcess(DWORD dwTickDiff)
 			CreateBudokai(BUDOKAI_TYPE_ADULT, BUDOKAI_MATCH_TYPE_TEAM, (BUDOKAITIME)curTime, m_pTableInfo);
 		}
 	}
-	else
+	else 
 	{
 		if (TickProcessBudokai(dwTickDiff, (BUDOKAITIME)curTime) == true) //if true, then end the budokai
 		{
@@ -270,7 +270,7 @@ void CBudokaiManager::TickProcess(DWORD dwTickDiff)
 	}
 }
 
-void CBudokaiManager::UpdateChannelStateInfo(BUDOKAITIME tmDefaultOpenTime, bool bRankbattleAllow, sBUDOKAI_UPDATE_STATE_INFO& sStateInfo, sBUDOKAI_UPDATE_MATCH_STATE_INFO* aMatchStateInfo)
+void CBudokaiManager::UpdateChannelStateInfo(BUDOKAITIME tmDefaultOpenTime, bool bRankbattleAllow, sBUDOKAI_UPDATE_STATE_INFO & sStateInfo, sBUDOKAI_UPDATE_MATCH_STATE_INFO * aMatchStateInfo)
 {
 	CGameServer* app = (CGameServer*)g_pApp;
 
@@ -311,7 +311,7 @@ void CBudokaiManager::UpdateChannelStateInfo(BUDOKAITIME tmDefaultOpenTime, bool
 
 		//send budokai state. It will create an icon
 		CNtlPacket packet(sizeof(sGU_BUDOKAI_STATE_INFO_NFY));
-		sGU_BUDOKAI_STATE_INFO_NFY* res = (sGU_BUDOKAI_STATE_INFO_NFY*)packet.GetPacketData();
+		sGU_BUDOKAI_STATE_INFO_NFY * res = (sGU_BUDOKAI_STATE_INFO_NFY *)packet.GetPacketData();
 		res->wOpCode = GU_BUDOKAI_STATE_INFO_NFY;
 		res->tmDefaultOpenTime = tmDefaultOpenTime;
 		res->bRankbattleAllow = bRankbattleAllow;
@@ -329,7 +329,7 @@ void CBudokaiManager::UpdateChannelStateInfo(BUDOKAITIME tmDefaultOpenTime, bool
 
 		//send announcement that budokai started
 		CNtlPacket packet2(sizeof(sGU_BUDOKAI_PROGRESS_MESSAGE_NFY));
-		sGU_BUDOKAI_PROGRESS_MESSAGE_NFY* res2 = (sGU_BUDOKAI_PROGRESS_MESSAGE_NFY*)packet2.GetPacketData();
+		sGU_BUDOKAI_PROGRESS_MESSAGE_NFY * res2 = (sGU_BUDOKAI_PROGRESS_MESSAGE_NFY *)packet2.GetPacketData();
 		res2->wOpCode = GU_BUDOKAI_PROGRESS_MESSAGE_NFY;
 		res2->byMsgId = BUDOKAI_PROGRESS_MESSAGE_START;
 		packet2.SetPacketLen(sizeof(sGU_BUDOKAI_PROGRESS_MESSAGE_NFY));
@@ -337,7 +337,7 @@ void CBudokaiManager::UpdateChannelStateInfo(BUDOKAITIME tmDefaultOpenTime, bool
 	}
 }
 
-void CBudokaiManager::UpdateChannelState(BUDOKAITIME tmDefaultOpenTime, bool bRankbattleAllow, sBUDOKAI_UPDATE_STATE_INFO& sStateInfo)
+void CBudokaiManager::UpdateChannelState(BUDOKAITIME tmDefaultOpenTime, bool bRankbattleAllow, sBUDOKAI_UPDATE_STATE_INFO & sStateInfo)
 {
 	CGameServer* app = (CGameServer*)g_pApp;
 
@@ -356,7 +356,7 @@ void CBudokaiManager::UpdateChannelState(BUDOKAITIME tmDefaultOpenTime, bool bRa
 		memcpy(&m_stateInfo, &sStateInfo, sizeof(sBUDOKAI_UPDATE_STATE_INFO));
 
 		CNtlPacket packet(sizeof(sGU_BUDOKAI_UPDATE_STATE_NFY));
-		sGU_BUDOKAI_UPDATE_STATE_NFY* res = (sGU_BUDOKAI_UPDATE_STATE_NFY*)packet.GetPacketData();
+		sGU_BUDOKAI_UPDATE_STATE_NFY * res = (sGU_BUDOKAI_UPDATE_STATE_NFY *)packet.GetPacketData();
 		res->wOpCode = GU_BUDOKAI_UPDATE_STATE_NFY;
 		res->bRankbattleAllow = bRankbattleAllow;
 		memcpy(&res->sStateInfo, &sStateInfo, sizeof(sBUDOKAI_UPDATE_STATE_INFO));
@@ -365,7 +365,7 @@ void CBudokaiManager::UpdateChannelState(BUDOKAITIME tmDefaultOpenTime, bool bRa
 	}
 }
 
-void CBudokaiManager::UpdateMatchState(BYTE byMatchType, sBUDOKAI_UPDATE_MATCH_STATE_INFO& sStateInfo)
+void CBudokaiManager::UpdateMatchState(BYTE byMatchType, sBUDOKAI_UPDATE_MATCH_STATE_INFO & sStateInfo)
 {
 	CGameServer* app = (CGameServer*)g_pApp;
 
@@ -380,7 +380,7 @@ void CBudokaiManager::UpdateMatchState(BYTE byMatchType, sBUDOKAI_UPDATE_MATCH_S
 		memcpy(&m_matchStateInfo[byMatchType], &sStateInfo, sizeof(sBUDOKAI_UPDATE_MATCH_STATE_INFO));
 
 		CNtlPacket packet(sizeof(sGU_BUDOKAI_UPDATE_MATCH_STATE_NFY));
-		sGU_BUDOKAI_UPDATE_MATCH_STATE_NFY* res = (sGU_BUDOKAI_UPDATE_MATCH_STATE_NFY*)packet.GetPacketData();
+		sGU_BUDOKAI_UPDATE_MATCH_STATE_NFY * res = (sGU_BUDOKAI_UPDATE_MATCH_STATE_NFY *)packet.GetPacketData();
 		res->wOpCode = GU_BUDOKAI_UPDATE_MATCH_STATE_NFY;
 		res->byMatchType = byMatchType;
 		memcpy(&res->sStateInfo, &sStateInfo, sizeof(sBUDOKAI_UPDATE_MATCH_STATE_INFO));
@@ -394,7 +394,7 @@ void CBudokaiManager::SendTournamentIndividualListToChat(CHARACTERID charId, BYT
 	CGameServer* app = (CGameServer*)g_pApp;
 
 	CNtlPacket packet(sizeof(sGT_BUDOKAI_TOURNAMENT_INDIVIDUAL_LIST_RES));
-	sGT_BUDOKAI_TOURNAMENT_INDIVIDUAL_LIST_RES* res = (sGT_BUDOKAI_TOURNAMENT_INDIVIDUAL_LIST_RES*)packet.GetPacketData();
+	sGT_BUDOKAI_TOURNAMENT_INDIVIDUAL_LIST_RES * res = (sGT_BUDOKAI_TOURNAMENT_INDIVIDUAL_LIST_RES *)packet.GetPacketData();
 	res->wOpCode = GT_BUDOKAI_TOURNAMENT_INDIVIDUAL_LIST_RES;
 	res->wResultCode = CHAT_SUCCESS;
 	res->charId = charId;
@@ -441,12 +441,12 @@ void CBudokaiManager::SendTournamentIndividualListToChat(CHARACTERID charId, BYT
 	app->Send(hSession, &packet);
 }
 
-void CBudokaiManager::SendTournamentIndividualInfoToChat(CHARACTERID charId, WORD* awJoinId, HOBJECT hSession)
+void CBudokaiManager::SendTournamentIndividualInfoToChat(CHARACTERID charId, WORD * awJoinId, HOBJECT hSession)
 {
 	CGameServer* app = (CGameServer*)g_pApp;
 
 	CNtlPacket packet(sizeof(sGT_BUDOKAI_TOURNAMENT_INDIVIDUAL_INFO_RES));
-	sGT_BUDOKAI_TOURNAMENT_INDIVIDUAL_INFO_RES* res = (sGT_BUDOKAI_TOURNAMENT_INDIVIDUAL_INFO_RES*)packet.GetPacketData();
+	sGT_BUDOKAI_TOURNAMENT_INDIVIDUAL_INFO_RES * res = (sGT_BUDOKAI_TOURNAMENT_INDIVIDUAL_INFO_RES *)packet.GetPacketData();
 	res->wOpCode = GT_BUDOKAI_TOURNAMENT_INDIVIDUAL_INFO_RES;
 	res->wResultCode = CHAT_SUCCESS;
 	res->charId = charId;
@@ -477,7 +477,7 @@ void CBudokaiManager::SendTournamentTeamListToChat(CHARACTERID charId, BYTE byRe
 	CGameServer* app = (CGameServer*)g_pApp;
 
 	CNtlPacket packet(sizeof(sGT_BUDOKAI_TOURNAMENT_TEAM_LIST_RES));
-	sGT_BUDOKAI_TOURNAMENT_TEAM_LIST_RES* res = (sGT_BUDOKAI_TOURNAMENT_TEAM_LIST_RES*)packet.GetPacketData();
+	sGT_BUDOKAI_TOURNAMENT_TEAM_LIST_RES * res = (sGT_BUDOKAI_TOURNAMENT_TEAM_LIST_RES *)packet.GetPacketData();
 	res->wOpCode = GT_BUDOKAI_TOURNAMENT_TEAM_LIST_RES;
 	res->wResultCode = CHAT_SUCCESS;
 	res->charId = charId;
@@ -524,12 +524,12 @@ void CBudokaiManager::SendTournamentTeamListToChat(CHARACTERID charId, BYTE byRe
 	app->Send(hSession, &packet);
 }
 
-void CBudokaiManager::SendTournamentTeamInfoToChat(CHARACTERID charId, WORD* awJoinId, HOBJECT hSession)
+void CBudokaiManager::SendTournamentTeamInfoToChat(CHARACTERID charId, WORD * awJoinId, HOBJECT hSession)
 {
 	CGameServer* app = (CGameServer*)g_pApp;
 
 	CNtlPacket packet(sizeof(sGT_BUDOKAI_TOURNAMENT_TEAM_INFO_RES));
-	sGT_BUDOKAI_TOURNAMENT_TEAM_INFO_RES* res = (sGT_BUDOKAI_TOURNAMENT_TEAM_INFO_RES*)packet.GetPacketData();
+	sGT_BUDOKAI_TOURNAMENT_TEAM_INFO_RES * res = (sGT_BUDOKAI_TOURNAMENT_TEAM_INFO_RES *)packet.GetPacketData();
 	res->wOpCode = GT_BUDOKAI_TOURNAMENT_TEAM_INFO_RES;
 	res->wResultCode = CHAT_SUCCESS;
 	res->charId = charId;
@@ -555,7 +555,7 @@ void CBudokaiManager::SendTournamentTeamInfoToChat(CHARACTERID charId, WORD* awJ
 	app->Send(hSession, &packet);
 }
 
-void CBudokaiManager::CreateBudokai(eBUDOKAI_TYPE type, eBUDOKAI_MATCH_TYPE matchType, BUDOKAITIME curTime, sBUDOKAI_TBLINFO* pTblInfo)
+void CBudokaiManager::CreateBudokai(eBUDOKAI_TYPE type, eBUDOKAI_MATCH_TYPE matchType, BUDOKAITIME curTime, sBUDOKAI_TBLINFO * pTblInfo)
 {
 	ERR_LOG(LOG_GENERAL, "BUDOKAI: Create Budokai. m_type = %u, matchType = %u, curTime = %u", type, matchType, curTime);
 
@@ -583,7 +583,7 @@ void CBudokaiManager::CreateBudokai(eBUDOKAI_TYPE type, eBUDOKAI_MATCH_TYPE matc
 
 	//broadcast that budokai began
 	CNtlPacket packet(sizeof(sGT_BUDOKAI_CHANNEL_STATE_INFO_NFY));
-	sGT_BUDOKAI_CHANNEL_STATE_INFO_NFY* res = (sGT_BUDOKAI_CHANNEL_STATE_INFO_NFY*)packet.GetPacketData();
+	sGT_BUDOKAI_CHANNEL_STATE_INFO_NFY * res = (sGT_BUDOKAI_CHANNEL_STATE_INFO_NFY *)packet.GetPacketData();
 	res->wOpCode = GT_BUDOKAI_CHANNEL_STATE_INFO_NFY;
 	res->tmDefaultOpenTime = m_tmDefaultOpenTime;
 	res->bRankbattleAllow = m_bRankbattleAllow;
@@ -686,166 +686,166 @@ bool CBudokaiManager::TickProcessBudokai(DWORD dwTickDiff, BUDOKAITIME curTime)
 {
 	switch (m_stateInfo.byState) //budokai state
 	{
-	case BUDOKAI_STATE_JUNIOR_CLOSE:
-	case BUDOKAI_STATE_CLOSE: //this state is the last one. //When this is received by client then information "all battle have ended" appear. So it seems like this is called in the end of budokai.
-	{
-		CGameServer* app = (CGameServer*)g_pApp;
-
-		CNtlPacket packet(sizeof(sGQ_BUDOKAI_HISTORY_WRITE_REQ));
-		sGQ_BUDOKAI_HISTORY_WRITE_REQ* res = (sGQ_BUDOKAI_HISTORY_WRITE_REQ*)packet.GetPacketData();
-		res->wOpCode = GQ_BUDOKAI_HISTORY_WRITE_REQ;
-		res->byBudokaiType = m_type;
-		res->byMatchType = m_matchType;
-		packet.SetPacketLen(sizeof(sGQ_BUDOKAI_HISTORY_WRITE_REQ));
-		app->SendTo(app->GetQueryServerSession(), &packet);
-
-		CloseBudokai();
-
-		return true;
-	}
-	break;
-	case BUDOKAI_STATE_JUNIOR_OPEN_NOTICE:
-	{
-		if (m_stateInfo.tmNextStepTime <= curTime)
+		case BUDOKAI_STATE_JUNIOR_CLOSE:
+		case BUDOKAI_STATE_CLOSE: //this state is the last one. //When this is received by client then information "all battle have ended" appear. So it seems like this is called in the end of budokai.
 		{
-			m_stateInfo.byState = BUDOKAI_STATE_JUNIOR_DOJO_RECOMMEND;
-			m_stateInfo.tmNextStepTime = curTime + m_pTableInfo->dwDojoRecommendTime;
-			m_stateInfo.tmRemainTime = m_pTableInfo->dwDojoRecommendTime;
+			CGameServer* app = (CGameServer*)g_pApp;
 
-			ERR_LOG(LOG_GENERAL, "BUDOKAI: Update State BUDOKAI_STATE_JUNIOR_OPEN_NOTICE -> BUDOKAI_STATE_JUNIOR_DOJO_RECOMMEND, tmNextStepTime = %u, tmRemainTime = %u", m_stateInfo.tmNextStepTime, m_stateInfo.tmRemainTime);
+			CNtlPacket packet(sizeof(sGQ_BUDOKAI_HISTORY_WRITE_REQ));
+			sGQ_BUDOKAI_HISTORY_WRITE_REQ * res = (sGQ_BUDOKAI_HISTORY_WRITE_REQ *)packet.GetPacketData();
+			res->wOpCode = GQ_BUDOKAI_HISTORY_WRITE_REQ;
+			res->byBudokaiType = m_type;
+			res->byMatchType = m_matchType;
+			packet.SetPacketLen(sizeof(sGQ_BUDOKAI_HISTORY_WRITE_REQ));
+			app->SendTo(app->GetQueryServerSession(), &packet);
 
-			SendBudokaiState();
+			CloseBudokai();
+
+			return true;
 		}
-	}
-	break;
-	case BUDOKAI_STATE_OPEN_NOTICE:
-	{
-		if (m_stateInfo.tmNextStepTime <= curTime)
+		break;
+		case BUDOKAI_STATE_JUNIOR_OPEN_NOTICE:
 		{
-			m_stateInfo.byState = BUDOKAI_STATE_DOJO_RECOMMEND;
-			m_stateInfo.tmNextStepTime = curTime + m_pTableInfo->dwDojoRecommendTime;
-			m_stateInfo.tmRemainTime = m_pTableInfo->dwDojoRecommendTime;
+			if (m_stateInfo.tmNextStepTime <= curTime)
+			{
+				m_stateInfo.byState = BUDOKAI_STATE_JUNIOR_DOJO_RECOMMEND;
+				m_stateInfo.tmNextStepTime = curTime + m_pTableInfo->dwDojoRecommendTime;
+				m_stateInfo.tmRemainTime = m_pTableInfo->dwDojoRecommendTime;
 
-			ERR_LOG(LOG_GENERAL, "BUDOKAI: Update State BUDOKAI_STATE_OPEN_NOTICE -> BUDOKAI_STATE_DOJO_RECOMMEND, tmNextStepTime = %u, tmRemainTime = %u", m_stateInfo.tmNextStepTime, m_stateInfo.tmRemainTime);
+				ERR_LOG(LOG_GENERAL, "BUDOKAI: Update State BUDOKAI_STATE_JUNIOR_OPEN_NOTICE -> BUDOKAI_STATE_JUNIOR_DOJO_RECOMMEND, tmNextStepTime = %u, tmRemainTime = %u", m_stateInfo.tmNextStepTime, m_stateInfo.tmRemainTime);
 
-			SendBudokaiState();
+				SendBudokaiState();
+			}
 		}
-	}
-	break;
-	case BUDOKAI_STATE_JUNIOR_DOJO_RECOMMEND:
-	{
-		if (m_stateInfo.tmNextStepTime <= curTime)
+		break;
+		case BUDOKAI_STATE_OPEN_NOTICE:
 		{
-			m_stateInfo.byState = BUDOKAI_STATE_JUNIOR_OPEN;
-			m_stateInfo.tmNextStepTime = curTime + m_pTableInfo->dwBudokaiEndTime;
-			m_stateInfo.tmRemainTime = m_pTableInfo->dwBudokaiEndTime;
+			if (m_stateInfo.tmNextStepTime <= curTime)
+			{
+				m_stateInfo.byState = BUDOKAI_STATE_DOJO_RECOMMEND;
+				m_stateInfo.tmNextStepTime = curTime + m_pTableInfo->dwDojoRecommendTime;
+				m_stateInfo.tmRemainTime = m_pTableInfo->dwDojoRecommendTime;
 
-			ERR_LOG(LOG_GENERAL, "BUDOKAI: Update State BUDOKAI_STATE_JUNIOR_DOJO_RECOMMEND -> BUDOKAI_STATE_JUNIOR_OPEN, tmNextStepTime = %u, tmRemainTime = %u", m_stateInfo.tmNextStepTime, m_stateInfo.tmRemainTime);
+				ERR_LOG(LOG_GENERAL, "BUDOKAI: Update State BUDOKAI_STATE_OPEN_NOTICE -> BUDOKAI_STATE_DOJO_RECOMMEND, tmNextStepTime = %u, tmRemainTime = %u", m_stateInfo.tmNextStepTime, m_stateInfo.tmRemainTime);
 
-			SendBudokaiState();
-
-			m_matchStateInfo[m_matchType].byState = BUDOKAI_MATCHSTATE_REGISTER;
-			m_matchStateInfo[m_matchType].tmNextStepTime = curTime + m_pTableInfo->dwRegisterTime;
-			m_matchStateInfo[m_matchType].tmRemainTime = m_pTableInfo->dwRegisterTime;
-
-			ERR_LOG(LOG_GENERAL, "BUDOKAI: Update MatchType %u State %u, tmNextStepTime = %u, tmRemainTime = %u",
-				m_matchType, BUDOKAI_MATCHSTATE_REGISTER, m_matchStateInfo[m_matchType].tmNextStepTime, m_matchStateInfo[m_matchType].tmRemainTime);
-
-			SendMatchState();
+				SendBudokaiState();
+			}
 		}
-	}
-	break;
-	case BUDOKAI_STATE_DOJO_RECOMMEND:
-	{
-		if (m_stateInfo.tmNextStepTime <= curTime)
+		break;
+		case BUDOKAI_STATE_JUNIOR_DOJO_RECOMMEND:
 		{
-			m_stateInfo.byState = BUDOKAI_STATE_OPEN;
-			m_stateInfo.tmNextStepTime = curTime + m_pTableInfo->dwBudokaiEndTime;
-			m_stateInfo.tmRemainTime = m_pTableInfo->dwBudokaiEndTime;
+			if (m_stateInfo.tmNextStepTime <= curTime)
+			{
+				m_stateInfo.byState = BUDOKAI_STATE_JUNIOR_OPEN;
+				m_stateInfo.tmNextStepTime = curTime + m_pTableInfo->dwBudokaiEndTime;
+				m_stateInfo.tmRemainTime = m_pTableInfo->dwBudokaiEndTime;
 
-			ERR_LOG(LOG_GENERAL, "BUDOKAI: Update State BUDOKAI_STATE_DOJO_RECOMMEND -> BUDOKAI_STATE_OPEN, tmNextStepTime = %u, tmRemainTime = %u", m_stateInfo.tmNextStepTime, m_stateInfo.tmRemainTime);
+				ERR_LOG(LOG_GENERAL, "BUDOKAI: Update State BUDOKAI_STATE_JUNIOR_DOJO_RECOMMEND -> BUDOKAI_STATE_JUNIOR_OPEN, tmNextStepTime = %u, tmRemainTime = %u", m_stateInfo.tmNextStepTime, m_stateInfo.tmRemainTime);
 
-			SendBudokaiState();
+				SendBudokaiState();
 
-			m_matchStateInfo[m_matchType].byState = BUDOKAI_MATCHSTATE_REGISTER;
-			m_matchStateInfo[m_matchType].tmNextStepTime = curTime + m_pTableInfo->dwRegisterTime;
-			m_matchStateInfo[m_matchType].tmRemainTime = m_pTableInfo->dwRegisterTime;
+				m_matchStateInfo[m_matchType].byState = BUDOKAI_MATCHSTATE_REGISTER;
+				m_matchStateInfo[m_matchType].tmNextStepTime = curTime + m_pTableInfo->dwRegisterTime;
+				m_matchStateInfo[m_matchType].tmRemainTime = m_pTableInfo->dwRegisterTime;
 
-			ERR_LOG(LOG_GENERAL, "BUDOKAI: Update MatchType %u State %u, tmNextStepTime = %u, tmRemainTime = %u",
-				m_matchType, BUDOKAI_MATCHSTATE_REGISTER, m_matchStateInfo[m_matchType].tmNextStepTime, m_matchStateInfo[m_matchType].tmRemainTime);
+				ERR_LOG(LOG_GENERAL, "BUDOKAI: Update MatchType %u State %u, tmNextStepTime = %u, tmRemainTime = %u",
+					m_matchType, BUDOKAI_MATCHSTATE_REGISTER, m_matchStateInfo[m_matchType].tmNextStepTime, m_matchStateInfo[m_matchType].tmRemainTime);
 
-			SendMatchState();
+				SendMatchState();
+			}
 		}
-	}
-	break;
-	case BUDOKAI_STATE_JUNIOR_OPEN:
-	{
-		//progress match
-		TickProcessMatch(dwTickDiff, curTime);
-
-		if (m_stateInfo.tmNextStepTime <= curTime)
+		break;
+		case BUDOKAI_STATE_DOJO_RECOMMEND:
 		{
-			//change budokai to clear state. 
-			m_stateInfo.byState = BUDOKAI_STATE_JUNIOR_CLEAR;
-			m_stateInfo.tmNextStepTime = curTime + 0;
-			m_stateInfo.tmRemainTime = 0;
+			if (m_stateInfo.tmNextStepTime <= curTime)
+			{
+				m_stateInfo.byState = BUDOKAI_STATE_OPEN;
+				m_stateInfo.tmNextStepTime = curTime + m_pTableInfo->dwBudokaiEndTime;
+				m_stateInfo.tmRemainTime = m_pTableInfo->dwBudokaiEndTime;
 
-			ERR_LOG(LOG_GENERAL, "BUDOKAI: Update State BUDOKAI_STATE_JUNIOR_OPEN -> BUDOKAI_STATE_JUNIOR_CLEAR, tmNextStepTime = %u, tmRemainTime = %u", m_stateInfo.tmNextStepTime, m_stateInfo.tmRemainTime);
+				ERR_LOG(LOG_GENERAL, "BUDOKAI: Update State BUDOKAI_STATE_DOJO_RECOMMEND -> BUDOKAI_STATE_OPEN, tmNextStepTime = %u, tmRemainTime = %u", m_stateInfo.tmNextStepTime, m_stateInfo.tmRemainTime);
 
-			SendBudokaiState();
+				SendBudokaiState();
+
+				m_matchStateInfo[m_matchType].byState = BUDOKAI_MATCHSTATE_REGISTER;
+				m_matchStateInfo[m_matchType].tmNextStepTime = curTime + m_pTableInfo->dwRegisterTime;
+				m_matchStateInfo[m_matchType].tmRemainTime = m_pTableInfo->dwRegisterTime;
+
+				ERR_LOG(LOG_GENERAL, "BUDOKAI: Update MatchType %u State %u, tmNextStepTime = %u, tmRemainTime = %u", 
+					m_matchType, BUDOKAI_MATCHSTATE_REGISTER, m_matchStateInfo[m_matchType].tmNextStepTime, m_matchStateInfo[m_matchType].tmRemainTime);
+
+				SendMatchState();
+			}
 		}
-	}
-	break;
-	case BUDOKAI_STATE_OPEN:
-	{
-		//progress match
-		TickProcessMatch(dwTickDiff, curTime);
-
-		if (m_stateInfo.tmNextStepTime <= curTime)
+		break;
+		case BUDOKAI_STATE_JUNIOR_OPEN:
 		{
-			//change budokai to clear state. 
-			m_stateInfo.byState = BUDOKAI_STATE_CLEAR;
-			m_stateInfo.tmNextStepTime = curTime + 0;
-			m_stateInfo.tmRemainTime = 0;
+			//progress match
+			TickProcessMatch(dwTickDiff, curTime);
 
-			ERR_LOG(LOG_GENERAL, "BUDOKAI: Update State BUDOKAI_STATE_OPEN -> BUDOKAI_STATE_CLEAR, tmNextStepTime = %u, tmRemainTime = %u", m_stateInfo.tmNextStepTime, m_stateInfo.tmRemainTime);
+			if (m_stateInfo.tmNextStepTime <= curTime)
+			{
+				//change budokai to clear state. 
+				m_stateInfo.byState = BUDOKAI_STATE_JUNIOR_CLEAR;
+				m_stateInfo.tmNextStepTime = curTime + 0;
+				m_stateInfo.tmRemainTime = 0;
 
-			SendBudokaiState();
+				ERR_LOG(LOG_GENERAL, "BUDOKAI: Update State BUDOKAI_STATE_JUNIOR_OPEN -> BUDOKAI_STATE_JUNIOR_CLEAR, tmNextStepTime = %u, tmRemainTime = %u", m_stateInfo.tmNextStepTime, m_stateInfo.tmRemainTime);
+
+				SendBudokaiState();
+			}
 		}
-	}
-	break;
-	case BUDOKAI_STATE_JUNIOR_CLEAR:
-	{
-		if (m_stateInfo.tmNextStepTime <= curTime)
+		break;
+		case BUDOKAI_STATE_OPEN:
 		{
-			//change to close state
-			m_stateInfo.byState = BUDOKAI_STATE_JUNIOR_CLOSE;
-			m_stateInfo.tmNextStepTime = curTime;
-			m_stateInfo.tmRemainTime = 0;
+			//progress match
+			TickProcessMatch(dwTickDiff, curTime);
 
-			ERR_LOG(LOG_GENERAL, "BUDOKAI: Update State BUDOKAI_STATE_JUNIOR_CLEAR -> BUDOKAI_STATE_JUNIOR_CLOSE, tmNextStepTime = %u, tmRemainTime = %u", m_stateInfo.tmNextStepTime, m_stateInfo.tmRemainTime);
+			if (m_stateInfo.tmNextStepTime <= curTime)
+			{
+				//change budokai to clear state. 
+				m_stateInfo.byState = BUDOKAI_STATE_CLEAR;
+				m_stateInfo.tmNextStepTime = curTime + 0;
+				m_stateInfo.tmRemainTime = 0;
 
-			SendBudokaiState();
+				ERR_LOG(LOG_GENERAL, "BUDOKAI: Update State BUDOKAI_STATE_OPEN -> BUDOKAI_STATE_CLEAR, tmNextStepTime = %u, tmRemainTime = %u", m_stateInfo.tmNextStepTime, m_stateInfo.tmRemainTime);
+
+				SendBudokaiState();
+			}
 		}
-	}
-	break;
-	case BUDOKAI_STATE_CLEAR:
-	{
-		if (m_stateInfo.tmNextStepTime <= curTime)
+		break;
+		case BUDOKAI_STATE_JUNIOR_CLEAR:
 		{
-			//change to close state
-			m_stateInfo.byState = BUDOKAI_STATE_CLOSE;
-			m_stateInfo.tmNextStepTime = curTime;
-			m_stateInfo.tmRemainTime = 0;
+			if (m_stateInfo.tmNextStepTime <= curTime)
+			{
+				//change to close state
+				m_stateInfo.byState = BUDOKAI_STATE_JUNIOR_CLOSE;
+				m_stateInfo.tmNextStepTime = curTime;
+				m_stateInfo.tmRemainTime = 0;
 
-			ERR_LOG(LOG_GENERAL, "BUDOKAI: Update State BUDOKAI_STATE_CLEAR -> BUDOKAI_STATE_CLOSE, tmNextStepTime = %u, tmRemainTime = %u", m_stateInfo.tmNextStepTime, m_stateInfo.tmRemainTime);
+				ERR_LOG(LOG_GENERAL, "BUDOKAI: Update State BUDOKAI_STATE_JUNIOR_CLEAR -> BUDOKAI_STATE_JUNIOR_CLOSE, tmNextStepTime = %u, tmRemainTime = %u", m_stateInfo.tmNextStepTime, m_stateInfo.tmRemainTime);
 
-			SendBudokaiState();
+				SendBudokaiState();
+			}
 		}
-	}
-	break;
+		break;
+		case BUDOKAI_STATE_CLEAR:
+		{
+			if (m_stateInfo.tmNextStepTime <= curTime)
+			{
+				//change to close state
+				m_stateInfo.byState = BUDOKAI_STATE_CLOSE;
+				m_stateInfo.tmNextStepTime = curTime;
+				m_stateInfo.tmRemainTime = 0;
 
-	default: ERR_LOG(LOG_SYSTEM, "Unknown budokai-state %u", m_stateInfo.byState); break;
+				ERR_LOG(LOG_GENERAL, "BUDOKAI: Update State BUDOKAI_STATE_CLEAR -> BUDOKAI_STATE_CLOSE, tmNextStepTime = %u, tmRemainTime = %u", m_stateInfo.tmNextStepTime, m_stateInfo.tmRemainTime);
+
+				SendBudokaiState();
+			}
+		}
+		break;
+
+		default: ERR_LOG(LOG_SYSTEM, "Unknown budokai-state %u", m_stateInfo.byState); break;
 	}
 
 	return false;
@@ -855,268 +855,268 @@ void CBudokaiManager::TickProcessMatch(DWORD dwTickDif, BUDOKAITIME curTime)
 {
 	switch (m_matchStateInfo[m_matchType].byState)
 	{
-	case BUDOKAI_MATCHSTATE_REGISTER:
-	{
-		if (m_matchStateInfo[m_matchType].tmNextStepTime <= curTime)
+		case BUDOKAI_MATCHSTATE_REGISTER:
 		{
-			m_matchStateInfo[m_matchType].byState = BUDOKAI_MATCHSTATE_WAIT_MINOR_MATCH;
-			m_matchStateInfo[m_matchType].tmNextStepTime = curTime + m_pTableInfo->dwMinorMatch_WaitTime;
-			m_matchStateInfo[m_matchType].tmRemainTime = m_pTableInfo->dwMinorMatch_WaitTime;
+			if (m_matchStateInfo[m_matchType].tmNextStepTime <= curTime)
+			{
+				m_matchStateInfo[m_matchType].byState = BUDOKAI_MATCHSTATE_WAIT_MINOR_MATCH;
+				m_matchStateInfo[m_matchType].tmNextStepTime = curTime + m_pTableInfo->dwMinorMatch_WaitTime;
+				m_matchStateInfo[m_matchType].tmRemainTime = m_pTableInfo->dwMinorMatch_WaitTime;
 
-			ERR_LOG(LOG_GENERAL, "BUDOKAI: Update Match-State. Type %u, byState BUDOKAI_MATCHSTATE_REGISTER -> BUDOKAI_MATCHSTATE_WAIT_MINOR_MATCH, tmNextStepTime = %u, tmRemainTime = %u",
-				m_matchType, m_matchStateInfo[m_matchType].tmNextStepTime, m_matchStateInfo[m_matchType].tmRemainTime);
+				ERR_LOG(LOG_GENERAL, "BUDOKAI: Update Match-State. Type %u, byState BUDOKAI_MATCHSTATE_REGISTER -> BUDOKAI_MATCHSTATE_WAIT_MINOR_MATCH, tmNextStepTime = %u, tmRemainTime = %u", 
+					m_matchType, m_matchStateInfo[m_matchType].tmNextStepTime, m_matchStateInfo[m_matchType].tmRemainTime);
 
-			SendMatchState();
+				SendMatchState();
+			}
 		}
-	}
-	break;
+		break;
 
-	case BUDOKAI_MATCHSTATE_WAIT_MINOR_MATCH:
-	{
-		if (m_matchStateInfo[m_matchType].tmNextStepTime <= curTime)
+		case BUDOKAI_MATCHSTATE_WAIT_MINOR_MATCH:
 		{
-			m_matchStateInfo[m_matchType].byState = BUDOKAI_MATCHSTATE_MINOR_MATCH;
-			m_matchStateInfo[m_matchType].tmNextStepTime = INVALID_BUDOKAITIME;
-			m_matchStateInfo[m_matchType].tmRemainTime = 0;
+			if (m_matchStateInfo[m_matchType].tmNextStepTime <= curTime)
+			{
+				m_matchStateInfo[m_matchType].byState = BUDOKAI_MATCHSTATE_MINOR_MATCH;
+				m_matchStateInfo[m_matchType].tmNextStepTime = INVALID_BUDOKAITIME;
+				m_matchStateInfo[m_matchType].tmRemainTime = 0;
 
-			ERR_LOG(LOG_GENERAL, "BUDOKAI: Update Match-State. Type %u, byState BUDOKAI_MATCHSTATE_WAIT_MINOR_MATCH -> BUDOKAI_MATCHSTATE_MINOR_MATCH, tmNextStepTime = %u, tmRemainTime = %u",
-				m_matchType, m_matchStateInfo[m_matchType].tmNextStepTime, m_matchStateInfo[m_matchType].tmRemainTime);
+				ERR_LOG(LOG_GENERAL, "BUDOKAI: Update Match-State. Type %u, byState BUDOKAI_MATCHSTATE_WAIT_MINOR_MATCH -> BUDOKAI_MATCHSTATE_MINOR_MATCH, tmNextStepTime = %u, tmRemainTime = %u",
+					m_matchType, m_matchStateInfo[m_matchType].tmNextStepTime, m_matchStateInfo[m_matchType].tmRemainTime);
 
-			SendMatchState();
+				SendMatchState();
 
-			//start prelim
-			StartPrelim();
+				//start prelim
+				StartPrelim();
+			}
 		}
-	}
-	break;
+		break;
 
-	case BUDOKAI_MATCHSTATE_MINOR_MATCH:
-	{
-		//progress prelim
-		TickProcessPrelim(dwTickDif, curTime);
-
-		if (m_mapPrelims.size() == 0) //check if all prelims done
+		case BUDOKAI_MATCHSTATE_MINOR_MATCH:
 		{
-			EndPrelim();
+			//progress prelim
+			TickProcessPrelim(dwTickDif, curTime);
 
-			if (m_matchType == BUDOKAI_MATCH_TYPE_INDIVIDIAUL)
-				m_matchStateInfo[m_matchType].byState = BUDOKAI_MATCHSTATE_WAIT_MAJORMATCH_32;
-			else
+			if (m_mapPrelims.size() == 0) //check if all prelims done
+			{
+				EndPrelim();
+
+				if(m_matchType == BUDOKAI_MATCH_TYPE_INDIVIDIAUL)
+					m_matchStateInfo[m_matchType].byState = BUDOKAI_MATCHSTATE_WAIT_MAJORMATCH_32;
+				else
+					m_matchStateInfo[m_matchType].byState = BUDOKAI_MATCHSTATE_WAIT_MAJORMATCH_16;
+
+				m_matchStateInfo[m_matchType].tmNextStepTime = curTime + m_pTableInfo->dwMajorMatch_WaitTime;
+				m_matchStateInfo[m_matchType].tmRemainTime = m_pTableInfo->dwMajorMatch_WaitTime;
+
+				ERR_LOG(LOG_GENERAL, "BUDOKAI: Update Match-State. Type %u, byState BUDOKAI_MATCHSTATE_MINOR_MATCH -> BUDOKAI_MATCHSTATE_WAIT_MAJORMATCH_32, tmNextStepTime = %u, tmRemainTime = %u",
+					m_matchType, m_matchStateInfo[m_matchType].tmNextStepTime, m_matchStateInfo[m_matchType].tmRemainTime);
+
+				SendMatchState();
+			}
+		}
+		break;
+
+		case BUDOKAI_MATCHSTATE_WAIT_MAJORMATCH_32:
+		{
+			if (m_matchStateInfo[m_matchType].tmNextStepTime <= curTime)
+			{
+				m_matchStateInfo[m_matchType].byState = BUDOKAI_MATCHSTATE_MAJORMATCH_32;
+				m_matchStateInfo[m_matchType].tmNextStepTime = INVALID_BUDOKAITIME;
+				m_matchStateInfo[m_matchType].tmRemainTime = 0;
+
+				ERR_LOG(LOG_GENERAL, "BUDOKAI: Update Match-State. Type %u, byState BUDOKAI_MATCHSTATE_WAIT_MAJORMATCH_32 -> BUDOKAI_MATCHSTATE_MAJORMATCH_32, tmNextStepTime = %u, tmRemainTime = %u",
+					m_matchType, m_matchStateInfo[m_matchType].tmNextStepTime, m_matchStateInfo[m_matchType].tmRemainTime);
+
+				SendMatchState();
+
+				StartMajorMatchTeleport();
+			}
+		}
+		break;
+
+		case BUDOKAI_MATCHSTATE_MAJORMATCH_32:
+		{
+			//progress depth 32
+			TickProcessMajorMatch(dwTickDif, curTime);
+
+			if(m_aTournamentMatch[BUDOKAI_MATCH_DEPTH_32].byMatchCount == m_aTournamentMatch[BUDOKAI_MATCH_DEPTH_32].byMatchCountEnd)//check if all 32th done
+			{
+				EndMatchDepth(BUDOKAI_MATCH_DEPTH_32);
+
 				m_matchStateInfo[m_matchType].byState = BUDOKAI_MATCHSTATE_WAIT_MAJORMATCH_16;
+				m_matchStateInfo[m_matchType].tmNextStepTime = curTime + m_pTableInfo->dwMajorMatch_WaitTime;
+				m_matchStateInfo[m_matchType].tmRemainTime = m_pTableInfo->dwMajorMatch_WaitTime;
 
-			m_matchStateInfo[m_matchType].tmNextStepTime = curTime + m_pTableInfo->dwMajorMatch_WaitTime;
-			m_matchStateInfo[m_matchType].tmRemainTime = m_pTableInfo->dwMajorMatch_WaitTime;
+				ERR_LOG(LOG_GENERAL, "BUDOKAI: Update Match-State. Type %u, byState BUDOKAI_MATCHSTATE_MAJORMATCH_32 -> BUDOKAI_MATCHSTATE_WAIT_MAJORMATCH_16, tmNextStepTime = %u, tmRemainTime = %u",
+					m_matchType, m_matchStateInfo[m_matchType].tmNextStepTime, m_matchStateInfo[m_matchType].tmRemainTime);
 
-			ERR_LOG(LOG_GENERAL, "BUDOKAI: Update Match-State. Type %u, byState BUDOKAI_MATCHSTATE_MINOR_MATCH -> BUDOKAI_MATCHSTATE_WAIT_MAJORMATCH_32, tmNextStepTime = %u, tmRemainTime = %u",
-				m_matchType, m_matchStateInfo[m_matchType].tmNextStepTime, m_matchStateInfo[m_matchType].tmRemainTime);
-
-			SendMatchState();
+				SendMatchState();
+			}
 		}
-	}
-	break;
+		break;
 
-	case BUDOKAI_MATCHSTATE_WAIT_MAJORMATCH_32:
-	{
-		if (m_matchStateInfo[m_matchType].tmNextStepTime <= curTime)
+		case BUDOKAI_MATCHSTATE_WAIT_MAJORMATCH_16:
 		{
-			m_matchStateInfo[m_matchType].byState = BUDOKAI_MATCHSTATE_MAJORMATCH_32;
-			m_matchStateInfo[m_matchType].tmNextStepTime = INVALID_BUDOKAITIME;
-			m_matchStateInfo[m_matchType].tmRemainTime = 0;
+			if (m_matchStateInfo[m_matchType].tmNextStepTime <= curTime)
+			{
+				m_matchStateInfo[m_matchType].byState = BUDOKAI_MATCHSTATE_MAJORMATCH_16;
+				m_matchStateInfo[m_matchType].tmNextStepTime = INVALID_BUDOKAITIME;
+				m_matchStateInfo[m_matchType].tmRemainTime = 0;
 
-			ERR_LOG(LOG_GENERAL, "BUDOKAI: Update Match-State. Type %u, byState BUDOKAI_MATCHSTATE_WAIT_MAJORMATCH_32 -> BUDOKAI_MATCHSTATE_MAJORMATCH_32, tmNextStepTime = %u, tmRemainTime = %u",
-				m_matchType, m_matchStateInfo[m_matchType].tmNextStepTime, m_matchStateInfo[m_matchType].tmRemainTime);
+				ERR_LOG(LOG_GENERAL, "BUDOKAI: Update Match-State. Type %u, byState BUDOKAI_MATCHSTATE_WAIT_MAJORMATCH_16 -> BUDOKAI_MATCHSTATE_MAJORMATCH_16, tmNextStepTime = %u, tmRemainTime = %u",
+					m_matchType, m_matchStateInfo[m_matchType].tmNextStepTime, m_matchStateInfo[m_matchType].tmRemainTime);
 
-			SendMatchState();
+				SendMatchState();
 
-			StartMajorMatchTeleport();
+				StartMajorMatchTeleport();
+			}
 		}
-	}
-	break;
+		break;
 
-	case BUDOKAI_MATCHSTATE_MAJORMATCH_32:
-	{
-		//progress depth 32
-		TickProcessMajorMatch(dwTickDif, curTime);
-
-		if (m_aTournamentMatch[BUDOKAI_MATCH_DEPTH_32].byMatchCount == m_aTournamentMatch[BUDOKAI_MATCH_DEPTH_32].byMatchCountEnd)//check if all 32th done
+		case BUDOKAI_MATCHSTATE_MAJORMATCH_16:
 		{
-			EndMatchDepth(BUDOKAI_MATCH_DEPTH_32);
+			//progress depth 16
+			TickProcessMajorMatch(dwTickDif, curTime);
 
-			m_matchStateInfo[m_matchType].byState = BUDOKAI_MATCHSTATE_WAIT_MAJORMATCH_16;
-			m_matchStateInfo[m_matchType].tmNextStepTime = curTime + m_pTableInfo->dwMajorMatch_WaitTime;
-			m_matchStateInfo[m_matchType].tmRemainTime = m_pTableInfo->dwMajorMatch_WaitTime;
+			if (m_aTournamentMatch[BUDOKAI_MATCH_DEPTH_16].byMatchCount == m_aTournamentMatch[BUDOKAI_MATCH_DEPTH_16].byMatchCountEnd) //check if all 16th done
+			{
+				EndMatchDepth(BUDOKAI_MATCH_DEPTH_16);
 
-			ERR_LOG(LOG_GENERAL, "BUDOKAI: Update Match-State. Type %u, byState BUDOKAI_MATCHSTATE_MAJORMATCH_32 -> BUDOKAI_MATCHSTATE_WAIT_MAJORMATCH_16, tmNextStepTime = %u, tmRemainTime = %u",
-				m_matchType, m_matchStateInfo[m_matchType].tmNextStepTime, m_matchStateInfo[m_matchType].tmRemainTime);
+				m_matchStateInfo[m_matchType].byState = BUDOKAI_MATCHSTATE_WAIT_MAJORMATCH_08;
+				m_matchStateInfo[m_matchType].tmNextStepTime = curTime + m_pTableInfo->dwMajorMatch_WaitTime;
+				m_matchStateInfo[m_matchType].tmRemainTime = m_pTableInfo->dwMajorMatch_WaitTime;
 
-			SendMatchState();
+				ERR_LOG(LOG_GENERAL, "BUDOKAI: Update Match-State. Type %u, byState BUDOKAI_MATCHSTATE_MAJORMATCH_16 -> BUDOKAI_MATCHSTATE_WAIT_MAJORMATCH_08, tmNextStepTime = %u, tmRemainTime = %u",
+					m_matchType, m_matchStateInfo[m_matchType].tmNextStepTime, m_matchStateInfo[m_matchType].tmRemainTime);
+
+				SendMatchState();
+			}
 		}
-	}
-	break;
+		break;
 
-	case BUDOKAI_MATCHSTATE_WAIT_MAJORMATCH_16:
-	{
-		if (m_matchStateInfo[m_matchType].tmNextStepTime <= curTime)
+		case BUDOKAI_MATCHSTATE_WAIT_MAJORMATCH_08:
 		{
-			m_matchStateInfo[m_matchType].byState = BUDOKAI_MATCHSTATE_MAJORMATCH_16;
-			m_matchStateInfo[m_matchType].tmNextStepTime = INVALID_BUDOKAITIME;
-			m_matchStateInfo[m_matchType].tmRemainTime = 0;
+			if (m_matchStateInfo[m_matchType].tmNextStepTime <= curTime)
+			{
+				m_matchStateInfo[m_matchType].byState = BUDOKAI_MATCHSTATE_MAJORMATCH_08;
+				m_matchStateInfo[m_matchType].tmNextStepTime = INVALID_BUDOKAITIME;
+				m_matchStateInfo[m_matchType].tmRemainTime = 0;
 
-			ERR_LOG(LOG_GENERAL, "BUDOKAI: Update Match-State. Type %u, byState BUDOKAI_MATCHSTATE_WAIT_MAJORMATCH_16 -> BUDOKAI_MATCHSTATE_MAJORMATCH_16, tmNextStepTime = %u, tmRemainTime = %u",
-				m_matchType, m_matchStateInfo[m_matchType].tmNextStepTime, m_matchStateInfo[m_matchType].tmRemainTime);
+				ERR_LOG(LOG_GENERAL, "BUDOKAI: Update Match-State. Type %u, byState BUDOKAI_MATCHSTATE_WAIT_MAJORMATCH_08 -> BUDOKAI_MATCHSTATE_MAJORMATCH_08, tmNextStepTime = %u, tmRemainTime = %u",
+					m_matchType, m_matchStateInfo[m_matchType].tmNextStepTime, m_matchStateInfo[m_matchType].tmRemainTime);
 
-			SendMatchState();
+				SendMatchState();
 
-			StartMajorMatchTeleport();
+				StartMajorMatchTeleport();
+			}
 		}
-	}
-	break;
+		break;
 
-	case BUDOKAI_MATCHSTATE_MAJORMATCH_16:
-	{
-		//progress depth 16
-		TickProcessMajorMatch(dwTickDif, curTime);
-
-		if (m_aTournamentMatch[BUDOKAI_MATCH_DEPTH_16].byMatchCount == m_aTournamentMatch[BUDOKAI_MATCH_DEPTH_16].byMatchCountEnd) //check if all 16th done
+		case BUDOKAI_MATCHSTATE_MAJORMATCH_08:
 		{
-			EndMatchDepth(BUDOKAI_MATCH_DEPTH_16);
+			//progress depth 8
+			TickProcessMajorMatch(dwTickDif, curTime);
 
-			m_matchStateInfo[m_matchType].byState = BUDOKAI_MATCHSTATE_WAIT_MAJORMATCH_08;
-			m_matchStateInfo[m_matchType].tmNextStepTime = curTime + m_pTableInfo->dwMajorMatch_WaitTime;
-			m_matchStateInfo[m_matchType].tmRemainTime = m_pTableInfo->dwMajorMatch_WaitTime;
+			if (m_aTournamentMatch[BUDOKAI_MATCH_DEPTH_8].byMatchCount == m_aTournamentMatch[BUDOKAI_MATCH_DEPTH_8].byMatchCountEnd) //check if all 8th done
+			{
+				EndMatchDepth(BUDOKAI_MATCH_DEPTH_8);
 
-			ERR_LOG(LOG_GENERAL, "BUDOKAI: Update Match-State. Type %u, byState BUDOKAI_MATCHSTATE_MAJORMATCH_16 -> BUDOKAI_MATCHSTATE_WAIT_MAJORMATCH_08, tmNextStepTime = %u, tmRemainTime = %u",
-				m_matchType, m_matchStateInfo[m_matchType].tmNextStepTime, m_matchStateInfo[m_matchType].tmRemainTime);
+				m_matchStateInfo[m_matchType].byState = BUDOKAI_MATCHSTATE_WAIT_SEMIFINAL_MATCH;
+				m_matchStateInfo[m_matchType].tmNextStepTime = curTime + m_pTableInfo->dwFinalMatch_WaitTime;
+				m_matchStateInfo[m_matchType].tmRemainTime = m_pTableInfo->dwFinalMatch_WaitTime;
 
-			SendMatchState();
+				ERR_LOG(LOG_GENERAL, "BUDOKAI: Update Match-State. Type %u, byState BUDOKAI_MATCHSTATE_MAJORMATCH_08 -> BUDOKAI_MATCHSTATE_WAIT_SEMIFINAL_MATCH, tmNextStepTime = %u, tmRemainTime = %u",
+					m_matchType, m_matchStateInfo[m_matchType].tmNextStepTime, m_matchStateInfo[m_matchType].tmRemainTime);
+
+				SendMatchState();
+			}
 		}
-	}
-	break;
+		break;
 
-	case BUDOKAI_MATCHSTATE_WAIT_MAJORMATCH_08:
-	{
-		if (m_matchStateInfo[m_matchType].tmNextStepTime <= curTime)
+		case BUDOKAI_MATCHSTATE_WAIT_SEMIFINAL_MATCH:
 		{
-			m_matchStateInfo[m_matchType].byState = BUDOKAI_MATCHSTATE_MAJORMATCH_08;
-			m_matchStateInfo[m_matchType].tmNextStepTime = INVALID_BUDOKAITIME;
-			m_matchStateInfo[m_matchType].tmRemainTime = 0;
+			if (m_matchStateInfo[m_matchType].tmNextStepTime <= curTime)
+			{
+				m_matchStateInfo[m_matchType].byState = BUDOKAI_MATCHSTATE_SEMIFINAL_MATCH;
+				m_matchStateInfo[m_matchType].tmNextStepTime = INVALID_BUDOKAITIME;
+				m_matchStateInfo[m_matchType].tmRemainTime = 0;
 
-			ERR_LOG(LOG_GENERAL, "BUDOKAI: Update Match-State. Type %u, byState BUDOKAI_MATCHSTATE_WAIT_MAJORMATCH_08 -> BUDOKAI_MATCHSTATE_MAJORMATCH_08, tmNextStepTime = %u, tmRemainTime = %u",
-				m_matchType, m_matchStateInfo[m_matchType].tmNextStepTime, m_matchStateInfo[m_matchType].tmRemainTime);
+				ERR_LOG(LOG_GENERAL, "BUDOKAI: Update Match-State. Type %u, byState BUDOKAI_MATCHSTATE_WAIT_SEMIFINAL_MATCH -> BUDOKAI_MATCHSTATE_SEMIFINAL_MATCH, tmNextStepTime = %u, tmRemainTime = %u",
+					m_matchType, m_matchStateInfo[m_matchType].tmNextStepTime, m_matchStateInfo[m_matchType].tmRemainTime);
 
-			SendMatchState();
+				SendMatchState();
 
-			StartMajorMatchTeleport();
+				StartFinalMatchTeleport();
+			}
 		}
-	}
-	break;
+		break;
 
-	case BUDOKAI_MATCHSTATE_MAJORMATCH_08:
-	{
-		//progress depth 8
-		TickProcessMajorMatch(dwTickDif, curTime);
-
-		if (m_aTournamentMatch[BUDOKAI_MATCH_DEPTH_8].byMatchCount == m_aTournamentMatch[BUDOKAI_MATCH_DEPTH_8].byMatchCountEnd) //check if all 8th done
+		case BUDOKAI_MATCHSTATE_SEMIFINAL_MATCH:
 		{
-			EndMatchDepth(BUDOKAI_MATCH_DEPTH_8);
+			//progress semi finals
+			TickProcessFinalMatch(dwTickDif, curTime);
 
-			m_matchStateInfo[m_matchType].byState = BUDOKAI_MATCHSTATE_WAIT_SEMIFINAL_MATCH;
-			m_matchStateInfo[m_matchType].tmNextStepTime = curTime + m_pTableInfo->dwFinalMatch_WaitTime;
-			m_matchStateInfo[m_matchType].tmRemainTime = m_pTableInfo->dwFinalMatch_WaitTime;
+			if (m_aTournamentMatch[BUDOKAI_MATCH_DEPTH_4].byMatchCount == m_aTournamentMatch[BUDOKAI_MATCH_DEPTH_4].byMatchCountEnd) //check if all semi final done
+			{
+				EndMatchDepth(BUDOKAI_MATCH_DEPTH_4);
 
-			ERR_LOG(LOG_GENERAL, "BUDOKAI: Update Match-State. Type %u, byState BUDOKAI_MATCHSTATE_MAJORMATCH_08 -> BUDOKAI_MATCHSTATE_WAIT_SEMIFINAL_MATCH, tmNextStepTime = %u, tmRemainTime = %u",
-				m_matchType, m_matchStateInfo[m_matchType].tmNextStepTime, m_matchStateInfo[m_matchType].tmRemainTime);
+				m_matchStateInfo[m_matchType].byState = BUDOKAI_MATCHSTATE_WAIT_FINAL_MATCH;
+				m_matchStateInfo[m_matchType].tmNextStepTime = curTime + m_pTableInfo->dwFinalMatch_WaitTime;
+				m_matchStateInfo[m_matchType].tmRemainTime = m_pTableInfo->dwFinalMatch_WaitTime;
 
-			SendMatchState();
+				ERR_LOG(LOG_GENERAL, "BUDOKAI: Update Match-State. Type %u, byState BUDOKAI_MATCHSTATE_SEMIFINAL_MATCH -> BUDOKAI_MATCHSTATE_WAIT_FINAL_MATCH, tmNextStepTime = %u, tmRemainTime = %u",
+					m_matchType, m_matchStateInfo[m_matchType].tmNextStepTime, m_matchStateInfo[m_matchType].tmRemainTime);
+
+				SendMatchState();
+			}
 		}
-	}
-	break;
+		break;
 
-	case BUDOKAI_MATCHSTATE_WAIT_SEMIFINAL_MATCH:
-	{
-		if (m_matchStateInfo[m_matchType].tmNextStepTime <= curTime)
+		case BUDOKAI_MATCHSTATE_WAIT_FINAL_MATCH:
 		{
-			m_matchStateInfo[m_matchType].byState = BUDOKAI_MATCHSTATE_SEMIFINAL_MATCH;
-			m_matchStateInfo[m_matchType].tmNextStepTime = INVALID_BUDOKAITIME;
-			m_matchStateInfo[m_matchType].tmRemainTime = 0;
+			if (m_matchStateInfo[m_matchType].tmNextStepTime <= curTime)
+			{
+				m_matchStateInfo[m_matchType].byState = BUDOKAI_MATCHSTATE_FINAL_MATCH;
+				m_matchStateInfo[m_matchType].tmNextStepTime = INVALID_BUDOKAITIME;
+				m_matchStateInfo[m_matchType].tmRemainTime = 0;
 
-			ERR_LOG(LOG_GENERAL, "BUDOKAI: Update Match-State. Type %u, byState BUDOKAI_MATCHSTATE_WAIT_SEMIFINAL_MATCH -> BUDOKAI_MATCHSTATE_SEMIFINAL_MATCH, tmNextStepTime = %u, tmRemainTime = %u",
-				m_matchType, m_matchStateInfo[m_matchType].tmNextStepTime, m_matchStateInfo[m_matchType].tmRemainTime);
+				ERR_LOG(LOG_GENERAL, "BUDOKAI: Update Match-State. Type %u, byState BUDOKAI_MATCHSTATE_WAIT_FINAL_MATCH -> BUDOKAI_MATCHSTATE_FINAL_MATCH, tmNextStepTime = %u, tmRemainTime = %u",
+					m_matchType, m_matchStateInfo[m_matchType].tmNextStepTime, m_matchStateInfo[m_matchType].tmRemainTime);
 
-			SendMatchState();
+				SendMatchState();
 
-			StartFinalMatchTeleport();
+				StartFinalMatchTeleport();
+			}
 		}
-	}
-	break;
+		break;
 
-	case BUDOKAI_MATCHSTATE_SEMIFINAL_MATCH:
-	{
-		//progress semi finals
-		TickProcessFinalMatch(dwTickDif, curTime);
-
-		if (m_aTournamentMatch[BUDOKAI_MATCH_DEPTH_4].byMatchCount == m_aTournamentMatch[BUDOKAI_MATCH_DEPTH_4].byMatchCountEnd) //check if all semi final done
+		case BUDOKAI_MATCHSTATE_FINAL_MATCH:
 		{
-			EndMatchDepth(BUDOKAI_MATCH_DEPTH_4);
+			TickProcessFinalMatch(dwTickDif, curTime);
 
-			m_matchStateInfo[m_matchType].byState = BUDOKAI_MATCHSTATE_WAIT_FINAL_MATCH;
-			m_matchStateInfo[m_matchType].tmNextStepTime = curTime + m_pTableInfo->dwFinalMatch_WaitTime;
-			m_matchStateInfo[m_matchType].tmRemainTime = m_pTableInfo->dwFinalMatch_WaitTime;
+			if (m_aTournamentMatch[BUDOKAI_MATCH_DEPTH_2].byMatchCount == m_aTournamentMatch[BUDOKAI_MATCH_DEPTH_2].byMatchCountEnd) //check if all final done
+			{
+				m_matchStateInfo[m_matchType].byState = BUDOKAI_MATCHSTATE_MATCH_END;
+				m_matchStateInfo[m_matchType].tmNextStepTime = curTime + m_pTableInfo->dwEndingWaitTime;
+				m_matchStateInfo[m_matchType].tmRemainTime = m_pTableInfo->dwEndingWaitTime;
 
-			ERR_LOG(LOG_GENERAL, "BUDOKAI: Update Match-State. Type %u, byState BUDOKAI_MATCHSTATE_SEMIFINAL_MATCH -> BUDOKAI_MATCHSTATE_WAIT_FINAL_MATCH, tmNextStepTime = %u, tmRemainTime = %u",
-				m_matchType, m_matchStateInfo[m_matchType].tmNextStepTime, m_matchStateInfo[m_matchType].tmRemainTime);
+				ERR_LOG(LOG_GENERAL, "BUDOKAI: Update Match-State. Type %u, byState BUDOKAI_MATCHSTATE_FINAL_MATCH -> BUDOKAI_MATCHSTATE_MATCH_END, tmNextStepTime = %u, tmRemainTime = %u",
+					m_matchType, m_matchStateInfo[m_matchType].tmNextStepTime, m_matchStateInfo[m_matchType].tmRemainTime);
 
-			SendMatchState();
+				SendMatchState();
+			}
 		}
-	}
-	break;
+		break;
 
-	case BUDOKAI_MATCHSTATE_WAIT_FINAL_MATCH:
-	{
-		if (m_matchStateInfo[m_matchType].tmNextStepTime <= curTime)
+		case BUDOKAI_MATCHSTATE_MATCH_END:
 		{
-			m_matchStateInfo[m_matchType].byState = BUDOKAI_MATCHSTATE_FINAL_MATCH;
-			m_matchStateInfo[m_matchType].tmNextStepTime = INVALID_BUDOKAITIME;
-			m_matchStateInfo[m_matchType].tmRemainTime = 0;
-
-			ERR_LOG(LOG_GENERAL, "BUDOKAI: Update Match-State. Type %u, byState BUDOKAI_MATCHSTATE_WAIT_FINAL_MATCH -> BUDOKAI_MATCHSTATE_FINAL_MATCH, tmNextStepTime = %u, tmRemainTime = %u",
-				m_matchType, m_matchStateInfo[m_matchType].tmNextStepTime, m_matchStateInfo[m_matchType].tmRemainTime);
-
-			SendMatchState();
-
-			StartFinalMatchTeleport();
+			if (m_matchStateInfo[m_matchType].tmNextStepTime <= curTime)
+			{
+				m_stateInfo.tmNextStepTime = 0;
+			}
 		}
-	}
-	break;
+		break;
 
-	case BUDOKAI_MATCHSTATE_FINAL_MATCH:
-	{
-		TickProcessFinalMatch(dwTickDif, curTime);
-
-		if (m_aTournamentMatch[BUDOKAI_MATCH_DEPTH_2].byMatchCount == m_aTournamentMatch[BUDOKAI_MATCH_DEPTH_2].byMatchCountEnd) //check if all final done
-		{
-			m_matchStateInfo[m_matchType].byState = BUDOKAI_MATCHSTATE_MATCH_END;
-			m_matchStateInfo[m_matchType].tmNextStepTime = curTime + m_pTableInfo->dwEndingWaitTime;
-			m_matchStateInfo[m_matchType].tmRemainTime = m_pTableInfo->dwEndingWaitTime;
-
-			ERR_LOG(LOG_GENERAL, "BUDOKAI: Update Match-State. Type %u, byState BUDOKAI_MATCHSTATE_FINAL_MATCH -> BUDOKAI_MATCHSTATE_MATCH_END, tmNextStepTime = %u, tmRemainTime = %u",
-				m_matchType, m_matchStateInfo[m_matchType].tmNextStepTime, m_matchStateInfo[m_matchType].tmRemainTime);
-
-			SendMatchState();
-		}
-	}
-	break;
-
-	case BUDOKAI_MATCHSTATE_MATCH_END:
-	{
-		if (m_matchStateInfo[m_matchType].tmNextStepTime <= curTime)
-		{
-			m_stateInfo.tmNextStepTime = 0;
-		}
-	}
-	break;
-
-	default: ERR_LOG(LOG_SYSTEM, "Invalid budokai match state %u", m_matchStateInfo[m_matchType].byState); break;
+		default: ERR_LOG(LOG_SYSTEM, "Invalid budokai match state %u", m_matchStateInfo[m_matchType].byState); break;
 	}
 }
 
@@ -1127,7 +1127,7 @@ void CBudokaiManager::SendBudokaiState()
 
 	//send to query server
 	CNtlPacket packet2(sizeof(sGQ_BUDOKAI_UPDATE_STATE_REQ));
-	sGQ_BUDOKAI_UPDATE_STATE_REQ* res2 = (sGQ_BUDOKAI_UPDATE_STATE_REQ*)packet2.GetPacketData();
+	sGQ_BUDOKAI_UPDATE_STATE_REQ * res2 = (sGQ_BUDOKAI_UPDATE_STATE_REQ *)packet2.GetPacketData();
 	res2->wOpCode = GQ_BUDOKAI_UPDATE_STATE_REQ;
 	res2->sStateData.byState = m_stateInfo.byState;
 	res2->sStateData.tmNextStepTime = m_stateInfo.tmNextStepTime;
@@ -1135,7 +1135,7 @@ void CBudokaiManager::SendBudokaiState()
 	app->SendTo(app->GetQueryServerSession(), &packet2);
 
 	CNtlPacket packet(sizeof(sGT_BUDOKAI_CHANNEL_UPDATE_STATE));
-	sGT_BUDOKAI_CHANNEL_UPDATE_STATE* res = (sGT_BUDOKAI_CHANNEL_UPDATE_STATE*)packet.GetPacketData();
+	sGT_BUDOKAI_CHANNEL_UPDATE_STATE * res = (sGT_BUDOKAI_CHANNEL_UPDATE_STATE *)packet.GetPacketData();
 	res->wOpCode = GT_BUDOKAI_CHANNEL_UPDATE_STATE;
 	res->tmDefaultOpenTime = m_tmDefaultOpenTime;
 	res->bRankbattleAllow = m_bRankbattleAllow;
@@ -1150,7 +1150,7 @@ void CBudokaiManager::SendMatchState()
 
 	//send to query server
 	CNtlPacket packet2(sizeof(sGQ_BUDOKAI_UPDATE_MATCH_STATE_REQ));
-	sGQ_BUDOKAI_UPDATE_MATCH_STATE_REQ* res2 = (sGQ_BUDOKAI_UPDATE_MATCH_STATE_REQ*)packet2.GetPacketData();
+	sGQ_BUDOKAI_UPDATE_MATCH_STATE_REQ * res2 = (sGQ_BUDOKAI_UPDATE_MATCH_STATE_REQ *)packet2.GetPacketData();
 	res2->wOpCode = GQ_BUDOKAI_UPDATE_MATCH_STATE_REQ;
 	res2->byMatchType = m_matchType;
 	res2->sStateData.byState = m_matchStateInfo[m_matchType].byState;
@@ -1159,7 +1159,7 @@ void CBudokaiManager::SendMatchState()
 	app->SendTo(app->GetQueryServerSession(), &packet2);
 
 	CNtlPacket packet(sizeof(sGT_BUDOKAI_CHANNEL_UPDATE_MATCH_STATE));
-	sGT_BUDOKAI_CHANNEL_UPDATE_MATCH_STATE* res = (sGT_BUDOKAI_CHANNEL_UPDATE_MATCH_STATE*)packet.GetPacketData();
+	sGT_BUDOKAI_CHANNEL_UPDATE_MATCH_STATE * res = (sGT_BUDOKAI_CHANNEL_UPDATE_MATCH_STATE *)packet.GetPacketData();
 	res->wOpCode = GT_BUDOKAI_CHANNEL_UPDATE_MATCH_STATE;
 	res->byMatchType = m_matchType;
 	memcpy(&res->sStateInfo, &m_matchStateInfo[m_matchType], sizeof(sBUDOKAI_UPDATE_MATCH_STATE_INFO));
@@ -1174,7 +1174,7 @@ void CBudokaiManager::StartPrelim()
 
 	//send announcement that players can enter prelims
 	CNtlPacket packet2(sizeof(sGU_BUDOKAI_PROGRESS_MESSAGE_NFY));
-	sGU_BUDOKAI_PROGRESS_MESSAGE_NFY* res2 = (sGU_BUDOKAI_PROGRESS_MESSAGE_NFY*)packet2.GetPacketData();
+	sGU_BUDOKAI_PROGRESS_MESSAGE_NFY * res2 = (sGU_BUDOKAI_PROGRESS_MESSAGE_NFY *)packet2.GetPacketData();
 	res2->wOpCode = GU_BUDOKAI_PROGRESS_MESSAGE_NFY;
 	res2->byMsgId = BUDOKAI_PROGRESS_MESSAGE_MINORMATCH_ENTERING;
 	packet2.SetPacketLen(sizeof(sGU_BUDOKAI_PROGRESS_MESSAGE_NFY));
@@ -1191,7 +1191,7 @@ void CBudokaiManager::StartPrelim()
 			m_byDojoRecommenders, byMaxPrelims, (int)m_mapIndividual.size());
 
 		CNtlPacket packet(sizeof(sGT_BUDOKAI_MINOR_MATCH_INDIVIDUAL_LIST_NFY));
-		sGT_BUDOKAI_MINOR_MATCH_INDIVIDUAL_LIST_NFY* res = (sGT_BUDOKAI_MINOR_MATCH_INDIVIDUAL_LIST_NFY*)packet.GetPacketData();
+		sGT_BUDOKAI_MINOR_MATCH_INDIVIDUAL_LIST_NFY * res = (sGT_BUDOKAI_MINOR_MATCH_INDIVIDUAL_LIST_NFY *)packet.GetPacketData();
 		res->wOpCode = GT_BUDOKAI_MINOR_MATCH_INDIVIDUAL_LIST_NFY;
 		res->byServerChannelId = DOJO_CHANNEL_INDEX;
 		res->byServerIndex = 0;
@@ -1245,7 +1245,7 @@ void CBudokaiManager::StartPrelim()
 		// --- 2. LOOP -> ALL NON-DOJO RECOMMENDERS
 		for (std::vector<std::pair<JOINID, sBUDOKAI_REGISTER_INDIVIDUAL_DATA>>::iterator it = elems.begin(); it != elems.end(); it++)
 		{
-			//	printf("it->first: %u, charId:%u, fPoint %f \n", it->first, it->second.charId, it->second.fPoint);
+		//	printf("it->first: %u, charId:%u, fPoint %f \n", it->first, it->second.charId, it->second.fPoint);
 			if (it->second.bDojoRecommender == false)
 			{
 				boost::unordered_map<JOINID, sBUDOKAI_REGISTER_INDIVIDUAL_DATA>::iterator realIt = m_mapIndividual.find(it->first);
@@ -1325,7 +1325,7 @@ void CBudokaiManager::StartPrelim()
 		ERR_LOG(LOG_GENERAL, "BUDOKAI: Start create Party Prelims. byMaxPrelims = %u, RegistrarCount %u", byMaxPrelims, (int)m_mapIndividual.size());
 
 		CNtlPacket packet(sizeof(sGT_BUDOKAI_MINOR_MATCH_TEAM_LIST_NFY));
-		sGT_BUDOKAI_MINOR_MATCH_TEAM_LIST_NFY* res = (sGT_BUDOKAI_MINOR_MATCH_TEAM_LIST_NFY*)packet.GetPacketData();
+		sGT_BUDOKAI_MINOR_MATCH_TEAM_LIST_NFY * res = (sGT_BUDOKAI_MINOR_MATCH_TEAM_LIST_NFY *)packet.GetPacketData();
 		res->wOpCode = GT_BUDOKAI_MINOR_MATCH_TEAM_LIST_NFY;
 		res->byServerChannelId = DOJO_CHANNEL_INDEX;
 		res->byServerIndex = 0;
@@ -1461,7 +1461,7 @@ void CBudokaiManager::EndPrelim()
 								it = m_mapPrelimWinners.erase(it);
 								break;
 							}
-						}
+						} 
 						else ++it;
 					}
 				}
@@ -1566,34 +1566,121 @@ void CBudokaiManager::TickProcessPrelim(DWORD dwTickDif, BUDOKAITIME curTime)
 
 		switch (prelim->m_byMatchState)
 		{
-		case BUDOKAI_MINORMATCH_STATE_NONE:
-		{
-		}
-		break;
-		case BUDOKAI_MINORMATCH_STATE_WAIT_MINORMATCH:
-		{
-		}
-		break;
-		case BUDOKAI_MINORMATCH_STATE_WAIT:
-		{
-			if (prelim->m_dwMatchTickCount == 0 || prelim->m_byCount >= prelim->m_byTotalCount)
+			case BUDOKAI_MINORMATCH_STATE_NONE:
 			{
-				if (prelim->m_byCount == 0 || prelim->m_byTotalCount == 0) //if none inside, then end directly //if none inside, then end directly
+			}
+			break;
+			case BUDOKAI_MINORMATCH_STATE_WAIT_MINORMATCH:
+			{
+			}
+			break;
+			case BUDOKAI_MINORMATCH_STATE_WAIT:
+			{
+				if (prelim->m_dwMatchTickCount == 0 || prelim->m_byCount >= prelim->m_byTotalCount)
 				{
-					prelim->m_byMatchState = BUDOKAI_MINORMATCH_STATE_END;
-					ERR_LOG(LOG_GENERAL, "BUDOKAI: Prelim Index %u no players connected. Go to end..", it->first);
+					if (prelim->m_byCount == 0 || prelim->m_byTotalCount == 0) //if none inside, then end directly //if none inside, then end directly
+					{
+						prelim->m_byMatchState = BUDOKAI_MINORMATCH_STATE_END;
+						ERR_LOG(LOG_GENERAL, "BUDOKAI: Prelim Index %u no players connected. Go to end..", it->first);
+					}
+					else //normal prelim begin
+					{
+						ERR_LOG(LOG_GENERAL, "BUDOKAI: Prelim Index %u Started. PlayerCount %u, TotalPlayer %u", it->first, prelim->m_byCount, prelim->m_byTotalCount);
+
+						prelim->m_byMatchState = BUDOKAI_MINORMATCH_STATE_MATCH_READY;
+						prelim->m_dwMatchTickCount = 5000;
+
+						CNtlPacket packet2(sizeof(sGU_MATCH_MINORMATCH_STATE_UPDATE_NFY));
+						sGU_MATCH_MINORMATCH_STATE_UPDATE_NFY * res2 = (sGU_MATCH_MINORMATCH_STATE_UPDATE_NFY *)packet2.GetPacketData();
+						res2->wOpCode = GU_MATCH_MINORMATCH_STATE_UPDATE_NFY;
+						res2->byMatchState = BUDOKAI_MINORMATCH_STATE_MATCH_READY;
+						res2->bIsEnter = true;
+						res2->byStage = 0;
+						res2->dwRemainTime = prelim->m_dwMatchTickCount;
+						packet2.SetPacketLen(sizeof(sGU_MATCH_MINORMATCH_STATE_UPDATE_NFY));
+						prelim->m_pWorld->Broadcast(&packet2);
+					}
 				}
-				else //normal prelim begin
+			}
+			break;
+			case BUDOKAI_MINORMATCH_STATE_DIRECTION:
+			{
+			}
+			break;
+			case BUDOKAI_MINORMATCH_STATE_MATCH_READY:
+			{
+				if (prelim->m_dwMatchTickCount == 0)
 				{
-					ERR_LOG(LOG_GENERAL, "BUDOKAI: Prelim Index %u Started. PlayerCount %u, TotalPlayer %u", it->first, prelim->m_byCount, prelim->m_byTotalCount);
+					//send player info
+					SendMinorMatchTeamInfo(it->first, prelim);
 
-					prelim->m_byMatchState = BUDOKAI_MINORMATCH_STATE_MATCH_READY;
-					prelim->m_dwMatchTickCount = 5000;
+					//send player state
+					MinorMatchUpdatePlayersState(prelim, it->first, MATCH_MEMBER_STATE_NORMAL);
 
+					bool bDefaultWin = false;
+
+					if (m_matchType == BUDOKAI_MATCH_TYPE_INDIVIDIAUL && prelim->m_byTotalCount == 1)
+						bDefaultWin = true;
+					else if (m_matchType == BUDOKAI_MATCH_TYPE_TEAM && prelim->m_byTotalCount == 5)
+						bDefaultWin = true;
+
+					if (bDefaultWin) // if only 1 in prelim, then finish
+					{
+						ERR_LOG(LOG_GENERAL, "BUDOKAI: Prelim Index %u. Only one player/team in prelim.. Add as default winner", it->first);
+
+						if(m_matchType == BUDOKAI_MATCH_TYPE_INDIVIDIAUL)
+							prelim->m_mapSelection.insert({ prelim->m_mapIndividualPrelim.begin()->first, 0 });
+						else
+							prelim->m_mapSelection.insert({ prelim->m_mapTeamPrelim.begin()->first, 0 });
+
+						prelim->m_byMatchState = BUDOKAI_MINORMATCH_STATE_STAGE_FINISH;
+						prelim->m_dwMatchTickCount = 3000;
+
+						CNtlPacket packet2(sizeof(sGU_MATCH_MINORMATCH_STATE_UPDATE_NFY));
+						sGU_MATCH_MINORMATCH_STATE_UPDATE_NFY * res2 = (sGU_MATCH_MINORMATCH_STATE_UPDATE_NFY *)packet2.GetPacketData();
+						res2->wOpCode = GU_MATCH_MINORMATCH_STATE_UPDATE_NFY;
+						res2->byMatchState = BUDOKAI_MINORMATCH_STATE_STAGE_FINISH;
+						res2->bIsEnter = true;
+						res2->byStage = 0;
+						res2->dwRemainTime = prelim->m_dwMatchTickCount;
+						packet2.SetPacketLen(sizeof(sGU_MATCH_MINORMATCH_STATE_UPDATE_NFY));
+						prelim->m_pWorld->Broadcast(&packet2);
+					}
+					else
+					{
+						prelim->m_byMatchState = BUDOKAI_MINORMATCH_STATE_STAGE_READY;
+						prelim->m_dwMatchTickCount = 5000;
+
+						//this packet will show "READY"
+						CNtlPacket packet2(sizeof(sGU_MATCH_MINORMATCH_STATE_UPDATE_NFY));
+						sGU_MATCH_MINORMATCH_STATE_UPDATE_NFY * res2 = (sGU_MATCH_MINORMATCH_STATE_UPDATE_NFY *)packet2.GetPacketData();
+						res2->wOpCode = GU_MATCH_MINORMATCH_STATE_UPDATE_NFY;
+						res2->byMatchState = BUDOKAI_MINORMATCH_STATE_STAGE_READY;
+						res2->bIsEnter = true;
+						res2->byStage = 0;
+						res2->dwRemainTime = prelim->m_dwMatchTickCount;
+						packet2.SetPacketLen(sizeof(sGU_MATCH_MINORMATCH_STATE_UPDATE_NFY));
+						prelim->m_pWorld->Broadcast(&packet2);
+					}
+
+					ERR_LOG(LOG_GENERAL, "BUDOKAI: Prelim Index %u. Update State %u -> %u. m_dwMatchTickCount = %u", it->first, BUDOKAI_MINORMATCH_STATE_MATCH_READY, prelim->m_byMatchState, prelim->m_dwMatchTickCount);
+				}
+			}
+			break;
+			case BUDOKAI_MINORMATCH_STATE_STAGE_READY:
+			{
+				if (prelim->m_dwMatchTickCount == 0)
+				{
+					prelim->m_byMatchState = BUDOKAI_MINORMATCH_STATE_STAGE_RUN;
+					prelim->m_dwMatchTickCount = m_pTableInfo->dwMatchIntervalTime * 1000;
+
+					ERR_LOG(LOG_GENERAL, "BUDOKAI: Prelim Index %u. Update State %u -> %u. m_dwMatchTickCount = %u", it->first, BUDOKAI_MINORMATCH_STATE_STAGE_READY, prelim->m_byMatchState, prelim->m_dwMatchTickCount);
+
+					//this packet will show "START"
 					CNtlPacket packet2(sizeof(sGU_MATCH_MINORMATCH_STATE_UPDATE_NFY));
-					sGU_MATCH_MINORMATCH_STATE_UPDATE_NFY* res2 = (sGU_MATCH_MINORMATCH_STATE_UPDATE_NFY*)packet2.GetPacketData();
+					sGU_MATCH_MINORMATCH_STATE_UPDATE_NFY * res2 = (sGU_MATCH_MINORMATCH_STATE_UPDATE_NFY *)packet2.GetPacketData();
 					res2->wOpCode = GU_MATCH_MINORMATCH_STATE_UPDATE_NFY;
-					res2->byMatchState = BUDOKAI_MINORMATCH_STATE_MATCH_READY;
+					res2->byMatchState = BUDOKAI_MINORMATCH_STATE_STAGE_RUN;
 					res2->bIsEnter = true;
 					res2->byStage = 0;
 					res2->dwRemainTime = prelim->m_dwMatchTickCount;
@@ -1601,203 +1688,116 @@ void CBudokaiManager::TickProcessPrelim(DWORD dwTickDif, BUDOKAITIME curTime)
 					prelim->m_pWorld->Broadcast(&packet2);
 				}
 			}
-		}
-		break;
-		case BUDOKAI_MINORMATCH_STATE_DIRECTION:
-		{
-		}
-		break;
-		case BUDOKAI_MINORMATCH_STATE_MATCH_READY:
-		{
-			if (prelim->m_dwMatchTickCount == 0)
+			break;
+			case BUDOKAI_MINORMATCH_STATE_STAGE_RUN:
 			{
-				//send player info
-				SendMinorMatchTeamInfo(it->first, prelim);
+				//progress fight
+				ProcessMinorMatch(prelim, it->first, dwTickDif);
 
-				//send player state
-				MinorMatchUpdatePlayersState(prelim, it->first, MATCH_MEMBER_STATE_NORMAL);
-
-				bool bDefaultWin = false;
-
-				if (m_matchType == BUDOKAI_MATCH_TYPE_INDIVIDIAUL && prelim->m_byTotalCount == 1)
-					bDefaultWin = true;
-				else if (m_matchType == BUDOKAI_MATCH_TYPE_TEAM && prelim->m_byTotalCount == 5)
-					bDefaultWin = true;
-
-				if (bDefaultWin) // if only 1 in prelim, then finish
+				if (prelim->m_dwMatchTickCount == 0)
 				{
-					ERR_LOG(LOG_GENERAL, "BUDOKAI: Prelim Index %u. Only one player/team in prelim.. Add as default winner", it->first);
+					prelim->m_dwMatchTickCount = 5000;
 
-					if (m_matchType == BUDOKAI_MATCH_TYPE_INDIVIDIAUL)
-						prelim->m_mapSelection.insert({ prelim->m_mapIndividualPrelim.begin()->first, 0 });
-					else
-						prelim->m_mapSelection.insert({ prelim->m_mapTeamPrelim.begin()->first, 0 });
+					DecidePrelimWinner(prelim, it->first);
 
-					prelim->m_byMatchState = BUDOKAI_MINORMATCH_STATE_STAGE_FINISH;
+					CNtlPacket packet2(sizeof(sGU_MATCH_MINORMATCH_STATE_UPDATE_NFY));
+					sGU_MATCH_MINORMATCH_STATE_UPDATE_NFY * res2 = (sGU_MATCH_MINORMATCH_STATE_UPDATE_NFY *)packet2.GetPacketData();
+					res2->wOpCode = GU_MATCH_MINORMATCH_STATE_UPDATE_NFY;
+					res2->byMatchState = prelim->m_byMatchState; //in "DecidePrelimWinner" we decide the next state
+					res2->bIsEnter = true;
+					res2->byStage = 0;
+					res2->dwRemainTime = prelim->m_dwMatchTickCount;
+					packet2.SetPacketLen(sizeof(sGU_MATCH_MINORMATCH_STATE_UPDATE_NFY));
+					prelim->m_pWorld->Broadcast(&packet2);
+
+					ERR_LOG(LOG_GENERAL, "BUDOKAI: Prelim Index %u. Update State %u -> %u. m_dwMatchTickCount = %u", it->first, BUDOKAI_MINORMATCH_STATE_STAGE_RUN, prelim->m_byMatchState, prelim->m_dwMatchTickCount);
+				}
+			}
+			break;
+			case BUDOKAI_MINORMATCH_STATE_STAGE_SELECTION:
+			{
+				if (prelim->m_dwMatchTickCount == 0)
+				{
+					MinorMatchSelection(prelim, it->first);
+
+					prelim->m_byMatchState = BUDOKAI_MINORMATCH_STATE_MATCH_FINISH;
 					prelim->m_dwMatchTickCount = 3000;
 
+					ERR_LOG(LOG_GENERAL, "BUDOKAI: Prelim Index %u. Update State %u -> %u. m_dwMatchTickCount = %u", it->first, BUDOKAI_MINORMATCH_STATE_STAGE_SELECTION, prelim->m_byMatchState, prelim->m_dwMatchTickCount);
+
 					CNtlPacket packet2(sizeof(sGU_MATCH_MINORMATCH_STATE_UPDATE_NFY));
-					sGU_MATCH_MINORMATCH_STATE_UPDATE_NFY* res2 = (sGU_MATCH_MINORMATCH_STATE_UPDATE_NFY*)packet2.GetPacketData();
+					sGU_MATCH_MINORMATCH_STATE_UPDATE_NFY * res2 = (sGU_MATCH_MINORMATCH_STATE_UPDATE_NFY *)packet2.GetPacketData();
 					res2->wOpCode = GU_MATCH_MINORMATCH_STATE_UPDATE_NFY;
-					res2->byMatchState = BUDOKAI_MINORMATCH_STATE_STAGE_FINISH;
+					res2->byMatchState = BUDOKAI_MINORMATCH_STATE_MATCH_FINISH;
 					res2->bIsEnter = true;
 					res2->byStage = 0;
 					res2->dwRemainTime = prelim->m_dwMatchTickCount;
 					packet2.SetPacketLen(sizeof(sGU_MATCH_MINORMATCH_STATE_UPDATE_NFY));
 					prelim->m_pWorld->Broadcast(&packet2);
 				}
-				else
+			}
+			break;
+			case BUDOKAI_MINORMATCH_STATE_STAGE_FINISH:
+			{
+				if (prelim->m_dwMatchTickCount == 0)
 				{
-					prelim->m_byMatchState = BUDOKAI_MINORMATCH_STATE_STAGE_READY;
-					prelim->m_dwMatchTickCount = 5000;
+					MinorMatchStageFinish(prelim, it->first);
 
-					//this packet will show "READY"
+					prelim->m_byMatchState = BUDOKAI_MINORMATCH_STATE_MATCH_FINISH;
+					prelim->m_dwMatchTickCount = 1000;
+
+					ERR_LOG(LOG_GENERAL, "BUDOKAI: Prelim Index %u. Update State %u -> %u. m_dwMatchTickCount = %u", it->first, BUDOKAI_MINORMATCH_STATE_STAGE_FINISH, prelim->m_byMatchState, prelim->m_dwMatchTickCount);
+
 					CNtlPacket packet2(sizeof(sGU_MATCH_MINORMATCH_STATE_UPDATE_NFY));
-					sGU_MATCH_MINORMATCH_STATE_UPDATE_NFY* res2 = (sGU_MATCH_MINORMATCH_STATE_UPDATE_NFY*)packet2.GetPacketData();
+					sGU_MATCH_MINORMATCH_STATE_UPDATE_NFY * res2 = (sGU_MATCH_MINORMATCH_STATE_UPDATE_NFY *)packet2.GetPacketData();
 					res2->wOpCode = GU_MATCH_MINORMATCH_STATE_UPDATE_NFY;
-					res2->byMatchState = BUDOKAI_MINORMATCH_STATE_STAGE_READY;
+					res2->byMatchState = BUDOKAI_MINORMATCH_STATE_MATCH_FINISH;
 					res2->bIsEnter = true;
 					res2->byStage = 0;
 					res2->dwRemainTime = prelim->m_dwMatchTickCount;
 					packet2.SetPacketLen(sizeof(sGU_MATCH_MINORMATCH_STATE_UPDATE_NFY));
 					prelim->m_pWorld->Broadcast(&packet2);
 				}
-
-				ERR_LOG(LOG_GENERAL, "BUDOKAI: Prelim Index %u. Update State %u -> %u. m_dwMatchTickCount = %u", it->first, BUDOKAI_MINORMATCH_STATE_MATCH_READY, prelim->m_byMatchState, prelim->m_dwMatchTickCount);
 			}
-		}
-		break;
-		case BUDOKAI_MINORMATCH_STATE_STAGE_READY:
-		{
-			if (prelim->m_dwMatchTickCount == 0)
+			break;
+			case BUDOKAI_MINORMATCH_STATE_MATCH_FINISH:
 			{
-				prelim->m_byMatchState = BUDOKAI_MINORMATCH_STATE_STAGE_RUN;
-				prelim->m_dwMatchTickCount = m_pTableInfo->dwMatchIntervalTime * 1000;
+				if (prelim->m_dwMatchTickCount == 0)
+				{
+					MinorMatchMatchFinish(prelim, it->first);
 
-				ERR_LOG(LOG_GENERAL, "BUDOKAI: Prelim Index %u. Update State %u -> %u. m_dwMatchTickCount = %u", it->first, BUDOKAI_MINORMATCH_STATE_STAGE_READY, prelim->m_byMatchState, prelim->m_dwMatchTickCount);
+					prelim->m_byMatchState = BUDOKAI_MINORMATCH_STATE_END;
+					prelim->m_dwMatchTickCount = 15000;
 
-				//this packet will show "START"
-				CNtlPacket packet2(sizeof(sGU_MATCH_MINORMATCH_STATE_UPDATE_NFY));
-				sGU_MATCH_MINORMATCH_STATE_UPDATE_NFY* res2 = (sGU_MATCH_MINORMATCH_STATE_UPDATE_NFY*)packet2.GetPacketData();
-				res2->wOpCode = GU_MATCH_MINORMATCH_STATE_UPDATE_NFY;
-				res2->byMatchState = BUDOKAI_MINORMATCH_STATE_STAGE_RUN;
-				res2->bIsEnter = true;
-				res2->byStage = 0;
-				res2->dwRemainTime = prelim->m_dwMatchTickCount;
-				packet2.SetPacketLen(sizeof(sGU_MATCH_MINORMATCH_STATE_UPDATE_NFY));
-				prelim->m_pWorld->Broadcast(&packet2);
+					ERR_LOG(LOG_GENERAL, "BUDOKAI: Prelim Index %u. Update State %u -> %u. m_dwMatchTickCount = %u", it->first, BUDOKAI_MINORMATCH_STATE_MATCH_FINISH, prelim->m_byMatchState, prelim->m_dwMatchTickCount);
+
+					CNtlPacket packet2(sizeof(sGU_MATCH_MINORMATCH_STATE_UPDATE_NFY));
+					sGU_MATCH_MINORMATCH_STATE_UPDATE_NFY * res2 = (sGU_MATCH_MINORMATCH_STATE_UPDATE_NFY *)packet2.GetPacketData();
+					res2->wOpCode = GU_MATCH_MINORMATCH_STATE_UPDATE_NFY;
+					res2->byMatchState = BUDOKAI_MINORMATCH_STATE_END;
+					res2->bIsEnter = true;
+					res2->byStage = 0;
+					res2->dwRemainTime = prelim->m_dwMatchTickCount;
+					packet2.SetPacketLen(sizeof(sGU_MATCH_MINORMATCH_STATE_UPDATE_NFY));
+					prelim->m_pWorld->Broadcast(&packet2);
+				}
 			}
-		}
-		break;
-		case BUDOKAI_MINORMATCH_STATE_STAGE_RUN:
-		{
-			//progress fight
-			ProcessMinorMatch(prelim, it->first, dwTickDif);
+			break;
 
-			if (prelim->m_dwMatchTickCount == 0)
+			case BUDOKAI_MINORMATCH_STATE_END:
 			{
-				prelim->m_dwMatchTickCount = 5000;
+				if (prelim->m_dwMatchTickCount == 0)
+				{
+					MinorMatchEnd(prelim, it->first);
 
-				DecidePrelimWinner(prelim, it->first);
-
-				CNtlPacket packet2(sizeof(sGU_MATCH_MINORMATCH_STATE_UPDATE_NFY));
-				sGU_MATCH_MINORMATCH_STATE_UPDATE_NFY* res2 = (sGU_MATCH_MINORMATCH_STATE_UPDATE_NFY*)packet2.GetPacketData();
-				res2->wOpCode = GU_MATCH_MINORMATCH_STATE_UPDATE_NFY;
-				res2->byMatchState = prelim->m_byMatchState; //in "DecidePrelimWinner" we decide the next state
-				res2->bIsEnter = true;
-				res2->byStage = 0;
-				res2->dwRemainTime = prelim->m_dwMatchTickCount;
-				packet2.SetPacketLen(sizeof(sGU_MATCH_MINORMATCH_STATE_UPDATE_NFY));
-				prelim->m_pWorld->Broadcast(&packet2);
-
-				ERR_LOG(LOG_GENERAL, "BUDOKAI: Prelim Index %u. Update State %u -> %u. m_dwMatchTickCount = %u", it->first, BUDOKAI_MINORMATCH_STATE_STAGE_RUN, prelim->m_byMatchState, prelim->m_dwMatchTickCount);
+					delete prelim;
+					it = m_mapPrelims.erase(it);
+					continue;
+				}
 			}
-		}
-		break;
-		case BUDOKAI_MINORMATCH_STATE_STAGE_SELECTION:
-		{
-			if (prelim->m_dwMatchTickCount == 0)
-			{
-				MinorMatchSelection(prelim, it->first);
+			break;
 
-				prelim->m_byMatchState = BUDOKAI_MINORMATCH_STATE_MATCH_FINISH;
-				prelim->m_dwMatchTickCount = 3000;
-
-				ERR_LOG(LOG_GENERAL, "BUDOKAI: Prelim Index %u. Update State %u -> %u. m_dwMatchTickCount = %u", it->first, BUDOKAI_MINORMATCH_STATE_STAGE_SELECTION, prelim->m_byMatchState, prelim->m_dwMatchTickCount);
-
-				CNtlPacket packet2(sizeof(sGU_MATCH_MINORMATCH_STATE_UPDATE_NFY));
-				sGU_MATCH_MINORMATCH_STATE_UPDATE_NFY* res2 = (sGU_MATCH_MINORMATCH_STATE_UPDATE_NFY*)packet2.GetPacketData();
-				res2->wOpCode = GU_MATCH_MINORMATCH_STATE_UPDATE_NFY;
-				res2->byMatchState = BUDOKAI_MINORMATCH_STATE_MATCH_FINISH;
-				res2->bIsEnter = true;
-				res2->byStage = 0;
-				res2->dwRemainTime = prelim->m_dwMatchTickCount;
-				packet2.SetPacketLen(sizeof(sGU_MATCH_MINORMATCH_STATE_UPDATE_NFY));
-				prelim->m_pWorld->Broadcast(&packet2);
-			}
-		}
-		break;
-		case BUDOKAI_MINORMATCH_STATE_STAGE_FINISH:
-		{
-			if (prelim->m_dwMatchTickCount == 0)
-			{
-				MinorMatchStageFinish(prelim, it->first);
-
-				prelim->m_byMatchState = BUDOKAI_MINORMATCH_STATE_MATCH_FINISH;
-				prelim->m_dwMatchTickCount = 1000;
-
-				ERR_LOG(LOG_GENERAL, "BUDOKAI: Prelim Index %u. Update State %u -> %u. m_dwMatchTickCount = %u", it->first, BUDOKAI_MINORMATCH_STATE_STAGE_FINISH, prelim->m_byMatchState, prelim->m_dwMatchTickCount);
-
-				CNtlPacket packet2(sizeof(sGU_MATCH_MINORMATCH_STATE_UPDATE_NFY));
-				sGU_MATCH_MINORMATCH_STATE_UPDATE_NFY* res2 = (sGU_MATCH_MINORMATCH_STATE_UPDATE_NFY*)packet2.GetPacketData();
-				res2->wOpCode = GU_MATCH_MINORMATCH_STATE_UPDATE_NFY;
-				res2->byMatchState = BUDOKAI_MINORMATCH_STATE_MATCH_FINISH;
-				res2->bIsEnter = true;
-				res2->byStage = 0;
-				res2->dwRemainTime = prelim->m_dwMatchTickCount;
-				packet2.SetPacketLen(sizeof(sGU_MATCH_MINORMATCH_STATE_UPDATE_NFY));
-				prelim->m_pWorld->Broadcast(&packet2);
-			}
-		}
-		break;
-		case BUDOKAI_MINORMATCH_STATE_MATCH_FINISH:
-		{
-			if (prelim->m_dwMatchTickCount == 0)
-			{
-				MinorMatchMatchFinish(prelim, it->first);
-
-				prelim->m_byMatchState = BUDOKAI_MINORMATCH_STATE_END;
-				prelim->m_dwMatchTickCount = 15000;
-
-				ERR_LOG(LOG_GENERAL, "BUDOKAI: Prelim Index %u. Update State %u -> %u. m_dwMatchTickCount = %u", it->first, BUDOKAI_MINORMATCH_STATE_MATCH_FINISH, prelim->m_byMatchState, prelim->m_dwMatchTickCount);
-
-				CNtlPacket packet2(sizeof(sGU_MATCH_MINORMATCH_STATE_UPDATE_NFY));
-				sGU_MATCH_MINORMATCH_STATE_UPDATE_NFY* res2 = (sGU_MATCH_MINORMATCH_STATE_UPDATE_NFY*)packet2.GetPacketData();
-				res2->wOpCode = GU_MATCH_MINORMATCH_STATE_UPDATE_NFY;
-				res2->byMatchState = BUDOKAI_MINORMATCH_STATE_END;
-				res2->bIsEnter = true;
-				res2->byStage = 0;
-				res2->dwRemainTime = prelim->m_dwMatchTickCount;
-				packet2.SetPacketLen(sizeof(sGU_MATCH_MINORMATCH_STATE_UPDATE_NFY));
-				prelim->m_pWorld->Broadcast(&packet2);
-			}
-		}
-		break;
-
-		case BUDOKAI_MINORMATCH_STATE_END:
-		{
-			if (prelim->m_dwMatchTickCount == 0)
-			{
-				MinorMatchEnd(prelim, it->first);
-
-				delete prelim;
-				it = m_mapPrelims.erase(it);
-				continue;
-			}
-		}
-		break;
-
-		default: ERR_LOG(LOG_GENERAL, "Unknown match state %u", prelim->m_byMatchState);
+			default: ERR_LOG(LOG_GENERAL, "Unknown match state %u", prelim->m_byMatchState);
 		}
 
 		++it;
@@ -1825,7 +1825,7 @@ void CBudokaiManager::SendMinorMatchTeamInfo(BYTE byMatchIndex, sPRELIM_HEAD* pr
 				boost::unordered_map<JOINID, sBUDOKAI_REGISTER_INDIVIDUAL_DATA>::iterator it2 = m_mapIndividual.find(pPlayer->GetJoinID());
 				if (it2 != m_mapIndividual.end())
 				{
-					info[i].wTeamType = (WORD)MAX_MATCH_TEAM_TYPE_COUNT + i;
+					info[i].wTeamType = (WORD) MAX_MATCH_TEAM_TYPE_COUNT + i;
 
 					pPlayer->SetBudokaiTeamType(info[i].wTeamType);
 
@@ -1883,7 +1883,7 @@ void CBudokaiManager::SendMinorMatchTeamInfo(BYTE byMatchIndex, sPRELIM_HEAD* pr
 			info[i].wTeamName_var = 0;
 			info[i].bDojoRecommender = false;
 			info[i].byMemberCount = 0;
-
+			
 			NTL_SAFE_WCSCPY(partyName, partyInfo->m_wszTeamName);
 			info[i].wTeamName_var = sData.Write(sizeof(partyName), partyName);
 
@@ -1922,7 +1922,7 @@ void CBudokaiManager::SendMinorMatchTeamInfo(BYTE byMatchIndex, sPRELIM_HEAD* pr
 	WORD wPacketSize = sData.GetPacketSize(sizeof(sGU_MATCH_MINORMATCH_TEAM_INFO_NFY));
 
 	CNtlPacket packet(wPacketSize);
-	sGU_MATCH_MINORMATCH_TEAM_INFO_NFY* res = (sGU_MATCH_MINORMATCH_TEAM_INFO_NFY*)packet.GetPacketData();
+	sGU_MATCH_MINORMATCH_TEAM_INFO_NFY * res = (sGU_MATCH_MINORMATCH_TEAM_INFO_NFY *)packet.GetPacketData();
 	res->wOpCode = GU_MATCH_MINORMATCH_TEAM_INFO_NFY;
 	res->byMatchIndex = byMatchIndex;
 	res->byTeamCount = i;
@@ -1949,7 +1949,7 @@ void CBudokaiManager::MinorMatchUpdatePlayersState(sPRELIM_HEAD* prelim, BYTE by
 					pPlayer->SetBudokaiPcState(byState);
 
 					CNtlPacket packet2(sizeof(sGU_MATCH_MINORMATCH_PLAYER_STATE_NFY));
-					sGU_MATCH_MINORMATCH_PLAYER_STATE_NFY* res2 = (sGU_MATCH_MINORMATCH_PLAYER_STATE_NFY*)packet2.GetPacketData();
+					sGU_MATCH_MINORMATCH_PLAYER_STATE_NFY * res2 = (sGU_MATCH_MINORMATCH_PLAYER_STATE_NFY *)packet2.GetPacketData();
 					res2->wOpCode = GU_MATCH_MINORMATCH_PLAYER_STATE_NFY;
 					res2->hPc = it->first;
 					res2->byPcState = byState;
@@ -1986,7 +1986,7 @@ void CBudokaiManager::ProcessMinorMatch(sPRELIM_HEAD* prelim, BYTE byMatchIndex,
 							pPlayer->SetBudokaiPcState(MATCH_MEMBER_STATE_OUTOFAREA);
 
 							CNtlPacket packet2(sizeof(sGU_MATCH_MINORMATCH_PLAYER_STATE_NFY));
-							sGU_MATCH_MINORMATCH_PLAYER_STATE_NFY* res2 = (sGU_MATCH_MINORMATCH_PLAYER_STATE_NFY*)packet2.GetPacketData();
+							sGU_MATCH_MINORMATCH_PLAYER_STATE_NFY * res2 = (sGU_MATCH_MINORMATCH_PLAYER_STATE_NFY *)packet2.GetPacketData();
 							res2->wOpCode = GU_MATCH_MINORMATCH_PLAYER_STATE_NFY;
 							res2->hPc = pPlayer->GetID();
 							res2->byPcState = MATCH_MEMBER_STATE_OUTOFAREA;
@@ -2031,7 +2031,7 @@ void CBudokaiManager::DecidePrelimWinner(sPRELIM_HEAD* prelim, BYTE byMatchIndex
 						//update players state to normal
 						pPlayer->SetBudokaiPcState(MATCH_MEMBER_STATE_NONE);
 						CNtlPacket packet2(sizeof(sGU_MATCH_MINORMATCH_PLAYER_STATE_NFY));
-						sGU_MATCH_MINORMATCH_PLAYER_STATE_NFY* res2 = (sGU_MATCH_MINORMATCH_PLAYER_STATE_NFY*)packet2.GetPacketData();
+						sGU_MATCH_MINORMATCH_PLAYER_STATE_NFY * res2 = (sGU_MATCH_MINORMATCH_PLAYER_STATE_NFY *)packet2.GetPacketData();
 						res2->wOpCode = GU_MATCH_MINORMATCH_PLAYER_STATE_NFY;
 						res2->hPc = it->first;
 						res2->byPcState = MATCH_MEMBER_STATE_NONE;
@@ -2045,12 +2045,12 @@ void CBudokaiManager::DecidePrelimWinner(sPRELIM_HEAD* prelim, BYTE byMatchIndex
 		// -- Check if there are people with same amount of kills
 		auto x = std::max_element(mapKills.begin(), mapKills.end(),
 			[](const std::pair<HOBJECT, BYTE>& p1, const std::pair<HOBJECT, BYTE>& p2) {
-				return p1.second < p2.second; });
+			return p1.second < p2.second; });
 
-		prelim->m_mapSelection.insert({ x->first, 0 });
+		prelim->m_mapSelection.insert({x->first, 0});
 
 		ERR_LOG(LOG_GENERAL, "BUDOKAI: Prelim Index %u. Player %u has the most kills %u", byMatchIndex, x->first, x->second);
-
+		
 		//check if some other have the same amount of kills... Then add to selection
 		for (std::map<HOBJECT, BYTE>::iterator it = mapKills.begin(); it != mapKills.end(); it++)
 		{
@@ -2085,7 +2085,7 @@ void CBudokaiManager::DecidePrelimWinner(sPRELIM_HEAD* prelim, BYTE byMatchIndex
 							pPlayer->SetBudokaiPcState(MATCH_MEMBER_STATE_NONE);
 
 							CNtlPacket packet2(sizeof(sGU_MATCH_MINORMATCH_PLAYER_STATE_NFY));
-							sGU_MATCH_MINORMATCH_PLAYER_STATE_NFY* res2 = (sGU_MATCH_MINORMATCH_PLAYER_STATE_NFY*)packet2.GetPacketData();
+							sGU_MATCH_MINORMATCH_PLAYER_STATE_NFY * res2 = (sGU_MATCH_MINORMATCH_PLAYER_STATE_NFY *)packet2.GetPacketData();
 							res2->wOpCode = GU_MATCH_MINORMATCH_PLAYER_STATE_NFY;
 							res2->hPc = it->first;
 							res2->byPcState = MATCH_MEMBER_STATE_NONE;
@@ -2100,7 +2100,7 @@ void CBudokaiManager::DecidePrelimWinner(sPRELIM_HEAD* prelim, BYTE byMatchIndex
 		// -- Check if there are people with same amount of kills
 		auto x = std::max_element(mapKills.begin(), mapKills.end(),
 			[](const std::pair<unsigned int, BYTE>& p1, const std::pair<unsigned int, BYTE>& p2) {
-				return p1.second < p2.second; });
+			return p1.second < p2.second; });
 
 		prelim->m_mapSelection.insert({ x->first, 0 });
 
@@ -2123,7 +2123,7 @@ void CBudokaiManager::DecidePrelimWinner(sPRELIM_HEAD* prelim, BYTE byMatchIndex
 			// -- Get team with most members
 			auto y = std::max_element(mapMemberCount.begin(), mapMemberCount.end(),
 				[](const std::pair<unsigned int, BYTE>& p1, const std::pair<unsigned int, BYTE>& p2) {
-					return p1.second < p2.second; });
+				return p1.second < p2.second; });
 
 			prelim->m_mapSelection.insert({ y->first, 0 });
 
@@ -2157,7 +2157,7 @@ void CBudokaiManager::DecidePrelimWinner(sPRELIM_HEAD* prelim, BYTE byMatchIndex
 void CBudokaiManager::MinorMatchSelection(sPRELIM_HEAD* prelim, BYTE byMatchIndex)
 {
 	CNtlPacket packet(sizeof(sGU_MATCH_MINORMATCH_SELECTION_NFY));
-	sGU_MATCH_MINORMATCH_SELECTION_NFY* res = (sGU_MATCH_MINORMATCH_SELECTION_NFY*)packet.GetPacketData();
+	sGU_MATCH_MINORMATCH_SELECTION_NFY * res = (sGU_MATCH_MINORMATCH_SELECTION_NFY *)packet.GetPacketData();
 	res->wOpCode = GU_MATCH_MINORMATCH_SELECTION_NFY;
 	res->byTeamCount = 0;
 	res->teamWinner = INVALID_TEAMTYPE;
@@ -2222,7 +2222,7 @@ void CBudokaiManager::MinorMatchSelection(sPRELIM_HEAD* prelim, BYTE byMatchInde
 
 		ERR_LOG(LOG_GENERAL, "BUDOKAI: Prelim Index %u. Selection Winner: Party = %u, dice = %u, byTeamCount = %u", byMatchIndex, winner->first, winner->second, res->byTeamCount);
 	}
-
+	
 	packet.SetPacketLen(sizeof(sGU_MATCH_MINORMATCH_SELECTION_NFY));
 	prelim->m_pWorld->Broadcast(&packet);
 }
@@ -2231,7 +2231,7 @@ void CBudokaiManager::MinorMatchSelection(sPRELIM_HEAD* prelim, BYTE byMatchInde
 void CBudokaiManager::MinorMatchStageFinish(sPRELIM_HEAD* prelim, BYTE byMatchIndex)
 {
 	CNtlPacket packet2(sizeof(sGU_MATCH_MINORMATCH_STAGE_FINISH_NFY));
-	sGU_MATCH_MINORMATCH_STAGE_FINISH_NFY* res2 = (sGU_MATCH_MINORMATCH_STAGE_FINISH_NFY*)packet2.GetPacketData();
+	sGU_MATCH_MINORMATCH_STAGE_FINISH_NFY * res2 = (sGU_MATCH_MINORMATCH_STAGE_FINISH_NFY *)packet2.GetPacketData();
 	res2->wOpCode = GU_MATCH_MINORMATCH_STAGE_FINISH_NFY;
 	res2->wStageWinner = INVALID_TEAMTYPE;
 	res2->byStageResult = INVALID_MATCH_RESULT;
@@ -2279,7 +2279,7 @@ void CBudokaiManager::MinorMatchStageFinish(sPRELIM_HEAD* prelim, BYTE byMatchIn
 void CBudokaiManager::MinorMatchMatchFinish(sPRELIM_HEAD* prelim, BYTE byMatchIndex)
 {
 	CNtlPacket packet2(sizeof(sGU_MATCH_MINORMATCH_MATCH_FINISH_NFY));
-	sGU_MATCH_MINORMATCH_MATCH_FINISH_NFY* res2 = (sGU_MATCH_MINORMATCH_MATCH_FINISH_NFY*)packet2.GetPacketData();
+	sGU_MATCH_MINORMATCH_MATCH_FINISH_NFY * res2 = (sGU_MATCH_MINORMATCH_MATCH_FINISH_NFY *)packet2.GetPacketData();
 	res2->wOpCode = GU_MATCH_MINORMATCH_MATCH_FINISH_NFY;
 	res2->wMatchWinner = INVALID_MATCH_TEAM_TYPE;
 	res2->byMatchResult = INVALID_MATCH_RESULT;
@@ -2431,7 +2431,7 @@ void CBudokaiManager::MinorMatchMatchFinish(sPRELIM_HEAD* prelim, BYTE byMatchIn
 
 					pPlayer->UpdateMudosaPoints(pPlayer->GetMudosaPoints() + dwMudosaPoints, true);
 
-					if (itemIdx != INVALID_TBLIDX)
+					if(itemIdx != INVALID_TBLIDX)
 						g_pItemManager->CreateQuestRewardItem(pPlayer, itemIdx, byItemCount);
 				}
 			}
@@ -2442,7 +2442,7 @@ void CBudokaiManager::MinorMatchMatchFinish(sPRELIM_HEAD* prelim, BYTE byMatchIn
 		for (std::map<JOINID, sPARTY_INFO>::iterator it = prelim->m_mapTeamPrelim.begin(); it != prelim->m_mapTeamPrelim.end(); it++)
 		{
 			sPARTY_INFO* partyInfo = &it->second;
-
+			
 			DWORD dwMudosaPoints = 0;
 			TBLIDX itemIdx = INVALID_TBLIDX;
 			BYTE byItemCount = 0;
@@ -2520,7 +2520,7 @@ void CBudokaiManager::MinorMatchEnd(sPRELIM_HEAD* prelim, BYTE byMatchIndex)
 				if (pPlayer->GetMatchIndex() == byMatchIndex)
 				{
 					CNtlPacket packet(sizeof(sGQ_BUDOKAI_TOURNAMENT_INDIVIDUAL_ADD_ENTRY_LIST_REQ));
-					sGQ_BUDOKAI_TOURNAMENT_INDIVIDUAL_ADD_ENTRY_LIST_REQ* res = (sGQ_BUDOKAI_TOURNAMENT_INDIVIDUAL_ADD_ENTRY_LIST_REQ*)packet.GetPacketData();
+					sGQ_BUDOKAI_TOURNAMENT_INDIVIDUAL_ADD_ENTRY_LIST_REQ * res = (sGQ_BUDOKAI_TOURNAMENT_INDIVIDUAL_ADD_ENTRY_LIST_REQ *)packet.GetPacketData();
 					res->wOpCode = GQ_BUDOKAI_TOURNAMENT_INDIVIDUAL_ADD_ENTRY_LIST_REQ;
 					res->wJoinId = pPlayer->GetJoinID();
 					res->byMatchIndex = byMatchIndex;
@@ -2569,7 +2569,7 @@ void CBudokaiManager::MinorMatchEnd(sPRELIM_HEAD* prelim, BYTE byMatchIndex)
 			sPARTY_INFO* partyInfo = &it->second;
 
 			CNtlPacket packet(sizeof(sGQ_BUDOKAI_TOURNAMENT_TEAM_ADD_ENTRY_LIST_REQ));
-			sGQ_BUDOKAI_TOURNAMENT_TEAM_ADD_ENTRY_LIST_REQ* res = (sGQ_BUDOKAI_TOURNAMENT_TEAM_ADD_ENTRY_LIST_REQ*)packet.GetPacketData();
+			sGQ_BUDOKAI_TOURNAMENT_TEAM_ADD_ENTRY_LIST_REQ * res = (sGQ_BUDOKAI_TOURNAMENT_TEAM_ADD_ENTRY_LIST_REQ *)packet.GetPacketData();
 			res->wOpCode = GQ_BUDOKAI_TOURNAMENT_TEAM_ADD_ENTRY_LIST_REQ;
 			res->wJoinId = partyInfo->joinId;
 			res->byMatchIndex = byMatchIndex;
@@ -2624,7 +2624,7 @@ void CBudokaiManager::MinorMatchEnd(sPRELIM_HEAD* prelim, BYTE byMatchIndex)
 }
 
 
-void CBudokaiManager::MinorMatchSpawnPlayerRandomPlace(CPlayer* pPlayer, bool bSpawnFromFaint)
+void CBudokaiManager::MinorMatchSpawnPlayerRandomPlace(CPlayer * pPlayer, bool bSpawnFromFaint)
 {
 	if (pPlayer->GetCurWorld())
 	{
@@ -2670,7 +2670,7 @@ void CBudokaiManager::MinorMatchSpawnPlayerRandomPlace(CPlayer* pPlayer, bool bS
 			pPlayer->SetBudokaiPcState(MATCH_MEMBER_STATE_RESCUE);
 
 			CNtlPacket packet2(sizeof(sGU_MATCH_MINORMATCH_PLAYER_STATE_NFY));
-			sGU_MATCH_MINORMATCH_PLAYER_STATE_NFY* res2 = (sGU_MATCH_MINORMATCH_PLAYER_STATE_NFY*)packet2.GetPacketData();
+			sGU_MATCH_MINORMATCH_PLAYER_STATE_NFY * res2 = (sGU_MATCH_MINORMATCH_PLAYER_STATE_NFY *)packet2.GetPacketData();
 			res2->wOpCode = GU_MATCH_MINORMATCH_PLAYER_STATE_NFY;
 			res2->hPc = pPlayer->GetID();
 			res2->byPcState = pPlayer->GetBudokaiPcState();
@@ -2712,7 +2712,7 @@ void CBudokaiManager::TickProcessMajorMatch(DWORD dwTickDif, BUDOKAITIME curTime
 					it->first, match->m_dwMatchTickCount);
 
 				CNtlPacket packet2(sizeof(sGU_MATCH_MAJORMATCH_STATE_UPDATE_NFY));
-				sGU_MATCH_MAJORMATCH_STATE_UPDATE_NFY* res2 = (sGU_MATCH_MAJORMATCH_STATE_UPDATE_NFY*)packet2.GetPacketData();
+				sGU_MATCH_MAJORMATCH_STATE_UPDATE_NFY * res2 = (sGU_MATCH_MAJORMATCH_STATE_UPDATE_NFY *)packet2.GetPacketData();
 				res2->wOpCode = GU_MATCH_MAJORMATCH_STATE_UPDATE_NFY;
 				res2->byMatchState = BUDOKAI_MAJORMATCH_STATE_STAGE_FINISH;
 				res2->bIsEnter = false; //false = the score picture goes away
@@ -2749,7 +2749,7 @@ void CBudokaiManager::TickProcessMajorMatch(DWORD dwTickDif, BUDOKAITIME curTime
 					ResetPlayerMajorMatch(match, it->first, false);
 
 					CNtlPacket packet2(sizeof(sGU_MATCH_MAJORMATCH_STATE_UPDATE_NFY));
-					sGU_MATCH_MAJORMATCH_STATE_UPDATE_NFY* res2 = (sGU_MATCH_MAJORMATCH_STATE_UPDATE_NFY*)packet2.GetPacketData();
+					sGU_MATCH_MAJORMATCH_STATE_UPDATE_NFY * res2 = (sGU_MATCH_MAJORMATCH_STATE_UPDATE_NFY *)packet2.GetPacketData();
 					res2->wOpCode = GU_MATCH_MAJORMATCH_STATE_UPDATE_NFY;
 					res2->byMatchState = BUDOKAI_MAJORMATCH_STATE_MATCH_READY;
 					res2->bIsEnter = true;
@@ -2765,7 +2765,7 @@ void CBudokaiManager::TickProcessMajorMatch(DWORD dwTickDif, BUDOKAITIME curTime
 		{
 			if (match->m_dwMatchTickCount == 0)
 			{
-				if (MajorMatchCheckPlayerCount(match, it->first) == true)
+				if(MajorMatchCheckPlayerCount(match, it->first) == true)
 				{
 					match->m_byMatchState = BUDOKAI_MAJORMATCH_STATE_STAGE_READY;
 					match->m_dwMatchTickCount = 5000;
@@ -2774,7 +2774,7 @@ void CBudokaiManager::TickProcessMajorMatch(DWORD dwTickDif, BUDOKAITIME curTime
 						it->first, match->m_dwMatchTickCount);
 
 					CNtlPacket packet2(sizeof(sGU_MATCH_MAJORMATCH_STATE_UPDATE_NFY));
-					sGU_MATCH_MAJORMATCH_STATE_UPDATE_NFY* res2 = (sGU_MATCH_MAJORMATCH_STATE_UPDATE_NFY*)packet2.GetPacketData();
+					sGU_MATCH_MAJORMATCH_STATE_UPDATE_NFY * res2 = (sGU_MATCH_MAJORMATCH_STATE_UPDATE_NFY *)packet2.GetPacketData();
 					res2->wOpCode = GU_MATCH_MAJORMATCH_STATE_UPDATE_NFY;
 					res2->byMatchState = BUDOKAI_MAJORMATCH_STATE_STAGE_READY;
 					res2->bIsEnter = true;
@@ -2797,7 +2797,7 @@ void CBudokaiManager::TickProcessMajorMatch(DWORD dwTickDif, BUDOKAITIME curTime
 					it->first, match->m_dwMatchTickCount);
 
 				CNtlPacket packet2(sizeof(sGU_MATCH_MAJORMATCH_STATE_UPDATE_NFY));
-				sGU_MATCH_MAJORMATCH_STATE_UPDATE_NFY* res2 = (sGU_MATCH_MAJORMATCH_STATE_UPDATE_NFY*)packet2.GetPacketData();
+				sGU_MATCH_MAJORMATCH_STATE_UPDATE_NFY * res2 = (sGU_MATCH_MAJORMATCH_STATE_UPDATE_NFY *)packet2.GetPacketData();
 				res2->wOpCode = GU_MATCH_MAJORMATCH_STATE_UPDATE_NFY;
 				res2->byMatchState = BUDOKAI_MAJORMATCH_STATE_DIRECTION;
 				res2->bIsEnter = true;
@@ -2814,7 +2814,7 @@ void CBudokaiManager::TickProcessMajorMatch(DWORD dwTickDif, BUDOKAITIME curTime
 			{
 				match->m_byMatchState = BUDOKAI_MAJORMATCH_STATE_STAGE_RUN;
 
-				if (m_matchType == BUDOKAI_MATCH_TYPE_INDIVIDIAUL)
+				if(m_matchType == BUDOKAI_MATCH_TYPE_INDIVIDIAUL)
 					match->m_dwMatchTickCount = 3 * 60 * 1000; // 3 minutes
 				else
 					match->m_dwMatchTickCount = 4 * 60 * 1000; // 4 minutes
@@ -2828,7 +2828,7 @@ void CBudokaiManager::TickProcessMajorMatch(DWORD dwTickDif, BUDOKAITIME curTime
 
 				//this packet will show "START"
 				CNtlPacket packet2(sizeof(sGU_MATCH_MAJORMATCH_STATE_UPDATE_NFY));
-				sGU_MATCH_MAJORMATCH_STATE_UPDATE_NFY* res2 = (sGU_MATCH_MAJORMATCH_STATE_UPDATE_NFY*)packet2.GetPacketData();
+				sGU_MATCH_MAJORMATCH_STATE_UPDATE_NFY * res2 = (sGU_MATCH_MAJORMATCH_STATE_UPDATE_NFY *)packet2.GetPacketData();
 				res2->wOpCode = GU_MATCH_MAJORMATCH_STATE_UPDATE_NFY;
 				res2->byMatchState = BUDOKAI_MAJORMATCH_STATE_STAGE_RUN;
 				res2->bIsEnter = true;
@@ -2873,7 +2873,7 @@ void CBudokaiManager::TickProcessMajorMatch(DWORD dwTickDif, BUDOKAITIME curTime
 						it->first, match->m_dwMatchTickCount);
 
 					CNtlPacket packet2(sizeof(sGU_MATCH_MAJORMATCH_STATE_UPDATE_NFY));
-					sGU_MATCH_MAJORMATCH_STATE_UPDATE_NFY* res2 = (sGU_MATCH_MAJORMATCH_STATE_UPDATE_NFY*)packet2.GetPacketData();
+					sGU_MATCH_MAJORMATCH_STATE_UPDATE_NFY * res2 = (sGU_MATCH_MAJORMATCH_STATE_UPDATE_NFY *)packet2.GetPacketData();
 					res2->wOpCode = GU_MATCH_MAJORMATCH_STATE_UPDATE_NFY;
 					res2->byMatchState = BUDOKAI_MAJORMATCH_STATE_STAGE_READY;
 					res2->bIsEnter = true;
@@ -2890,10 +2890,10 @@ void CBudokaiManager::TickProcessMajorMatch(DWORD dwTickDif, BUDOKAITIME curTime
 						it->first, match->m_dwMatchTickCount);
 
 					CNtlPacket packet2(sizeof(sGU_MATCH_MAJORMATCH_STATE_UPDATE_NFY));
-					sGU_MATCH_MAJORMATCH_STATE_UPDATE_NFY* res2 = (sGU_MATCH_MAJORMATCH_STATE_UPDATE_NFY*)packet2.GetPacketData();
+					sGU_MATCH_MAJORMATCH_STATE_UPDATE_NFY * res2 = (sGU_MATCH_MAJORMATCH_STATE_UPDATE_NFY *)packet2.GetPacketData();
 					res2->wOpCode = GU_MATCH_MAJORMATCH_STATE_UPDATE_NFY;
 					res2->byMatchState = BUDOKAI_MAJORMATCH_STATE_MATCH_FINISH;
-					res2->bIsEnter = true;
+					res2->bIsEnter = true; 
 					res2->byStage = match->byStage;
 					res2->dwRemainTime = match->m_dwMatchTickCount;
 					packet2.SetPacketLen(sizeof(sGU_MATCH_MAJORMATCH_STATE_UPDATE_NFY));
@@ -2913,7 +2913,7 @@ void CBudokaiManager::TickProcessMajorMatch(DWORD dwTickDif, BUDOKAITIME curTime
 					it->first, match->m_dwMatchTickCount);
 
 				CNtlPacket packet2(sizeof(sGU_MATCH_MAJORMATCH_STATE_UPDATE_NFY));
-				sGU_MATCH_MAJORMATCH_STATE_UPDATE_NFY* res2 = (sGU_MATCH_MAJORMATCH_STATE_UPDATE_NFY*)packet2.GetPacketData();
+				sGU_MATCH_MAJORMATCH_STATE_UPDATE_NFY * res2 = (sGU_MATCH_MAJORMATCH_STATE_UPDATE_NFY *)packet2.GetPacketData();
 				res2->wOpCode = GU_MATCH_MAJORMATCH_STATE_UPDATE_NFY;
 				res2->byMatchState = BUDOKAI_MAJORMATCH_STATE_END;
 				res2->bIsEnter = true;
@@ -2957,7 +2957,7 @@ void CBudokaiManager::StartMajorMatchTeleport()
 	if (m_matchType == BUDOKAI_MATCH_TYPE_INDIVIDIAUL)
 	{
 		CNtlPacket packet(sizeof(sGT_BUDOKAI_MINOR_MATCH_INDIVIDUAL_LIST_NFY));
-		sGT_BUDOKAI_MINOR_MATCH_INDIVIDUAL_LIST_NFY* res = (sGT_BUDOKAI_MINOR_MATCH_INDIVIDUAL_LIST_NFY*)packet.GetPacketData();
+		sGT_BUDOKAI_MINOR_MATCH_INDIVIDUAL_LIST_NFY * res = (sGT_BUDOKAI_MINOR_MATCH_INDIVIDUAL_LIST_NFY *)packet.GetPacketData();
 		res->wOpCode = GT_BUDOKAI_MINOR_MATCH_INDIVIDUAL_LIST_NFY;
 		res->byServerChannelId = DOJO_CHANNEL_INDEX;
 		res->byServerIndex = 0;
@@ -3012,7 +3012,7 @@ void CBudokaiManager::StartMajorMatchTeleport()
 	else
 	{
 		CNtlPacket packet(sizeof(sGT_BUDOKAI_MINOR_MATCH_TEAM_LIST_NFY));
-		sGT_BUDOKAI_MINOR_MATCH_TEAM_LIST_NFY* res = (sGT_BUDOKAI_MINOR_MATCH_TEAM_LIST_NFY*)packet.GetPacketData();
+		sGT_BUDOKAI_MINOR_MATCH_TEAM_LIST_NFY * res = (sGT_BUDOKAI_MINOR_MATCH_TEAM_LIST_NFY *)packet.GetPacketData();
 		res->wOpCode = GT_BUDOKAI_MINOR_MATCH_TEAM_LIST_NFY;
 		res->byServerChannelId = DOJO_CHANNEL_INDEX;
 		res->byServerIndex = 0;
@@ -3072,7 +3072,7 @@ void CBudokaiManager::StartMajorMatchTeleport()
 	}
 }
 
-void CBudokaiManager::SendMajorMatchTeamInfo(BYTE byMatchIndex, sTOURNAMENT_MATCH* match)
+void CBudokaiManager::SendMajorMatchTeamInfo(BYTE byMatchIndex, sTOURNAMENT_MATCH * match)
 {
 	sVARIABLE_DATA sData;
 	sData.Init(1024);
@@ -3193,7 +3193,7 @@ void CBudokaiManager::SendMajorMatchTeamInfo(BYTE byMatchIndex, sTOURNAMENT_MATC
 	WORD wPacketSize = sData.GetPacketSize(sizeof(sGU_MATCH_MAJORMATCH_TEAM_INFO_NFY));
 
 	CNtlPacket packet(wPacketSize);
-	sGU_MATCH_MAJORMATCH_TEAM_INFO_NFY* res = (sGU_MATCH_MAJORMATCH_TEAM_INFO_NFY*)packet.GetPacketData();
+	sGU_MATCH_MAJORMATCH_TEAM_INFO_NFY * res = (sGU_MATCH_MAJORMATCH_TEAM_INFO_NFY *)packet.GetPacketData();
 	res->wOpCode = GU_MATCH_MAJORMATCH_TEAM_INFO_NFY;
 	res->byMatchIndex = byMatchIndex;
 	res->byMatchDepth = m_eMatchDepth;
@@ -3202,10 +3202,10 @@ void CBudokaiManager::SendMajorMatchTeamInfo(BYTE byMatchIndex, sTOURNAMENT_MATC
 	sData.CopyTo(&res->sData, sData.GetDataSize());
 	match->m_pWorld->Broadcast(&packet);
 
-	ERR_LOG(LOG_GENERAL, "Budokai: wPacketSize %u, sData.GetDataSize() %u, byTeamCount %u \n", wPacketSize, sData.GetDataSize(), res->byTeamCount);
+	ERR_LOG(LOG_GENERAL,"Budokai: wPacketSize %u, sData.GetDataSize() %u, byTeamCount %u \n", wPacketSize, sData.GetDataSize(), res->byTeamCount);
 }
 
-void CBudokaiManager::MajorMatchUpdatePlayersState(sTOURNAMENT_MATCH* match, BYTE byMatchIndex, BYTE byState)
+void CBudokaiManager::MajorMatchUpdatePlayersState(sTOURNAMENT_MATCH * match, BYTE byMatchIndex, BYTE byState)
 {
 	for (std::map<HOBJECT, sPLAYER_INFO>::iterator it = match->m_mapIndividual.begin(); it != match->m_mapIndividual.end(); it++)
 	{
@@ -3219,7 +3219,7 @@ void CBudokaiManager::MajorMatchUpdatePlayersState(sTOURNAMENT_MATCH* match, BYT
 					pPlayer->SetBudokaiPcState(byState);
 
 					CNtlPacket packet2(sizeof(sGU_MATCH_MAJORMATCH_PLAYER_STATE_NFY));
-					sGU_MATCH_MAJORMATCH_PLAYER_STATE_NFY* res2 = (sGU_MATCH_MAJORMATCH_PLAYER_STATE_NFY*)packet2.GetPacketData();
+					sGU_MATCH_MAJORMATCH_PLAYER_STATE_NFY * res2 = (sGU_MATCH_MAJORMATCH_PLAYER_STATE_NFY *)packet2.GetPacketData();
 					res2->wOpCode = GU_MATCH_MAJORMATCH_PLAYER_STATE_NFY;
 					res2->hPc = it->first;
 					res2->byPcState = byState;
@@ -3234,7 +3234,7 @@ void CBudokaiManager::MajorMatchUpdatePlayersState(sTOURNAMENT_MATCH* match, BYT
 	}
 }
 
-bool CBudokaiManager::ProcessMajorMatch(sTOURNAMENT_MATCH* match, BYTE byMatchIndex, DWORD dwTickDif)
+bool CBudokaiManager::ProcessMajorMatch(sTOURNAMENT_MATCH * match, BYTE byMatchIndex, DWORD dwTickDif)
 {
 	if (m_matchType == BUDOKAI_MATCH_TYPE_INDIVIDIAUL)
 	{
@@ -3256,7 +3256,7 @@ bool CBudokaiManager::ProcessMajorMatch(sTOURNAMENT_MATCH* match, BYTE byMatchIn
 								pPlayer->SetBudokaiPcState(MATCH_MEMBER_STATE_OUTOFAREA);
 
 								CNtlPacket packet2(sizeof(sGU_MATCH_MAJORMATCH_PLAYER_STATE_NFY));
-								sGU_MATCH_MAJORMATCH_PLAYER_STATE_NFY* res2 = (sGU_MATCH_MAJORMATCH_PLAYER_STATE_NFY*)packet2.GetPacketData();
+								sGU_MATCH_MAJORMATCH_PLAYER_STATE_NFY * res2 = (sGU_MATCH_MAJORMATCH_PLAYER_STATE_NFY *)packet2.GetPacketData();
 								res2->wOpCode = GU_MATCH_MAJORMATCH_PLAYER_STATE_NFY;
 								res2->hPc = pPlayer->GetID();
 								res2->byPcState = MATCH_MEMBER_STATE_OUTOFAREA;
@@ -3298,7 +3298,7 @@ bool CBudokaiManager::ProcessMajorMatch(sTOURNAMENT_MATCH* match, BYTE byMatchIn
 									pPlayer->SetBudokaiPcState(MATCH_MEMBER_STATE_OUTOFAREA);
 
 									CNtlPacket packet2(sizeof(sGU_MATCH_MAJORMATCH_PLAYER_STATE_NFY));
-									sGU_MATCH_MAJORMATCH_PLAYER_STATE_NFY* res2 = (sGU_MATCH_MAJORMATCH_PLAYER_STATE_NFY*)packet2.GetPacketData();
+									sGU_MATCH_MAJORMATCH_PLAYER_STATE_NFY * res2 = (sGU_MATCH_MAJORMATCH_PLAYER_STATE_NFY *)packet2.GetPacketData();
 									res2->wOpCode = GU_MATCH_MAJORMATCH_PLAYER_STATE_NFY;
 									res2->hPc = pPlayer->GetID();
 									res2->byPcState = MATCH_MEMBER_STATE_OUTOFAREA;
@@ -3337,7 +3337,7 @@ bool CBudokaiManager::ProcessMajorMatch(sTOURNAMENT_MATCH* match, BYTE byMatchIn
 	return true;
 }
 
-void CBudokaiManager::UpdateMajorMatchScore(sTOURNAMENT_MATCH* match, BYTE byMatchIndex, BYTE byMatchResult, TEAMTYPE wMatchWinner, BYTE byWins/* = 1*/)
+void CBudokaiManager::UpdateMajorMatchScore(sTOURNAMENT_MATCH * match, BYTE byMatchIndex, BYTE byMatchResult, TEAMTYPE wMatchWinner, BYTE byWins/* = 1*/)
 {
 	if (wMatchWinner == MATCH_TEAM_TYPE_TEAM1)
 	{
@@ -3353,7 +3353,7 @@ void CBudokaiManager::UpdateMajorMatchScore(sTOURNAMENT_MATCH* match, BYTE byMat
 	}
 
 	CNtlPacket packet(sizeof(sGU_MATCH_MAJORMATCH_STAGE_FINISH_NFY));
-	sGU_MATCH_MAJORMATCH_STAGE_FINISH_NFY* res = (sGU_MATCH_MAJORMATCH_STAGE_FINISH_NFY*)packet.GetPacketData();
+	sGU_MATCH_MAJORMATCH_STAGE_FINISH_NFY * res = (sGU_MATCH_MAJORMATCH_STAGE_FINISH_NFY *)packet.GetPacketData();
 	res->wOpCode = GU_MATCH_MAJORMATCH_STAGE_FINISH_NFY;
 	res->sMatchScore.byTeam1 = match->data.byScore1;
 	res->sMatchScore.byTeam2 = match->data.byScore2;
@@ -3382,7 +3382,7 @@ void CBudokaiManager::UpdateMajorMatchScore(sTOURNAMENT_MATCH* match, BYTE byMat
 	match->m_dwMatchTickCount = 5000;
 
 	CNtlPacket packet2(sizeof(sGU_MATCH_MAJORMATCH_STATE_UPDATE_NFY));
-	sGU_MATCH_MAJORMATCH_STATE_UPDATE_NFY* res2 = (sGU_MATCH_MAJORMATCH_STATE_UPDATE_NFY*)packet2.GetPacketData();
+	sGU_MATCH_MAJORMATCH_STATE_UPDATE_NFY * res2 = (sGU_MATCH_MAJORMATCH_STATE_UPDATE_NFY *)packet2.GetPacketData();
 	res2->wOpCode = GU_MATCH_MAJORMATCH_STATE_UPDATE_NFY;
 	res2->byMatchState = BUDOKAI_MAJORMATCH_STATE_NONE;
 	res2->bIsEnter = true;
@@ -3393,7 +3393,7 @@ void CBudokaiManager::UpdateMajorMatchScore(sTOURNAMENT_MATCH* match, BYTE byMat
 }
 
 
-void CBudokaiManager::ResetPlayerMajorMatch(sTOURNAMENT_MATCH* match, BYTE byMatchIndex, bool bSpawn)
+void CBudokaiManager::ResetPlayerMajorMatch(sTOURNAMENT_MATCH * match, BYTE byMatchIndex, bool bSpawn)
 {
 	match->m_byTeam1UnavailablePlayerCount = 0;
 	match->m_byTeam2UnavailablePlayerCount = 0;
@@ -3532,10 +3532,10 @@ void CBudokaiManager::ResetPlayerMajorMatch(sTOURNAMENT_MATCH* match, BYTE byMat
 	}
 }
 
-void CBudokaiManager::MajorMatchMatchFinish(sTOURNAMENT_MATCH* match, BYTE byMatchIndex)
+void CBudokaiManager::MajorMatchMatchFinish(sTOURNAMENT_MATCH * match, BYTE byMatchIndex)
 {
 	CNtlPacket packet2(sizeof(sGU_MATCH_MAJORMATCH_MATCH_FINISH_NFY));
-	sGU_MATCH_MAJORMATCH_MATCH_FINISH_NFY* res2 = (sGU_MATCH_MAJORMATCH_MATCH_FINISH_NFY*)packet2.GetPacketData();
+	sGU_MATCH_MAJORMATCH_MATCH_FINISH_NFY * res2 = (sGU_MATCH_MAJORMATCH_MATCH_FINISH_NFY *)packet2.GetPacketData();
 	res2->wOpCode = GU_MATCH_MAJORMATCH_MATCH_FINISH_NFY;
 	res2->byMatchResult = MATCH_RESULT_WIN;
 	res2->sMatchScore.byTeam1 = match->data.byScore1;
@@ -3568,7 +3568,7 @@ void CBudokaiManager::MajorMatchMatchFinish(sTOURNAMENT_MATCH* match, BYTE byMat
 				pPlayer->SetBudokaiPcState(MATCH_MEMBER_STATE_NORMAL);
 
 				CNtlPacket packet3(sizeof(sGU_MATCH_MAJORMATCH_PLAYER_STATE_NFY));
-				sGU_MATCH_MAJORMATCH_PLAYER_STATE_NFY* res3 = (sGU_MATCH_MAJORMATCH_PLAYER_STATE_NFY*)packet3.GetPacketData();
+				sGU_MATCH_MAJORMATCH_PLAYER_STATE_NFY * res3 = (sGU_MATCH_MAJORMATCH_PLAYER_STATE_NFY *)packet3.GetPacketData();
 				res3->wOpCode = GU_MATCH_MAJORMATCH_PLAYER_STATE_NFY;
 				res3->hPc = it->first;
 				res3->byPcState = MATCH_MEMBER_STATE_NORMAL;
@@ -3679,7 +3679,7 @@ void CBudokaiManager::MajorMatchMatchFinish(sTOURNAMENT_MATCH* match, BYTE byMat
 					pPlayer->SetBudokaiPcState(MATCH_MEMBER_STATE_NORMAL);
 
 					CNtlPacket packet3(sizeof(sGU_MATCH_MAJORMATCH_PLAYER_STATE_NFY));
-					sGU_MATCH_MAJORMATCH_PLAYER_STATE_NFY* res3 = (sGU_MATCH_MAJORMATCH_PLAYER_STATE_NFY*)packet3.GetPacketData();
+					sGU_MATCH_MAJORMATCH_PLAYER_STATE_NFY * res3 = (sGU_MATCH_MAJORMATCH_PLAYER_STATE_NFY *)packet3.GetPacketData();
 					res3->wOpCode = GU_MATCH_MAJORMATCH_PLAYER_STATE_NFY;
 					res3->hPc = it->first;
 					res3->byPcState = MATCH_MEMBER_STATE_NORMAL;
@@ -3700,7 +3700,7 @@ void CBudokaiManager::MajorMatchMatchFinish(sTOURNAMENT_MATCH* match, BYTE byMat
 	}
 }
 
-void CBudokaiManager::MajorMatchEnd(sTOURNAMENT_MATCH* match, BYTE byMatchIndex)
+void CBudokaiManager::MajorMatchEnd(sTOURNAMENT_MATCH * match, BYTE byMatchIndex)
 {
 	CGameServer* app = (CGameServer*)g_pApp;
 
@@ -3718,7 +3718,7 @@ void CBudokaiManager::MajorMatchEnd(sTOURNAMENT_MATCH* match, BYTE byMatchIndex)
 				if (pPlayer->GetMatchIndex() == byMatchIndex && pPlayer->GetCharID() == info.charId)
 				{
 					CNtlPacket packet(sizeof(sGQ_BUDOKAI_TOURNAMENT_INDIVIDUAL_ADD_ENTRY_LIST_REQ));
-					sGQ_BUDOKAI_TOURNAMENT_INDIVIDUAL_ADD_ENTRY_LIST_REQ* res = (sGQ_BUDOKAI_TOURNAMENT_INDIVIDUAL_ADD_ENTRY_LIST_REQ*)packet.GetPacketData();
+					sGQ_BUDOKAI_TOURNAMENT_INDIVIDUAL_ADD_ENTRY_LIST_REQ * res = (sGQ_BUDOKAI_TOURNAMENT_INDIVIDUAL_ADD_ENTRY_LIST_REQ *)packet.GetPacketData();
 					res->wOpCode = GQ_BUDOKAI_TOURNAMENT_INDIVIDUAL_ADD_ENTRY_LIST_REQ;
 					res->wJoinId = pPlayer->GetJoinID();
 					res->byMatchIndex = byMatchIndex;
@@ -3764,7 +3764,7 @@ void CBudokaiManager::MajorMatchEnd(sTOURNAMENT_MATCH* match, BYTE byMatchIndex)
 						}
 						else ERR_LOG(LOG_GENERAL, "Could not find player in m_mapJoinInfo");
 					}
-
+			
 					packet.SetPacketLen(sizeof(sGQ_BUDOKAI_TOURNAMENT_INDIVIDUAL_ADD_ENTRY_LIST_REQ));
 					app->SendTo(app->GetQueryServerSession(), &packet);
 
@@ -3780,7 +3780,7 @@ void CBudokaiManager::MajorMatchEnd(sTOURNAMENT_MATCH* match, BYTE byMatchIndex)
 			sPARTY_INFO* partyInfo = &it->second;
 
 			CNtlPacket packet(sizeof(sGQ_BUDOKAI_TOURNAMENT_TEAM_ADD_ENTRY_LIST_REQ));
-			sGQ_BUDOKAI_TOURNAMENT_TEAM_ADD_ENTRY_LIST_REQ* res = (sGQ_BUDOKAI_TOURNAMENT_TEAM_ADD_ENTRY_LIST_REQ*)packet.GetPacketData();
+			sGQ_BUDOKAI_TOURNAMENT_TEAM_ADD_ENTRY_LIST_REQ * res = (sGQ_BUDOKAI_TOURNAMENT_TEAM_ADD_ENTRY_LIST_REQ *)packet.GetPacketData();
 			res->wOpCode = GQ_BUDOKAI_TOURNAMENT_TEAM_ADD_ENTRY_LIST_REQ;
 			res->wJoinId = partyInfo->joinId;
 			res->byMatchIndex = byMatchIndex;
@@ -3860,7 +3860,7 @@ void CBudokaiManager::EndMatchDepth(eBUDOKAI_MATCH_DEPTH matchDepth)
 	}
 }
 
-void CBudokaiManager::MajorMatchTimeEnd(sTOURNAMENT_MATCH* match, BYTE byMatchIndex)
+void CBudokaiManager::MajorMatchTimeEnd(sTOURNAMENT_MATCH * match, BYTE byMatchIndex)
 {
 	//if (m_matchType == BUDOKAI_MATCH_TYPE_INDIVIDIAUL)
 	{
@@ -3956,7 +3956,7 @@ bool CBudokaiManager::MajorMatchCheckPlayerCount(sTOURNAMENT_MATCH* match, BYTE 
 		return false;
 	}
 
-	if (match->m_byTeam2PlayerCount == 0)
+	if(match->m_byTeam2PlayerCount == 0)
 	{
 		UpdateMajorMatchScore(match, byMatchIndex, MATCH_RESULT_WIN, MATCH_TEAM_TYPE_TEAM1, 2); //give instant 2 wins
 		return false;
@@ -3988,7 +3988,7 @@ void CBudokaiManager::TickProcessFinalMatch(DWORD dwTickDif, BUDOKAITIME curTime
 					it->first, match->m_dwMatchTickCount);
 
 				CNtlPacket packet2(sizeof(sGU_MATCH_FINALMATCH_STATE_UPDATE_NFY));
-				sGU_MATCH_FINALMATCH_STATE_UPDATE_NFY* res2 = (sGU_MATCH_FINALMATCH_STATE_UPDATE_NFY*)packet2.GetPacketData();
+				sGU_MATCH_FINALMATCH_STATE_UPDATE_NFY * res2 = (sGU_MATCH_FINALMATCH_STATE_UPDATE_NFY *)packet2.GetPacketData();
 				res2->wOpCode = GU_MATCH_FINALMATCH_STATE_UPDATE_NFY;
 				res2->byMatchState = BUDOKAI_FINALMATCH_STATE_STAGE_FINISH;
 				res2->bIsEnter = false; //false = the score picture goes away
@@ -4025,7 +4025,7 @@ void CBudokaiManager::TickProcessFinalMatch(DWORD dwTickDif, BUDOKAITIME curTime
 					ResetPlayerFinalMatch(match, it->first, false);
 
 					CNtlPacket packet2(sizeof(sGU_MATCH_FINALMATCH_STATE_UPDATE_NFY));
-					sGU_MATCH_FINALMATCH_STATE_UPDATE_NFY* res2 = (sGU_MATCH_FINALMATCH_STATE_UPDATE_NFY*)packet2.GetPacketData();
+					sGU_MATCH_FINALMATCH_STATE_UPDATE_NFY * res2 = (sGU_MATCH_FINALMATCH_STATE_UPDATE_NFY *)packet2.GetPacketData();
 					res2->wOpCode = GU_MATCH_FINALMATCH_STATE_UPDATE_NFY;
 					res2->byMatchState = BUDOKAI_FINALMATCH_STATE_MATCH_READY;
 					res2->bIsEnter = true;
@@ -4050,7 +4050,7 @@ void CBudokaiManager::TickProcessFinalMatch(DWORD dwTickDif, BUDOKAITIME curTime
 						it->first, match->m_dwMatchTickCount);
 
 					CNtlPacket packet2(sizeof(sGU_MATCH_FINALMATCH_STATE_UPDATE_NFY));
-					sGU_MATCH_FINALMATCH_STATE_UPDATE_NFY* res2 = (sGU_MATCH_FINALMATCH_STATE_UPDATE_NFY*)packet2.GetPacketData();
+					sGU_MATCH_FINALMATCH_STATE_UPDATE_NFY * res2 = (sGU_MATCH_FINALMATCH_STATE_UPDATE_NFY *)packet2.GetPacketData();
 					res2->wOpCode = GU_MATCH_FINALMATCH_STATE_UPDATE_NFY;
 					res2->byMatchState = BUDOKAI_FINALMATCH_STATE_STAGE_READY;
 					res2->bIsEnter = true;
@@ -4075,7 +4075,7 @@ void CBudokaiManager::TickProcessFinalMatch(DWORD dwTickDif, BUDOKAITIME curTime
 						it->first, match->m_dwMatchTickCount);
 
 					CNtlPacket packet2(sizeof(sGU_MATCH_FINALMATCH_STATE_UPDATE_NFY));
-					sGU_MATCH_FINALMATCH_STATE_UPDATE_NFY* res2 = (sGU_MATCH_FINALMATCH_STATE_UPDATE_NFY*)packet2.GetPacketData();
+					sGU_MATCH_FINALMATCH_STATE_UPDATE_NFY * res2 = (sGU_MATCH_FINALMATCH_STATE_UPDATE_NFY *)packet2.GetPacketData();
 					res2->wOpCode = GU_MATCH_FINALMATCH_STATE_UPDATE_NFY;
 					res2->byMatchState = BUDOKAI_FINALMATCH_STATE_FINALDIRECTION;
 					res2->bIsEnter = true;
@@ -4093,7 +4093,7 @@ void CBudokaiManager::TickProcessFinalMatch(DWORD dwTickDif, BUDOKAITIME curTime
 						it->first, match->m_dwMatchTickCount);
 
 					CNtlPacket packet2(sizeof(sGU_MATCH_FINALMATCH_STATE_UPDATE_NFY));
-					sGU_MATCH_FINALMATCH_STATE_UPDATE_NFY* res2 = (sGU_MATCH_FINALMATCH_STATE_UPDATE_NFY*)packet2.GetPacketData();
+					sGU_MATCH_FINALMATCH_STATE_UPDATE_NFY * res2 = (sGU_MATCH_FINALMATCH_STATE_UPDATE_NFY *)packet2.GetPacketData();
 					res2->wOpCode = GU_MATCH_FINALMATCH_STATE_UPDATE_NFY;
 					res2->byMatchState = BUDOKAI_FINALMATCH_STATE_DIRECTION;
 					res2->bIsEnter = true;
@@ -4110,7 +4110,7 @@ void CBudokaiManager::TickProcessFinalMatch(DWORD dwTickDif, BUDOKAITIME curTime
 			if (match->m_dwMatchTickCount == 0)
 			{
 				match->m_byMatchState = BUDOKAI_FINALMATCH_STATE_STAGE_RUN;
-
+				
 				if (m_matchType == BUDOKAI_MATCH_TYPE_INDIVIDIAUL)
 					match->m_dwMatchTickCount = 3 * 60 * 1000; // 3 minutes
 				else
@@ -4124,7 +4124,7 @@ void CBudokaiManager::TickProcessFinalMatch(DWORD dwTickDif, BUDOKAITIME curTime
 
 				//this packet will show "START"
 				CNtlPacket packet2(sizeof(sGU_MATCH_FINALMATCH_STATE_UPDATE_NFY));
-				sGU_MATCH_FINALMATCH_STATE_UPDATE_NFY* res2 = (sGU_MATCH_FINALMATCH_STATE_UPDATE_NFY*)packet2.GetPacketData();
+				sGU_MATCH_FINALMATCH_STATE_UPDATE_NFY * res2 = (sGU_MATCH_FINALMATCH_STATE_UPDATE_NFY *)packet2.GetPacketData();
 				res2->wOpCode = GU_MATCH_FINALMATCH_STATE_UPDATE_NFY;
 				res2->byMatchState = BUDOKAI_FINALMATCH_STATE_STAGE_RUN;
 				res2->bIsEnter = true;
@@ -4165,7 +4165,7 @@ void CBudokaiManager::TickProcessFinalMatch(DWORD dwTickDif, BUDOKAITIME curTime
 						it->first, match->m_dwMatchTickCount);
 
 					CNtlPacket packet2(sizeof(sGU_MATCH_FINALMATCH_STATE_UPDATE_NFY));
-					sGU_MATCH_FINALMATCH_STATE_UPDATE_NFY* res2 = (sGU_MATCH_FINALMATCH_STATE_UPDATE_NFY*)packet2.GetPacketData();
+					sGU_MATCH_FINALMATCH_STATE_UPDATE_NFY * res2 = (sGU_MATCH_FINALMATCH_STATE_UPDATE_NFY *)packet2.GetPacketData();
 					res2->wOpCode = GU_MATCH_FINALMATCH_STATE_UPDATE_NFY;
 					res2->byMatchState = BUDOKAI_FINALMATCH_STATE_STAGE_READY;
 					res2->bIsEnter = true;
@@ -4183,7 +4183,7 @@ void CBudokaiManager::TickProcessFinalMatch(DWORD dwTickDif, BUDOKAITIME curTime
 						it->first, match->m_dwMatchTickCount);
 
 					CNtlPacket packet2(sizeof(sGU_MATCH_FINALMATCH_STATE_UPDATE_NFY));
-					sGU_MATCH_FINALMATCH_STATE_UPDATE_NFY* res2 = (sGU_MATCH_FINALMATCH_STATE_UPDATE_NFY*)packet2.GetPacketData();
+					sGU_MATCH_FINALMATCH_STATE_UPDATE_NFY * res2 = (sGU_MATCH_FINALMATCH_STATE_UPDATE_NFY *)packet2.GetPacketData();
 					res2->wOpCode = GU_MATCH_FINALMATCH_STATE_UPDATE_NFY;
 					res2->byMatchState = BUDOKAI_FINALMATCH_STATE_MATCH_FINISH;
 					res2->bIsEnter = true;
@@ -4215,7 +4215,7 @@ void CBudokaiManager::TickProcessFinalMatch(DWORD dwTickDif, BUDOKAITIME curTime
 						it->first, match->m_dwMatchTickCount);
 
 					CNtlPacket packet2(sizeof(sGU_MATCH_FINALMATCH_STATE_UPDATE_NFY));
-					sGU_MATCH_FINALMATCH_STATE_UPDATE_NFY* res2 = (sGU_MATCH_FINALMATCH_STATE_UPDATE_NFY*)packet2.GetPacketData();
+					sGU_MATCH_FINALMATCH_STATE_UPDATE_NFY * res2 = (sGU_MATCH_FINALMATCH_STATE_UPDATE_NFY *)packet2.GetPacketData();
 					res2->wOpCode = GU_MATCH_FINALMATCH_STATE_UPDATE_NFY;
 					res2->byMatchState = BUDOKAI_FINALMATCH_STATE_AWARDING;
 					res2->bIsEnter = true;
@@ -4233,7 +4233,7 @@ void CBudokaiManager::TickProcessFinalMatch(DWORD dwTickDif, BUDOKAITIME curTime
 						it->first, match->m_dwMatchTickCount);
 
 					CNtlPacket packet2(sizeof(sGU_MATCH_FINALMATCH_STATE_UPDATE_NFY));
-					sGU_MATCH_FINALMATCH_STATE_UPDATE_NFY* res2 = (sGU_MATCH_FINALMATCH_STATE_UPDATE_NFY*)packet2.GetPacketData();
+					sGU_MATCH_FINALMATCH_STATE_UPDATE_NFY * res2 = (sGU_MATCH_FINALMATCH_STATE_UPDATE_NFY *)packet2.GetPacketData();
 					res2->wOpCode = GU_MATCH_FINALMATCH_STATE_UPDATE_NFY;
 					res2->byMatchState = BUDOKAI_FINALMATCH_STATE_END;
 					res2->bIsEnter = true;
@@ -4261,7 +4261,7 @@ void CBudokaiManager::TickProcessFinalMatch(DWORD dwTickDif, BUDOKAITIME curTime
 						it->first, match->m_dwMatchTickCount);
 
 					CNtlPacket packet2(sizeof(sGU_MATCH_FINALMATCH_STATE_UPDATE_NFY));
-					sGU_MATCH_FINALMATCH_STATE_UPDATE_NFY* res2 = (sGU_MATCH_FINALMATCH_STATE_UPDATE_NFY*)packet2.GetPacketData();
+					sGU_MATCH_FINALMATCH_STATE_UPDATE_NFY * res2 = (sGU_MATCH_FINALMATCH_STATE_UPDATE_NFY *)packet2.GetPacketData();
 					res2->wOpCode = GU_MATCH_FINALMATCH_STATE_UPDATE_NFY;
 					res2->byMatchState = BUDOKAI_FINALMATCH_STATE_STAGE_READY;
 					res2->bIsEnter = true;
@@ -4285,7 +4285,7 @@ void CBudokaiManager::TickProcessFinalMatch(DWORD dwTickDif, BUDOKAITIME curTime
 					it->first, match->m_dwMatchTickCount);
 
 				CNtlPacket packet2(sizeof(sGU_MATCH_FINALMATCH_STATE_UPDATE_NFY));
-				sGU_MATCH_FINALMATCH_STATE_UPDATE_NFY* res2 = (sGU_MATCH_FINALMATCH_STATE_UPDATE_NFY*)packet2.GetPacketData();
+				sGU_MATCH_FINALMATCH_STATE_UPDATE_NFY * res2 = (sGU_MATCH_FINALMATCH_STATE_UPDATE_NFY *)packet2.GetPacketData();
 				res2->wOpCode = GU_MATCH_FINALMATCH_STATE_UPDATE_NFY;
 				res2->byMatchState = BUDOKAI_FINALMATCH_STATE_END;
 				res2->bIsEnter = true;
@@ -4325,7 +4325,7 @@ void CBudokaiManager::StartFinalMatchTeleport()
 	if (m_matchType == BUDOKAI_MATCH_TYPE_INDIVIDIAUL)
 	{
 		CNtlPacket packet(sizeof(sGT_BUDOKAI_MINOR_MATCH_INDIVIDUAL_LIST_NFY));
-		sGT_BUDOKAI_MINOR_MATCH_INDIVIDUAL_LIST_NFY* res = (sGT_BUDOKAI_MINOR_MATCH_INDIVIDUAL_LIST_NFY*)packet.GetPacketData();
+		sGT_BUDOKAI_MINOR_MATCH_INDIVIDUAL_LIST_NFY * res = (sGT_BUDOKAI_MINOR_MATCH_INDIVIDUAL_LIST_NFY *)packet.GetPacketData();
 		res->wOpCode = GT_BUDOKAI_MINOR_MATCH_INDIVIDUAL_LIST_NFY;
 		res->byServerChannelId = DOJO_CHANNEL_INDEX;
 		res->byServerIndex = 0;
@@ -4390,7 +4390,7 @@ void CBudokaiManager::StartFinalMatchTeleport()
 	else
 	{
 		CNtlPacket packet(sizeof(sGT_BUDOKAI_MINOR_MATCH_TEAM_LIST_NFY));
-		sGT_BUDOKAI_MINOR_MATCH_TEAM_LIST_NFY* res = (sGT_BUDOKAI_MINOR_MATCH_TEAM_LIST_NFY*)packet.GetPacketData();
+		sGT_BUDOKAI_MINOR_MATCH_TEAM_LIST_NFY * res = (sGT_BUDOKAI_MINOR_MATCH_TEAM_LIST_NFY *)packet.GetPacketData();
 		res->wOpCode = GT_BUDOKAI_MINOR_MATCH_TEAM_LIST_NFY;
 		res->byServerChannelId = DOJO_CHANNEL_INDEX;
 		res->byServerIndex = 0;
@@ -4472,7 +4472,7 @@ void CBudokaiManager::StartFinalMatchTeleport()
 	}
 }
 
-void CBudokaiManager::SendFinalMatchTeamInfo(BYTE byMatchIndex, sTOURNAMENT_MATCH* match)
+void CBudokaiManager::SendFinalMatchTeamInfo(BYTE byMatchIndex, sTOURNAMENT_MATCH * match)
 {
 	sVARIABLE_DATA sData;
 	sData.Init(1024);
@@ -4612,7 +4612,7 @@ void CBudokaiManager::SendFinalMatchTeamInfo(BYTE byMatchIndex, sTOURNAMENT_MATC
 	WORD wPacketSize = sData.GetPacketSize(sizeof(sGU_MATCH_FINALMATCH_TEAM_INFO_NFY));
 
 	CNtlPacket packet(wPacketSize);
-	sGU_MATCH_FINALMATCH_TEAM_INFO_NFY* res = (sGU_MATCH_FINALMATCH_TEAM_INFO_NFY*)packet.GetPacketData();
+	sGU_MATCH_FINALMATCH_TEAM_INFO_NFY * res = (sGU_MATCH_FINALMATCH_TEAM_INFO_NFY *)packet.GetPacketData();
 	res->wOpCode = GU_MATCH_FINALMATCH_TEAM_INFO_NFY;
 	res->byMatchIndex = byMatchIndex;
 	res->byMatchDepth = m_eMatchDepth;
@@ -4624,7 +4624,7 @@ void CBudokaiManager::SendFinalMatchTeamInfo(BYTE byMatchIndex, sTOURNAMENT_MATC
 	ERR_LOG(LOG_GENERAL, "Budokai: Final wPacketSize %u, sData.GetDataSize() %u, byTeamCount %u \n", wPacketSize, sData.GetDataSize(), res->byTeamCount);
 }
 
-void CBudokaiManager::FinalMatchUpdatePlayersState(sTOURNAMENT_MATCH* match, BYTE byMatchIndex, BYTE byState)
+void CBudokaiManager::FinalMatchUpdatePlayersState(sTOURNAMENT_MATCH * match, BYTE byMatchIndex, BYTE byState)
 {
 	for (std::map<HOBJECT, sPLAYER_INFO>::iterator it = match->m_mapIndividual.begin(); it != match->m_mapIndividual.end(); it++)
 	{
@@ -4640,7 +4640,7 @@ void CBudokaiManager::FinalMatchUpdatePlayersState(sTOURNAMENT_MATCH* match, BYT
 						pPlayer->SetBudokaiPcState(byState);
 
 						CNtlPacket packet2(sizeof(sGU_MATCH_FINALMATCH_PLAYER_STATE_NFY));
-						sGU_MATCH_FINALMATCH_PLAYER_STATE_NFY* res2 = (sGU_MATCH_FINALMATCH_PLAYER_STATE_NFY*)packet2.GetPacketData();
+						sGU_MATCH_FINALMATCH_PLAYER_STATE_NFY * res2 = (sGU_MATCH_FINALMATCH_PLAYER_STATE_NFY *)packet2.GetPacketData();
 						res2->wOpCode = GU_MATCH_FINALMATCH_PLAYER_STATE_NFY;
 						res2->hPc = it->first;
 						res2->byPcState = byState;
@@ -4655,7 +4655,7 @@ void CBudokaiManager::FinalMatchUpdatePlayersState(sTOURNAMENT_MATCH* match, BYT
 	}
 }
 
-bool CBudokaiManager::ProcessFinalMatch(sTOURNAMENT_MATCH* match, BYTE byMatchIndex, DWORD dwTickDif)
+bool CBudokaiManager::ProcessFinalMatch(sTOURNAMENT_MATCH * match, BYTE byMatchIndex, DWORD dwTickDif)
 {
 	if (m_matchType == BUDOKAI_MATCH_TYPE_INDIVIDIAUL)
 	{
@@ -4678,7 +4678,7 @@ bool CBudokaiManager::ProcessFinalMatch(sTOURNAMENT_MATCH* match, BYTE byMatchIn
 									pPlayer->SetBudokaiPcState(MATCH_MEMBER_STATE_OUTOFAREA);
 
 									CNtlPacket packet2(sizeof(sGU_MATCH_FINALMATCH_PLAYER_STATE_NFY));
-									sGU_MATCH_FINALMATCH_PLAYER_STATE_NFY* res2 = (sGU_MATCH_FINALMATCH_PLAYER_STATE_NFY*)packet2.GetPacketData();
+									sGU_MATCH_FINALMATCH_PLAYER_STATE_NFY * res2 = (sGU_MATCH_FINALMATCH_PLAYER_STATE_NFY *)packet2.GetPacketData();
 									res2->wOpCode = GU_MATCH_FINALMATCH_PLAYER_STATE_NFY;
 									res2->hPc = pPlayer->GetID();
 									res2->byPcState = MATCH_MEMBER_STATE_OUTOFAREA;
@@ -4725,7 +4725,7 @@ bool CBudokaiManager::ProcessFinalMatch(sTOURNAMENT_MATCH* match, BYTE byMatchIn
 									pPlayer->SetBudokaiPcState(MATCH_MEMBER_STATE_OUTOFAREA);
 
 									CNtlPacket packet2(sizeof(sGU_MATCH_MAJORMATCH_PLAYER_STATE_NFY));
-									sGU_MATCH_MAJORMATCH_PLAYER_STATE_NFY* res2 = (sGU_MATCH_MAJORMATCH_PLAYER_STATE_NFY*)packet2.GetPacketData();
+									sGU_MATCH_MAJORMATCH_PLAYER_STATE_NFY * res2 = (sGU_MATCH_MAJORMATCH_PLAYER_STATE_NFY *)packet2.GetPacketData();
 									res2->wOpCode = GU_MATCH_MAJORMATCH_PLAYER_STATE_NFY;
 									res2->hPc = pPlayer->GetID();
 									res2->byPcState = MATCH_MEMBER_STATE_OUTOFAREA;
@@ -4764,7 +4764,7 @@ bool CBudokaiManager::ProcessFinalMatch(sTOURNAMENT_MATCH* match, BYTE byMatchIn
 	return true;
 }
 
-void CBudokaiManager::UpdateFinalMatchScore(sTOURNAMENT_MATCH* match, BYTE byMatchIndex, BYTE byMatchResult, TEAMTYPE wMatchWinner, BYTE byWins/* = 1*/)
+void CBudokaiManager::UpdateFinalMatchScore(sTOURNAMENT_MATCH * match, BYTE byMatchIndex, BYTE byMatchResult, TEAMTYPE wMatchWinner, BYTE byWins/* = 1*/)
 {
 	if (wMatchWinner == MATCH_TEAM_TYPE_TEAM1)
 	{
@@ -4780,7 +4780,7 @@ void CBudokaiManager::UpdateFinalMatchScore(sTOURNAMENT_MATCH* match, BYTE byMat
 	}
 
 	CNtlPacket packet(sizeof(sGU_MATCH_FINALMATCH_STAGE_FINISH_NFY));
-	sGU_MATCH_FINALMATCH_STAGE_FINISH_NFY* res = (sGU_MATCH_FINALMATCH_STAGE_FINISH_NFY*)packet.GetPacketData();
+	sGU_MATCH_FINALMATCH_STAGE_FINISH_NFY * res = (sGU_MATCH_FINALMATCH_STAGE_FINISH_NFY *)packet.GetPacketData();
 	res->wOpCode = GU_MATCH_FINALMATCH_STAGE_FINISH_NFY;
 	res->sMatchScore.byTeam1 = match->data.byScore1;
 	res->sMatchScore.byTeam2 = match->data.byScore2;
@@ -4809,7 +4809,7 @@ void CBudokaiManager::UpdateFinalMatchScore(sTOURNAMENT_MATCH* match, BYTE byMat
 	match->m_dwMatchTickCount = 5000;
 
 	CNtlPacket packet2(sizeof(sGU_MATCH_FINALMATCH_STATE_UPDATE_NFY));
-	sGU_MATCH_FINALMATCH_STATE_UPDATE_NFY* res2 = (sGU_MATCH_FINALMATCH_STATE_UPDATE_NFY*)packet2.GetPacketData();
+	sGU_MATCH_FINALMATCH_STATE_UPDATE_NFY * res2 = (sGU_MATCH_FINALMATCH_STATE_UPDATE_NFY *)packet2.GetPacketData();
 	res2->wOpCode = GU_MATCH_FINALMATCH_STATE_UPDATE_NFY;
 	res2->byMatchState = BUDOKAI_FINALMATCH_STATE_NONE;
 	res2->bIsEnter = true;
@@ -4819,10 +4819,10 @@ void CBudokaiManager::UpdateFinalMatchScore(sTOURNAMENT_MATCH* match, BYTE byMat
 	match->m_pWorld->Broadcast(&packet2);
 }
 
-void CBudokaiManager::FinalMatchMatchFinish(sTOURNAMENT_MATCH* match, BYTE byMatchIndex)
+void CBudokaiManager::FinalMatchMatchFinish(sTOURNAMENT_MATCH * match, BYTE byMatchIndex)
 {
 	CNtlPacket packet2(sizeof(sGU_MATCH_FINALMATCH_MATCH_FINISH_NFY));
-	sGU_MATCH_FINALMATCH_MATCH_FINISH_NFY* res2 = (sGU_MATCH_FINALMATCH_MATCH_FINISH_NFY*)packet2.GetPacketData();
+	sGU_MATCH_FINALMATCH_MATCH_FINISH_NFY * res2 = (sGU_MATCH_FINALMATCH_MATCH_FINISH_NFY *)packet2.GetPacketData();
 	res2->wOpCode = GU_MATCH_FINALMATCH_MATCH_FINISH_NFY;
 	res2->byMatchResult = MATCH_RESULT_WIN;
 	res2->sMatchScore.byTeam1 = match->data.byScore1;
@@ -4860,7 +4860,7 @@ void CBudokaiManager::FinalMatchMatchFinish(sTOURNAMENT_MATCH* match, BYTE byMat
 					pPlayer->SetBudokaiPcState(MATCH_MEMBER_STATE_NORMAL);
 
 					CNtlPacket packet3(sizeof(sGU_MATCH_FINALMATCH_PLAYER_STATE_NFY));
-					sGU_MATCH_FINALMATCH_PLAYER_STATE_NFY* res3 = (sGU_MATCH_FINALMATCH_PLAYER_STATE_NFY*)packet3.GetPacketData();
+					sGU_MATCH_FINALMATCH_PLAYER_STATE_NFY * res3 = (sGU_MATCH_FINALMATCH_PLAYER_STATE_NFY *)packet3.GetPacketData();
 					res3->wOpCode = GU_MATCH_FINALMATCH_PLAYER_STATE_NFY;
 					res3->hPc = it->first;
 					res3->byPcState = MATCH_MEMBER_STATE_NORMAL;
@@ -4969,7 +4969,7 @@ void CBudokaiManager::FinalMatchMatchFinish(sTOURNAMENT_MATCH* match, BYTE byMat
 					pPlayer->SetBudokaiPcState(MATCH_MEMBER_STATE_NORMAL);
 
 					CNtlPacket packet3(sizeof(sGU_MATCH_FINALMATCH_PLAYER_STATE_NFY));
-					sGU_MATCH_FINALMATCH_PLAYER_STATE_NFY* res3 = (sGU_MATCH_FINALMATCH_PLAYER_STATE_NFY*)packet3.GetPacketData();
+					sGU_MATCH_FINALMATCH_PLAYER_STATE_NFY * res3 = (sGU_MATCH_FINALMATCH_PLAYER_STATE_NFY *)packet3.GetPacketData();
 					res3->wOpCode = GU_MATCH_FINALMATCH_PLAYER_STATE_NFY;
 					res3->hPc = it->first;
 					res3->byPcState = MATCH_MEMBER_STATE_NORMAL;
@@ -4985,7 +4985,7 @@ void CBudokaiManager::FinalMatchMatchFinish(sTOURNAMENT_MATCH* match, BYTE byMat
 		}
 	}
 }
-void CBudokaiManager::ResetPlayerFinalMatch(sTOURNAMENT_MATCH* match, BYTE byMatchIndex, bool bSpawn)
+void CBudokaiManager::ResetPlayerFinalMatch(sTOURNAMENT_MATCH * match, BYTE byMatchIndex, bool bSpawn)
 {
 	match->m_byTeam1UnavailablePlayerCount = 0;
 	match->m_byTeam2UnavailablePlayerCount = 0;
@@ -5131,7 +5131,7 @@ void CBudokaiManager::ResetPlayerFinalMatch(sTOURNAMENT_MATCH* match, BYTE byMat
 	}
 }
 
-void CBudokaiManager::FinalMatchTimeEnd(sTOURNAMENT_MATCH* match, BYTE byMatchIndex)
+void CBudokaiManager::FinalMatchTimeEnd(sTOURNAMENT_MATCH * match, BYTE byMatchIndex)
 {
 	//if (m_matchType == BUDOKAI_MATCH_TYPE_INDIVIDIAUL)
 	{
@@ -5222,7 +5222,7 @@ void CBudokaiManager::FinalMatchTimeEnd(sTOURNAMENT_MATCH* match, BYTE byMatchIn
 	}
 }
 
-void CBudokaiManager::FinalMatchEnd(sTOURNAMENT_MATCH* match, BYTE byMatchIndex)
+void CBudokaiManager::FinalMatchEnd(sTOURNAMENT_MATCH * match, BYTE byMatchIndex)
 {
 	CGameServer* app = (CGameServer*)g_pApp;
 
@@ -5240,7 +5240,7 @@ void CBudokaiManager::FinalMatchEnd(sTOURNAMENT_MATCH* match, BYTE byMatchIndex)
 				if (pPlayer->GetMatchIndex() == byMatchIndex && pPlayer->GetCharID() == info.charId)
 				{
 					CNtlPacket packet(sizeof(sGQ_BUDOKAI_TOURNAMENT_INDIVIDUAL_ADD_ENTRY_LIST_REQ));
-					sGQ_BUDOKAI_TOURNAMENT_INDIVIDUAL_ADD_ENTRY_LIST_REQ* res = (sGQ_BUDOKAI_TOURNAMENT_INDIVIDUAL_ADD_ENTRY_LIST_REQ*)packet.GetPacketData();
+					sGQ_BUDOKAI_TOURNAMENT_INDIVIDUAL_ADD_ENTRY_LIST_REQ * res = (sGQ_BUDOKAI_TOURNAMENT_INDIVIDUAL_ADD_ENTRY_LIST_REQ *)packet.GetPacketData();
 					res->wOpCode = GQ_BUDOKAI_TOURNAMENT_INDIVIDUAL_ADD_ENTRY_LIST_REQ;
 					res->wJoinId = pPlayer->GetJoinID();
 					res->byMatchIndex = byMatchIndex;
@@ -5289,7 +5289,7 @@ void CBudokaiManager::FinalMatchEnd(sTOURNAMENT_MATCH* match, BYTE byMatchIndex)
 						}
 						else ERR_LOG(LOG_GENERAL, "Could not find player in m_mapJoinInfo");
 					}
-
+					
 					packet.SetPacketLen(sizeof(sGQ_BUDOKAI_TOURNAMENT_INDIVIDUAL_ADD_ENTRY_LIST_REQ));
 					app->SendTo(app->GetQueryServerSession(), &packet);
 
@@ -5305,7 +5305,7 @@ void CBudokaiManager::FinalMatchEnd(sTOURNAMENT_MATCH* match, BYTE byMatchIndex)
 			sPARTY_INFO* partyInfo = &it->second;
 
 			CNtlPacket packet(sizeof(sGQ_BUDOKAI_TOURNAMENT_TEAM_ADD_ENTRY_LIST_REQ));
-			sGQ_BUDOKAI_TOURNAMENT_TEAM_ADD_ENTRY_LIST_REQ* res = (sGQ_BUDOKAI_TOURNAMENT_TEAM_ADD_ENTRY_LIST_REQ*)packet.GetPacketData();
+			sGQ_BUDOKAI_TOURNAMENT_TEAM_ADD_ENTRY_LIST_REQ * res = (sGQ_BUDOKAI_TOURNAMENT_TEAM_ADD_ENTRY_LIST_REQ *)packet.GetPacketData();
 			res->wOpCode = GQ_BUDOKAI_TOURNAMENT_TEAM_ADD_ENTRY_LIST_REQ;
 			res->wJoinId = partyInfo->joinId;
 			res->byMatchIndex = byMatchIndex;
@@ -5370,7 +5370,7 @@ void CBudokaiManager::FinalMatchEnd(sTOURNAMENT_MATCH* match, BYTE byMatchIndex)
 	}
 }
 
-bool CBudokaiManager::FinalMatchCheckPlayerCount(sTOURNAMENT_MATCH* match, BYTE byMatchIndex)
+bool CBudokaiManager::FinalMatchCheckPlayerCount(sTOURNAMENT_MATCH * match, BYTE byMatchIndex)
 {
 	if (match->m_byTeam1PlayerCount == 0)
 	{
@@ -5387,7 +5387,7 @@ bool CBudokaiManager::FinalMatchCheckPlayerCount(sTOURNAMENT_MATCH* match, BYTE 
 	return true;
 }
 
-void CBudokaiManager::FinalMatchFinalDirection(sTOURNAMENT_MATCH* match)
+void CBudokaiManager::FinalMatchFinalDirection(sTOURNAMENT_MATCH * match)
 {
 	if (m_matchType == BUDOKAI_MATCH_TYPE_INDIVIDIAUL)
 	{
@@ -5547,7 +5547,7 @@ void CBudokaiManager::FinalMatchFinalDirection(sTOURNAMENT_MATCH* match)
 	}
 }
 
-void CBudokaiManager::FinalMatchAwarding(sTOURNAMENT_MATCH* match)
+void CBudokaiManager::FinalMatchAwarding(sTOURNAMENT_MATCH * match)
 {
 	CGameServer* app = (CGameServer*)g_pApp;
 
@@ -5580,7 +5580,7 @@ void CBudokaiManager::FinalMatchAwarding(sTOURNAMENT_MATCH* match)
 
 					// --- ANNOUNCE THE FIRST PLACE WINNER
 					CNtlPacket pChat(sizeof(sGT_BROADCASTING_SYSTEM_NFY));
-					sGT_BROADCASTING_SYSTEM_NFY* rChat = (sGT_BROADCASTING_SYSTEM_NFY*)pChat.GetPacketData();
+					sGT_BROADCASTING_SYSTEM_NFY * rChat = (sGT_BROADCASTING_SYSTEM_NFY *)pChat.GetPacketData();
 					rChat->wOpCode = GT_BROADCASTING_SYSTEM_NFY;
 					rChat->byMsgType = DBO_BROADCASTING_MSG_TYPE_BUDOKAI;
 					rChat->sData.sBudokaiRecord.wSeason = m_stateInfo.wSeasonCount + 1;
@@ -5689,7 +5689,7 @@ void CBudokaiManager::FinalMatchAwarding(sTOURNAMENT_MATCH* match)
 
 				// --- ANNOUNCE THE FIRST PLACE WINNER
 				CNtlPacket pChat(sizeof(sGT_BROADCASTING_SYSTEM_NFY));
-				sGT_BROADCASTING_SYSTEM_NFY* rChat = (sGT_BROADCASTING_SYSTEM_NFY*)pChat.GetPacketData();
+				sGT_BROADCASTING_SYSTEM_NFY * rChat = (sGT_BROADCASTING_SYSTEM_NFY *)pChat.GetPacketData();
 				rChat->wOpCode = GT_BROADCASTING_SYSTEM_NFY;
 				rChat->byMsgType = DBO_BROADCASTING_MSG_TYPE_BUDOKAI;
 				rChat->sData.sBudokaiRecord.wSeason = m_stateInfo.wSeasonCount + 1;
@@ -5796,7 +5796,7 @@ void CBudokaiManager::FinalMatchAwarding(sTOURNAMENT_MATCH* match)
 	WORD wPacketSize = sData.GetPacketSize(sizeof(sGU_MATCH_AWARDING_NFY));
 
 	CNtlPacket packet(wPacketSize);
-	sGU_MATCH_AWARDING_NFY* res = (sGU_MATCH_AWARDING_NFY*)packet.GetPacketData();
+	sGU_MATCH_AWARDING_NFY * res = (sGU_MATCH_AWARDING_NFY *)packet.GetPacketData();
 	res->wOpCode = GU_MATCH_AWARDING_NFY;
 	memcpy(res->awTeamName, awTeamName, sizeof(awTeamName));
 	sData.CopyTo(&res->sData, sData.GetDataSize());
@@ -5805,7 +5805,7 @@ void CBudokaiManager::FinalMatchAwarding(sTOURNAMENT_MATCH* match)
 	ERR_LOG(LOG_GENERAL, "wPacketSize %u, sData.GetDataSize() %u \n", wPacketSize, sData.GetDataSize());
 }
 
-void CBudokaiManager::AddIndividualToNextRound(sTOURNAMENT_MATCH* match, BYTE byMatchIndex, JOINID joinId, JOINID spectatorJoinId/* = INVALID_JOINID*/)
+void CBudokaiManager::AddIndividualToNextRound(sTOURNAMENT_MATCH * match, BYTE byMatchIndex, JOINID joinId, JOINID spectatorJoinId/* = INVALID_JOINID*/)
 {
 	CGameServer* app = (CGameServer*)g_pApp;
 
@@ -5865,7 +5865,7 @@ void CBudokaiManager::AddIndividualToNextRound(sTOURNAMENT_MATCH* match, BYTE by
 		}
 
 		//INFO: DONT DO "else" HERE OTHERWISE FINALISTS WONT GET TELEPORTED IF THERE IS A SPECTATOR
-
+		
 		if (m_matchType == BUDOKAI_MATCH_TYPE_INDIVIDIAUL)
 		{
 			std::map<JOINID, sBUDOKAI_TOURNAMENT_INDIVIDUAL_ENTRY_DATA*>::iterator it5 = m_mapIndividualTournament.find(joinId);
@@ -5923,13 +5923,13 @@ void CBudokaiManager::AddIndividualToNextRound(sTOURNAMENT_MATCH* match, BYTE by
 			{
 				ERR_LOG(LOG_GENERAL, "Could not find user in m_mapIndividualTournament");
 			}
-		}
+		}	
 	}
 	else printf("AddIndividualToNextRound: Could not find match...");
 }
 
 
-void CBudokaiManager::MinorMatchUpdatePlayerState(BYTE byState, CPlayer* pPlayer)
+void CBudokaiManager::MinorMatchUpdatePlayerState(BYTE byState, CPlayer * pPlayer)
 {
 	std::map<BYTE, sPRELIM_HEAD*>::iterator iter = m_mapPrelims.find(pPlayer->GetMatchIndex());
 	if (iter != m_mapPrelims.end())
@@ -5939,7 +5939,7 @@ void CBudokaiManager::MinorMatchUpdatePlayerState(BYTE byState, CPlayer* pPlayer
 		pPlayer->SetBudokaiPcState(byState);
 
 		CNtlPacket packet2(sizeof(sGU_MATCH_MINORMATCH_PLAYER_STATE_NFY));
-		sGU_MATCH_MINORMATCH_PLAYER_STATE_NFY* res2 = (sGU_MATCH_MINORMATCH_PLAYER_STATE_NFY*)packet2.GetPacketData();
+		sGU_MATCH_MINORMATCH_PLAYER_STATE_NFY * res2 = (sGU_MATCH_MINORMATCH_PLAYER_STATE_NFY *)packet2.GetPacketData();
 		res2->wOpCode = GU_MATCH_MINORMATCH_PLAYER_STATE_NFY;
 		res2->hPc = pPlayer->GetID();
 		res2->byPcState = byState;
@@ -5948,7 +5948,7 @@ void CBudokaiManager::MinorMatchUpdatePlayerState(BYTE byState, CPlayer* pPlayer
 	}
 }
 
-void CBudokaiManager::MajorMatchUpdatePlayerState(BYTE byState, CPlayer* pPlayer)
+void CBudokaiManager::MajorMatchUpdatePlayerState(BYTE byState, CPlayer * pPlayer)
 {
 	std::map<BYTE, sTOURNAMENT_MATCH*>::iterator it4 = m_aTournamentMatch[m_eMatchDepth].m_mapTournament.find(pPlayer->GetMatchIndex());
 	if (it4 != m_aTournamentMatch[m_eMatchDepth].m_mapTournament.end())
@@ -5969,7 +5969,7 @@ void CBudokaiManager::MajorMatchUpdatePlayerState(BYTE byState, CPlayer* pPlayer
 		}
 
 		CNtlPacket packet2(sizeof(sGU_MATCH_MAJORMATCH_PLAYER_STATE_NFY));
-		sGU_MATCH_MAJORMATCH_PLAYER_STATE_NFY* res2 = (sGU_MATCH_MAJORMATCH_PLAYER_STATE_NFY*)packet2.GetPacketData();
+		sGU_MATCH_MAJORMATCH_PLAYER_STATE_NFY * res2 = (sGU_MATCH_MAJORMATCH_PLAYER_STATE_NFY *)packet2.GetPacketData();
 		res2->wOpCode = GU_MATCH_MAJORMATCH_PLAYER_STATE_NFY;
 		res2->hPc = pPlayer->GetID();
 		res2->byPcState = byState;
@@ -5978,7 +5978,7 @@ void CBudokaiManager::MajorMatchUpdatePlayerState(BYTE byState, CPlayer* pPlayer
 	}
 }
 
-void CBudokaiManager::FinalMatchUpdatePlayerState(BYTE byState, CPlayer* pPlayer)
+void CBudokaiManager::FinalMatchUpdatePlayerState(BYTE byState, CPlayer * pPlayer)
 {
 	std::map<BYTE, sTOURNAMENT_MATCH*>::iterator it4 = m_aTournamentMatch[m_eMatchDepth].m_mapTournament.find(pPlayer->GetMatchIndex());
 	if (it4 != m_aTournamentMatch[m_eMatchDepth].m_mapTournament.end())
@@ -5999,7 +5999,7 @@ void CBudokaiManager::FinalMatchUpdatePlayerState(BYTE byState, CPlayer* pPlayer
 		}
 
 		CNtlPacket packet2(sizeof(sGU_MATCH_FINALMATCH_PLAYER_STATE_NFY));
-		sGU_MATCH_FINALMATCH_PLAYER_STATE_NFY* res2 = (sGU_MATCH_FINALMATCH_PLAYER_STATE_NFY*)packet2.GetPacketData();
+		sGU_MATCH_FINALMATCH_PLAYER_STATE_NFY * res2 = (sGU_MATCH_FINALMATCH_PLAYER_STATE_NFY *)packet2.GetPacketData();
 		res2->wOpCode = GU_MATCH_FINALMATCH_PLAYER_STATE_NFY;
 		res2->hPc = pPlayer->GetID();
 		res2->byPcState = byState;
@@ -6008,7 +6008,7 @@ void CBudokaiManager::FinalMatchUpdatePlayerState(BYTE byState, CPlayer* pPlayer
 	}
 }
 
-void CBudokaiManager::LoadBudokaiStateInfo(CPlayer* pPlayer)
+void CBudokaiManager::LoadBudokaiStateInfo(CPlayer * pPlayer)
 {
 	if (m_stateInfo.byState == BUDOKAI_STATE_JUNIOR_CLOSE || m_stateInfo.byState == BUDOKAI_STATE_CLOSE)
 		return;
@@ -6016,7 +6016,7 @@ void CBudokaiManager::LoadBudokaiStateInfo(CPlayer* pPlayer)
 	CGameServer* app = (CGameServer*)g_pApp;
 
 	CNtlPacket packet(sizeof(sGU_BUDOKAI_STATE_INFO_NFY));
-	sGU_BUDOKAI_STATE_INFO_NFY* res = (sGU_BUDOKAI_STATE_INFO_NFY*)packet.GetPacketData();
+	sGU_BUDOKAI_STATE_INFO_NFY * res = (sGU_BUDOKAI_STATE_INFO_NFY *)packet.GetPacketData();
 	res->wOpCode = GU_BUDOKAI_STATE_INFO_NFY;
 	res->tmDefaultOpenTime = m_tmDefaultOpenTime;
 	res->bRankbattleAllow = m_bRankbattleAllow;
@@ -6083,7 +6083,7 @@ void CBudokaiManager::LoadBudokaiStateInfo(CPlayer* pPlayer)
 					it4->second->m_byCount += 1;
 
 					CNtlPacket packet2(sizeof(sGU_MATCH_MINORMATCH_STATE_UPDATE_NFY));
-					sGU_MATCH_MINORMATCH_STATE_UPDATE_NFY* res2 = (sGU_MATCH_MINORMATCH_STATE_UPDATE_NFY*)packet2.GetPacketData();
+					sGU_MATCH_MINORMATCH_STATE_UPDATE_NFY * res2 = (sGU_MATCH_MINORMATCH_STATE_UPDATE_NFY *)packet2.GetPacketData();
 					res2->wOpCode = GU_MATCH_MINORMATCH_STATE_UPDATE_NFY;
 					res2->byMatchState = it4->second->m_byMatchState;
 					res2->bIsEnter = true;
@@ -6123,13 +6123,13 @@ void CBudokaiManager::LoadBudokaiStateInfo(CPlayer* pPlayer)
 
 					it4->second->m_mapIndividual.insert({ pPlayer->GetID(), sPLAYER_INFO(pPlayer->GetCharID(), bSpectator) });
 
-					if (bSpectator == false) //only increase counter if not false
+					if(bSpectator == false) //only increase counter if not false
 						it4->second->m_byCount += 1;
 
 					if (m_matchStateInfo[m_matchType].byState < BUDOKAI_MATCHSTATE_WAIT_SEMIFINAL_MATCH)
 					{
 						CNtlPacket packet2(sizeof(sGU_MATCH_MAJORMATCH_STATE_UPDATE_NFY));
-						sGU_MATCH_MAJORMATCH_STATE_UPDATE_NFY* res2 = (sGU_MATCH_MAJORMATCH_STATE_UPDATE_NFY*)packet2.GetPacketData();
+						sGU_MATCH_MAJORMATCH_STATE_UPDATE_NFY * res2 = (sGU_MATCH_MAJORMATCH_STATE_UPDATE_NFY *)packet2.GetPacketData();
 						res2->wOpCode = GU_MATCH_MAJORMATCH_STATE_UPDATE_NFY;
 						res2->byMatchState = it4->second->m_byMatchState;
 						res2->bIsEnter = true;
@@ -6141,7 +6141,7 @@ void CBudokaiManager::LoadBudokaiStateInfo(CPlayer* pPlayer)
 					else
 					{
 						CNtlPacket packet2(sizeof(sGU_MATCH_FINALMATCH_STATE_UPDATE_NFY));
-						sGU_MATCH_FINALMATCH_STATE_UPDATE_NFY* res2 = (sGU_MATCH_FINALMATCH_STATE_UPDATE_NFY*)packet2.GetPacketData();
+						sGU_MATCH_FINALMATCH_STATE_UPDATE_NFY * res2 = (sGU_MATCH_FINALMATCH_STATE_UPDATE_NFY *)packet2.GetPacketData();
 						res2->wOpCode = GU_MATCH_FINALMATCH_STATE_UPDATE_NFY;
 						res2->byMatchState = it4->second->m_byMatchState;
 						res2->bIsEnter = true;
@@ -6196,7 +6196,7 @@ void CBudokaiManager::LoadBudokaiStateInfo(CPlayer* pPlayer)
 					it4->second->m_byCount += 1;
 
 					CNtlPacket packet2(sizeof(sGU_MATCH_MINORMATCH_STATE_UPDATE_NFY));
-					sGU_MATCH_MINORMATCH_STATE_UPDATE_NFY* res2 = (sGU_MATCH_MINORMATCH_STATE_UPDATE_NFY*)packet2.GetPacketData();
+					sGU_MATCH_MINORMATCH_STATE_UPDATE_NFY * res2 = (sGU_MATCH_MINORMATCH_STATE_UPDATE_NFY *)packet2.GetPacketData();
 					res2->wOpCode = GU_MATCH_MINORMATCH_STATE_UPDATE_NFY;
 					res2->byMatchState = it4->second->m_byMatchState;
 					res2->bIsEnter = true;
@@ -6259,7 +6259,7 @@ void CBudokaiManager::LoadBudokaiStateInfo(CPlayer* pPlayer)
 					if (m_matchStateInfo[m_matchType].byState < BUDOKAI_MATCHSTATE_WAIT_SEMIFINAL_MATCH)
 					{
 						CNtlPacket packet2(sizeof(sGU_MATCH_MAJORMATCH_STATE_UPDATE_NFY));
-						sGU_MATCH_MAJORMATCH_STATE_UPDATE_NFY* res2 = (sGU_MATCH_MAJORMATCH_STATE_UPDATE_NFY*)packet2.GetPacketData();
+						sGU_MATCH_MAJORMATCH_STATE_UPDATE_NFY * res2 = (sGU_MATCH_MAJORMATCH_STATE_UPDATE_NFY *)packet2.GetPacketData();
 						res2->wOpCode = GU_MATCH_MAJORMATCH_STATE_UPDATE_NFY;
 						res2->byMatchState = it4->second->m_byMatchState;
 						res2->bIsEnter = true;
@@ -6271,7 +6271,7 @@ void CBudokaiManager::LoadBudokaiStateInfo(CPlayer* pPlayer)
 					else
 					{
 						CNtlPacket packet2(sizeof(sGU_MATCH_FINALMATCH_STATE_UPDATE_NFY));
-						sGU_MATCH_FINALMATCH_STATE_UPDATE_NFY* res2 = (sGU_MATCH_FINALMATCH_STATE_UPDATE_NFY*)packet2.GetPacketData();
+						sGU_MATCH_FINALMATCH_STATE_UPDATE_NFY * res2 = (sGU_MATCH_FINALMATCH_STATE_UPDATE_NFY *)packet2.GetPacketData();
 						res2->wOpCode = GU_MATCH_FINALMATCH_STATE_UPDATE_NFY;
 						res2->byMatchState = it4->second->m_byMatchState;
 						res2->bIsEnter = true;
@@ -6298,10 +6298,10 @@ void CBudokaiManager::LoadBudokaiStateInfo(CPlayer* pPlayer)
 	}
 }
 
-void CBudokaiManager::JoinStateReq(CPlayer* pPlayer)
+void CBudokaiManager::JoinStateReq(CPlayer * pPlayer)
 {
 	CNtlPacket packet(sizeof(sGU_BUDOKAI_JOIN_STATE_RES));
-	sGU_BUDOKAI_JOIN_STATE_RES* res = (sGU_BUDOKAI_JOIN_STATE_RES*)packet.GetPacketData();
+	sGU_BUDOKAI_JOIN_STATE_RES * res = (sGU_BUDOKAI_JOIN_STATE_RES *)packet.GetPacketData();
 	res->wOpCode = GU_BUDOKAI_JOIN_STATE_RES;
 	res->wResultCode = GAME_SUCCESS;
 
@@ -6330,7 +6330,7 @@ void CBudokaiManager::JoinIndividualReq(CPlayer* pPlayer)
 	if (wResultcode == GAME_SUCCESS)
 	{
 		CNtlPacket packet(sizeof(sGQ_BUDOKAI_JOIN_INDIVIDUAL_REQ));
-		sGQ_BUDOKAI_JOIN_INDIVIDUAL_REQ* res = (sGQ_BUDOKAI_JOIN_INDIVIDUAL_REQ*)packet.GetPacketData();
+		sGQ_BUDOKAI_JOIN_INDIVIDUAL_REQ * res = (sGQ_BUDOKAI_JOIN_INDIVIDUAL_REQ *)packet.GetPacketData();
 		res->wOpCode = GQ_BUDOKAI_JOIN_INDIVIDUAL_REQ;
 		res->charId = pPlayer->GetCharID();
 		res->fPoint = pPlayer->GetRankBattleScoreInfo()->fPoint;
@@ -6341,7 +6341,7 @@ void CBudokaiManager::JoinIndividualReq(CPlayer* pPlayer)
 	else
 	{
 		CNtlPacket packet(sizeof(sGU_BUDOKAI_JOIN_INDIVIDUAL_RES));
-		sGU_BUDOKAI_JOIN_INDIVIDUAL_RES* res = (sGU_BUDOKAI_JOIN_INDIVIDUAL_RES*)packet.GetPacketData();
+		sGU_BUDOKAI_JOIN_INDIVIDUAL_RES * res = (sGU_BUDOKAI_JOIN_INDIVIDUAL_RES *)packet.GetPacketData();
 		res->wOpCode = GU_BUDOKAI_JOIN_INDIVIDUAL_RES;
 		res->wResultCode = wResultcode;
 		packet.SetPacketLen(sizeof(sGU_BUDOKAI_JOIN_INDIVIDUAL_RES));
@@ -6349,7 +6349,7 @@ void CBudokaiManager::JoinIndividualReq(CPlayer* pPlayer)
 	}
 }
 
-void CBudokaiManager::LeaveIndividualReq(CPlayer* pPlayer)
+void CBudokaiManager::LeaveIndividualReq(CPlayer * pPlayer)
 {
 	CGameServer* app = (CGameServer*)g_pApp;
 
@@ -6358,7 +6358,7 @@ void CBudokaiManager::LeaveIndividualReq(CPlayer* pPlayer)
 	if (wResultcode == GAME_SUCCESS)
 	{
 		CNtlPacket packet(sizeof(sGQ_BUDOKAI_LEAVE_INDIVIDUAL_REQ));
-		sGQ_BUDOKAI_LEAVE_INDIVIDUAL_REQ* res = (sGQ_BUDOKAI_LEAVE_INDIVIDUAL_REQ*)packet.GetPacketData();
+		sGQ_BUDOKAI_LEAVE_INDIVIDUAL_REQ * res = (sGQ_BUDOKAI_LEAVE_INDIVIDUAL_REQ *)packet.GetPacketData();
 		res->wOpCode = GQ_BUDOKAI_LEAVE_INDIVIDUAL_REQ;
 		res->charId = pPlayer->GetCharID();
 		res->handle = pPlayer->GetID();
@@ -6368,7 +6368,7 @@ void CBudokaiManager::LeaveIndividualReq(CPlayer* pPlayer)
 	else
 	{
 		CNtlPacket packet(sizeof(sGU_BUDOKAI_LEAVE_INDIVIDUAL_RES));
-		sGU_BUDOKAI_LEAVE_INDIVIDUAL_RES* res = (sGU_BUDOKAI_LEAVE_INDIVIDUAL_RES*)packet.GetPacketData();
+		sGU_BUDOKAI_LEAVE_INDIVIDUAL_RES * res = (sGU_BUDOKAI_LEAVE_INDIVIDUAL_RES *)packet.GetPacketData();
 		res->wOpCode = GU_BUDOKAI_LEAVE_INDIVIDUAL_RES;
 		res->wResultCode = wResultcode;
 		packet.SetPacketLen(sizeof(sGU_BUDOKAI_LEAVE_INDIVIDUAL_RES));
@@ -6376,7 +6376,7 @@ void CBudokaiManager::LeaveIndividualReq(CPlayer* pPlayer)
 	}
 }
 
-void CBudokaiManager::JoinTeamReq(CPlayer* pPlayer, WCHAR* wszTeamName)
+void CBudokaiManager::JoinTeamReq(CPlayer * pPlayer, WCHAR * wszTeamName)
 {
 	CGameServer* app = (CGameServer*)g_pApp;
 
@@ -6388,7 +6388,7 @@ void CBudokaiManager::JoinTeamReq(CPlayer* pPlayer, WCHAR* wszTeamName)
 
 	if (pPlayer->GetJoinID() != INVALID_JOINID)
 		wResultcode = GAME_BUDOKAI_CHARACTER_ALREADY_JOIN;
-	else if (nameLen > NTL_MAX_SIZE_PARTY_NAME)
+	else if(nameLen > NTL_MAX_SIZE_PARTY_NAME)
 		wResultcode = GAME_BUDOKAI_TOO_LONG_TEAM_NAME;
 	else if (nameLen < NTL_MIN_SIZE_PARTY_NAME)
 		wResultcode = GAME_BUDOKAI_TOO_SHORT_TEAM_NAME;
@@ -6400,7 +6400,7 @@ void CBudokaiManager::JoinTeamReq(CPlayer* pPlayer, WCHAR* wszTeamName)
 		CParty* pParty = pPlayer->GetParty();
 
 		CNtlPacket packet(sizeof(sGQ_BUDOKAI_JOIN_TEAM_REQ));
-		sGQ_BUDOKAI_JOIN_TEAM_REQ* res = (sGQ_BUDOKAI_JOIN_TEAM_REQ*)packet.GetPacketData();
+		sGQ_BUDOKAI_JOIN_TEAM_REQ * res = (sGQ_BUDOKAI_JOIN_TEAM_REQ *)packet.GetPacketData();
 		res->wOpCode = GQ_BUDOKAI_JOIN_TEAM_REQ;
 		res->handle = pPlayer->GetID();
 		res->charId = pPlayer->GetCharID();
@@ -6420,14 +6420,14 @@ void CBudokaiManager::JoinTeamReq(CPlayer* pPlayer, WCHAR* wszTeamName)
 
 			res->fPoint += res->aTeamInfo[i].fPoint;
 		}
-
+		
 		packet.SetPacketLen(sizeof(sGQ_BUDOKAI_JOIN_TEAM_REQ));
 		app->SendTo(app->GetQueryServerSession(), &packet);
 	}
 	else
 	{
 		CNtlPacket packet(sizeof(sGU_BUDOKAI_JOIN_TEAM_RES));
-		sGU_BUDOKAI_JOIN_TEAM_RES* res = (sGU_BUDOKAI_JOIN_TEAM_RES*)packet.GetPacketData();
+		sGU_BUDOKAI_JOIN_TEAM_RES * res = (sGU_BUDOKAI_JOIN_TEAM_RES *)packet.GetPacketData();
 		res->wOpCode = GU_BUDOKAI_JOIN_TEAM_RES;
 		res->wResultCode = wResultcode;
 		packet.SetPacketLen(sizeof(sGU_BUDOKAI_JOIN_TEAM_RES));
@@ -6435,7 +6435,7 @@ void CBudokaiManager::JoinTeamReq(CPlayer* pPlayer, WCHAR* wszTeamName)
 	}
 }
 
-void CBudokaiManager::LeaveTeamReq(CPlayer* pPlayer)
+void CBudokaiManager::LeaveTeamReq(CPlayer * pPlayer)
 {
 	CGameServer* app = (CGameServer*)g_pApp;
 
@@ -6446,7 +6446,7 @@ void CBudokaiManager::LeaveTeamReq(CPlayer* pPlayer)
 		boost::unordered_map<JOINID, sBUDOKAI_REGISTER_TEAM_DATA>::iterator it = m_mapTeam.find(pPlayer->GetJoinID());
 		if (it != m_mapTeam.end())
 		{
-			if (it->second.aMembers[0] != pPlayer->GetCharID())
+			if(it->second.aMembers[0] != pPlayer->GetCharID())
 				wResultcode = GAME_BUDOKAI_YOU_ARE_NOT_A_TEAM_LEADER;
 		}
 		else wResultcode = GAME_BUDOKAI_CHARACTER_NOT_JOINED;
@@ -6455,7 +6455,7 @@ void CBudokaiManager::LeaveTeamReq(CPlayer* pPlayer)
 	if (wResultcode == GAME_SUCCESS)
 	{
 		CNtlPacket packet(sizeof(sGQ_BUDOKAI_LEAVE_TEAM_REQ));
-		sGQ_BUDOKAI_LEAVE_TEAM_REQ* res = (sGQ_BUDOKAI_LEAVE_TEAM_REQ*)packet.GetPacketData();
+		sGQ_BUDOKAI_LEAVE_TEAM_REQ * res = (sGQ_BUDOKAI_LEAVE_TEAM_REQ *)packet.GetPacketData();
 		res->wOpCode = GQ_BUDOKAI_LEAVE_TEAM_REQ;
 		res->charId = pPlayer->GetCharID();
 		res->handle = pPlayer->GetID();
@@ -6465,7 +6465,7 @@ void CBudokaiManager::LeaveTeamReq(CPlayer* pPlayer)
 	else
 	{
 		CNtlPacket packet(sizeof(sGU_BUDOKAI_LEAVE_TEAM_RES));
-		sGU_BUDOKAI_LEAVE_TEAM_RES* res = (sGU_BUDOKAI_LEAVE_TEAM_RES*)packet.GetPacketData();
+		sGU_BUDOKAI_LEAVE_TEAM_RES * res = (sGU_BUDOKAI_LEAVE_TEAM_RES *)packet.GetPacketData();
 		res->wOpCode = GU_BUDOKAI_LEAVE_TEAM_RES;
 		res->wResultCode = wResultcode;
 		packet.SetPacketLen(sizeof(sGU_BUDOKAI_LEAVE_TEAM_RES));
@@ -6473,9 +6473,9 @@ void CBudokaiManager::LeaveTeamReq(CPlayer* pPlayer)
 	}
 }
 
-void CBudokaiManager::JoinIndividual(CHARACTERID charId, float fPoint, JOINID wJoinId, bool bDojoRecommender, WCHAR* wszCharName)
+void CBudokaiManager::JoinIndividual(CHARACTERID charId, float fPoint, JOINID wJoinId, bool bDojoRecommender, WCHAR * wszCharName)
 {
-	if (bDojoRecommender)
+	if(bDojoRecommender)
 		++m_byDojoRecommenders;
 
 	sBUDOKAI_REGISTER_INDIVIDUAL_DATA data;
@@ -6511,7 +6511,7 @@ void CBudokaiManager::LeaveIndividual(JOINID joinid)
 	}
 }
 
-void CBudokaiManager::JoinTeam(CHARACTERID charId, WCHAR* wszTeamName, BYTE byMemberCount, CHARACTERID* aMembers, float fPoint, JOINID wJoinId, sBUDOKAI_TEAM_POINT_INFO* aTeamInfo)
+void CBudokaiManager::JoinTeam(CHARACTERID charId, WCHAR * wszTeamName, BYTE byMemberCount, CHARACTERID * aMembers, float fPoint, JOINID wJoinId, sBUDOKAI_TEAM_POINT_INFO * aTeamInfo)
 {
 	sBUDOKAI_REGISTER_TEAM_DATA data;
 	NTL_SAFE_WCSCPY(data.wszTeamName, wszTeamName);
@@ -6548,7 +6548,7 @@ void CBudokaiManager::TeleportPrelimReq(CHARACTERID charId, HOBJECT handle, BYTE
 	CGameServer* app = (CGameServer*)g_pApp;
 
 	CNtlPacket packet(sizeof(sGT_BUDOKAI_MINOR_MATCH_TELEPORT_INFO_RES));
-	sGT_BUDOKAI_MINOR_MATCH_TELEPORT_INFO_RES* res = (sGT_BUDOKAI_MINOR_MATCH_TELEPORT_INFO_RES*)packet.GetPacketData();
+	sGT_BUDOKAI_MINOR_MATCH_TELEPORT_INFO_RES * res = (sGT_BUDOKAI_MINOR_MATCH_TELEPORT_INFO_RES *)packet.GetPacketData();
 	res->wOpCode = GT_BUDOKAI_MINOR_MATCH_TELEPORT_INFO_RES;
 	res->charId = charId;
 	res->handle = handle;
@@ -6587,7 +6587,7 @@ void CBudokaiManager::TeleportPrelimReq(CHARACTERID charId, HOBJECT handle, BYTE
 				}
 				else res->wResultCode = GAME_BUDOKAI_CHARACTER_NOT_JOINED;
 			}
-			else if (m_matchStateInfo[BUDOKAI_MATCH_TYPE_INDIVIDIAUL].byState == BUDOKAI_MATCHSTATE_MAJORMATCH_32
+			else if (m_matchStateInfo[BUDOKAI_MATCH_TYPE_INDIVIDIAUL].byState == BUDOKAI_MATCHSTATE_MAJORMATCH_32 
 				|| m_matchStateInfo[BUDOKAI_MATCH_TYPE_INDIVIDIAUL].byState == BUDOKAI_MATCHSTATE_MAJORMATCH_16
 				|| m_matchStateInfo[BUDOKAI_MATCH_TYPE_INDIVIDIAUL].byState == BUDOKAI_MATCHSTATE_MAJORMATCH_08)
 			{
@@ -6664,7 +6664,7 @@ void CBudokaiManager::TeleportPrelimReq(CHARACTERID charId, HOBJECT handle, BYTE
 				else res->wResultCode = GAME_BUDOKAI_CHARACTER_NOT_JOINED;
 			}
 		}
-		else if (byMatchType == BUDOKAI_MATCH_TYPE_TEAM)
+		else if(byMatchType == BUDOKAI_MATCH_TYPE_TEAM)
 		{
 			if (m_matchStateInfo[BUDOKAI_MATCH_TYPE_TEAM].byState == BUDOKAI_MATCHSTATE_MINOR_MATCH)
 			{
@@ -6802,7 +6802,7 @@ void CBudokaiManager::MinorMatchUpdateScore(BYTE byMatchIndex, TEAMTYPE wTeamTyp
 			it3->second.dwTick = 9000;
 
 			CNtlPacket packet2(sizeof(sGU_MATCH_MINORMATCH_PLAYER_STATE_NFY));
-			sGU_MATCH_MINORMATCH_PLAYER_STATE_NFY* res2 = (sGU_MATCH_MINORMATCH_PLAYER_STATE_NFY*)packet2.GetPacketData();
+			sGU_MATCH_MINORMATCH_PLAYER_STATE_NFY * res2 = (sGU_MATCH_MINORMATCH_PLAYER_STATE_NFY *)packet2.GetPacketData();
 			res2->wOpCode = GU_MATCH_MINORMATCH_PLAYER_STATE_NFY;
 			res2->hPc = hFainter;
 			res2->byPcState = MATCH_MEMBER_STATE_FAINT;
@@ -6813,7 +6813,7 @@ void CBudokaiManager::MinorMatchUpdateScore(BYTE byMatchIndex, TEAMTYPE wTeamTyp
 		if (wTeamType != INVALID_TEAMTYPE)
 		{
 			CNtlPacket packet(sizeof(sGU_MATCH_MINORMATCH_UPDATE_SCORE_NFY));
-			sGU_MATCH_MINORMATCH_UPDATE_SCORE_NFY* res = (sGU_MATCH_MINORMATCH_UPDATE_SCORE_NFY*)packet.GetPacketData();
+			sGU_MATCH_MINORMATCH_UPDATE_SCORE_NFY * res = (sGU_MATCH_MINORMATCH_UPDATE_SCORE_NFY *)packet.GetPacketData();
 			res->wOpCode = GU_MATCH_MINORMATCH_UPDATE_SCORE_NFY;
 			res->wTeamType = wTeamType;
 			res->hSlayer = hSlayer;
@@ -6866,7 +6866,7 @@ void CBudokaiManager::MajorMatchUpdateScore(BYTE byMatchIndex, TEAMTYPE wTeamTyp
 		if (it3 != it->second->m_mapIndividual.end())
 		{
 			CNtlPacket packet2(sizeof(sGU_MATCH_MAJORMATCH_PLAYER_STATE_NFY));
-			sGU_MATCH_MAJORMATCH_PLAYER_STATE_NFY* res2 = (sGU_MATCH_MAJORMATCH_PLAYER_STATE_NFY*)packet2.GetPacketData();
+			sGU_MATCH_MAJORMATCH_PLAYER_STATE_NFY * res2 = (sGU_MATCH_MAJORMATCH_PLAYER_STATE_NFY *)packet2.GetPacketData();
 			res2->wOpCode = GU_MATCH_MAJORMATCH_PLAYER_STATE_NFY;
 			res2->hPc = hFainter;
 			res2->byPcState = MATCH_MEMBER_STATE_FAINT;
@@ -6914,7 +6914,7 @@ void CBudokaiManager::FinalMatchUpdateScore(BYTE byMatchIndex, TEAMTYPE wTeamTyp
 		if (it3 != it->second->m_mapIndividual.end())
 		{
 			CNtlPacket packet2(sizeof(sGU_MATCH_FINALMATCH_PLAYER_STATE_NFY));
-			sGU_MATCH_FINALMATCH_PLAYER_STATE_NFY* res2 = (sGU_MATCH_FINALMATCH_PLAYER_STATE_NFY*)packet2.GetPacketData();
+			sGU_MATCH_FINALMATCH_PLAYER_STATE_NFY * res2 = (sGU_MATCH_FINALMATCH_PLAYER_STATE_NFY *)packet2.GetPacketData();
 			res2->wOpCode = GU_MATCH_FINALMATCH_PLAYER_STATE_NFY;
 			res2->hPc = hFainter;
 			res2->byPcState = MATCH_MEMBER_STATE_FAINT;
@@ -6966,7 +6966,7 @@ void CBudokaiManager::PlayerDisconnect(CHARACTERID charId, HOBJECT hPlayer, JOIN
 				if (m_eMatchDepth <= BUDOKAI_MATCH_DEPTH_4)
 				{
 					CNtlPacket packet2(sizeof(sGU_MATCH_FINALMATCH_PLAYER_STATE_NFY));
-					sGU_MATCH_FINALMATCH_PLAYER_STATE_NFY* res2 = (sGU_MATCH_FINALMATCH_PLAYER_STATE_NFY*)packet2.GetPacketData();
+					sGU_MATCH_FINALMATCH_PLAYER_STATE_NFY * res2 = (sGU_MATCH_FINALMATCH_PLAYER_STATE_NFY *)packet2.GetPacketData();
 					res2->wOpCode = GU_MATCH_FINALMATCH_PLAYER_STATE_NFY;
 					res2->hPc = hPlayer;
 					res2->byPcState = MATCH_MEMBER_STATE_GIVEUP;
@@ -6976,7 +6976,7 @@ void CBudokaiManager::PlayerDisconnect(CHARACTERID charId, HOBJECT hPlayer, JOIN
 				else
 				{
 					CNtlPacket packet2(sizeof(sGU_MATCH_MAJORMATCH_PLAYER_STATE_NFY));
-					sGU_MATCH_MAJORMATCH_PLAYER_STATE_NFY* res2 = (sGU_MATCH_MAJORMATCH_PLAYER_STATE_NFY*)packet2.GetPacketData();
+					sGU_MATCH_MAJORMATCH_PLAYER_STATE_NFY * res2 = (sGU_MATCH_MAJORMATCH_PLAYER_STATE_NFY *)packet2.GetPacketData();
 					res2->wOpCode = GU_MATCH_MAJORMATCH_PLAYER_STATE_NFY;
 					res2->hPc = hPlayer;
 					res2->byPcState = MATCH_MEMBER_STATE_GIVEUP;
@@ -7046,7 +7046,7 @@ void CBudokaiManager::PlayerDisconnect(CHARACTERID charId, HOBJECT hPlayer, JOIN
 	}
 }
 
-WORD CBudokaiManager::CheckBudokaiOpen(CPlayer* pPlayer)
+WORD CBudokaiManager::CheckBudokaiOpen(CPlayer * pPlayer)
 {
 	//printf("%u %u %u %u \n", m_pTableInfo->byJuniorLevelMin, m_pTableInfo->byJuniorLevelMax, m_pTableInfo->byAdultLevelMin, m_pTableInfo->byAdultLevelMax);
 	if (m_type == BUDOKAI_TYPE_JUNIOR)
@@ -7068,14 +7068,14 @@ WORD CBudokaiManager::CheckBudokaiOpen(CPlayer* pPlayer)
 
 				if (pParty == NULL)
 					return GAME_PARTY_YOU_ARE_NOT_IN_PARTY;
-				if (pParty->GetPartyLeaderID() != pPlayer->GetID())
+				if(pParty->GetPartyLeaderID() != pPlayer->GetID())
 					return GAME_BUDOKAI_YOU_ARE_NOT_A_TEAM_LEADER;
-				if (pParty->GetPartyMemberCount() < NTL_MAX_MEMBER_IN_PARTY)
+				if(pParty->GetPartyMemberCount() < NTL_MAX_MEMBER_IN_PARTY)
 					return GAME_BUDOKAI_NEED_MORE_MEMBER;
 
 				for (BYTE i = 0; i < pParty->GetPartyMemberCount(); i++)
 				{
-					if (g_pObjectManager->GetPC(pParty->GetMemberInfo(i).hHandle) == NULL)
+					if(g_pObjectManager->GetPC(pParty->GetMemberInfo(i).hHandle) == NULL)
 						return GAME_BUDOKAI_NEED_MORE_MEMBER;
 
 					if (pParty->GetMemberInfo(i).byLevel < m_pTableInfo->byJuniorLevelMin || pParty->GetMemberInfo(i).byLevel > m_pTableInfo->byJuniorLevelMax)
@@ -7128,7 +7128,7 @@ WORD CBudokaiManager::CheckBudokaiOpen(CPlayer* pPlayer)
 	return GAME_SUCCESS;
 }
 
-bool CBudokaiManager::IsInsideArena(CNtlVector& vLoc, CWorld* pWorld)
+bool CBudokaiManager::IsInsideArena(CNtlVector & vLoc, CWorld* pWorld)
 {
 	if (pWorld)
 	{
@@ -7158,7 +7158,7 @@ void CBudokaiManager::SetJoinData(JOINID joinid, BYTE byJoinState, BYTE byJoinRe
 	}
 }
 
-bool CBudokaiManager::CanTeleportPrelim(CPlayer* pPlayer)
+bool CBudokaiManager::CanTeleportPrelim(CPlayer * pPlayer)
 {
 	if (m_matchStateInfo[m_matchType].byState != BUDOKAI_MATCHSTATE_MINOR_MATCH)
 		return false;
@@ -7173,7 +7173,7 @@ bool CBudokaiManager::CanTeleportPrelim(CPlayer* pPlayer)
 	return false;
 }
 
-bool CBudokaiManager::CanTeleportMajorMatch(CPlayer* pPlayer)
+bool CBudokaiManager::CanTeleportMajorMatch(CPlayer * pPlayer)
 {
 	if (m_matchStateInfo[m_matchType].byState < BUDOKAI_MATCHSTATE_MINOR_MATCH)
 		return false;
@@ -7184,7 +7184,7 @@ bool CBudokaiManager::CanTeleportMajorMatch(CPlayer* pPlayer)
 		if (it2->second.byJoinResult > BUDOKAI_JOIN_RESULT_MINORMATCH && it2->second.byJoinState == BUDOKAI_JOIN_STATE_PLAY)
 			return true;
 	}
-
+	
 	return false;
 }
 
@@ -7232,71 +7232,73 @@ TEAMTYPE CBudokaiManager::DecideTeamType(BYTE nextMatchDepth, BYTE byPrelimIndex
 	{
 		switch (nextMatchDepth)
 		{
-		case BUDOKAI_MATCH_DEPTH_16:
-		{
-			if (byPrelimIndex == 0 || byPrelimIndex == 1
-				|| byPrelimIndex == 4 || byPrelimIndex == 5
-				|| byPrelimIndex == 8 || byPrelimIndex == 9
-				|| byPrelimIndex == 12 || byPrelimIndex == 13
-				|| byPrelimIndex == 16 || byPrelimIndex == 17
-				|| byPrelimIndex == 20 || byPrelimIndex == 21
-				|| byPrelimIndex == 24 || byPrelimIndex == 25
-				|| byPrelimIndex == 28 || byPrelimIndex == 29)
-				return MATCH_TEAM_TYPE_TEAM1;
-		}
-		break;
-		case BUDOKAI_MATCH_DEPTH_8:
-		{
-			if (byPrelimIndex == 0 || byPrelimIndex == 1 || byPrelimIndex == 2 || byPrelimIndex == 3
-				|| byPrelimIndex == 8 || byPrelimIndex == 9 || byPrelimIndex == 10 || byPrelimIndex == 11
-				|| byPrelimIndex == 16 || byPrelimIndex == 17 || byPrelimIndex == 18 || byPrelimIndex == 19
-				|| byPrelimIndex == 24 || byPrelimIndex == 25 || byPrelimIndex == 26 || byPrelimIndex == 27)
-				return MATCH_TEAM_TYPE_TEAM1;
-		}
-		break;
-		case BUDOKAI_MATCH_DEPTH_4:
-		{
-			if (byPrelimIndex == 0 || byPrelimIndex == 1 || byPrelimIndex == 2 || byPrelimIndex == 3 || byPrelimIndex == 4 || byPrelimIndex == 5 || byPrelimIndex == 6 || byPrelimIndex == 7
-				|| byPrelimIndex == 16 || byPrelimIndex == 17 || byPrelimIndex == 18 || byPrelimIndex == 19 || byPrelimIndex == 20 || byPrelimIndex == 21 || byPrelimIndex == 22 || byPrelimIndex == 23)
-				return MATCH_TEAM_TYPE_TEAM1;
-		}
-		break;
-		case BUDOKAI_MATCH_DEPTH_2:
-		{
-			if (byPrelimIndex >= 0 && byPrelimIndex <= 15)
-				return MATCH_TEAM_TYPE_TEAM1;
-		}
-		break;
+			case BUDOKAI_MATCH_DEPTH_16:
+			{
+				if (byPrelimIndex == 0 || byPrelimIndex == 1
+					|| byPrelimIndex == 4 || byPrelimIndex == 5
+					|| byPrelimIndex == 8 || byPrelimIndex == 9
+					|| byPrelimIndex == 12 || byPrelimIndex == 13
+					|| byPrelimIndex == 16 || byPrelimIndex == 17
+					|| byPrelimIndex == 20 || byPrelimIndex == 21
+					|| byPrelimIndex == 24 || byPrelimIndex == 25
+					|| byPrelimIndex == 28 || byPrelimIndex == 29)
+					return MATCH_TEAM_TYPE_TEAM1;
+			}
+			break;
+			case BUDOKAI_MATCH_DEPTH_8:
+			{
+				if (byPrelimIndex == 0 || byPrelimIndex == 1 || byPrelimIndex == 2 || byPrelimIndex == 3
+					|| byPrelimIndex == 8 || byPrelimIndex == 9 || byPrelimIndex == 10 || byPrelimIndex == 11
+					|| byPrelimIndex == 16 || byPrelimIndex == 17 || byPrelimIndex == 18 || byPrelimIndex == 19
+					|| byPrelimIndex == 24 || byPrelimIndex == 25 || byPrelimIndex == 26 || byPrelimIndex == 27)
+					return MATCH_TEAM_TYPE_TEAM1;
+			}
+			break;
+			case BUDOKAI_MATCH_DEPTH_4:
+			{
+				if (byPrelimIndex == 0 || byPrelimIndex == 1 || byPrelimIndex == 2 || byPrelimIndex == 3 || byPrelimIndex == 4 || byPrelimIndex == 5 || byPrelimIndex == 6 || byPrelimIndex == 7
+					|| byPrelimIndex == 16 || byPrelimIndex == 17 || byPrelimIndex == 18 || byPrelimIndex == 19 || byPrelimIndex == 20 || byPrelimIndex == 21 || byPrelimIndex == 22 || byPrelimIndex == 23)
+					return MATCH_TEAM_TYPE_TEAM1;
+			}
+			break;
+			case BUDOKAI_MATCH_DEPTH_2:
+			{
+				if (byPrelimIndex >= 0 && byPrelimIndex <= 15)
+					return MATCH_TEAM_TYPE_TEAM1;
+			}
+			break;
 		}
 	}
 	else
 	{
 		switch (nextMatchDepth)
 		{
-		case BUDOKAI_MATCH_DEPTH_8:
-		{
-			if (byPrelimIndex == 0 || byPrelimIndex == 1
-				|| byPrelimIndex == 4 || byPrelimIndex == 5
-				|| byPrelimIndex == 8 || byPrelimIndex == 9
-				|| byPrelimIndex == 12 || byPrelimIndex == 13)
-				return MATCH_TEAM_TYPE_TEAM1;
-		}
-		break;
-		case BUDOKAI_MATCH_DEPTH_4:
-		{
-			if (byPrelimIndex == 0 || byPrelimIndex == 1 || byPrelimIndex == 2 || byPrelimIndex == 3
-				|| byPrelimIndex == 8 || byPrelimIndex == 9 || byPrelimIndex == 10 || byPrelimIndex == 11)
-				return MATCH_TEAM_TYPE_TEAM1;
-		}
-		break;
-		case BUDOKAI_MATCH_DEPTH_2:
-		{
-			if (byPrelimIndex >= 0 && byPrelimIndex <= 7)
-				return MATCH_TEAM_TYPE_TEAM1;
-		}
-		break;
+			case BUDOKAI_MATCH_DEPTH_8:
+			{
+				if (byPrelimIndex == 0 || byPrelimIndex == 1 
+					|| byPrelimIndex == 4 || byPrelimIndex == 5 
+					|| byPrelimIndex == 8 || byPrelimIndex == 9
+					|| byPrelimIndex == 12 || byPrelimIndex == 13)
+					return MATCH_TEAM_TYPE_TEAM1;
+			}
+			break;
+			case BUDOKAI_MATCH_DEPTH_4:
+			{
+				if (byPrelimIndex == 0 || byPrelimIndex == 1 || byPrelimIndex == 2 || byPrelimIndex == 3 
+					|| byPrelimIndex == 8 || byPrelimIndex == 9 || byPrelimIndex == 10 || byPrelimIndex == 11)
+					return MATCH_TEAM_TYPE_TEAM1;
+			}
+			break;
+			case BUDOKAI_MATCH_DEPTH_2:
+			{
+				if (byPrelimIndex >= 0 && byPrelimIndex <= 7)
+					return MATCH_TEAM_TYPE_TEAM1;
+			}
+			break;
 		}
 	}
 
 	return teamType;
 }
+
+
