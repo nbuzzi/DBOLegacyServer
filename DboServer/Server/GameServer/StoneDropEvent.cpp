@@ -122,15 +122,17 @@ void CStoneDropEvent::Update(CMonster* pMob, CCharacter* pPlayer)
 
 	BYTE byMobLevel = pMob->GetLevel();
 
+	int mobLevelToUse = byMobLevel;
+	if (byMobLevel > 70) mobLevelToUse = 70;
 	for (int i = 0; i < stoneLevelsSize; ++i)
 	{
 		const int stoneLevel = stoneLevels[i];
 
-		if (stoneLevel < byMobLevel)
+		if (stoneLevel < mobLevelToUse)
 			continue;
 
-		if (stoneLevel > byMobLevel + 10)
-		    break;
+		if (stoneLevel > mobLevelToUse + 10)
+			break;
 
 		if (Dbo_CheckProbabilityF(CalculateBaseDropChance()))
 		{

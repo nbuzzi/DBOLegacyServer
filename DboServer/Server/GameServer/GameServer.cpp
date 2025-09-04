@@ -53,25 +53,37 @@
 std::atomic<bool> g_CommandSocketRunning{false};
 
 void CommandSocketThread(CGameServer* pServer)
+
 {
 	WSADATA wsaData;
 	if (WSAStartup(MAKEWORD(2,2), &wsaData) != 0) {
 		std::cerr << "WSAStartup failed" << std::endl;
 		return;
 	}
-	SOCKET listenSock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-	if (listenSock == INVALID_SOCKET) {
-		std::cerr << "Socket creation failed" << std::endl;
-		WSACleanup();
-		return;
-	}
-	sockaddr_in serverAddr{};
-	serverAddr.sin_family = AF_INET;
-	serverAddr.sin_addr.s_addr = inet_addr("127.0.0.1");
-	serverAddr.sin_port = htons(6666);
-	if (bind(listenSock, (sockaddr*)&serverAddr, sizeof(serverAddr)) == SOCKET_ERROR) {
-		std::cerr << "Bind failed" << std::endl;
+	SOCKET listenSock = INVALID_SOCKET;
+	int startPort = 6666;
+	int maxAttempts = 10;
+	int usedPort = 0;
+	for (int i = 0; i < maxAttempts; ++i) {
+		listenSock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+		if (listenSock == INVALID_SOCKET) {
+			std::cerr << "Socket creation failed" << std::endl;
+			WSACleanup();
+			return;
+		}
+		sockaddr_in serverAddr{};
+		serverAddr.sin_family = AF_INET;
+		serverAddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+		serverAddr.sin_port = htons(startPort + i);
+		if (bind(listenSock, (sockaddr*)&serverAddr, sizeof(serverAddr)) == 0) {
+			usedPort = startPort + i;
+			break;
+		}
 		closesocket(listenSock);
+		listenSock = INVALID_SOCKET;
+	}
+	if (listenSock == INVALID_SOCKET) {
+		std::cerr << "Bind failed on all ports" << std::endl;
 		WSACleanup();
 		return;
 	}
@@ -81,7 +93,7 @@ void CommandSocketThread(CGameServer* pServer)
 		WSACleanup();
 		return;
 	}
-	std::cout << "[GameServer] Command socket listening on 127.0.0.1:6666" << std::endl;
+	std::cout << "[GameServer] Command socket listening on 127.0.0.1:" << usedPort << std::endl;
 	g_CommandSocketRunning = true;
 	while (g_CommandSocketRunning) {
 		SOCKET clientSock = accept(listenSock, nullptr, nullptr);
@@ -94,7 +106,9 @@ void CommandSocketThread(CGameServer* pServer)
 			// Elimina saltos de línea
 			cmd.erase(std::remove(cmd.begin(), cmd.end(), '\r'), cmd.end());
 			cmd.erase(std::remove(cmd.begin(), cmd.end(), '\n'), cmd.end());
-			pServer->OnCommandInput(cmd);
+			BOOL result = pServer->OnCommandInput(cmd);
+			const char* reply = (result == TRUE) ? "OK\n" : "KO\n";
+			send(clientSock, reply, (int)strlen(reply), 0);
 		}
 		closesocket(clientSock);
 	}
@@ -628,7 +642,7 @@ BOOL CGameServer::OnCommandInput(std::string& sCmd)
 		CPlayer* pTarget = g_pObjectManager->FindByName(wszCharName);
 		if (!pTarget || !pTarget->IsInitialized()) {
 			printf("Player '%s' not found or not initialized\n", playerName.c_str());
-			return TRUE;
+			return FALSE;
 		}
 		if (pTarget->GetPlayerItemContainer()->CountEmptyInventory() >= 1) {
 			sITEM_TBLDAT* pTblData = (sITEM_TBLDAT*)g_pTableContainer->GetItemTable()->FindData(itemId);
@@ -638,17 +652,21 @@ BOOL CGameServer::OnCommandInput(std::string& sCmd)
 						amount = pTblData->byMax_Stack;
 					g_pItemManager->CreateItem(pTarget, itemId, amount, INVALID_BYTE, INVALID_BYTE, pTblData->Item_Option_Tblidx == INVALID_TBLIDX);
 					printf("Item %u x%d added to %s\n", itemId, amount, playerName.c_str());
+					return TRUE;
 				}
 				else {
 					printf("Item %u is not valid or is a recipe\n", itemId);
+					return FALSE;
 				}
 			}
 			else {
 				printf("Item %u not found in table\n", itemId);
+				return FALSE;
 			}
 		}
 		else {
 			printf("Player '%s' has no empty inventory slot\n", playerName.c_str());
+			return FALSE;
 		}
 	}
 	else if (args[0] == "setzenny" && args.size() == 3) {
@@ -660,10 +678,11 @@ BOOL CGameServer::OnCommandInput(std::string& sCmd)
 		CPlayer* pTarget = g_pObjectManager->FindByName(wszCharName);
 		if (!pTarget || !pTarget->IsInitialized()) {
 			printf("Player '%s' not found or not initialized\n", playerName.c_str());
-			return TRUE;
+			return FALSE;
 		}
 
 		pTarget->UpdateZeni(ZENNY_CHANGE_TYPE_CHEAT, amount, true);
+		return TRUE;
 	}
 	else if (args[0] == "addtitle" && args.size() == 3) {
 		// addtitle <charname> <id>
@@ -675,8 +694,10 @@ BOOL CGameServer::OnCommandInput(std::string& sCmd)
 		if (pPlayer) {
 			pPlayer->AddCharTitle((TBLIDX)titleId);
 			printf("Title %d added to %s\n", titleId, charname.c_str());
+			return TRUE;
 		} else {
 			printf("Character '%s' not found\n", charname.c_str());
+			return FALSE;
 		}
 	}
 	// ...existing code for other commands...
