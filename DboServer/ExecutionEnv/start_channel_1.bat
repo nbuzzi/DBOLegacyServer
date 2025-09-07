@@ -1,3 +1,3 @@
-start GameServer.exe .\\config\\GameServer1.ini
+start GameServerFull.exe .\\config\\GameServer1.ini
 
 exit
