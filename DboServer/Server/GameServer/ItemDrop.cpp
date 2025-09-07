@@ -545,7 +545,86 @@ void CItemDrop::GenerateOptionSet(sITEM_TBLDAT* table, bool bEnchantAble)
 }
 
 
+void CItemDrop::PickUpCustomItems(CPlayer* pPlayer, const std::vector<TBLIDX>& allowedItemIds)
+{
+	if (!pPlayer || !pPlayer->IsInitialized())
+		return;
 
+	if (std::find(allowedItemIds.begin(), allowedItemIds.end(), m_tblidx) == allowedItemIds.end())
+		return;
+
+	WORD resultcode = GAME_SUCCESS;
+
+	bool bPartyDice = false;
+	bool bInOrder = false;
+	bool bByPartyHunting = false;
+
+	if (pPlayer->GetDragonballScramble() == false &&
+		pPlayer->GetParty() &&
+		pPlayer->GetParty()->GetZeniLootingMethod() != NTL_PARTY_ITEM_LOOTING_GREEDILY &&
+		pPlayer->GetParty()->GetPartyMemberCount() > 1)
+	{
+		switch (pPlayer->GetParty()->GetItemLootingMethod())
+		{
+		case NTL_PARTY_ITEM_LOOTING_IN_ORDER:
+		{
+			if (pPlayer->GetParty()->GetItemLootingMethodRank() <= m_byRank)
+				bInOrder = true;
+		} break;
+
+		case NTL_PARTY_ITEM_LOOTING_DICE:
+		case NTL_PARTY_ITEM_LOOTING_DICE_BY_EQUIPED:
+		{
+			if (pPlayer->GetParty()->GetItemLootingMethodRank() <= m_byRank)
+				bPartyDice = true;
+		} break;
+
+		default: break;
+		}
+	}
+
+	if (pPlayer->GetDragonballScramble() == false && m_tblidx >= 200041 && m_tblidx <= 200047)
+	{
+		resultcode = SCRAMBLE_CANNOT_DO_WHILE_NOT_JOINED;
+	}
+	else
+	{
+		if (bPartyDice == false)
+		{
+			if (bInOrder == false)
+			{
+				if (g_pItemManager->CreateItem(pPlayer, this) == false)
+					resultcode = GAME_ITEM_INVEN_FULL;
+				else
+					g_pItemManager->DestroyItemDropOverTime(this);
+			}
+			else
+			{
+				if (pPlayer->GetParty()->ShareItemDropInOrder(this))
+					g_pItemManager->DestroyItemDropOverTime(this);
+				else
+					resultcode = GAME_PARTY_NOBODY_CANT_RECEIVE_ITEM_RIGHT_NOW;
+			}
+		}
+		else
+		{
+			if (pPlayer->GetParty()->CreatePartyInventoryItem(this) == false)
+				resultcode = GAME_PARTY_NO_EMPTY_SPACE_IN_PARTY_INVENTORY;
+			else
+				bByPartyHunting = true;
+		}
+	}
+
+	CNtlPacket packet3(sizeof(sGU_ITEM_PICK_RES));
+	sGU_ITEM_PICK_RES* res3 = (sGU_ITEM_PICK_RES*)packet3.GetPacketData();
+	res3->wOpCode = GU_ITEM_PICK_RES;
+	res3->wResultCode = resultcode;
+	res3->bByPartyHunting = bByPartyHunting;
+	res3->bPartyDice = bPartyDice;
+	res3->itemTblidx = m_tblidx;
+	packet3.SetPacketLen(sizeof(sGU_ITEM_PICK_RES));
+	pPlayer->SendPacket(&packet3);
+}
 
 //--------------------------------------------------------------------------------------//
 //			===			TIMED EVENT FUNCTIONS		===

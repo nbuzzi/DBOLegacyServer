@@ -132,6 +132,25 @@ void CBudokaiManager::Init()
 
 	m_byDojoRecommenders = 0;
 	m_eMatchDepth = INVALID_BUDOKAI_MATCH_DEPTH;
+
+	// m_pTableInfo->dwDojoRecommendTime = 300; // 10 minutes Notice period
+	// m_pTableInfo->dwOpenNoticeTime = 300; // 10 minutes period
+	// m_pTableInfo->dwRegisterTime = 500; // 20 minutes to register
+	// m_pTableInfo->dwEndingWaitTime = 180; // 1 minute
+
+	// // Set number of rounds per phase (adjust as needed)
+	// int minorRounds = 3; // e.g. 3 fights in minor match
+	// int majorRounds = 3; // e.g. 3 fights in major match
+	// int finalRounds = 4; // e.g. 4 fights in final match
+	// int fightDuration = 180; // seconds per fight (2 minutes)
+
+	// // Set wait times to match total fight duration per phase
+	// m_pTableInfo->dwMinorMatch_WaitTime = fightDuration;
+	// m_pTableInfo->dwMajorMatch_WaitTime = fightDuration;
+	// m_pTableInfo->dwFinalMatch_WaitTime = fightDuration;
+
+		// // Set Budokai end time to cover all rounds (sum all phases)
+		// m_pTableInfo->dwBudokaiEndTime = (minorRounds + majorRounds + finalRounds) * fightDuration;
 }
 
 void CBudokaiManager::Destroy()
@@ -745,8 +764,8 @@ bool CBudokaiManager::TickProcessBudokai(DWORD dwTickDiff, BUDOKAITIME curTime)
 				SendBudokaiState();
 
 				m_matchStateInfo[m_matchType].byState = BUDOKAI_MATCHSTATE_REGISTER;
-				m_matchStateInfo[m_matchType].tmNextStepTime = curTime + m_pTableInfo->dwRegisterTime;
-				m_matchStateInfo[m_matchType].tmRemainTime = m_pTableInfo->dwRegisterTime;
+				m_matchStateInfo[m_matchType].tmNextStepTime = curTime + m_pTableInfo->dwMinorMatch_WaitTime;
+				m_matchStateInfo[m_matchType].tmRemainTime = m_pTableInfo->dwMinorMatch_WaitTime;
 
 				ERR_LOG(LOG_GENERAL, "BUDOKAI: Update MatchType %u State %u, tmNextStepTime = %u, tmRemainTime = %u",
 					m_matchType, BUDOKAI_MATCHSTATE_REGISTER, m_matchStateInfo[m_matchType].tmNextStepTime, m_matchStateInfo[m_matchType].tmRemainTime);
@@ -860,8 +879,8 @@ void CBudokaiManager::TickProcessMatch(DWORD dwTickDif, BUDOKAITIME curTime)
 			if (m_matchStateInfo[m_matchType].tmNextStepTime <= curTime)
 			{
 				m_matchStateInfo[m_matchType].byState = BUDOKAI_MATCHSTATE_WAIT_MINOR_MATCH;
-				m_matchStateInfo[m_matchType].tmNextStepTime = curTime + m_pTableInfo->dwMinorMatch_WaitTime;
-				m_matchStateInfo[m_matchType].tmRemainTime = m_pTableInfo->dwMinorMatch_WaitTime;
+				m_matchStateInfo[m_matchType].tmNextStepTime = curTime + m_pTableInfo->dwRegisterTime;
+				m_matchStateInfo[m_matchType].tmRemainTime = m_pTableInfo->dwRegisterTime;
 
 				ERR_LOG(LOG_GENERAL, "BUDOKAI: Update Match-State. Type %u, byState BUDOKAI_MATCHSTATE_REGISTER -> BUDOKAI_MATCHSTATE_WAIT_MINOR_MATCH, tmNextStepTime = %u, tmRemainTime = %u", 
 					m_matchType, m_matchStateInfo[m_matchType].tmNextStepTime, m_matchStateInfo[m_matchType].tmRemainTime);
@@ -3337,19 +3356,22 @@ bool CBudokaiManager::ProcessMajorMatch(sTOURNAMENT_MATCH * match, BYTE byMatchI
 	return true;
 }
 
+#define BUDOKAI_MAJOR_MATCH_MAX_SCORE 3
+#define BUDOKAI_FINAL_MATCH_MAX_SCORE 4
+
 void CBudokaiManager::UpdateMajorMatchScore(sTOURNAMENT_MATCH * match, BYTE byMatchIndex, BYTE byMatchResult, TEAMTYPE wMatchWinner, BYTE byWins/* = 1*/)
 {
 	if (wMatchWinner == MATCH_TEAM_TYPE_TEAM1)
 	{
 		match->data.byScore1 += byWins;
-		if (match->data.byScore1 > 2)
-			match->data.byScore1 = 2;
+		if (match->data.byScore1 > BUDOKAI_MAJOR_MATCH_MAX_SCORE)
+			match->data.byScore1 = BUDOKAI_MAJOR_MATCH_MAX_SCORE;
 	}
 	else
 	{
 		match->data.byScore2 += byWins;
-		if (match->data.byScore2 > 2)
-			match->data.byScore2 = 2;
+		if (match->data.byScore2 > BUDOKAI_MAJOR_MATCH_MAX_SCORE)
+			match->data.byScore2 = BUDOKAI_MAJOR_MATCH_MAX_SCORE;
 	}
 
 	CNtlPacket packet(sizeof(sGU_MATCH_MAJORMATCH_STAGE_FINISH_NFY));
@@ -3370,7 +3392,7 @@ void CBudokaiManager::UpdateMajorMatchScore(sTOURNAMENT_MATCH * match, BYTE byMa
 	MajorMatchUpdatePlayersState(match, byMatchIndex, MATCH_MEMBER_STATE_NONE);
 
 	//check if match finish
-	if (match->data.byScore1 >= 2 || match->data.byScore2 >= 2)
+	if (match->data.byScore1 >= BUDOKAI_MAJOR_MATCH_MAX_SCORE || match->data.byScore2 >= BUDOKAI_MAJOR_MATCH_MAX_SCORE)
 	{
 		ERR_LOG(LOG_GENERAL, "BUDOKAI: Update Tournament Major Match. Index %u. Winner-Team = %u. Score1 = %u, Score2 = %u, byMatchResult = %u ",
 			byMatchIndex, wMatchWinner, match->data.byScore1, match->data.byScore2, byMatchResult);
@@ -4796,6 +4818,7 @@ void CBudokaiManager::UpdateFinalMatchScore(sTOURNAMENT_MATCH * match, BYTE byMa
 	//update players state to none
 	FinalMatchUpdatePlayersState(match, byMatchIndex, MATCH_MEMBER_STATE_NONE);
 
+	//check if match finish
 	//check if match finish
 	if (match->data.byScore1 >= 3 || match->data.byScore2 >= 3)
 	{

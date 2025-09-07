@@ -40,6 +40,8 @@ public:
 	bool						IsOwnership(CPlayer* ch);
 	void						PickUpStoneItem(CPlayer* pPlayer);
 
+	void						PickUpCustomItems(CPlayer* pPlayer, const std::vector<TBLIDX>& allowedItemIds);
+
 	inline void					SetZeni(DWORD zeni) { m_dwZeniDrop = zeni; }
 	inline DWORD				GetZeni() { return m_dwZeniDrop; }
 

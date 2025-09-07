@@ -12082,13 +12082,13 @@ void CClientSession::RecvGiftShopBuyReq(CNtlPacket* pPacket)
 			}
 
 			// Deduct WP and ensure it cannot exceed the 2k limit after purchase
-				DWORD newWaguPoints = cPlayer->GetWaguPoints();
-				if (newWaguPoints < price) newWaguPoints = 0;
-				else newWaguPoints -= price;
-				// Prevent any restoration of previous WP balance (exploit fix)
-				// Only deduction and capping allowed
-				if (newWaguPoints > 2000) newWaguPoints = 2000;
-				cPlayer->UpdateWaguPoints(newWaguPoints);
+			DWORD newWaguPoints = cPlayer->GetWaguPoints();
+			if (newWaguPoints < price) newWaguPoints = 0;
+			else newWaguPoints -= price;
+			// Prevent any restoration of previous WP balance (exploit fix)
+			// Only deduction and capping allowed
+			if (newWaguPoints > 2000) newWaguPoints = 2000;
+			cPlayer->UpdateWaguPoints(newWaguPoints);
 
 			CGameServer* app = (CGameServer*)g_pApp;
 
@@ -14001,6 +14001,7 @@ void CClientSession::RecvMascotAutoLootingReq(CNtlPacket* pPacket)
 	else
 	{
 		cPlayer->GetCurrentMascot()->SetCanLoot(false);
+		std::vector<TBLIDX> customIdsToPick = { 111, 110, 11160035,11160034,11160033, 11160029, 200001, 200002, 200003, 200004, 200005, 200006, 200007 };
 
 		for (int i = 0; i < req->byItemCount; i++)
 		{
@@ -14019,13 +14020,11 @@ void CClientSession::RecvMascotAutoLootingReq(CNtlPacket* pPacket)
 				if (item->IsOwnership(cPlayer) == false)
 					continue;
 
-				switch (item->GetObjType())
-				{
-				case OBJTYPE_DROPMONEY: item->PickUpZeni(cPlayer); nCount++; break;
-				case OBJTYPE_DROPITEM: item->PickUpStoneItem(cPlayer); nCount++; break;
-
-				default: break;
-				}
+				// NICO: Custom drop item looting conditions can be added here
+				item->PickUpStoneItem(cPlayer);
+				item->PickUpCustomItems(cPlayer, customIdsToPick);
+				item->PickUpZeni(cPlayer);
+				nCount++;
 			}
 		}
 	}

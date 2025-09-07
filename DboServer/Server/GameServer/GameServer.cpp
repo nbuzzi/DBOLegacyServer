@@ -719,6 +719,14 @@ BOOL CGameServer::OnCommandInput(std::string& sCmd)
 		g_pDragonballHuntEvent->EndEvent();
 		NTL_PRINT(PRINT_APP, "Dragonball Hunt Event Stopped");
 	}
+	else if (sCmd == "startdojo") {
+		g_pDojoManager->StartDojoEvent();
+		NTL_PRINT(PRINT_APP, "Dojo Event Started (manual)");
+	}
+	else if (sCmd == "stopdojo") {
+		g_pDojoManager->StopDojoEvent();
+		NTL_PRINT(PRINT_APP, "Dojo Event Stopped (manual)");
+	}
 	else if (sCmd == "dumpthreads") {
 		tThreadFactory::Instance().AllThreadDump();
 	}
