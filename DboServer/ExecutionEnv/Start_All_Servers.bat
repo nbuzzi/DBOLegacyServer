@@ -19,7 +19,7 @@ start GameServer.exe .\\config\\GameServer1.ini
 timeout /t 1 /nobreak > nul
 
 ::Using the game server full for now::
-start GameServerFull.exe .\\config\\GameServer9.ini
+start GameServer.exe .\\config\\GameServer9.ini
 timeout /t 1 /nobreak > nul
 
 start ChatServer.exe
