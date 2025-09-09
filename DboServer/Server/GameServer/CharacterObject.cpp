@@ -84,7 +84,7 @@ void CCharacterObject::Init()
 
 	m_hTarget = INVALID_HOBJECT;
 
-	m_byChainSequence = 0;
+	m_byChainSequence = NTL_BATTLE_CHAIN_ATTACK_START;
 
 	m_fWalkSpeedBeforeBlock = 0.0f;
 	m_fRunSpeedBeforeBlock = 0.0f;
@@ -528,7 +528,7 @@ bool CCharacterObject::IsAttackable(CCharacterObject* pTarget)
 		{
 			if (pTarget->IsFainting() || pTarget->IsDespawning())
 				return false;
-
+			
 			if (pTarget->IsValidTarget(0)) //not sure
 			{
 				if (pTarget->GetCharStateID() != CHARSTATE_SLIDING && pTarget->GetCharStateID() != CHARSTATE_HTB && pTarget->GetCharStateID() != CHARSTATE_SANDBAG && pTarget->GetCharStateID() != CHARSTATE_DIRECT_PLAY && pTarget->GetCharStateID() != CHARSTATE_TURNING)
@@ -633,7 +633,7 @@ bool CCharacterObject::SetFightMode(bool bFlag)
 {
 	if (m_bFightMode != bFlag)
 	{
-		m_byChainSequence = 0; //reset chain attack
+		m_byChainSequence = NTL_BATTLE_CHAIN_ATTACK_START; //reset chain attack
 
 		m_bFightMode = bFlag;
 		return true;

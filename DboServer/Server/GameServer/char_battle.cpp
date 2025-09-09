@@ -36,7 +36,7 @@ void CPlayer::UpdatePvpZone(bool bStatus)
 //-------------------------------------------------------------------//
 // send attack action packet
 //-------------------------------------------------------------------//
-void CCharacter::AttackAction(CCharacter* pVictim)
+void CCharacter::AttackAction(CCharacter* pVictim, bool bIsChainAttack)
 {
 	float fDmg = 0.0f;
 	BYTE byAttackType = GetAttackType();
@@ -49,19 +49,6 @@ void CCharacter::AttackAction(CCharacter* pVictim)
 	CNtlVector vShift(pVictim->GetCurLoc() - GetCurLoc());
 	vShift.y = 0.0f;
 	vShift.SafeNormalize();
-
-	//float reducedDmg = 0;
-	
-	// Player characters will chain all attacks from 1 until max anim id (depending on level, max 6), then reset back to 1.
-	if (IsPC()) {
-		if (m_byChainSequence < GetMaxChainAttack())
-			++m_byChainSequence;
-		else
-			m_byChainSequence = GetStartChainIndex();
-	}
-	// Mobs will simply select either main or secondary attack randomly.
-	else
-		m_byChainSequence = rand() % GetMaxChainAttack();
 
 	if (pVictim->GetStateManager()->IsCharCondition(CHARCOND_INVINCIBLE))
 	{
@@ -80,12 +67,14 @@ void CCharacter::AttackAction(CCharacter* pVictim)
 		}
 	}
 
+
 	//check dodge
 	if (BattleIsDodge(pVictim->IsPC(), GetCharAtt()->GetAttackRate(), pVictim->GetCharAtt()->GetDodgeRate(), GetLevel(), pVictim->GetLevel()) == true)
 	{
 		byAttackResult = BATTLE_ATTACK_RESULT_DODGE;
 		goto SEND_PACKET;
 	}
+
 
 	//if not guarded or dodged then calculate damage
 	fDmg = CalcMeleeDamage(this, pVictim);
@@ -94,34 +83,16 @@ void CCharacter::AttackAction(CCharacter* pVictim)
 	float fChainBonusRate = NtlGetBattleChainAttackBounsRate(m_byChainSequence);
 	fDmg += fDmg * fChainBonusRate / 100;
 
-	//bool bIsComboFinisher = IsPC() && m_byChainSequence == NTL_BATTLE_MAX_CHAIN_ATTACK_COUNT_PLAYER;
+
+
 	if (BattleIsBlock(pVictim->GetCharAtt()->GetBlockRate(), GetLevel(), pVictim->GetLevel()))
 	{
-		// Commented out code because this sliding behavior didn't seem to exist in latest retail TW version.
-		// TODO: Below code is commented out because the sliding (aka a knockdown that's being blocked) mechanic
-		//  seems to not work properly. Unsure if client issue or server issue (most likely).
-		/*if (bIsComboFinisher)
-		{
-			byAttackResult = BATTLE_ATTACK_RESULT_SLIDING;
-			byBlockedAction = DBO_GUARD_TYPE_KNOCKDOWN;
-			vShift *= +NTL_BATTLE_SLIDING_DISTANCE; // should it be push distance instead?
-		}
-		else*/
-		{
-			byAttackResult = BATTLE_ATTACK_RESULT_BLOCK;
-		}
-		//fDmg *= (1.0f - NTL_BATTLE_BLOCK_DAMAGE_REDUCE_RATE);
+		byAttackResult = BATTLE_ATTACK_RESULT_BLOCK;
 		fDmg /= 2.0f;
 	}
-	// Commented out code because this knockdown behavior didn't seem to exist in latest retail TW version.
-	//else if (bIsComboFinisher)
-	//{
-	//	byAttackResult = BATTLE_ATTACK_RESULT_KNOCKDOWN;
-	//	vShift *= +NTL_BATTLE_KNOCKDOWN_DISTANCE;
-	//}
 	else
 	{
-		// check crit
+		//check crit
 		float fCritDmgRate = 0.0f, fCritDmgBonus = 0.0f, fCritDefRate = 0.0f;
 		bool bIsCrit = false;
 
@@ -130,6 +101,7 @@ void CCharacter::AttackAction(CCharacter* pVictim)
 			if (BattleIsCrit(GetCharAtt(), pVictim->GetCharAtt(), true))
 			{
 				bIsCrit = true;
+
 				fCritDmgRate = GetCharAtt()->GetPhysicalCriticalDamageRate();
 
 				// critical dmg def
@@ -141,6 +113,7 @@ void CCharacter::AttackAction(CCharacter* pVictim)
 			if (BattleIsCrit(GetCharAtt(), pVictim->GetCharAtt(), false))
 			{
 				bIsCrit = true;
+
 				fCritDmgRate = GetCharAtt()->GetEnergyCriticalDamageRate();
 
 				// critical dmg def
@@ -151,7 +124,9 @@ void CCharacter::AttackAction(CCharacter* pVictim)
 		if (bIsCrit)
 		{
 			byAttackResult = BATTLE_ATTACK_RESULT_CRITICAL_HIT;
+
 			fCritDmgBonus = ((fDmg * fCritDmgRate) / 100.f);
+
 			fCritDmgBonus -= fCritDmgBonus * fCritDefRate / 100.f;
 
 			fDmg += fCritDmgBonus;
@@ -167,25 +142,23 @@ void CCharacter::AttackAction(CCharacter* pVictim)
 	//	fTargetLpRecoveredWhenHit, pVictim->GetCharAtt()->GetLastLpRecoveryWhenHit(), pVictim->GetCharAtt()->GetLastLpRecoveryWhenHitInPercent(), fDmg);
 
 	//check reflect
-	//check reflect
 	fReflectedDamage = GetReflectDamage(fDmg, byAttackType, pVictim->GetCharAtt()->GetPhysicalReflection(), pVictim->GetCharAtt()->GetEnergyReflection());
 
-	//if (reducedDmg > 0)
-	//	fDmg = reducedDmg;
 
-//---SEND PACKET START----------------------------------------------------------
+	//---SEND PACKET START----------------------------------------------------------
 SEND_PACKET:
+
 	CNtlPacket packet(sizeof(sGU_CHAR_ACTION_ATTACK));
-	sGU_CHAR_ACTION_ATTACK * res = (sGU_CHAR_ACTION_ATTACK *)packet.GetPacketData();
+	sGU_CHAR_ACTION_ATTACK* res = (sGU_CHAR_ACTION_ATTACK*)packet.GetPacketData();
 	res->wOpCode = GU_CHAR_ACTION_ATTACK;
 	res->hSubject = GetID();
 	res->hTarget = pVictim->GetID();
 	res->dwLpEpEventId = pVictim->AcquireLpEpEventID();
-	res->bChainAttack = IsPC(); // Only players perform chain attacks.
+	res->bChainAttack = (BYTE)bIsChainAttack;
 	res->byAttackResult = byAttackResult;
 	res->attackResultValue = (int)fDmg;
 	res->byAttackSequence = m_byChainSequence;
-	res->fReflectedDamage = fReflectedDamage;
+	res->fReflectedDamage = fReflectedDamage; //when this is enabled then the client crashes
 	res->byBlockedAction = byBlockedAction;
 	vShift.CopyTo(res->vShift);
 
@@ -197,12 +170,12 @@ SEND_PACKET:
 	if (res->lpEpRecovered.dwTargetEpRecoveredWhenHit >= 1)
 		res->lpEpRecovered.bIsEpRecoveredWhenHit = true;
 
-	packet.SetPacketLen( sizeof(sGU_CHAR_ACTION_ATTACK) );
+	packet.SetPacketLen(sizeof(sGU_CHAR_ACTION_ATTACK));
 	Broadcast(&packet);
 
-//---SEND PACKET END----------------------------------------------------------
+	//---SEND PACKET END----------------------------------------------------------
 
-	//<attacker>deal reflect damage
+		//<attacker>deal reflect damage
 	if (fReflectedDamage > 1.0f)
 	{
 		OnAttackAction(pVictim, (int)fReflectedDamage, BATTLE_ATTACK_RESULT_REFLECTED_DAMAGE);
@@ -221,17 +194,13 @@ SEND_PACKET:
 			pVictim->UpdateCurEP((WORD)fTargetEpRecoveredWhenHit, true, false);
 	}
 
-	// Commented out code because this knockdown/sliding behavior didn't seem to exist in latest retail TW version.
-	// TODO: Should we send this before the sGU_CHAR_ACTION_ATTACK packet? After? Should we actually send the sGU_UPDATE_CHAR_STATE
-	//  packet too? Or should we simply update the values internally but not broadcast?
-	//if (byAttackResult == BATTLE_ATTACK_RESULT_KNOCKDOWN)
-	//{
-	//	pVictim->SendCharStateKnockdown(res->vShift);
-	//}
-	//else if (byAttackResult == BATTLE_ATTACK_RESULT_SLIDING)
-	//{
-	//	pVictim->SendCharStateSliding(res->vShift);
-	//}
+
+	if (bIsChainAttack)
+	{
+		++m_byChainSequence;
+		if (m_byChainSequence > GetMaxChainAttack())
+			m_byChainSequence = NTL_BATTLE_CHAIN_ATTACK_START;
+	}
 }
 
 void CCharacter::SpecialAttackAction(CCharacter * pVictim, BYTE byAttackType, BYTE bySourceType, TBLIDX sourceTblidx, CSkill* pSkill)
