@@ -303,7 +303,7 @@ bool IsInBattleArena(TBLIDX worldTblidx, CNtlVector& vCurLoc, bool isPowerTourna
 	if (worldTblidx == 1 && (vCurLoc.x < 5792 && vCurLoc.z < 788 && vCurLoc.x > 5752 && vCurLoc.z > 748))
 		return true;
 
-	// Arena 2 – Tatami (AABB rápido + polígono preciso)
+	// Arena 2 ?Tatami (AABB rápido + polígono preciso)
 	if (worldTblidx == 1) {
 		if (vCurLoc.x > 4472.23f && vCurLoc.x < 4521.23f &&
 			vCurLoc.z > 4047.36f && vCurLoc.z < 4096.48f)

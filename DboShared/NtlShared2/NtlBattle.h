@@ -300,6 +300,7 @@ const float			NTL_BATTLE_SLIDING_DISTANCE					= 4.0f; // SLIDING °Å¸®
 
 const int			NTL_BATTLE_CHAIN_ATTACK_START_NPC			= 0; // chain attack start id for npcs
 const int			NTL_BATTLE_CHAIN_ATTACK_START_PLAYER		= 1; // chain attack start id for players
+const int			NTL_BATTLE_CHAIN_ATTACK_START = 1; // chain attack start id 
 
 const int			NTL_BATTLE_MAX_CHAIN_ATTACK_COUNT_NPC		= 2; // NPC attacks (currently 2 types)
 const int			NTL_BATTLE_MAX_CHAIN_ATTACK_COUNT_PLAYER	= 6; // The maximum value chain attack for players

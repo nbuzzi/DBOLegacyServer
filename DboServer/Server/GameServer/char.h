@@ -235,7 +235,7 @@ public:
 
 public:
 
-	void			AttackAction(CCharacter* pVictim);
+	void			AttackAction(CCharacter* pVictim, bool bIsChainAttack);
 	void			SpecialAttackAction(CCharacter* pVictim, BYTE byAttackType, BYTE bySourceType, TBLIDX sourceTblidx, CSkill* pSkill);
 	virtual bool	OnAttackAction(CCharacter* pAttacker, int nDmg, BYTE byAttackResult, eFAINT_REASON eReason = FAINT_REASON_HIT);
 	virtual bool	OnSkillAction(CCharacter* pAttacker, int nDmg, DWORD dwAggroPoint, BYTE byAttackResult, bool bWakeUpTarget); // returns true if target dies on this action, false otherwise

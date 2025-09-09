@@ -12,6 +12,7 @@
 #include "DungeonManager.h"
 #include "TriggerManager.h"
 #include "ObjectManager.h"
+#include "CPlayer.h"
 #include "privateshop.h"
 #include "RankBattle.h"
 #include "PartyMatching.h"
@@ -39,6 +40,82 @@
 #include "HoneyBeeEvent.h"
 #include "StoneDropEvent.h"
 #include "Fairy Event.h"
+// --- INICIO SOCKET COMANDOS ---
+#include <thread>
+#include <atomic>
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#pragma comment(lib, "ws2_32.lib")
+#include <iostream>
+#include <sstream>
+#include <vector>
+
+std::atomic<bool> g_CommandSocketRunning{false};
+
+void CommandSocketThread(CGameServer* pServer)
+
+{
+	WSADATA wsaData;
+	if (WSAStartup(MAKEWORD(2,2), &wsaData) != 0) {
+		std::cerr << "WSAStartup failed" << std::endl;
+		return;
+	}
+	SOCKET listenSock = INVALID_SOCKET;
+	int startPort = 6666;
+	int maxAttempts = 10;
+	int usedPort = 0;
+	for (int i = 0; i < maxAttempts; ++i) {
+		listenSock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+		if (listenSock == INVALID_SOCKET) {
+			std::cerr << "Socket creation failed" << std::endl;
+			WSACleanup();
+			return;
+		}
+		sockaddr_in serverAddr{};
+		serverAddr.sin_family = AF_INET;
+		serverAddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+		serverAddr.sin_port = htons(startPort + i);
+		if (bind(listenSock, (sockaddr*)&serverAddr, sizeof(serverAddr)) == 0) {
+			usedPort = startPort + i;
+			break;
+		}
+		closesocket(listenSock);
+		listenSock = INVALID_SOCKET;
+	}
+	if (listenSock == INVALID_SOCKET) {
+		std::cerr << "Bind failed on all ports" << std::endl;
+		WSACleanup();
+		return;
+	}
+	if (listen(listenSock, 1) == SOCKET_ERROR) {
+		std::cerr << "Listen failed" << std::endl;
+		closesocket(listenSock);
+		WSACleanup();
+		return;
+	}
+	std::cout << "[GameServer] Command socket listening on 127.0.0.1:" << usedPort << std::endl;
+	g_CommandSocketRunning = true;
+	while (g_CommandSocketRunning) {
+		SOCKET clientSock = accept(listenSock, nullptr, nullptr);
+		if (clientSock == INVALID_SOCKET) continue;
+		char buffer[256] = {0};
+		int bytes = recv(clientSock, buffer, sizeof(buffer)-1, 0);
+		if (bytes > 0) {
+			buffer[bytes] = '\0';
+			std::string cmd(buffer);
+			// Elimina saltos de línea
+			cmd.erase(std::remove(cmd.begin(), cmd.end(), '\r'), cmd.end());
+			cmd.erase(std::remove(cmd.begin(), cmd.end(), '\n'), cmd.end());
+			BOOL result = pServer->OnCommandInput(cmd);
+			const char* reply = (result == TRUE) ? "OK\n" : "KO\n";
+			send(clientSock, reply, (int)strlen(reply), 0);
+		}
+		closesocket(clientSock);
+	}
+	closesocket(listenSock);
+	WSACleanup();
+}
+// --- FIN SOCKET COMANDOS ---
 
 
 CGameServer::CGameServer()
@@ -239,6 +316,15 @@ int CGameServer::OnAppStart()
 
 
 	NTL_PRINT(PRINT_APP, "GAME SERVER READY ");
+
+	// Iniciar el hilo del socket de comandos
+	static std::thread commandThread;
+	if (!g_CommandSocketRunning) {
+		commandThread = std::thread(CommandSocketThread, this);
+		commandThread.detach();
+	}
+
+	NTL_PRINT(PRINT_APP, "LOCAL PAGE COMMAND HANDLER READY");
 
 	return NTL_SUCCESS;
 }
@@ -519,104 +605,172 @@ int	CGameServer::OnConfiguration(const char * lpszConfigFile)
 //		Purpose	:
 //		Return	:
 //-----------------------------------------------------------------------------------
+
 BOOL CGameServer::OnCommandInput(std::string& sCmd)
 {
-	if (sCmd == "help")
-	{
+	// Soporte para comandos con argumentos
+	std::istringstream iss(sCmd);
+	std::vector<std::string> args;
+	std::string token;
+	while (iss >> token) args.push_back(token);
+
+	if (args.empty()) return TRUE;
+
+	if (args[0] == "help") {
 		printf("shutdown - Shutdown the server after 30 seconds \n");
-
-		printf("\n");
-
 		printf("playercount - return amount of players online\n");
-
-		printf("\n");
-
 		printf("startdbhunt - start dragonball hunt event\n");
 		printf("stopdbhunt - stop dragonball hunt event\n");
 		printf("startbossspawnevent - start boss spawn event\n");
-
+		printf("addtitle <charname> <id> - add title to character\n");
+		printf("additem <player> <itemid> <amount> - add item to player\n");
+		printf("setzenny <player> <amount> - set zenny of player\n");
 		printf("\n");
 	}
-	else if (sCmd == "shutdown")
-	{
+	else if (args[0] == "additem" && (args.size() == 4 || args.size() == 3)) {
+		// additem <player> <itemid> <amount> o additem <player> <itemid>
+		std::string playerName = args[1];
+		TBLIDX itemId = (TBLIDX)atoi(args[2].c_str());
+		BYTE amount = 1;
+		if (args.size() == 4) {
+			amount = (BYTE)atoi(args[3].c_str());
+			if (amount == 0 || amount == INVALID_BYTE)
+				amount = 1;
+		}
+		WCHAR wszCharName[64] = { 0 };
+		mbstowcs(wszCharName, playerName.c_str(), 63);
+		CPlayer* pTarget = g_pObjectManager->FindByName(wszCharName);
+		if (!pTarget || !pTarget->IsInitialized()) {
+			printf("Player '%s' not found or not initialized\n", playerName.c_str());
+			return FALSE;
+		}
+		if (pTarget->GetPlayerItemContainer()->CountEmptyInventory() >= 1) {
+			sITEM_TBLDAT* pTblData = (sITEM_TBLDAT*)g_pTableContainer->GetItemTable()->FindData(itemId);
+			if (pTblData) {
+				if (pTblData->bValidity_Able == true && pTblData->byItem_Type != eITEM_TYPE::ITEM_TYPE_RECIPE) {
+					if (amount > pTblData->byMax_Stack)
+						amount = pTblData->byMax_Stack;
+					g_pItemManager->CreateItem(pTarget, itemId, amount, INVALID_BYTE, INVALID_BYTE, pTblData->Item_Option_Tblidx == INVALID_TBLIDX);
+					printf("Item %u x%d added to %s\n", itemId, amount, playerName.c_str());
+					return TRUE;
+				}
+				else {
+					printf("Item %u is not valid or is a recipe\n", itemId);
+					return FALSE;
+				}
+			}
+			else {
+				printf("Item %u not found in table\n", itemId);
+				return FALSE;
+			}
+		}
+		else {
+			printf("Player '%s' has no empty inventory slot\n", playerName.c_str());
+			return FALSE;
+		}
+	}
+	else if (args[0] == "setzenny" && args.size() == 3) {
+		std::string playerName = args[1];
+		DWORD amount = static_cast<DWORD>(std::stoul(args[2]));
+
+		WCHAR wszCharName[64] = { 0 };
+		mbstowcs(wszCharName, playerName.c_str(), 63);
+		CPlayer* pTarget = g_pObjectManager->FindByName(wszCharName);
+		if (!pTarget || !pTarget->IsInitialized()) {
+			printf("Player '%s' not found or not initialized\n", playerName.c_str());
+			return FALSE;
+		}
+
+		pTarget->UpdateZeni(ZENNY_CHANGE_TYPE_CHEAT, amount, true);
+		return TRUE;
+	}
+	else if (args[0] == "addtitle" && args.size() == 3) {
+		// addtitle <charname> <id>
+		std::string charname = args[1];
+		int titleId = atoi(args[2].c_str());
+		WCHAR wszCharName[64] = {0};
+		mbstowcs(wszCharName, charname.c_str(), 63);
+		CPlayer* pPlayer = g_pObjectManager->FindByName(wszCharName);
+		if (pPlayer) {
+			pPlayer->AddCharTitle((TBLIDX)titleId);
+			printf("Title %d added to %s\n", titleId, charname.c_str());
+			return TRUE;
+		} else {
+			printf("Character '%s' not found\n", charname.c_str());
+			return FALSE;
+		}
+	}
+	// ...existing code for other commands...
+	else if (sCmd == "shutdown") {
 		printf("Server shut down begin\n");
 		g_pGameProcessor->StartServerShutdownEvent();
 	}
-	else if (sCmd == "playercount")
-	{
+	else if (sCmd == "playercount") {
 		printf("Currently %zu players online \n", g_pObjectManager->GetPlayerCount());
 	}
-	else if (sCmd == "logwpsscript")
-	{
+	else if (sCmd == "logwpsscript") {
 		g_pScriptAlgoManager->LogAllActiveScripts();
 	}
-	else if (sCmd == "startdbhunt")
-	{
+	else if (sCmd == "startdbhunt") {
 		g_pDragonballHuntEvent->StartEvent();
 		NTL_PRINT(PRINT_APP, "Dragonball Hunt Event Started");
 	}
-	else if (sCmd == "stopdbhunt")
-	{
+	else if (sCmd == "stopdbhunt") {
 		g_pDragonballHuntEvent->EndEvent();
 		NTL_PRINT(PRINT_APP, "Dragonball Hunt Event Stopped");
 	}
-	else if (sCmd == "dumpthreads")
-	{
+	else if (sCmd == "startdojo") {
+		g_pDojoManager->StartDojoEvent();
+		NTL_PRINT(PRINT_APP, "Dojo Event Started (manual)");
+	}
+	else if (sCmd == "stopdojo") {
+		g_pDojoManager->StopDojoEvent();
+		NTL_PRINT(PRINT_APP, "Dojo Event Stopped (manual)");
+	}
+	else if (sCmd == "dumpthreads") {
 		tThreadFactory::Instance().AllThreadDump();
 	}
-	else if (sCmd == "StartAdultSolo")
-	{
+	else if (sCmd == "StartAdultSolo") {
 		g_pBudokaiManager->StartSoloAdultBudokai();
 	}
-	else if (sCmd == "StartAdultTeam")
-	{
+	else if (sCmd == "StartAdultTeam") {
 		g_pBudokaiManager->StartPartyAdultBudokai();
 	}
-	else if (sCmd == "StartJuniorSolo")
-	{
+	else if (sCmd == "StartJuniorSolo") {
 		g_pBudokaiManager->StartSoloJuniorBudokai();
 	}
-	else if (sCmd == "StartJuniorTeam")
-	{
+	else if (sCmd == "StartJuniorTeam") {
 		g_pBudokaiManager->StartPartyJuniorBudokai();
 	}
-	else if (sCmd == "startdbscramble")
-	{
+	else if (sCmd == "startdbscramble") {
 		g_pDragonballScramble->StartEvent();
 		NTL_PRINT(PRINT_APP, "DragonballScramble Started");
 	}
-	else if (sCmd == "stopdbscramble")
-	{
+	else if (sCmd == "stopdbscramble") {
 		g_pDragonballScramble->EndEvent(true);
 		NTL_PRINT(PRINT_APP, "DragonballScramble Stopped");
 	}
-	else if (sCmd == "startbeeevent")
-	{
+	else if (sCmd == "startbeeevent") {
 		g_pHoneyBeeEvent->StartEvent();
 		NTL_PRINT(PRINT_APP, "HoneybeeEvent Started");
 	}
-	else if (sCmd == "stopbeeevent")
-	{
+	else if (sCmd == "stopbeeevent") {
 		g_pHoneyBeeEvent->EndEvent();
 		NTL_PRINT(PRINT_APP, "HoneybeeEvent Stopped");
 	}
-	else if (sCmd == "startfairy")
-	{
+	else if (sCmd == "startfairy") {
 		g_pFairyEvent->StartEvent();
 		NTL_PRINT(PRINT_APP, "Fairy Event Started");
 	}
-	else if (sCmd == "stopfairy")
-	{
+	else if (sCmd == "stopfairy") {
 		g_pFairyEvent->EndEvent();
 		NTL_PRINT(PRINT_APP, "Fairy Event Stopped");
 	}
-	else if (sCmd == "startdropstone")
-	{
+	else if (sCmd == "startdropstone") {
 		g_pStoneDropEvent->StartEvent();
 		NTL_PRINT(PRINT_APP, "Drop Stone Event Started");
 	}
-	else if (sCmd == "stopdropstone")
-	{
+	else if (sCmd == "stopdropstone") {
 		g_pStoneDropEvent->EndEvent();
 		NTL_PRINT(PRINT_APP, "Drop Stone Event Stopped");
 	}
@@ -651,6 +805,9 @@ void CGameServer::Destroy()
 	SAFE_DELETE(m_pGameProcessor);
 	SAFE_DELETE(m_pGameMain);
 	SAFE_DELETE(m_pGameData);
+
+	// Detener el hilo del socket de comandos
+	g_CommandSocketRunning = false;
 }
 
 

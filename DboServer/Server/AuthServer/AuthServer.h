@@ -168,6 +168,9 @@ public:
 
 	bool			IsAccountTempBlocked(const char* strUsername);
 	void			RegisterAccountTempBann(const char* strUsername);
+	void			TickHousekeeping();
+	void			LogNetStats();
+	void			OnLoginFailure(CClientSession* sess);
 
 private:
 

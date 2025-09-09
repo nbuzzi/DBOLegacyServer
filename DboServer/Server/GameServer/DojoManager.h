@@ -93,6 +93,9 @@ public:
 	CDojoManager();
 	virtual ~CDojoManager();
 	
+	// Manual Dojo Event Control
+	void StartDojoEvent();
+	void StopDojoEvent();
 
 private:
 

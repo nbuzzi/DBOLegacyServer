@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Monster.h"
 #include "GameServer.h"
+#include <algorithm>
 #include "NtlRandom.h"
 #include "ObjectManager.h"
 #include "RangeCheck.h"
@@ -146,7 +147,14 @@ bool CMonster::CreateDataAndSpawn(WORLDID worldId, sMOB_TBLDAT* mobTbldat, sSPAW
 	bot_profile.vSpawnDir = spawnTbldat->vSpawn_Dir;
 	bot_profile.vSpawnLoc = spawnTbldat->vSpawn_Loc;
 
-	bot_profile.wSpawnTime = spawnTbldat->wSpawn_Cool_Time;
+	// NICO: Reduce respawn time to 10% of original (minimum 1 second)
+	// Reduce respawn time to 30% of original (70% faster, minimum 1 second)
+	// Usar macro max si está definido por Windows headers
+#ifdef max
+	bot_profile.wSpawnTime = max(1, (int)(spawnTbldat->wSpawn_Cool_Time * 0.1));
+#else
+	bot_profile.wSpawnTime = ((1) > ((int)(spawnTbldat->wSpawn_Cool_Time * 0.1))) ? (1) : ((int)(spawnTbldat->wSpawn_Cool_Time * 0.1));
+#endif
 	bot_profile.dwParty_Index = spawnTbldat->dwParty_Index;
 
 	m_pAniTbldat = g_pTableContainer->GetModelToolCharDataTable()->FindData(mobTbldat->szModel);

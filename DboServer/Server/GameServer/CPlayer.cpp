@@ -3831,79 +3831,49 @@ void CPlayer::OnTargetChanged(HOBJECT hOldTarget)
 	}
 }
 
-struct ChainKey {
-	BYTE cls, weapon, chain;
-	bool operator==(const ChainKey& o) const { return cls == o.cls && weapon == o.weapon && chain == o.chain; }
-};
-struct ChainKeyHash {
-	size_t operator()(const ChainKey& k) const {
-		return (k.cls) ^ (size_t(k.weapon) << 8) ^ (size_t(k.chain) << 16);
-	}
-};
-
-
-// CPlayer::AttackProgress
 bool CPlayer::AttackProgress(DWORD dwTickDiff, float fMultiple)
 {
-	if (!CCharacterObject::AttackProgress(dwTickDiff, fMultiple))
-		return false;
+	if (CCharacterObject::AttackProgress(dwTickDiff, fMultiple))
+	{
+		CGameServer* app = (CGameServer*)g_pApp;
 
-	CGameServer* app = (CGameServer*)g_pApp;
-
-	// 1) Determinar el tipo de arma REAL (fallback a glove si algo falla)
-	BYTE byWeaponType = ITEM_TYPE_GLOVE;
-	if (CItem* pWeapon = GetPlayerItemContainer()->GetItem(CONTAINER_TYPE_EQUIP, EQUIP_SLOT_TYPE_HAND))
-		if (pWeapon->GetTbldat())
+		BYTE byWeaponType = ITEM_TYPE_UNKNOWN;
+		CItem* pWeapon = GetPlayerItemContainer()->GetItem(CONTAINER_TYPE_EQUIP, EQUIP_SLOT_TYPE_HAND);
+		if (pWeapon)
 			byWeaponType = pWeapon->GetTbldat()->byItem_Type;
 
-	// 2) Validar target y rango antes de hacer trabajo extra
-	CCharacter* pVictim = g_pObjectManager->GetChar(GetAttackTarget());
-	if (!IsAttackable(pVictim))
-		return false;
-	if (!ConsiderAttackRange())
-		return false;
+		sCHAR_DATA_INFO* animationInfo = GetAniTbldat()->GetChainAttack(GetTbldat()->byClass, ITEM_TYPE_GLOVE, m_byChainSequence);
+		if (!animationInfo)
+			return false;
 
-	UpdateBattleCombatMode(true); // Start/Reset combat event
+		//	printf("m_dwNextAttackTime %u GetAttackSpeedRate() %u Animation-Duration %f \n", m_dwNextAttackTime, GetAttackSpeedRate(), animationInfo->fDurationTime);
 
-	AttackAction(pVictim);
+		CCharacter* pVictim = g_pObjectManager->GetChar(GetAttackTarget());
+		if (!pVictim || !pVictim->IsInitialized())
+			return false;
 
-	// 3) Calcular duraci�n correcta seg�n clase + arma + cadena
-	//const float fAnimationTimeMs =
-	//	GetAniTbldat()->GetChainAttackDurationTime(GetTbldat()->byClass, byWeaponType, m_byChainSequence);
+		if (!IsAttackable(pVictim))
+			return false;
+		else if (ConsiderAttackRange() == false)
+			return false;
 
-	static std::unordered_map<ChainKey, float, ChainKeyHash> s_cache;
-	ChainKey key{ GetTbldat()->byClass, byWeaponType, m_byChainSequence };
-	float fAnimationTimeMs;
+		UpdateBattleCombatMode(true); //Start/Reset combat event
 
-	auto it = s_cache.find(key);
-	if (it != s_cache.end()) {
-		fAnimationTimeMs = it->second;
+		AttackAction(pVictim, true);
+
+		float fAnimationTime = animationInfo->fDurationTime * 1000.f; //chain attack duration time (GetChainAttackDurationTime())
+		float fAttackAnimationSpeed = (GetAttackSpeedRate() == 0) ? 1.0f : 1000.0f / (float)GetAttackSpeedRate();
+		float fRequiredAttackAnimationTime = fAnimationTime / fAttackAnimationSpeed;
+
+		m_dwNextAttackTime = app->GetCurTickCount() + (DWORD)fRequiredAttackAnimationTime;
+
+		if (Dbo_CheckProbability(30 - (GetLevel() - pVictim->GetLevel())))
+			UpdateCurRP(GetCharAtt()->GetRPRegen(), true, false);
+
+		return true;
 	}
-	else {
-		fAnimationTimeMs = GetAniTbldat()->GetChainAttackDurationTime(key.cls, key.weapon, key.chain);
-		s_cache.emplace(key, fAnimationTimeMs);
-	}
 
-	// Server usa rate en "acciones por segundo": 1000.0 / rate = ms por tick de anim.
-	const float fAttackAnimMsPerUnit = (GetAttackSpeedRate() == 0) ? 1000.0f
-		: 1000.0f / (float)GetAttackSpeedRate();
-
-	const float fRequiredMs = fAnimationTimeMs / fAttackAnimMsPerUnit;
-
-	const DWORD now = app->GetCurTickCount(); // asegurate que sea monot�nico
-	DWORD next = now + (DWORD)std::ceil(fRequiredMs); // ceil para no �quedarse corto� por truncamiento
-
-	// 4) Clamp m�nimo a 1 frame del servidor (ej. 16ms si corres ~60Hz)
-	static const DWORD kMinGapMs = 16;
-	if (next < now + kMinGapMs)
-		next = now + kMinGapMs;
-
-	m_dwNextAttackTime = next;
-
-	if (Dbo_CheckProbability(30 - (GetLevel() - pVictim->GetLevel())))
-		UpdateCurRP(GetCharAtt()->GetRPRegen(), true, false);
-
-	return true;
+	return false;
 }
 
 

@@ -132,6 +132,25 @@ void CBudokaiManager::Init()
 
 	m_byDojoRecommenders = 0;
 	m_eMatchDepth = INVALID_BUDOKAI_MATCH_DEPTH;
+
+	// m_pTableInfo->dwDojoRecommendTime = 300; // 10 minutes Notice period
+	// m_pTableInfo->dwOpenNoticeTime = 300; // 10 minutes period
+	// m_pTableInfo->dwRegisterTime = 500; // 20 minutes to register
+	// m_pTableInfo->dwEndingWaitTime = 180; // 1 minute
+
+	// // Set number of rounds per phase (adjust as needed)
+	// int minorRounds = 3; // e.g. 3 fights in minor match
+	// int majorRounds = 3; // e.g. 3 fights in major match
+	// int finalRounds = 4; // e.g. 4 fights in final match
+	// int fightDuration = 180; // seconds per fight (2 minutes)
+
+	// // Set wait times to match total fight duration per phase
+	// m_pTableInfo->dwMinorMatch_WaitTime = fightDuration;
+	// m_pTableInfo->dwMajorMatch_WaitTime = fightDuration;
+	// m_pTableInfo->dwFinalMatch_WaitTime = fightDuration;
+
+		// // Set Budokai end time to cover all rounds (sum all phases)
+		// m_pTableInfo->dwBudokaiEndTime = (minorRounds + majorRounds + finalRounds) * fightDuration;
 }
 
 void CBudokaiManager::Destroy()
@@ -208,41 +227,42 @@ void CBudokaiManager::TickProcess(DWORD dwTickDiff)
 	}
 
 
-	// -- ADULT SOLO BUDOKAI (start every day at 12:00 UTC, which is 9:00 AM Argentina time)
-	static int lastSoloStartDay = -1;
-	if (m_bAdultBudokaiBegan == false)
+	// -- JUNIOR SOLO BUDOKAI
+	if (m_bJuniorBudokaiBegan == false)
 	{
-		if (timeStruct.tm_hour == 12 && timeStruct.tm_min == 0 && timeStruct.tm_sec < 5 && timeStruct.tm_yday != lastSoloStartDay)
+		if (timeStruct.tm_wday == 2 && timeStruct.tm_hour == 14) //check if its tuesday 14 o clock
 		{
-			m_bAdultBudokaiBegan = true;
-			lastSoloStartDay = timeStruct.tm_yday;
-			CreateBudokai(BUDOKAI_TYPE_ADULT, BUDOKAI_MATCH_TYPE_INDIVIDIAUL, (BUDOKAITIME)curTime, m_pTableInfo);
+			//start junior solo budokai
+			m_bJuniorBudokaiBegan = true;
+			
+			CreateBudokai(BUDOKAI_TYPE_JUNIOR, BUDOKAI_MATCH_TYPE_INDIVIDIAUL, (BUDOKAITIME)curTime, m_pTableInfo);
 		}
 	}
 	else
 	{
-		if (TickProcessBudokai(dwTickDiff, (BUDOKAITIME)curTime) == true)
+		if (TickProcessBudokai(dwTickDiff, (BUDOKAITIME)curTime) == true) //if true, then end the budokai
 		{
-			ERR_LOG(LOG_GENERAL, "BUDOKAI: End Adult-Solo Budokai");
-			m_bAdultBudokaiBegan = false;
+			//end budokai
+			ERR_LOG(LOG_GENERAL, "BUDOKAI: End Junior-Solo Budokai");
+			m_bJuniorBudokaiBegan = false;
 		}
 	}
 
-	// -- ADULT TEAM BUDOKAI (start every day at 19:00)
-	static int lastTeamStartDay = -1;
+	// -- ADULT PARTY BUDOKAI
 	if (m_bPartyAdultBudokaiBegan == false)
 	{
-		if (timeStruct.tm_hour == 19 && timeStruct.tm_min == 0 && timeStruct.tm_sec < 5 && timeStruct.tm_yday != lastTeamStartDay)
+		if (timeStruct.tm_wday == 0 && timeStruct.tm_hour == 13) //check if its sunday 13 o clock
 		{
+			//start adult party budokai
 			m_bPartyAdultBudokaiBegan = true;
-			lastTeamStartDay = timeStruct.tm_yday;
 			CreateBudokai(BUDOKAI_TYPE_ADULT, BUDOKAI_MATCH_TYPE_TEAM, (BUDOKAITIME)curTime, m_pTableInfo);
 		}
 	}
-	else
+	else 
 	{
-		if (TickProcessBudokai(dwTickDiff, (BUDOKAITIME)curTime) == true)
+		if (TickProcessBudokai(dwTickDiff, (BUDOKAITIME)curTime) == true) //if true, then end the budokai
 		{
+			//end budokai
 			ERR_LOG(LOG_GENERAL, "BUDOKAI: End Adult-Party Budokai");
 			m_bPartyAdultBudokaiBegan = false;
 		}
@@ -2818,6 +2838,7 @@ void CBudokaiManager::TickProcessMajorMatch(DWORD dwTickDif, BUDOKAITIME curTime
 				else
 					match->m_dwMatchTickCount = 4 * 60 * 1000; // 4 minutes
 
+
 				ERR_LOG(LOG_GENERAL, "BUDOKAI: Update Tournament Major Match. Index %u, byState BUDOKAI_MAJORMATCH_STATE_STAGE_READY -> BUDOKAI_MAJORMATCH_STATE_STAGE_RUN, m_dwMatchTickCount = %u",
 					it->first, match->m_dwMatchTickCount);
 
@@ -3335,7 +3356,6 @@ bool CBudokaiManager::ProcessMajorMatch(sTOURNAMENT_MATCH * match, BYTE byMatchI
 	return true;
 }
 
-// Score máximo para Major Match y Final Match
 #define BUDOKAI_MAJOR_MATCH_MAX_SCORE 3
 #define BUDOKAI_FINAL_MATCH_MAX_SCORE 4
 
@@ -4112,7 +4132,7 @@ void CBudokaiManager::TickProcessFinalMatch(DWORD dwTickDif, BUDOKAITIME curTime
 			if (match->m_dwMatchTickCount == 0)
 			{
 				match->m_byMatchState = BUDOKAI_FINALMATCH_STATE_STAGE_RUN;
-                
+				
 				if (m_matchType == BUDOKAI_MATCH_TYPE_INDIVIDIAUL)
 					match->m_dwMatchTickCount = 3 * 60 * 1000; // 3 minutes
 				else
@@ -4771,14 +4791,14 @@ void CBudokaiManager::UpdateFinalMatchScore(sTOURNAMENT_MATCH * match, BYTE byMa
 	if (wMatchWinner == MATCH_TEAM_TYPE_TEAM1)
 	{
 		match->data.byScore1 += byWins;
-		if (match->data.byScore1 > BUDOKAI_FINAL_MATCH_MAX_SCORE)
-			match->data.byScore1 = BUDOKAI_FINAL_MATCH_MAX_SCORE;
+		if (match->data.byScore1 > 3)
+			match->data.byScore1 = 3;
 	}
 	else
 	{
 		match->data.byScore2 += byWins;
-		if (match->data.byScore2 > BUDOKAI_FINAL_MATCH_MAX_SCORE)
-			match->data.byScore2 = BUDOKAI_FINAL_MATCH_MAX_SCORE;
+		if (match->data.byScore2 > 3)
+			match->data.byScore2 = 3;
 	}
 
 	CNtlPacket packet(sizeof(sGU_MATCH_FINALMATCH_STAGE_FINISH_NFY));
@@ -4799,7 +4819,8 @@ void CBudokaiManager::UpdateFinalMatchScore(sTOURNAMENT_MATCH * match, BYTE byMa
 	FinalMatchUpdatePlayersState(match, byMatchIndex, MATCH_MEMBER_STATE_NONE);
 
 	//check if match finish
-	if (match->data.byScore1 >= BUDOKAI_FINAL_MATCH_MAX_SCORE || match->data.byScore2 >= BUDOKAI_FINAL_MATCH_MAX_SCORE)
+	//check if match finish
+	if (match->data.byScore1 >= 3 || match->data.byScore2 >= 3)
 	{
 		ERR_LOG(LOG_GENERAL, "BUDOKAI: Update Tournament Final Match. Index %u. Winner-Team = %u. Score1 = %u, Score2 = %u, byMatchResult = %u ",
 			byMatchIndex, wMatchWinner, match->data.byScore1, match->data.byScore2, byMatchResult);

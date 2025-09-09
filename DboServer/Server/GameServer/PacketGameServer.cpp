@@ -5100,95 +5100,104 @@ void CClientSession::RecvCharTeleportReq(CNtlPacket* pPacket)
 //--------------------------------------------------------------------------------------//
 void CClientSession::RecvAttackBegin(CNtlPacket* pPacket)
 {
-	if (!cPlayer || !cPlayer->IsInitialized()) return;
-	auto* req = (sUG_CHAR_ATTACK_BEGIN*)pPacket->GetPacketData();
-	if (req->byType != 0) { ERR_LOG(LOG_USER, "RecvAttackBegin: byType==%u", req->byType); return; }
-
-	const HOBJECT hTarget = cPlayer->GetTargetHandle();
-	if (hTarget == cPlayer->GetID()) return;
-
-	CCharacter* victim = g_pObjectManager->GetChar(hTarget);
-	if (!victim || !victim->IsInitialized()) return;
-
-	CWorld* w = cPlayer->GetCurWorld();
-	if (!w) return;
-
-	const BYTE rule = w->GetTbldat()->byWorldRuleType;
-	if ((rule == GAMERULE_RANKBATTLE && cPlayer->GetRankBattleData()->eState != RANKBATTLE_MEMBER_STATE_ATTACKABLE) ||
-		((rule == GAMERULE_MINORMATCH || rule == GAMERULE_MAJORMATCH || rule == GAMERULE_FINALMATCH) &&
-			cPlayer->GetBudokaiPcState() != MATCH_MEMBER_STATE_NORMAL))
+	if (!cPlayer || !cPlayer->IsInitialized())
 		return;
 
-	if (cPlayer->GetCurrentPetId() != INVALID_HOBJECT)
+	sUG_CHAR_ATTACK_BEGIN* req = (sUG_CHAR_ATTACK_BEGIN*)pPacket->GetPacketData();
+
+	//byType 0 = player / 1 = pet
+
+	if (req->byType == 0)
 	{
-		CSummonPet* pPet = cPlayer->GetSummonPet();
-		if (pPet && pPet->GetToggleAttack())
+		HOBJECT hTarget = cPlayer->GetTargetHandle();
+
+		if (hTarget == cPlayer->GetID())
+			return;
+
+		CCharacter* victim = g_pObjectManager->GetChar(hTarget);
+		if (victim == NULL || victim->IsInitialized() == false)
+			return;
+
+		if (cPlayer->GetCurWorld() == NULL)
+			return;
+
+		BYTE byWorldRuleType = cPlayer->GetCurWorld()->GetTbldat()->byWorldRuleType;
+
+		if (byWorldRuleType == GAMERULE_RANKBATTLE)
 		{
-			pPet->SetAttackTarget(victim->GetID());
+			if (cPlayer->GetRankBattleData()->eState != RANKBATTLE_MEMBER_STATE_ATTACKABLE)
+				return;
 		}
-	}
+		else if (byWorldRuleType == GAMERULE_MINORMATCH || byWorldRuleType == GAMERULE_MAJORMATCH || byWorldRuleType == GAMERULE_FINALMATCH)
+		{
+			if (cPlayer->GetBudokaiPcState() != MATCH_MEMBER_STATE_NORMAL)
+				return;
+		}
 
-	if (cPlayer->IsKnockedDown()) return;
+		if (cPlayer->GetCurrentPetId() != INVALID_HOBJECT)
+		{
+			if (CSummonPet* pPet = cPlayer->GetSummonPet())
+			{
+				if (pPet->GetToggleAttack())
+					pPet->SetAttackTarget(victim->GetID());
+			}
+		}
 
-	// Sólo cambia estado si hace falta
-	if (!cPlayer->GetAttackProgress())
+		if (cPlayer->IsKnockedDown())
+			return;
+
+		cPlayer->SetAttackTarget(victim->GetID());
 		cPlayer->ChangeAttackProgress(true);
-
-	cPlayer->SetAttackTarget(victim->GetID());
+	}
+	else if (req->byType == 1)
+	{
+		ERR_LOG(LOG_USER, "An error is occured in RecvAttackBegin: req->byType == 1");
+	}
 }
-
-void CClientSession::RecvAttackEnd(CNtlPacket* pPacket)
-{
-	if (!cPlayer || !cPlayer->IsInitialized()) return;
-	auto* req = (sUG_CHAR_ATTACK_END*)pPacket->GetPacketData();
-	if (req->byType != 0) { ERR_LOG(LOG_USER, "RecvAttackEnd: byType==%u", req->byType); return; }
-
-	if (cPlayer->GetAttackProgress())
-		cPlayer->ChangeAttackProgress(false);
-
-	cPlayer->SetAttackTarget(INVALID_HOBJECT);
-}
-
-
 //--------------------------------------------------------------------------------------//
 //		ATTACK END
 //---------------------------------------------------------------------------------------//
-//void CClientSession::RecvAttackEnd(CNtlPacket* pPacket)
-//{
-//	if (!cPlayer || !cPlayer->IsInitialized())
-//		return;
-//
-//	sUG_CHAR_ATTACK_END* req = (sUG_CHAR_ATTACK_END*)pPacket->GetPacketData();
-//
-//	if (req->byType == 0)
-//	{
-//		cPlayer->ChangeAttackProgress(false);
-//		cPlayer->SetAttackTarget(INVALID_HOBJECT);
-//	}
-//	else if (req->byType == 1)
-//	{
-//		ERR_LOG(LOG_USER, "An error is occured in RecvAttackEnd: req->byType == 1");
-//	}
-//}
+void CClientSession::RecvAttackEnd(CNtlPacket* pPacket)
+{
+	if (!cPlayer || !cPlayer->IsInitialized())
+		return;
 
+	sUG_CHAR_ATTACK_END* req = (sUG_CHAR_ATTACK_END*)pPacket->GetPacketData();
 
+	if (req->byType == 0)
+	{
+		cPlayer->ChangeAttackProgress(false);
+		cPlayer->SetAttackTarget(INVALID_HOBJECT);
+	}
+	else if (req->byType == 1)
+	{
+		ERR_LOG(LOG_USER, "An error is occured in RecvAttackEnd: req->byType == 1");
+	}
+}
 
 void CClientSession::RecvCharSkillReq(CNtlPacket* pPacket)
 {
-	if (!cPlayer || !cPlayer->IsInitialized()) return;
+	if (!cPlayer || !cPlayer->IsInitialized())
+		return;
 
-	auto* req = (sUG_CHAR_SKILL_REQ*)pPacket->GetPacketData();
+	sUG_CHAR_SKILL_REQ* req = (sUG_CHAR_SKILL_REQ*)pPacket->GetPacketData();
 	WORD resultcode = GAME_SUCCESS;
+	CGameServer* app = (CGameServer*)g_pApp;
 
-	// 1) Distancia: evitá sqrt si disponés de versión “Sq”
-	CNtlVector vLoc; NtlLocationDecompress(&req->vCurLoc, &vLoc.x, &vLoc.y, &vLoc.z);
-	const float dist2 = NtlGetDistance(cPlayer->GetCurLoc(), vLoc); // <-- si no existe, dejá la versión normal
-	if (dist2 > (DBO_DISTANCE_CHECK_TOLERANCE * 2) * (DBO_DISTANCE_CHECK_TOLERANCE * 2))
+	//printf("byAvatarType:%u, ahApplyTarget:%u, byApplyTargetCount:%u, byAvatarType:%u, byRpBonusType:%u, bySlotIndex:%u, hTarget:%u\n", req->byAvatarType, req->ahApplyTarget[0], req->byApplyTargetCount, req->byAvatarType, req->byRpBonusType, req->bySlotIndex, req->hTarget);
+
+	CNtlVector vLoc;
+	NtlLocationDecompress(&req->vCurLoc, &vLoc.x, &vLoc.y, &vLoc.z);
+
+	float fMovedDistance = NtlGetDistance(cPlayer->GetCurLoc(), vLoc); // get distance from server and client
+	if (fMovedDistance > DBO_DISTANCE_CHECK_TOLERANCE * 2)
 	{
-		// TODO: rate-limit por cliente para evitar flood
-		ERR_LOG(LOG_HACK, "Player:%u speed? d2:%f", cPlayer->GetCharID(), dist2);
+		ERR_LOG(LOG_HACK, "Player: %u seems to be speed hacking. Distance: %f CurLoc: %f, %f, %f NewLoc: %f %f %f", cPlayer->GetCharID(), fMovedDistance, cPlayer->GetCurLoc().x, cPlayer->GetCurLoc().y, cPlayer->GetCurLoc().z, vLoc.x, vLoc.y, vLoc.z);
+		printf("Deve Ser Hacker sUG_CHAR_SKILL_REQ %f \n", fMovedDistance);
+		//this->Disconnect(false);
+
 		CNtlPacket packet(sizeof(sGU_CHAR_SKILL_RES));
-		auto* res = (sGU_CHAR_SKILL_RES*)packet.GetPacketData();
+		sGU_CHAR_SKILL_RES* res = (sGU_CHAR_SKILL_RES*)packet.GetPacketData();
 		res->wOpCode = GU_CHAR_SKILL_RES;
 		res->wResultCode = eRESULTCODE::GAME_SKILL_CANT_USE_FOR_SOME_REASON;
 		packet.SetPacketLen(sizeof(sGU_CHAR_SKILL_RES));
@@ -5196,112 +5205,143 @@ void CClientSession::RecvCharSkillReq(CNtlPacket* pPacket)
 		return;
 	}
 
-	sVECTOR3 sDir; NtlDirectionDecompress(&req->vCurDir, &sDir.x, &sDir.y, &sDir.z);
+	sVECTOR3 sDir;
+	NtlDirectionDecompress(&req->vCurDir, &sDir.x, &sDir.y, &sDir.z);
 	cPlayer->SetCurDir(sDir);
 
-	CSkillManagerPc* pMgr = cPlayer->GetSkillManager();
-	if (!pMgr) { resultcode = GAME_SKILL_YOU_DONT_HAVE_THE_SKILL; goto SEND; }
-
-	CSkillPc* pSkill = (CSkillPc*)pMgr->GetSkillWithSkillIndex(req->bySlotIndex);
-	if (!pSkill) { resultcode = GAME_SKILL_YOU_DONT_HAVE_THE_SKILL; goto SEND; }
-
-	const sSKILL_TBLDAT* st = pSkill->GetOriginalTableData();
-
-	// 2) Bloqueos por rangos (dejé tu lógica, sólo agrupado)
-	if ((st->tblidx >= 920061 && st->tblidx <= 920064) ||
-		(st->tblidx >= 920071 && st->tblidx <= 920073) ||
-		(st->tblidx >= 920931 && st->tblidx <= 920934) ||
-		(st->tblidx >= 920791 && st->tblidx <= 920793))
+	CSkillManagerPc* pSkillManager = cPlayer->GetSkillManager();
+	if (pSkillManager)
 	{
-		resultcode = GAME_SKILL_NO_PREREQUISITE_SKILLS_YOU_HAVE;
-		goto SEND;
-	}
-
-	// 3) Requerimiento de item (1 lookup)
-	if (st->byRequire_Epuip_Slot_Type != INVALID_BYTE)
-	{
-		CItem* reqItem = cPlayer->GetPlayerItemContainer()->GetItem(CONTAINER_TYPE_EQUIP, st->byRequire_Epuip_Slot_Type);
-		if (!reqItem || reqItem->GetTbldat()->byItem_Type != st->byRequire_Item_Type)
+		CSkillPc* pSkill = (CSkillPc*)pSkillManager->GetSkillWithSkillIndex(req->bySlotIndex);
+		if (pSkill)
 		{
-			resultcode = GAME_SKILL_NO_REQUIRED_ITEM; goto SEND;
+			if (pSkill->GetOriginalTableData()->tblidx >= 920061 && pSkill->GetOriginalTableData()->tblidx <= 920064)
+			{
+				resultcode = GAME_SKILL_NO_PREREQUISITE_SKILLS_YOU_HAVE;
+			}
+			if (pSkill->GetOriginalTableData()->tblidx >= 920071 && pSkill->GetOriginalTableData()->tblidx <= 920073)
+			{
+				resultcode = GAME_SKILL_NO_PREREQUISITE_SKILLS_YOU_HAVE;
+			}
+			if (pSkill->GetOriginalTableData()->tblidx >= 920931 && pSkill->GetOriginalTableData()->tblidx <= 920934)
+			{
+				resultcode = GAME_SKILL_NO_PREREQUISITE_SKILLS_YOU_HAVE;
+			}
+			if (pSkill->GetOriginalTableData()->tblidx >= 920791 && pSkill->GetOriginalTableData()->tblidx <= 920793)
+			{
+				resultcode = GAME_SKILL_NO_PREREQUISITE_SKILLS_YOU_HAVE;
+			}
+			if (pSkill->GetOriginalTableData()->byRequire_Epuip_Slot_Type != INVALID_BYTE) //check if has required item
+			{
+				CItem* pRequireItem = cPlayer->GetPlayerItemContainer()->GetItem(CONTAINER_TYPE_EQUIP, pSkill->GetOriginalTableData()->byRequire_Epuip_Slot_Type);
+				if (pRequireItem == NULL || pRequireItem->GetTbldat()->byItem_Type != pSkill->GetOriginalTableData()->byRequire_Item_Type)
+					resultcode = GAME_SKILL_NO_REQUIRED_ITEM;
+			}
+
+			if (cPlayer->GetCurWorld())
+			{
+				//check ep
+				if (pSkill->GetOriginalTableData()->wRequire_EP > 0)
+				{
+					float fRequireEP = (float)pSkill->GetOriginalTableData()->wRequire_EP;
+
+					if (cPlayer->GetCharAtt()->GetRequiredEpChangePercent() != 0.0f)
+						fRequireEP += fRequireEP * cPlayer->GetCharAtt()->GetRequiredEpChangePercent() / 100.0f;
+
+					if (req->byRpBonusType == DBO_RP_BONUS_TYPE_EP_MINUS)
+						fRequireEP -= fRequireEP * pSkill->GetOriginalTableData()->afRpEffectValue[DBO_RP_BONUS_SLOT_EP_MINUS] / 100.0f;
+
+					if (fRequireEP > 1.0f)
+					{
+						if ((WORD)fRequireEP > cPlayer->GetCurEP())
+							resultcode = GAME_SKILL_NOT_ENOUGH_EP;
+					}
+				}
+
+				//check LP
+				if (pSkill->GetOriginalTableData()->dwRequire_LP > 0)
+				{
+					if ((int)pSkill->GetOriginalTableData()->dwRequire_LP > cPlayer->GetCurLP())
+						resultcode = GAME_SKILL_NOT_ENOUGH_LP;
+				}
+
+				if (resultcode == GAME_SUCCESS)
+				{
+					BYTE byWorldRuleType = cPlayer->GetCurWorld()->GetTbldat()->byWorldRuleType;
+
+					if (byWorldRuleType == GAMERULE_RANKBATTLE)
+					{
+						if (cPlayer->GetRankBattleData()->eState != RANKBATTLE_MEMBER_STATE_ATTACKABLE)
+							resultcode = GAME_SKILL_CANT_CAST_NOW;
+					}
+					else if (byWorldRuleType == GAMERULE_MINORMATCH || byWorldRuleType == GAMERULE_MAJORMATCH || byWorldRuleType == GAMERULE_FINALMATCH)
+					{
+						if (cPlayer->GetBudokaiPcState() != MATCH_MEMBER_STATE_NORMAL)
+							resultcode = GAME_SKILL_CANT_CAST_NOW;
+					}
+
+					bool bIsHarmful = Dbo_IsHarmfulEffectType(pSkill->GetOriginalTableData()->bySkill_Active_Type) && pSkill->GetOriginalTableData()->byApply_Target != DBO_SKILL_APPLY_TARGET_PARTY;
+
+					if (bIsHarmful && cPlayer->IsPvpZone() == false && cPlayer->GetPcIsFreeBattle() == false && cPlayer->GetCurWorld()->GetTbldat()->bDynamic == false && GetNaviEngine()->IsBasicAttributeSet(cPlayer->GetCurWorld()->GetNaviInstanceHandle(), cPlayer->GetCurLoc().x, cPlayer->GetCurLoc().z, DBO_WORLD_ATTR_BASIC_FORBID_PC_BATTLE))
+					{
+						resultcode = GAME_SKILL_INVALID_TARGET_APPOINTED;
+					}
+					else if (pSkill->GetOriginalTableData()->bySkill_Class == NTL_SKILL_CLASS_PASSIVE) //do this check here and not inside skill class because we can use counter-attack(passive)
+					{
+						resultcode = GAME_SKILL_NOT_ACTIVE_TYPE;
+					}
+					else if (req->byRpBonusType != DBO_RP_BONUS_TYPE_INVALID) //check RP
+					{
+						resultcode = GAME_SKILL_CANT_USE_THAT_RP_BONUS_IN_SKILL;
+
+						for (int i = 0; i < DBO_MAX_RP_BONUS_COUNT_PER_SKILL; i++)
+						{
+							if (pSkill->GetOriginalTableData()->abyRpEffect[i] == req->byRpBonusType)
+							{
+								resultcode = GAME_SUCCESS;
+								break;
+							}
+						}
+					}
+				}
+			}
+			else
+			{
+				resultcode = GAME_SKILL_CANT_CAST_NOW;
+			}
+
+
+			if (resultcode == GAME_SUCCESS)
+			{
+				//RP Ball Shit
+				BYTE byRpBonusType = (req->byRpBonusType != DBO_RP_BONUS_TYPE_INVALID && cPlayer->GetCurRPBall() > 0) ? req->byRpBonusType : DBO_RP_BONUS_TYPE_INVALID;
+
+				CNtlVector sFinalSubjectLoc;
+				NtlLocationDecompress(&req->vFinalSubjectLoc, &sFinalSubjectLoc.x, &sFinalSubjectLoc.y, &sFinalSubjectLoc.z);
+
+				CNtlVector sFinalLoc;
+				//NtlLocationDecompress(&req->vFinalLoc, &sFinalLoc.x, &sFinalLoc.y, &sFinalLoc.z);
+
+				BYTE byTargetCount = req->byApplyTargetCount;
+
+				if (byTargetCount > pSkill->GetOriginalTableData()->byApply_Target_Max)
+					byTargetCount = pSkill->GetOriginalTableData()->byApply_Target_Max;
+
+				//	NTL_PRINT(PRINT_APP,"StartSkill: %f %f %f | %f %f %f | %f %f %f | %u\n", vLoc.x, vLoc.y, vLoc.z, sFinalSubjectLoc.x, sFinalSubjectLoc.y, sFinalSubjectLoc.z, cPlayer->GetCurLoc().x, cPlayer->GetCurLoc().y, cPlayer->GetCurLoc().z, cPlayer->GetCharStateID());
+				pSkill->UseSkill(byRpBonusType, req->hTarget, sFinalSubjectLoc, sFinalLoc, byTargetCount, req->ahApplyTarget, resultcode);
+			}
 		}
+		else resultcode = GAME_SKILL_YOU_DONT_HAVE_THE_SKILL;
 	}
+	else resultcode = GAME_SKILL_YOU_DONT_HAVE_THE_SKILL;
 
-	// 4) Mundo/reglas (cache)
-	CWorld* w = cPlayer->GetCurWorld();
-	if (!w) { resultcode = GAME_SKILL_CANT_CAST_NOW; goto SEND; }
-
-	const BYTE rule = w->GetTbldat()->byWorldRuleType;
-	if ((rule == GAMERULE_RANKBATTLE && cPlayer->GetRankBattleData()->eState != RANKBATTLE_MEMBER_STATE_ATTACKABLE) ||
-		((rule == GAMERULE_MINORMATCH || rule == GAMERULE_MAJORMATCH || rule == GAMERULE_FINALMATCH) &&
-			cPlayer->GetBudokaiPcState() != MATCH_MEMBER_STATE_NORMAL))
-	{
-		resultcode = GAME_SKILL_CANT_CAST_NOW; goto SEND;
-	}
-
-	// 5) Costos EP/LP (una sola vez)
-	if (st->wRequire_EP > 0)
-	{
-		float reqEP = (float)st->wRequire_EP;
-		const float pct = cPlayer->GetCharAtt()->GetRequiredEpChangePercent();
-		if (pct != 0.0f) reqEP += reqEP * (pct / 100.0f);
-
-		if (req->byRpBonusType == DBO_RP_BONUS_TYPE_EP_MINUS)
-			reqEP -= reqEP * st->afRpEffectValue[DBO_RP_BONUS_SLOT_EP_MINUS] / 100.0f;
-
-		if (reqEP > 1.0f && (WORD)reqEP > cPlayer->GetCurEP())
-		{
-			resultcode = GAME_SKILL_NOT_ENOUGH_EP; goto SEND;
-		}
-	}
-	if (st->dwRequire_LP > 0 && (int)st->dwRequire_LP > cPlayer->GetCurLP())
-	{
-		resultcode = GAME_SKILL_NOT_ENOUGH_LP; goto SEND;
-	}
-
-	// 6) Prohibiciones PvE/PvP
-	const bool harmful = Dbo_IsHarmfulEffectType(st->bySkill_Active_Type) && st->byApply_Target != DBO_SKILL_APPLY_TARGET_PARTY;
-	if (harmful && !cPlayer->IsPvpZone() && !cPlayer->GetPcIsFreeBattle() && w->GetTbldat()->bDynamic == false &&
-		GetNaviEngine()->IsBasicAttributeSet(w->GetNaviInstanceHandle(), cPlayer->GetCurLoc().x, cPlayer->GetCurLoc().z, DBO_WORLD_ATTR_BASIC_FORBID_PC_BATTLE))
-	{
-		resultcode = GAME_SKILL_INVALID_TARGET_APPOINTED; goto SEND;
-	}
-
-	// 7) Pasivas / RP bonus rápido
-	if (st->bySkill_Class == NTL_SKILL_CLASS_PASSIVE)
-	{
-		resultcode = GAME_SKILL_NOT_ACTIVE_TYPE; goto SEND;
-	}
-
-	if (req->byRpBonusType != DBO_RP_BONUS_TYPE_INVALID)
-	{
-		resultcode = GAME_SKILL_CANT_USE_THAT_RP_BONUS_IN_SKILL;
-		for (int i = 0; i < DBO_MAX_RP_BONUS_COUNT_PER_SKILL; ++i)
-			if (st->abyRpEffect[i] == req->byRpBonusType) { resultcode = GAME_SUCCESS; break; }
-		if (resultcode != GAME_SUCCESS) goto SEND;
-	}
-
-	// 8) UseSkill (clamps una vez)
-	const BYTE applyMax = st->byApply_Target_Max;
-	BYTE byTargetCount = std::min<BYTE>(req->byApplyTargetCount, applyMax);
-
-	BYTE byRpBonusType = (req->byRpBonusType != DBO_RP_BONUS_TYPE_INVALID && cPlayer->GetCurRPBall() > 0)
-		? req->byRpBonusType : DBO_RP_BONUS_TYPE_INVALID;
-
-	CNtlVector sFinalSubjectLoc; NtlLocationDecompress(&req->vFinalSubjectLoc, &sFinalSubjectLoc.x, &sFinalSubjectLoc.y, &sFinalSubjectLoc.z);
-	CNtlVector sFinalLoc; // (si no lo usás, no lo decompres)
-
-	pSkill->UseSkill(byRpBonusType, req->hTarget, sFinalSubjectLoc, sFinalLoc, byTargetCount, req->ahApplyTarget, resultcode);
-
-SEND:
 	CNtlPacket packet(sizeof(sGU_CHAR_SKILL_RES));
-	auto* res = (sGU_CHAR_SKILL_RES*)packet.GetPacketData();
+	sGU_CHAR_SKILL_RES* res = (sGU_CHAR_SKILL_RES*)packet.GetPacketData();
 	res->wOpCode = GU_CHAR_SKILL_RES;
 	res->wResultCode = resultcode;
 	packet.SetPacketLen(sizeof(sGU_CHAR_SKILL_RES));
 	g_pApp->Send(GetHandle(), &packet);
 }
-
 
 //--------------------------------------------------------------------------------------//
 //		Char learn skill
@@ -12082,13 +12122,13 @@ void CClientSession::RecvGiftShopBuyReq(CNtlPacket* pPacket)
 			}
 
 			// Deduct WP and ensure it cannot exceed the 2k limit after purchase
-				DWORD newWaguPoints = cPlayer->GetWaguPoints();
-				if (newWaguPoints < price) newWaguPoints = 0;
-				else newWaguPoints -= price;
-				// Prevent any restoration of previous WP balance (exploit fix)
-				// Only deduction and capping allowed
-				if (newWaguPoints > 2000) newWaguPoints = 2000;
-				cPlayer->UpdateWaguPoints(newWaguPoints);
+			DWORD newWaguPoints = cPlayer->GetWaguPoints();
+			if (newWaguPoints < price) newWaguPoints = 0;
+			else newWaguPoints -= price;
+			// Prevent any restoration of previous WP balance (exploit fix)
+			// Only deduction and capping allowed
+			if (newWaguPoints > 2000) newWaguPoints = 2000;
+			cPlayer->UpdateWaguPoints(newWaguPoints);
 
 			CGameServer* app = (CGameServer*)g_pApp;
 
@@ -14001,6 +14041,7 @@ void CClientSession::RecvMascotAutoLootingReq(CNtlPacket* pPacket)
 	else
 	{
 		cPlayer->GetCurrentMascot()->SetCanLoot(false);
+		std::vector<TBLIDX> customIdsToPick = { 111, 110, 11160035,11160034,11160033, 11160029, 200001, 200002, 200003, 200004, 200005, 200006, 200007 };
 
 		for (int i = 0; i < req->byItemCount; i++)
 		{
@@ -14019,13 +14060,11 @@ void CClientSession::RecvMascotAutoLootingReq(CNtlPacket* pPacket)
 				if (item->IsOwnership(cPlayer) == false)
 					continue;
 
-				switch (item->GetObjType())
-				{
-				case OBJTYPE_DROPMONEY: item->PickUpZeni(cPlayer); nCount++; break;
-				case OBJTYPE_DROPITEM: item->PickUpStoneItem(cPlayer); nCount++; break;
-
-				default: break;
-				}
+				// NICO: Custom drop item looting conditions can be added here
+				item->PickUpStoneItem(cPlayer);
+				item->PickUpCustomItems(cPlayer, customIdsToPick);
+				item->PickUpZeni(cPlayer);
+				nCount++;
 			}
 		}
 	}
