@@ -764,8 +764,8 @@ bool CBudokaiManager::TickProcessBudokai(DWORD dwTickDiff, BUDOKAITIME curTime)
 				SendBudokaiState();
 
 				m_matchStateInfo[m_matchType].byState = BUDOKAI_MATCHSTATE_REGISTER;
-				m_matchStateInfo[m_matchType].tmNextStepTime = curTime + m_pTableInfo->dwMinorMatch_WaitTime;
-				m_matchStateInfo[m_matchType].tmRemainTime = m_pTableInfo->dwMinorMatch_WaitTime;
+				m_matchStateInfo[m_matchType].tmNextStepTime = curTime + m_pTableInfo->dwRegisterTime;
+				m_matchStateInfo[m_matchType].tmRemainTime = m_pTableInfo->dwRegisterTime;
 
 				ERR_LOG(LOG_GENERAL, "BUDOKAI: Update MatchType %u State %u, tmNextStepTime = %u, tmRemainTime = %u",
 					m_matchType, BUDOKAI_MATCHSTATE_REGISTER, m_matchStateInfo[m_matchType].tmNextStepTime, m_matchStateInfo[m_matchType].tmRemainTime);
@@ -879,8 +879,8 @@ void CBudokaiManager::TickProcessMatch(DWORD dwTickDif, BUDOKAITIME curTime)
 			if (m_matchStateInfo[m_matchType].tmNextStepTime <= curTime)
 			{
 				m_matchStateInfo[m_matchType].byState = BUDOKAI_MATCHSTATE_WAIT_MINOR_MATCH;
-				m_matchStateInfo[m_matchType].tmNextStepTime = curTime + m_pTableInfo->dwRegisterTime;
-				m_matchStateInfo[m_matchType].tmRemainTime = m_pTableInfo->dwRegisterTime;
+				m_matchStateInfo[m_matchType].tmNextStepTime = curTime + m_pTableInfo->dwMinorMatch_WaitTime;
+				m_matchStateInfo[m_matchType].tmRemainTime = m_pTableInfo->dwMinorMatch_WaitTime;
 
 				ERR_LOG(LOG_GENERAL, "BUDOKAI: Update Match-State. Type %u, byState BUDOKAI_MATCHSTATE_REGISTER -> BUDOKAI_MATCHSTATE_WAIT_MINOR_MATCH, tmNextStepTime = %u, tmRemainTime = %u", 
 					m_matchType, m_matchStateInfo[m_matchType].tmNextStepTime, m_matchStateInfo[m_matchType].tmRemainTime);
