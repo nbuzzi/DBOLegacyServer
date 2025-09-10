@@ -404,7 +404,7 @@ GameStage( 0 )
 		--[
 			Condition( "check time" )
 			--[
-				Param( "time", 1)
+				Param( "time", 30 )
 			--]
 			End()
 		--]
@@ -17100,7 +17100,7 @@ GameStage( 0 )
 		--[
 			Condition( "check time" )
 			--[
-				Param( "time", 30 )
+				Param( "time", 1 )
 			--]
 			End()
 		--]
