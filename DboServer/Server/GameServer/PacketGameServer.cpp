@@ -14041,7 +14041,7 @@ void CClientSession::RecvMascotAutoLootingReq(CNtlPacket* pPacket)
 	else
 	{
 		cPlayer->GetCurrentMascot()->SetCanLoot(false);
-		std::vector<TBLIDX> customIdsToPick = { 111, 110, 11160035,11160034,11160033, 11160029, 200001, 200002, 200003, 200004, 200005, 200006, 200007 };
+		//std::vector<TBLIDX> customIdsToPick = { 111, 110, 11160035,11160034,11160033, 11160029, 200001, 200002, 200003, 200004, 200005, 200006, 200007 };
 
 		for (int i = 0; i < req->byItemCount; i++)
 		{
@@ -14061,10 +14061,13 @@ void CClientSession::RecvMascotAutoLootingReq(CNtlPacket* pPacket)
 					continue;
 
 				// NICO: Custom drop item looting conditions can be added here
-				item->PickUpStoneItem(cPlayer);
-				item->PickUpCustomItems(cPlayer, customIdsToPick);
-				item->PickUpZeni(cPlayer);
-				nCount++;
+				switch (item->GetObjType())
+				{
+				case OBJTYPE_DROPMONEY: item->PickUpZeni(cPlayer); nCount++; break;
+				case OBJTYPE_DROPITEM: item->PickUpStoneItem(cPlayer); nCount++; break;
+
+				default: break;
+				}
 			}
 		}
 	}

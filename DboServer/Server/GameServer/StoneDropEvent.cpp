@@ -131,7 +131,8 @@ void CStoneDropEvent::Update(CMonster* pMob, CCharacter* pPlayer)
 		if (stoneLevel < mobLevelToUse)
 			continue;
 
-		if (stoneLevel > mobLevelToUse + 10)
+		// El tope de piedra máxima es nivel 70, pero no hay límite de nivel del mob
+		if (stoneLevel > 70)
 			break;
 
 		if (Dbo_CheckProbabilityF(CalculateBaseDropChance()))
