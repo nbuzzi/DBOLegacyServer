@@ -69,6 +69,7 @@
     <ClCompile Include="CharSession.cpp" />
     <ClCompile Include="ChatPacket.cpp" />
     <ClCompile Include="ChatSession.cpp" />
+    <ClCompile Include="CrashDump.cpp" />
     <ClCompile Include="GamePacket.cpp" />
     <ClCompile Include="GameSession.cpp" />
     <ClCompile Include="MasterServer.cpp" />
@@ -82,7 +83,9 @@
     <ClInclude Include="AuthSession.h" />
     <ClInclude Include="CharSession.h" />
     <ClInclude Include="ChatSession.h" />
+    <ClInclude Include="CrashDump.h" />
     <ClInclude Include="GameSession.h" />
+    <ClInclude Include="IpGuard.h" />
     <ClInclude Include="MasterServer.h" />
     <ClInclude Include="PacketHead.h" />
     <ClInclude Include="SubNeighborServerInfoManager.h" />

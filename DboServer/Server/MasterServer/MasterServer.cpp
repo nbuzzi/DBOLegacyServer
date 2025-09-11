@@ -4,6 +4,9 @@
 
 #include "stdafx.h"
 #include "MasterServer.h"
+#include "CrashDump.h"
+#include "IpGuard.h"
+IpGuard g_ipGuard;
 
 int	CMasterServer::OnInitApp()
 {
@@ -36,6 +39,16 @@ int CMasterServer::OnAppStart()
 
 int	CMasterServer::OnCreate()
 {
+	std::unordered_set<std::string> wl = {
+		m_config.strAuthServerAcceptIP.c_str(),
+		m_config.strCharServerAcceptIP.c_str(),
+		m_config.strChatServerAcceptIP.c_str(),
+		m_config.strGameServerAcceptIP.c_str(),
+		m_config.strWebServerAcceptIP.c_str()
+	};
+	g_ipGuard.SetWhitelist(std::move(wl));
+	g_ipGuard.Configure(/*maxConcurrent*/2, /*maxPer5s*/6, /*cooldownSec*/60);
+
 	int rc = NTL_SUCCESS;
 
 	rc = m_AuthServerAcceptor.Create(m_config.strAuthServerAcceptIP.c_str(), m_config.wAuthServerAcceptPort, 1, m_config.wAuthServerAcceptPort, SESSION_SERVER_CON_AUTH_TO_MASTER, 1, 1, 1, 1);
@@ -79,35 +92,28 @@ void	CMasterServer::OnDestroy()
 }
 
 
-void	CMasterServer::Run()
+void CMasterServer::Run()
 {
-	DWORD m_dwTickCount, dwLastLoop = 0;
-	DWORD m_dwLastTimeGameMainUpdated = GetTickCount();
+	ULONGLONG lastLoop = 0;
+	ULONGLONG lastEvents = GetTickCount64();
 
 	while (IsRunnable())
 	{
-		m_dwTickCount = GetTickCount();
+		ULONGLONG now = GetTickCount64();
 
-		if (dwLastLoop && m_dwTickCount - dwLastLoop > 1000)
-		{
-			NTL_PRINT(PRINT_APP, "m_dwTickCount - dwLastLoop %u > 1000", m_dwTickCount - dwLastLoop);
-			ERR_LOG(LOG_GENERAL, "m_dwTickCount - dwLastLoop %u > 1000", m_dwTickCount - dwLastLoop);
+		if (lastLoop && now - lastLoop > 1000) {
+			ERR_LOG(LOG_GENERAL, "Main loop stall: %llu ms", (unsigned long long)(now - lastLoop));
 		}
 
-		if (m_dwTickCount - m_dwLastTimeGameMainUpdated >= 1000) //update events every 1000 second
-		{
-			DWORD dwTickDiff = m_dwTickCount - m_dwLastTimeGameMainUpdated;
-
-			g_pSrvMgr->TickProcess(dwTickDiff);
-
-			m_dwLastTimeGameMainUpdated = m_dwTickCount;
+		if (now - lastEvents >= 1000) { // cada 1000 ms, no "1000 second" ;)
+			g_pSrvMgr->TickProcess((DWORD)(now - lastEvents));
+			lastEvents = now;
 		}
 
-		dwLastLoop = GetTickCount();
+		lastLoop = GetTickCount64();
 		Wait(1);
 	}
 }
-
 
 
 //-----------------------------------------------------------------------------------
@@ -138,6 +144,10 @@ int main(int argc, _TCHAR* argv[])
 	GetLocalTime( &ti );
 
 	SetConsoleTitle( TEXT("MasterServer") );
+
+	CreateDirectoryA(".\\dumps", nullptr);
+	SetErrorMode(SEM_NOGPFAULTERRORBOX);
+	SetUnhandledExceptionFilter(UnhandledExceptionFilter_MiniDump);
 
 	int rc = app.Create(argc, argv, ".\\config\\MasterServer.ini");
 
