@@ -38,7 +38,17 @@ CPlayerItemContainer::~CPlayerItemContainer()
 		if (pItem)
 		{
 			g_pItemManager->RemoveItem(it->first);
-			ERR_LOG(LOG_USER, "[ITEM-DELETED] ::~CPlayerItemContainer - WARNING: item not removed from player %u. ItemID %u", m_pOwner->GetCharID(), pItem->GetItemID());
+			CHARACTERID logCharId = (m_pOwner ? m_pOwner->GetCharID() : INVALID_CHARACTERID);
+			if (logCharId == INVALID_CHARACTERID)
+			{
+				const sITEM_DATA &d = pItem->GetItemData();
+				if (d.charId != INVALID_CHARACTERID)
+					logCharId = d.charId;
+			}
+
+			ERR_LOG(LOG_USER,
+				"[ITEM-DELETED] CPlayerItemContainer::~CPlayerItemContainer - Force-removing item. Player %u, ItemID %I64u, Place %u, Pos %u, Handle %u",
+				logCharId, pItem->GetItemID(), pItem->GetPlace(), pItem->GetPos(), pItem->GetID());
 			SAFE_DELETE(pItem);
 		}
 		else
@@ -175,7 +185,7 @@ void CPlayerItemContainer::MoveItem(CItem* pItem, BYTE byCurPlace, BYTE byNewPla
 		else if (toG == CG_GUILD) { m_map_GuildBankItems.insert({ pItem->GetID(), pItem }); }
 	}
 	// Si no cambia de grupo (p.ej. inventario?inventario, equip?inventario, etc.),
-	// NO hace falta tocar los mapas: están indexados por handle y siguen válidos.
+	// NO hace falta tocar los mapas: estï¿½n indexados por handle y siguen vï¿½lidos.
 
 	// 2) Mantener estado de EQUIP: brief y flag
 	const bool fromEquip = IsEquipContainer(byCurPlace);

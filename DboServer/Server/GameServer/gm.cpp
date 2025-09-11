@@ -2567,7 +2567,11 @@ ACMD(do_createloot)
 		vec.x += RandomRangeF(-10.0f, 10.0f);
 		vec.z += RandomRangeF(-10.0f, 10.0f);
 
-		CItemDrop* pBall = g_pItemManager->CreateSingleDrop(100.f, ItemId);
+		CItemDrop* pBall = NULL;
+		if (g_pItemManager->IsValidSingleDropIdx(ItemId))
+		{
+			pBall = g_pItemManager->CreateSingleDrop(100.f, ItemId);
+		}
 		if (pBall)
 		{
 			pBall->AddToGround(pPlayer->GetWorldID(), vec);

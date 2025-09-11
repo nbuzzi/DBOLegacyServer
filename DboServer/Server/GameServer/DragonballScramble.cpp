@@ -150,7 +150,12 @@ void CDragonballScramble::StartEvent(bool bStartByCommand/* = true*/)
 		m_arrBalls[i].vLoc.y = pTbldat->fField_Y;
 		m_arrBalls[i].vLoc.z = pTbldat->fField_Z;
 
-		CItemDrop * pBall = g_pItemManager->CreateSingleDrop(100.f, 200041 + i);
+		CItemDrop* pBall = NULL;
+		if (g_pItemManager->IsValidSingleDropIdx(200041 + i))
+		{
+			pBall = g_pItemManager->CreateSingleDrop(100.f, 200041 + i);
+		}
+
 		if (pBall)
 		{
 			pBall->AddToGround(1, m_arrBalls[i].vLoc);
@@ -427,7 +432,11 @@ void CDragonballScramble::SpawnBall(CPlayer* pPlayer, bool bFaint/* = false*/, b
 					m_arrBalls[i].vLoc.x += 5.f;
 				}
 
-				CItemDrop * pBall = g_pItemManager->CreateSingleDrop(100.f, 200041 + i);
+				CItemDrop* pBall = NULL;
+				if (g_pItemManager->IsValidSingleDropIdx(200041 + i))
+				{
+					pBall = g_pItemManager->CreateSingleDrop(100.f, 200041 + i);
+				}
 				if (pBall)
 				{
 					m_arrBalls[i].bOnGround = true;

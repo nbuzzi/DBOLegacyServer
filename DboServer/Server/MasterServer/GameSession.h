@@ -24,7 +24,7 @@ public:
 
 public:
 
-	virtual DWORD				GetAliveCheckTime() { return 30000; }
+	virtual DWORD				GetAliveCheckTime() { return 60000; }
 
 	virtual int					OnAccept();
 	virtual void				OnClose();

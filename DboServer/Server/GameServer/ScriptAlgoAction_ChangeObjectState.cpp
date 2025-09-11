@@ -5,21 +5,17 @@
 #include "NtlPacketGU.h"
 #include "CPlayer.h"
 
-
-CWpsAlgoAction_ChangeObjectState::CWpsAlgoAction_ChangeObjectState(CWpsAlgoObject* pObject) :
-CScriptAlgoAction(pObject, SCRIPTCONTROL_ACTION_CHANGE_OBJECT_STATE, "SCRIPTCONTROL_ACTION_CHANGE_OBJECT_STATE")
+CWpsAlgoAction_ChangeObjectState::CWpsAlgoAction_ChangeObjectState(CWpsAlgoObject *pObject) : CScriptAlgoAction(pObject, SCRIPTCONTROL_ACTION_CHANGE_OBJECT_STATE, "SCRIPTCONTROL_ACTION_CHANGE_OBJECT_STATE")
 {
 }
-
 
 CWpsAlgoAction_ChangeObjectState::~CWpsAlgoAction_ChangeObjectState()
 {
 }
 
-
-bool CWpsAlgoAction_ChangeObjectState::AttachControlScriptNode(CControlScriptNode* pControlScriptNode)
+bool CWpsAlgoAction_ChangeObjectState::AttachControlScriptNode(CControlScriptNode *pControlScriptNode)
 {
-	CWPSNodeAction_ChangeObjectState* pAction = dynamic_cast<CWPSNodeAction_ChangeObjectState*>(pControlScriptNode);
+	CWPSNodeAction_ChangeObjectState *pAction = dynamic_cast<CWPSNodeAction_ChangeObjectState *>(pControlScriptNode);
 	if (pAction)
 	{
 		m_objectTblidx = pAction->m_objectTblidx;
@@ -43,15 +39,24 @@ int CWpsAlgoAction_ChangeObjectState::OnUpdate(DWORD dwTickDiff, float fMultiple
 		return m_status;
 	}
 
-	CTriggerObject* pObj = GetOwner()->GetWorld()->FindStaticObjectByIdx(m_objectTblidx);
+	CTriggerObject *pObj = GetOwner()->GetWorld()->FindStaticObjectByIdx(m_objectTblidx);
 	if (pObj == NULL)
 	{
-		ERR_LOG(LOG_SCRIPT, "World %u has no trigger object %u. Script ID %u", GetOwner()->GetWorld()->GetIdx(), m_objectTblidx, GetOwner()->GetScriptID());
 		m_status = SYSTEMERROR;
+
+		auto worldId = GetOwner()->GetWorld()->GetIdx();
+		if (worldId == 920000) // Broly world
+		{
+			// dont spam log for broly world
+			return m_status;
+		}
+
+		// log for other worlds
+		ERR_LOG(LOG_SCRIPT, "World %u has no trigger object %u. Script ID %u", worldId, m_objectTblidx, GetOwner()->GetScriptID());
 		return m_status;
 	}
 
-	//printf("obj %u change m_mainState %u m_subStateUnset %u m_subStateSet %u. Script %u \n", m_objectTblidx, m_mainState, m_subStateUnset, m_subStateSet, GetOwner()->GetScriptID());
+	// printf("obj %u change m_mainState %u m_subStateUnset %u m_subStateSet %u. Script %u \n", m_objectTblidx, m_mainState, m_subStateUnset, m_subStateSet, GetOwner()->GetScriptID());
 
 	BYTE byNewSubState = pObj->GetSubState();
 
@@ -60,26 +65,26 @@ int CWpsAlgoAction_ChangeObjectState::OnUpdate(DWORD dwTickDiff, float fMultiple
 		for (int i = 0; i < MAX_TOBJECT_SUBSTATE; i++)
 		{
 			BYTE byFlag = MAKE_BIT_FLAG(i);
-			if (BIT_FLAG_TEST(m_subStateUnset, byFlag)) //check if flag set
+			if (BIT_FLAG_TEST(m_subStateUnset, byFlag)) // check if flag set
 			{
-				if (BIT_FLAG_TEST(byNewSubState, byFlag)) //check if obj have flag
+				if (BIT_FLAG_TEST(byNewSubState, byFlag)) // check if obj have flag
 				{
-					BIT_FLAG_UNSET(byNewSubState, byFlag); //remove flag
+					BIT_FLAG_UNSET(byNewSubState, byFlag); // remove flag
 				}
 			}
 		}
 	}
 
-	if(m_subStateSet)
+	if (m_subStateSet)
 	{
 		for (int i = 0; i < MAX_TOBJECT_SUBSTATE; i++)
 		{
 			BYTE byFlag = MAKE_BIT_FLAG(i);
-			if (BIT_FLAG_TEST(m_subStateSet, byFlag)) //check if flag set
+			if (BIT_FLAG_TEST(m_subStateSet, byFlag)) // check if flag set
 			{
-				if (BIT_FLAG_TEST(byNewSubState, byFlag) == false) //check if obj dont have flag
+				if (BIT_FLAG_TEST(byNewSubState, byFlag) == false) // check if obj dont have flag
 				{
-					BIT_FLAG_SET(byNewSubState, byFlag); //add flag
+					BIT_FLAG_SET(byNewSubState, byFlag); // add flag
 				}
 			}
 		}

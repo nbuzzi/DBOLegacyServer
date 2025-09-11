@@ -824,7 +824,7 @@ void CGameServer::DoUpdatePerformanceLog(DWORD dwNow)
 
 void CGameServer::DoReportLoad(DWORD dwNow)
 {
-	if (dwNow - m_dwLastTimeLoadReported >= 5000)
+	if (dwNow - m_dwLastTimeLoadReported >= 10000)
 	{
 		if (m_dwLastTimeLoadReported)
 		{

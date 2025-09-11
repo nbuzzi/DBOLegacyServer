@@ -300,7 +300,11 @@ void CTimeQuest::SendNewTMQRecord()
 		{
 			wcscpy_s(rChat->sData.sTmqRecord.awszMember[rChat->sData.sTmqRecord.byMemberCount++], NTL_MAX_SIZE_CHAR_NAME + 1, pPlayer->GetCharName());
 			DWORD LuckyItem = 11100015 + rand() % 4;
-			CItemDrop* pDrop = g_pItemManager->CreateSingleDrop(100.f, LuckyItem);
+			CItemDrop* pDrop = NULL;
+			if (g_pItemManager->IsValidSingleDropIdx(LuckyItem))
+			{
+				pDrop = g_pItemManager->CreateSingleDrop(100.f, LuckyItem);
+			}
 			if (pDrop)
 			{
 				sVECTOR3 pos;

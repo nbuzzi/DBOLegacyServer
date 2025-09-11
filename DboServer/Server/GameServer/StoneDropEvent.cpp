@@ -286,7 +286,11 @@ void CStoneDropEvent::CreateSingleDrop(CMonster* pMob, CCharacter* pPlayer, int 
 		HOBJECT pPlayerId = pPlayer->GetID();
 		HOBJECT pPlayerPartyId = pPlayer->GetPartyID();
 		WORLDID nWorldId = pMob->GetWorldID();
-		CItemDrop* pDrop = g_pItemManager->CreateSingleDrop(100.f, dropId);
+		CItemDrop* pDrop = NULL;
+		if (g_pItemManager->IsValidSingleDropIdx(dropId))
+		{
+			pDrop = g_pItemManager->CreateSingleDrop(100.f, dropId);
+		}
 
 		if (pDrop)
 		{

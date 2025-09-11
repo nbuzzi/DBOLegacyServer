@@ -175,6 +175,7 @@ void CDynamicFieldSystemEvent::Update(CMonster* pMob, CCharacter* pPlayer)
 	for (; it != g_pTableContainer->GetDynamicFieldSystemTable()->DynamicFieldEnd(); it++)
 	{
 		sDYNAMIC_FIELD_SYSTEM_TBLDAT* pField = it->second;
+		CItemDrop* pDrop = NULL;
 
 		switch (pField->byAction)
 		{
@@ -182,7 +183,10 @@ void CDynamicFieldSystemEvent::Update(CMonster* pMob, CCharacter* pPlayer)
 			{
 				if (pField->tIndex == pMob->GetTblidx())
 				{
-					CItemDrop* pDrop = g_pItemManager->CreateSingleDrop(pField->fRate, pField->aIndex);
+					if (g_pItemManager->IsValidSingleDropIdx(pField->aIndex))
+					{
+						pDrop = g_pItemManager->CreateSingleDrop(pField->fRate, pField->aIndex);
+					}
 					if (pDrop)
 					{
 						sVECTOR3 pos;

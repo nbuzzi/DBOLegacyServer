@@ -946,7 +946,11 @@ void CMonster::CreateKillReward(bool bItemDrop)
 				pos.y = GetCurLoc().y;
 				pos.z = GetCurLoc().z + RandomRangeF(-2.0f, 2.0f);
 
-				CItemDrop* pBall = g_pItemManager->CreateSingleDrop(100.f, m_dropItem_Tblidx);
+				CItemDrop* pBall = NULL;
+				if (g_pItemManager->IsValidSingleDropIdx(m_dropItem_Tblidx))
+				{
+					pBall = g_pItemManager->CreateSingleDrop(100.f, m_dropItem_Tblidx);
+				}
 				if (pBall)
 				{
 					pBall->AddToGround(GetWorldID(), pos);
