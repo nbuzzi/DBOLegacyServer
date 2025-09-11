@@ -39,13 +39,16 @@ int CMasterServer::OnAppStart()
 
 int	CMasterServer::OnCreate()
 {
-	std::unordered_set<std::string> wl = {
-		m_config.strAuthServerAcceptIP.c_str(),
-		m_config.strCharServerAcceptIP.c_str(),
-		m_config.strChatServerAcceptIP.c_str(),
-		m_config.strGameServerAcceptIP.c_str(),
-		m_config.strWebServerAcceptIP.c_str()
-	};
+	std::unordered_set<std::string> wl;
+	auto add = [&wl](const std::string& ip){ if(!ip.empty()) wl.insert(ip); };
+	add(m_config.strAuthServerAcceptIP.c_str());
+	add(m_config.strCharServerAcceptIP.c_str());
+	add(m_config.strChatServerAcceptIP.c_str());
+	add(m_config.strGameServerAcceptIP.c_str());
+	add(m_config.strWebServerAcceptIP.c_str());
+	// Common localhost aliases
+	wl.insert("127.0.0.1");
+	wl.insert("::1");
 	g_ipGuard.SetWhitelist(std::move(wl));
 	g_ipGuard.Configure(/*maxConcurrent*/2, /*maxPer5s*/6, /*cooldownSec*/60);
 

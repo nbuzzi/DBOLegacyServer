@@ -43,7 +43,6 @@
 #include "AspectState_SpinningAttack.h"
 #include "AspectState_SuperSaiyan.h"
 #include "AspectState_Vehicle.h"
-#include "AspectState_Mystic.h"
 #include "ConditionState_Invisible.h"
 #include "ConditionState_HidingKi.h"
 #include "ConditionState_Invincible.h"
@@ -219,9 +218,6 @@ bool CStateManager::Create(CCharacter* pParentRef, eAIR_STATE eAirState)
 
 			CAspectState_RollingAttack* pStateRollingAttack = new CAspectState_RollingAttack(pParentRef);
 			RegisterAspectState(pStateRollingAttack);
-
-			CAspectState_Mystic* pStateMystic = new CAspectState_Mystic(pParentRef);
-			RegisterAspectState(pStateMystic);
 
 			////// CHAR CONDITIONS
 			CConditionState_Invisible* pCondInvisible = new CConditionState_Invisible(pParentRef);

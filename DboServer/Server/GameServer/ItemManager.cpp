@@ -48,7 +48,7 @@ void CItemManager::TickProcess(DWORD dwTickDiff, float fMultiple)
 				++it;
 				continue;
 			}
-			
+
 			it = m_mapItemDropDelayedDestroy.erase(it);
 
 			g_pObjectManager->DeleteUID(item->GetID());
@@ -132,7 +132,7 @@ CItem* CItemManager::CreateFromDB(HOBJECT hHandle, sITEM_DATA& rData, CPlayer* c
 	return item;
 }
 
-bool CItemManager::CreateItemDrop(CMonster* pkMob, CPlayer* pkKiller, std::vector<CItemDrop*> & vec_item)
+bool CItemManager::CreateItemDrop(CMonster* pkMob, CPlayer* pkKiller, std::vector<CItemDrop*>& vec_item)
 {
 	if (pkKiller->GetCurWorld() == NULL)
 		return false;
@@ -145,7 +145,7 @@ bool CItemManager::CreateItemDrop(CMonster* pkMob, CPlayer* pkKiller, std::vecto
 	if (bIsLucky)
 	{
 		CNtlPacket packet(sizeof(sGU_MOB_LUCKY_DROP_NFY));
-		sGU_MOB_LUCKY_DROP_NFY * res = (sGU_MOB_LUCKY_DROP_NFY*)packet.GetPacketData();
+		sGU_MOB_LUCKY_DROP_NFY* res = (sGU_MOB_LUCKY_DROP_NFY*)packet.GetPacketData();
 		res->wOpCode = GU_MOB_LUCKY_DROP_NFY;
 		res->hMobhandle = pkMob->GetID();
 		packet.SetPacketLen(sizeof(sGU_MOB_LUCKY_DROP_NFY));
@@ -155,7 +155,7 @@ bool CItemManager::CreateItemDrop(CMonster* pkMob, CPlayer* pkKiller, std::vecto
 	g_pTableContainer->GetItemGroupListTable()->AccumulateItemGroupListByWorldRuleType(pkMob->GetLevel(), pkKiller->GetCurWorld()->GetRuleType(), pkKiller->GetLevel() + 5, itemGroupList); //drop defined by world place
 
 	g_pTableContainer->GetItemGroupListTable()->AccumulateItemGroupListByMobTblidx(pkMob->GetLevel(), pkMob->GetTblidx(), itemGroupList); //quest , dungeon & field boss
-	
+
 	if (pkMob->GetMobType() == MOB_TYPE_ITEM_BOX)
 		g_pTableContainer->GetItemGroupListTable()->AccumulateItemGroupListByMobType(pkMob->GetLevel(), pkMob->GetMobType(), pkKiller->GetLevel() + 5, itemGroupList); //item box
 
@@ -170,7 +170,7 @@ bool CItemManager::CreateItemDrop(CMonster* pkMob, CPlayer* pkKiller, std::vecto
 		while (count >= 0)
 		{
 			sITEM_GROUP_LIST_TBLDAT* itemDrop = itemGroupList[count--];
-			
+
 			if (!itemDrop)
 			{
 				ERR_LOG(LOG_GENERAL, "itemGroupList is empty. deque count %d \n", count + 1);
@@ -332,8 +332,13 @@ bool CItemManager::CreateItemDrop(CMonster* pkMob, CPlayer* pkKiller, std::vecto
 		return true;
 }
 
-CItemDrop * CItemManager::CreateSingleDrop(float fRate, TBLIDX itemTblidx)
+CItemDrop* CItemManager::CreateSingleDrop(float fRate, TBLIDX itemTblidx)
 {
+	// NICO: Review why this item is missing in tables
+	if (itemTblidx == 4294967041) {
+		return NULL; //hack to avoid crashing, this value is from some quest reward
+	}
+
 	if (Dbo_CheckProbabilityF(fRate)) //check percent
 	{
 		sITEM_TBLDAT* pItemData = (sITEM_TBLDAT*)g_pTableContainer->GetItemTable()->FindData(itemTblidx);
@@ -345,10 +350,12 @@ CItemDrop * CItemManager::CreateSingleDrop(float fRate, TBLIDX itemTblidx)
 			item->GenerateOptionSet(pItemData, false);
 
 			m_map_pkItemDrop.insert(std::make_pair(item->GetID(), item));
-			
+
 			return item;
 		}
-		else ERR_LOG(LOG_SYSTEM, "Couldnt find item tblidx %u", itemTblidx);
+		else {
+			ERR_LOG(LOG_SYSTEM, "Couldnt find item tblidx %u", itemTblidx);
+		}
 	}
 
 	return NULL;
@@ -396,27 +403,27 @@ void CItemManager::CreateItemDrop(TBLIDX dropItem_ProbabilityTblidx, std::vector
 
 			switch (pProbabilityData->asProbabilityData[nReward[nRandomReward]].byType)
 			{
-				case eREWARD_TYPE_NORMAL_ITEM:
+			case eREWARD_TYPE_NORMAL_ITEM:
+			{
+				BYTE randomCount = (BYTE)RandomRange((int)pProbabilityData->asProbabilityData[nReward[nRandomReward]].dwMinValue, (int)pProbabilityData->asProbabilityData[nReward[nRandomReward]].dwMaxValue);
+				if (randomCount > 0)
 				{
-					BYTE randomCount = (BYTE)RandomRange((int)pProbabilityData->asProbabilityData[nReward[nRandomReward]].dwMinValue, (int)pProbabilityData->asProbabilityData[nReward[nRandomReward]].dwMaxValue);
-					if (randomCount > 0)
+					sITEM_TBLDAT* pItemData = (sITEM_TBLDAT*)g_pTableContainer->GetItemTable()->FindData(pProbabilityData->asProbabilityData[nReward[nRandomReward]].tblidx);
+					if (pItemData)
 					{
-						sITEM_TBLDAT* pItemData = (sITEM_TBLDAT*)g_pTableContainer->GetItemTable()->FindData(pProbabilityData->asProbabilityData[nReward[nRandomReward]].tblidx);
-						if (pItemData)
-						{
-							CItemDrop* item = new CItemDrop(OBJTYPE_DROPITEM);
-							item->SetID(g_pObjectManager->CreateUID());
-							item->SetTbldat(pItemData);
-							item->GenerateOptionSet(pItemData, false);
+						CItemDrop* item = new CItemDrop(OBJTYPE_DROPITEM);
+						item->SetID(g_pObjectManager->CreateUID());
+						item->SetTbldat(pItemData);
+						item->GenerateOptionSet(pItemData, false);
 
-							m_map_pkItemDrop.insert(std::make_pair(item->GetID(), item));
-							vec_item.push_back(item);
-						}
-						else ERR_LOG(LOG_SYSTEM, "Couldnt find item tblidx %u. dropItem_ProbabilityTblidx %u \n", pProbabilityData->asProbabilityData[nReward[nRandomReward]].tblidx, dropItem_ProbabilityTblidx);
+						m_map_pkItemDrop.insert(std::make_pair(item->GetID(), item));
+						vec_item.push_back(item);
 					}
+					else ERR_LOG(LOG_SYSTEM, "Couldnt find item tblidx %u. dropItem_ProbabilityTblidx %u \n", pProbabilityData->asProbabilityData[nReward[nRandomReward]].tblidx, dropItem_ProbabilityTblidx);
 				}
+			}
 
-				default: break;
+			default: break;
 			}
 		}
 	}
@@ -438,7 +445,7 @@ CItem* CItemManager::CreateItem(CPlayer* pPlayer, sITEM_DATA* pItemData, bool bS
 	if (bSendPacket)
 	{
 		CNtlPacket packet(sizeof(sGU_ITEM_CREATE));
-		sGU_ITEM_CREATE * res = (sGU_ITEM_CREATE *)packet.GetPacketData();
+		sGU_ITEM_CREATE* res = (sGU_ITEM_CREATE*)packet.GetPacketData();
 		res->wOpCode = GU_ITEM_CREATE;
 		res->bIsNew = true;
 		res->handle = item->GetID();
@@ -468,22 +475,22 @@ bool CItemManager::CreateItem(CPlayer* ch, TBLIDX uiIdx, BYTE byCount, BYTE byDe
 
 	CGameServer* app = (CGameServer*)g_pApp;
 
-	if(byDestPlace == INVALID_BYTE && byDestPos == INVALID_BYTE) //only check if invalid dest place & pos
+	if (byDestPlace == INVALID_BYTE && byDestPos == INVALID_BYTE) //only check if invalid dest place & pos
 	{
 		//check if same tblidx already exist && can stack
-		if(itemtbl->byMax_Stack > 1)
+		if (itemtbl->byMax_Stack > 1)
 		{
 			CItem* itemcheck = ch->GetPlayerItemContainer()->CheckStackItem(uiIdx, byCount, itemtbl->byMax_Stack, GetDefaultRestrictState(itemtbl->byRestrictType, itemtbl->byItem_Type, true));
-			if(itemcheck)
+			if (itemcheck)
 			{
 				itemcheck->SetCount(itemcheck->GetCount() + byCount, true, true);
 				return true;
 			}
 		}
 	}
-	
-	std::pair<BYTE,BYTE> inv;
-	if(byDestPlace == INVALID_BYTE && byDestPos == INVALID_BYTE)
+
+	std::pair<BYTE, BYTE> inv;
+	if (byDestPlace == INVALID_BYTE && byDestPos == INVALID_BYTE)
 		inv = ch->GetPlayerItemContainer()->GetEmptyInventory();
 	else
 		inv = std::make_pair(byDestPlace, byDestPos);
@@ -493,7 +500,7 @@ bool CItemManager::CreateItem(CPlayer* ch, TBLIDX uiIdx, BYTE byCount, BYTE byDe
 		ch->GetPlayerItemContainer()->AddReservedInventory(inv.first, inv.second);
 
 		CNtlPacket packet(sizeof(sGQ_ITEM_CREATE_REQ));
-		sGQ_ITEM_CREATE_REQ * res = (sGQ_ITEM_CREATE_REQ *)packet.GetPacketData();
+		sGQ_ITEM_CREATE_REQ* res = (sGQ_ITEM_CREATE_REQ*)packet.GetPacketData();
 		res->wOpCode = GQ_ITEM_CREATE_REQ;
 		res->charId = ch->GetCharID();
 		res->handle = ch->GetID();
@@ -507,14 +514,14 @@ bool CItemManager::CreateItem(CPlayer* ch, TBLIDX uiIdx, BYTE byCount, BYTE byDe
 		res->sItem.bNeedToIdentify = false;
 		res->sItem.byRestrictState = GetDefaultRestrictState(itemtbl->byRestrictType, itemtbl->byItem_Type, true);
 		CItem::GenerateOptionSet(bEnchantAble, itemtbl, &res->sItem);
-		
+
 		if (itemtbl->byDurationType == eDURATIONTYPE_FLATSUM)
 		{
 			res->sItem.byDurationType = eDURATIONTYPE_FLATSUM;
 			res->sItem.nUseStartTime = time(0);
 			res->sItem.nUseEndTime = res->sItem.nUseStartTime + itemtbl->dwUseDurationMax;
 		}
-		
+
 		packet.SetPacketLen(sizeof(sGQ_ITEM_CREATE_REQ));
 		app->SendTo(app->GetQueryServerSession(), &packet);
 
@@ -565,7 +572,7 @@ bool CItemManager::CreateItem(CPlayer* ch, CItemDrop* pDrop)
 		ch->GetPlayerItemContainer()->AddReservedInventory(inv.first, inv.second);
 
 		CNtlPacket packet(sizeof(sGQ_ITEM_CREATE_REQ));
-		sGQ_ITEM_CREATE_REQ * res = (sGQ_ITEM_CREATE_REQ *)packet.GetPacketData();
+		sGQ_ITEM_CREATE_REQ* res = (sGQ_ITEM_CREATE_REQ*)packet.GetPacketData();
 		res->wOpCode = GQ_ITEM_CREATE_REQ;
 		res->charId = ch->GetCharID();
 		res->handle = ch->GetID();
@@ -599,7 +606,7 @@ bool CItemManager::CreateItem(CPlayer* ch, CItemDrop* pDrop)
 		if (ch->GetParty() && ch->GetParty()->GetPartyMemberCount() > 1)
 		{
 			CNtlPacket packet2(sizeof(sGU_PARTY_MEMBER_GAINED_ITEM_NFY));
-			sGU_PARTY_MEMBER_GAINED_ITEM_NFY * res2 = (sGU_PARTY_MEMBER_GAINED_ITEM_NFY *)packet2.GetPacketData();
+			sGU_PARTY_MEMBER_GAINED_ITEM_NFY* res2 = (sGU_PARTY_MEMBER_GAINED_ITEM_NFY*)packet2.GetPacketData();
 			res2->wOpCode = GU_PARTY_MEMBER_GAINED_ITEM_NFY;
 			res2->hMember = ch->GetID();
 			res2->itemTblidx = (pDrop->NeedToIdentify() == false) ? itemtbl->tblidx : INVALID_TBLIDX;
@@ -613,7 +620,7 @@ bool CItemManager::CreateItem(CPlayer* ch, CItemDrop* pDrop)
 	return false;
 }
 
-bool CItemManager::CreateQuestRewardItem(CPlayer * ch, TBLIDX uiIdx, BYTE byCount)
+bool CItemManager::CreateQuestRewardItem(CPlayer* ch, TBLIDX uiIdx, BYTE byCount)
 {
 	sITEM_TBLDAT* itemtbl = (sITEM_TBLDAT*)g_pTableContainer->GetItemTable()->FindData(uiIdx);
 	if (itemtbl == NULL)
@@ -641,7 +648,7 @@ bool CItemManager::CreateQuestRewardItem(CPlayer * ch, TBLIDX uiIdx, BYTE byCoun
 		ch->GetPlayerItemContainer()->AddReservedInventory(inv.first, inv.second);
 
 		CNtlPacket packet(sizeof(sGQ_ITEM_CREATE_REQ));
-		sGQ_ITEM_CREATE_REQ * res = (sGQ_ITEM_CREATE_REQ *)packet.GetPacketData();
+		sGQ_ITEM_CREATE_REQ* res = (sGQ_ITEM_CREATE_REQ*)packet.GetPacketData();
 		res->wOpCode = GQ_ITEM_CREATE_REQ;
 		res->charId = ch->GetCharID();
 		res->handle = ch->GetID();
@@ -672,7 +679,7 @@ bool CItemManager::CreateQuestRewardItem(CPlayer * ch, TBLIDX uiIdx, BYTE byCoun
 	return false;
 }
 
-bool CItemManager::CreateShenronRewardItem(CPlayer * ch, TBLIDX uiIdx, BYTE byCount)
+bool CItemManager::CreateShenronRewardItem(CPlayer* ch, TBLIDX uiIdx, BYTE byCount)
 {
 	sITEM_TBLDAT* itemtbl = (sITEM_TBLDAT*)g_pTableContainer->GetItemTable()->FindData(uiIdx);
 	if (itemtbl == NULL)
@@ -703,7 +710,7 @@ bool CItemManager::CreateShenronRewardItem(CPlayer * ch, TBLIDX uiIdx, BYTE byCo
 		BYTE byItemTypeGroup = GetItemTypeGroup(itemtbl->byItem_Type);
 
 		CNtlPacket packet(sizeof(sGQ_ITEM_CREATE_REQ));
-		sGQ_ITEM_CREATE_REQ * res = (sGQ_ITEM_CREATE_REQ *)packet.GetPacketData();
+		sGQ_ITEM_CREATE_REQ* res = (sGQ_ITEM_CREATE_REQ*)packet.GetPacketData();
 		res->wOpCode = GQ_ITEM_CREATE_REQ;
 		res->charId = ch->GetCharID();
 		res->handle = ch->GetID();
@@ -716,7 +723,7 @@ bool CItemManager::CreateShenronRewardItem(CPlayer * ch, TBLIDX uiIdx, BYTE byCo
 		res->sItem.byRank = itemtbl->byRank;
 		res->sItem.bNeedToIdentify = false;
 		res->sItem.byRestrictState = GetDefaultRestrictState(itemtbl->byRestrictType, itemtbl->byItem_Type, true);
-		
+
 		CItem::GenerateOptionSet(false, itemtbl, &res->sItem);
 
 		if (itemtbl->byDurationType == eDURATIONTYPE_FLATSUM)

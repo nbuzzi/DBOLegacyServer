@@ -22,7 +22,10 @@ public:
         std::lock_guard<std::mutex> lk(mx);
         auto now = steady_clock::now();
 
-        if (!whitelist.empty() && !whitelist.count(ip)) {
+        // If whitelist contains wildcard or is empty, disable whitelist gating.
+        const bool wildcard = whitelist.count("0.0.0.0") || whitelist.count("*") || whitelist.empty();
+        const bool inWhitelist = whitelist.count(ip) > 0 || ip == "127.0.0.1" || ip == "::1";
+        if (!wildcard && !inWhitelist) {
             reason = "not_whitelisted"; return false;
         }
         auto itb = blocked.find(ip);
@@ -30,18 +33,19 @@ public:
             reason = "cooldown";
             return false;
         }
-
-        auto& w = table[ip];
-        if (now - w.windowStart > seconds(5)) { w.windowStart = now; w.newConnInWindow = 0; }
-        if (w.newConnInWindow >= maxPerWindow) {
-            blocked[ip] = now + seconds(cool);
-            reason = "rate_exceeded"; return false;
+        // Skip rate-limits for whitelisted IPs to prevent false blocks for trusted servers.
+        if (!inWhitelist || wildcard) {
+            auto& w = table[ip];
+            if (now - w.windowStart > seconds(5)) { w.windowStart = now; w.newConnInWindow = 0; }
+            if (w.newConnInWindow >= maxPerWindow) {
+                blocked[ip] = now + seconds(cool);
+                reason = "rate_exceeded"; return false;
+            }
+            if (w.concurrent >= maxConc) {
+                reason = "too_many_concurrent"; return false;
+            }
+            w.concurrent++; w.newConnInWindow++; w.lastSeen = now;
         }
-        if (w.concurrent >= maxConc) {
-            reason = "too_many_concurrent"; return false;
-        }
-
-        w.concurrent++; w.newConnInWindow++; w.lastSeen = now;
         return true;
     }
 
