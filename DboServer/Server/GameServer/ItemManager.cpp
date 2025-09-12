@@ -35,7 +35,8 @@ bool CItemManager::IsValidSingleDropIdx(TBLIDX itemTblidx) const
 {
 	// Expandable blacklist of invalid/sentinel tblidx values
 	static const TBLIDX kBlacklisted[] = {
-		4294967041u // known invalid from quest reward path
+		4294967041u, // known invalid from quest reward path
+		3154118657u
 	};
 
 	for (size_t i = 0; i < (sizeof(kBlacklisted) / sizeof(kBlacklisted[0])); ++i)

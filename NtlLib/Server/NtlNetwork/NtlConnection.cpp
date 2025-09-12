@@ -4,7 +4,7 @@
 //
 //	Begin		:	2005-12-19
 //
-//	Copyright	:	╗о NTL-Inc Co., Ltd
+//	Copyright	:	О©╫О©╫ NTL-Inc Co., Ltd
 //
 //	Author		:	Hyun Woo, Koo   ( zeroera@ntl-inc.com )
 //
@@ -70,8 +70,8 @@ public:
 //-----------------------------------------------------------------------------------
 //
 //-----------------------------------------------------------------------------------
-const DWORD CONNECTION_KEEP_ALIVE_TIME			= 5 * 1000; // ╪рдо ©и╪г KEEP ALIVE ©║ ╩Г©К
-const DWORD CONNECTION_KEEP_ALIVE_INTERVAL		= 1 * 1000; // ╪рдо ©и╪г KEEP ALIVE ©║ ╩Г©К
+const DWORD CONNECTION_KEEP_ALIVE_TIME			= 5 * 1000; // О©╫О©╫О©╫О©╫ О©╫и╪О©╫ KEEP ALIVE О©╫О©╫ О©╫О©╫О©╫
+const DWORD CONNECTION_KEEP_ALIVE_INTERVAL		= 1 * 1000; // О©╫О©╫О©╫О©╫ О©╫и╪О©╫ KEEP ALIVE О©╫О©╫ О©╫О©╫О©╫
 //-----------------------------------------------------------------------------------
 
 
@@ -563,7 +563,8 @@ int CNtlConnection::PostRecv()
 
 	if (m_bIsTrafficHeavy == true)
 	{
-		Disconnect(false);
+	ERR_LOG(LOG_NETWORK, "Session[%X] disconnecting due to heavy-traffic guard. Remote=%s:%u Local=%s:%u", this, GetRemoteIP(), GetRemotePort(), GetLocalIP(), GetLocalPort());
+	Disconnect(false);
 		return NTL_ERR_NET_SESSION_CLOSED; //if we do here NTL_SUCCESS then connection will stay forever active..
 	}
 

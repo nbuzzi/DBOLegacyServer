@@ -47,6 +47,9 @@ int CGameServerPassiveSession::OnDispatch(CNtlPacket* pPacket)
 	CMasterServer* app = (CMasterServer*)NtlSfxGetApp();
 	sNTLPACKETHEADER* pHeader = (sNTLPACKETHEADER*)pPacket->GetPacketData();
 
+	// Reset alive timer on any activity from GameServer to be more tolerant to ping jitter
+	ResetAliveTime();
+
 	switch (pHeader->wOpCode)
 	{
 	case GM_NOTIFY_SERVER_BEGIN: { Gm_NfyServerBegin(pPacket, app); } break;
@@ -57,14 +60,12 @@ int CGameServerPassiveSession::OnDispatch(CNtlPacket* pPacket)
 	case GM_PLAYER_SWITCH_CHANNEL_REQ: { Gm_PlayerSwitchChannel(pPacket, app); } break;
 	case GM_CHAR_SERVER_TELEPORT_REQ: { RecvCharServerTeleportReq(pPacket, app); } break;
 
-	case GM_PING_RES:
-	{
-		sGM_PING_RES* req = (sGM_PING_RES*)pPacket->GetPacketData();
-
-		ResetAliveTime();
+	case GM_PING_RES: 
+	{ 
+		sGM_PING_RES * req = (sGM_PING_RES*)pPacket->GetPacketData();
 
 		DWORD dwTick = GetTickCount();
-		if (dwTick - req->dwTick > 10)
+		if(dwTick - req->dwTick > 10)
 			ERR_LOG(LOG_GENERAL, "Game Server %d Channel %d Ping: %d ", req->serverId, req->serverChannelId, dwTick - req->dwTick);
 	}
 	break;

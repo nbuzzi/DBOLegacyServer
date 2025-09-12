@@ -24,7 +24,8 @@ public:
 
 public:
 
-	virtual DWORD				GetAliveCheckTime() { return 60000; }
+	// Tolerate longer stalls before dropping GameServer: 120s instead of 60s
+	virtual DWORD				GetAliveCheckTime() { return 120000; }
 
 	virtual int					OnAccept();
 	virtual void				OnClose();

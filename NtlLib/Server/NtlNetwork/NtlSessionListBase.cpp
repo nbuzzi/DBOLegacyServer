@@ -264,7 +264,14 @@ void CNtlSessionListBase::ValidCheck(DWORD dwTickTime)
 			//	}
 			/*else*/ if (false == pSession->ValidCheck(dwTickTime))
 			{
-				NTL_PRINT(PRINT_SYSTEM, "The session[%X] should be disconnected due to timeout.", pSession);
+				// More context to debug source of random disconnects
+				ERR_LOG(LOG_NETWORK,
+					"Timeout disconnect. Session[%X], Type[%u], Remote[%s:%u], Local[%s:%u], AliveCheck[%u]ms",
+					pSession,
+					pSession->GetSessionType(),
+					pSession->GetRemoteIP(), pSession->GetRemotePort(),
+					pSession->GetLocalIP(), pSession->GetLocalPort(),
+					pSession->GetAliveCheckTime());
 				pSession->Disconnect(false);
 			}
 			else if (pSession->PacketLogTime(dwTickTime))
