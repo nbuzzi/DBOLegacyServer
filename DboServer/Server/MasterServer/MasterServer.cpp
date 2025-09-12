@@ -50,7 +50,7 @@ int	CMasterServer::OnCreate()
 	wl.insert("127.0.0.1");
 	wl.insert("::1");
 	g_ipGuard.SetWhitelist(std::move(wl));
-	g_ipGuard.Configure(/*maxConcurrent*/2, /*maxPer5s*/6, /*cooldownSec*/60);
+	g_ipGuard.Configure(/*maxConcurrent*/20, /*maxPer5s*/15, /*cooldownSec*/30);
 
 	int rc = NTL_SUCCESS;
 

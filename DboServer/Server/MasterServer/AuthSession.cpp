@@ -13,12 +13,6 @@ int CAuthServerPassiveSession::OnAccept()
 	const char* rip = GetRemoteIP();
 	std::string ip = rip ? rip : "";
 
-	if (ip != "127.0.0.1") {
-		ERR_LOG(LOG_NETWORK, "DROP %s (Auth): not loopback", ip.c_str());
-		Disconnect(false);
-		return NTL_SUCCESS;
-	}
-
 	std::string reason;
 	if (!g_ipGuard.OnAccept(ip, reason)) {
 		ERR_LOG(LOG_NETWORK, "DROP %s (Auth): %s", ip.c_str(), reason.c_str());
