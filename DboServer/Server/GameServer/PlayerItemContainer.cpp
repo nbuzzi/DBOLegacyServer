@@ -38,17 +38,6 @@ CPlayerItemContainer::~CPlayerItemContainer()
 		if (pItem)
 		{
 			g_pItemManager->RemoveItem(it->first);
-			CHARACTERID logCharId = (m_pOwner ? m_pOwner->GetCharID() : INVALID_CHARACTERID);
-			if (logCharId == INVALID_CHARACTERID)
-			{
-				const sITEM_DATA &d = pItem->GetItemData();
-				if (d.charId != INVALID_CHARACTERID)
-					logCharId = d.charId;
-			}
-
-			ERR_LOG(LOG_USER,
-				"[ITEM-DELETED] CPlayerItemContainer::~CPlayerItemContainer - Force-removing item. Player %u, ItemID %I64u, Place %u, Pos %u, Handle %u",
-				logCharId, pItem->GetItemID(), pItem->GetPlace(), pItem->GetPos(), pItem->GetID());
 			SAFE_DELETE(pItem);
 		}
 		else
