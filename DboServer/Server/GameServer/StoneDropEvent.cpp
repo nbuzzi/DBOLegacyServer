@@ -121,40 +121,29 @@ void CStoneDropEvent::Update(CMonster* pMob, CCharacter* pPlayer)
 	const int stoneLevelsSize = sizeof(stoneLevels) / sizeof(stoneLevels[0]);
 
 	BYTE byMobLevel = pMob->GetLevel();
-
-	int mobLevelToUse = byMobLevel;
-	if (byMobLevel > 70) mobLevelToUse = 70;
+	int maxStoneLevel = byMobLevel + 5;
+	if (maxStoneLevel > 70) maxStoneLevel = 70;
 	for (int i = 0; i < stoneLevelsSize; ++i)
 	{
 		const int stoneLevel = stoneLevels[i];
-
-		if (stoneLevel < mobLevelToUse)
-			continue;
-
-		// El tope de piedra máxima es nivel 70, pero no hay límite de nivel del mob
-		if (stoneLevel > 70)
-			break;
+		// Solo dropear piedras desde el nivel del mob hasta el tope permitido
+		if (stoneLevel < byMobLevel) continue;
+		if (stoneLevel > maxStoneLevel) break;
 
 		if (Dbo_CheckProbabilityF(CalculateBaseDropChance()))
 		{
 			if (Dbo_CheckProbability(RED_DROP_RATE))
 				CreateSingleDrop(pMob, pPlayer, GetRedStoneByLevel(stoneLevel));
-
 			if (Dbo_CheckProbability(BLUE_DROP_RATE))
 				CreateSingleDrop(pMob, pPlayer, GetBlueStoneByLevel(stoneLevel));
-
 			if (Dbo_CheckProbability(PURPLE_DROP_RATE))
 				CreateSingleDrop(pMob, pPlayer, GetPurpleStoneByLevel(stoneLevel));
-
 			if (Dbo_CheckProbability(GREEN_DROP_RATE))
 				CreateSingleDrop(pMob, pPlayer, GetGreenStoneByLevel(stoneLevel));
-
 			if (Dbo_CheckProbability(BLACK_BLUE_DROP_RATE))
 				CreateSingleDrop(pMob, pPlayer, GetBlackBlueStoneByLevel(stoneLevel));
-
 			if (Dbo_CheckProbability(BLACK_RED_DROP_RATE))
 				CreateSingleDrop(pMob, pPlayer, GetBlackRedStoneByLevel(stoneLevel));
-
 			if (Dbo_CheckProbability(WHITE_DROP_RATE))
 				CreateSingleDrop(pMob, pPlayer, GetWhiteStoneByLevel(stoneLevel));
 		}
