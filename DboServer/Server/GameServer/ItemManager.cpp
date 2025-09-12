@@ -31,6 +31,22 @@ CItemManager::~CItemManager()
 }
 
 
+bool CItemManager::IsValidSingleDropIdx(TBLIDX itemTblidx) const
+{
+	// Expandable blacklist of invalid/sentinel tblidx values
+	static const TBLIDX kBlacklisted[] = {
+		4294967041u // known invalid from quest reward path
+	};
+
+	for (size_t i = 0; i < (sizeof(kBlacklisted) / sizeof(kBlacklisted[0])); ++i)
+	{
+		if (itemTblidx == kBlacklisted[i])
+			return false;
+	}
+	return true;
+}
+
+
 void CItemManager::TickProcess(DWORD dwTickDiff, float fMultiple)
 {
 	for (std::map<CItemDrop*, DWORD>::iterator it = m_mapItemDropDelayedDestroy.begin(); it != m_mapItemDropDelayedDestroy.end(); )

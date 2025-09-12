@@ -31,13 +31,8 @@ public:
 	void					DestroyItemDropOverTime(CItemDrop* item);
 
 
-	// Guard: validate tblidx before attempting single-drop creation
-	inline bool			IsValidSingleDropIdx(TBLIDX itemTblidx) const
-	{
-		// 4294967041u is a known invalid/sentinel from some quest reward path
-		return itemTblidx != 4294967041u;
-	}
-	CItem*					CreateFromDB(HOBJECT hHandle, sITEM_DATA& rData, CPlayer* ch); // only used when player login
+	bool					IsValidSingleDropIdx(TBLIDX itemTblidx) const;
+	CItem*					CreateFromDB(HOBJECT hHandle, sITEM_DATA& rData, CPlayer* ch); // only used when player login1
 	bool					CreateItemDrop(CMonster* pkMob, CPlayer* pkKiller, std::vector<CItemDrop*> & vec_item);
 	CItemDrop*				CreateSingleDrop(float fRate, TBLIDX itemTblidx);
 	void					CreateItemDrop(TBLIDX dropItem_ProbabilityTblidx, std::vector<CItemDrop*> & vec_item);
