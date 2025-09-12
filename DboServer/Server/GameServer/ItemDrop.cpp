@@ -26,6 +26,7 @@ CItemDrop::CItemDrop(eOBJTYPE eObjType)
 	m_byRank = ITEM_RANK_NORMAL;
 	m_bNeedToIdentify = false;
 	m_dwZeniDrop = 0;
+	m_byStackCount = 1;
 
 	if (eObjType == OBJTYPE_DROPITEM)
 		m_sOptionSet = new sITEM_OPTION_SET;

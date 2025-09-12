@@ -83,11 +83,12 @@ void CFairyEvent::Update(CMonster* pMob, CCharacter* pPlayer)
 		return;	
 	
 
-	//Fairy Drop´s
+	//Fairy Dropï¿½s
 	if (pMob->GetTblidx() == 16454101 || pMob->GetTblidx() == 16454102 || pMob->GetTblidx() == 16454103 ||
 		pMob->GetTblidx() == 16454104 || pMob->GetTblidx() == 16454201 || pMob->GetTblidx() == 16454202 ||
 		pMob->GetTblidx() == 16454203)
 	{
+		ERR_LOG(LOG_GENERAL, "[DropTrace] FairyEvent CreateSingleDrop item=%u", 11160029);
 		CItemDrop* pDrop = g_pItemManager->CreateSingleDrop(90.f, 11160029);
 		if (pDrop)
 		{
@@ -104,13 +105,14 @@ void CFairyEvent::Update(CMonster* pMob, CCharacter* pPlayer)
 
 		return;
 	}	
-	//Fairy Drop´s
+	//Fairy Dropï¿½s
 	if (pMob->GetTblidx() == 13211201 || pMob->GetTblidx() == 13211202 || pMob->GetTblidx() == 13211203 ||
 		pMob->GetTblidx() == 13211204 || pMob->GetTblidx() == 13211205 || pMob->GetTblidx() == 13211206 ||
 		pMob->GetTblidx() == 13211207)
 	{
 		for (int i = 0; i <= pMob->GetLevel(); i++)
 		{
+			ERR_LOG(LOG_GENERAL, "[DropTrace] FairyEvent CreateSingleDrop item=%u", 11160029);
 			CItemDrop* pDrop = g_pItemManager->CreateSingleDrop(80.f, 11160029);
 			if (pDrop)
 			{

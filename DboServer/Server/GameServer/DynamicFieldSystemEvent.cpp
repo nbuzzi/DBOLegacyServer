@@ -185,6 +185,7 @@ void CDynamicFieldSystemEvent::Update(CMonster* pMob, CCharacter* pPlayer)
 				{
 					if (g_pItemManager->IsValidSingleDropIdx(pField->aIndex))
 					{
+						ERR_LOG(LOG_GENERAL, "[DropTrace] DynamicField CreateSingleDrop player=%u item=%u rate=%.2f", pPlayer->GetID(), pField->aIndex, pField->fRate);
 						pDrop = g_pItemManager->CreateSingleDrop(pField->fRate, pField->aIndex);
 					}
 					if (pDrop)

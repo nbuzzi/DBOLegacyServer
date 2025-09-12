@@ -329,6 +329,7 @@
     <ClCompile Include="DynamicFieldSystemEvent.cpp" />
     <ClCompile Include="ExpEvent.cpp" />
     <ClCompile Include="Fairy Event.cpp" />
+  <ClCompile Include="CustomDropEvent.cpp" />
     <ClCompile Include="Guild.cpp" />
     <ClCompile Include="HoneyBeeEvent.cpp" />
     <ClCompile Include="HtbSkill.cpp" />
@@ -999,6 +1000,7 @@
     <ClInclude Include="DynamicFieldSystemEvent.h" />
     <ClInclude Include="ExpEvent.h" />
     <ClInclude Include="Fairy Event.h" />
+  <ClInclude Include="CustomDropEvent.h" />
     <ClInclude Include="Guild.h" />
     <ClInclude Include="HoneyBeeEvent.h" />
     <ClInclude Include="HtbSkill.h" />

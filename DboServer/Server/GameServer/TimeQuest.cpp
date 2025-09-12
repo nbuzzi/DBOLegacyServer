@@ -303,6 +303,7 @@ void CTimeQuest::SendNewTMQRecord()
 			CItemDrop* pDrop = NULL;
 			if (g_pItemManager->IsValidSingleDropIdx(LuckyItem))
 			{
+				ERR_LOG(LOG_GENERAL, "[DropTrace] TimeQuest CreateSingleDrop player=%u item=%u", pPlayer->GetCharID(), LuckyItem);
 				pDrop = g_pItemManager->CreateSingleDrop(100.f, LuckyItem);
 			}
 			if (pDrop)

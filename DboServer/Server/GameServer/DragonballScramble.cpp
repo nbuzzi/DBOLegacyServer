@@ -153,6 +153,7 @@ void CDragonballScramble::StartEvent(bool bStartByCommand/* = true*/)
 		CItemDrop* pBall = NULL;
 		if (g_pItemManager->IsValidSingleDropIdx(200041 + i))
 		{
+			ERR_LOG(LOG_GENERAL, "[DropTrace] DBScramble CreateSingleDrop item=%u", 200041 + i);
 			pBall = g_pItemManager->CreateSingleDrop(100.f, 200041 + i);
 		}
 
@@ -435,6 +436,7 @@ void CDragonballScramble::SpawnBall(CPlayer* pPlayer, bool bFaint/* = false*/, b
 				CItemDrop* pBall = NULL;
 				if (g_pItemManager->IsValidSingleDropIdx(200041 + i))
 				{
+					ERR_LOG(LOG_GENERAL, "[DropTrace] DBScramble CreateSingleDrop item=%u", 200041 + i);
 					pBall = g_pItemManager->CreateSingleDrop(100.f, 200041 + i);
 				}
 				if (pBall)

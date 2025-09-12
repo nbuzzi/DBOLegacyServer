@@ -40,6 +40,7 @@
 #include "HoneyBeeEvent.h"
 #include "StoneDropEvent.h"
 #include "Fairy Event.h"
+#include "CustomDropEvent.h"
 // --- INICIO SOCKET COMANDOS ---
 #include <thread>
 #include <atomic>
@@ -261,6 +262,10 @@ int CGameServer::OnInitApp()
 
 	NTL_PRINT(PRINT_APP, "Fairy System");
 	CFairyEvent* FairyEven = new CFairyEvent;
+	UNREFERENCED_PARAMETER(pScs);
+
+	NTL_PRINT(PRINT_APP, "Custom Drop System");
+	CCustomDropEvent* pCustomDrop = new CCustomDropEvent;
 	UNREFERENCED_PARAMETER(pScs);
 	if (!m_pGameMain->PrepareWorldAndObject())
 	{

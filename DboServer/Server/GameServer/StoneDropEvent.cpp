@@ -278,6 +278,7 @@ void CStoneDropEvent::CreateSingleDrop(CMonster* pMob, CCharacter* pPlayer, int 
 		CItemDrop* pDrop = NULL;
 		if (g_pItemManager->IsValidSingleDropIdx(dropId))
 		{
+			ERR_LOG(LOG_GENERAL, "[DropTrace] StoneDropEvent CreateSingleDrop mob=%u player=%u item=%d", pMob->GetTblidx(), pPlayer->GetID(), dropId);
 			pDrop = g_pItemManager->CreateSingleDrop(100.f, dropId);
 		}
 

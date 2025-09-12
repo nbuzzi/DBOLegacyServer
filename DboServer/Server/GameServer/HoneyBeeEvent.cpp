@@ -45,7 +45,7 @@ void CHoneyBeeEvent::StartEvent(BYTE byHours/* = 3*/)
 	CNtlStringW msg;
 
 	CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
-	sGU_SYSTEM_DISPLAY_TEXT * res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+	sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
 	res->wOpCode = GU_SYSTEM_DISPLAY_TEXT;
 	res->wMessageLengthInUnicode = (WORD)msg.Format(L"HoneyBee Event Started. Kill Monsters to summon Bees. You have %u hours to farm", byHours);
 	res->byDisplayType = SERVER_TEXT_EMERGENCY;
@@ -72,7 +72,7 @@ void CHoneyBeeEvent::TickProcess(DWORD dwTick)
 	m_dwNextUpdateTick = dwTick + 5000; //update again in 5 seconds
 }
 
-void CHoneyBeeEvent::Update(CMonster * pMob, CCharacter * pPlayer)
+void CHoneyBeeEvent::Update(CMonster* pMob, CCharacter* pPlayer)
 {
 	if (m_bOn == false)
 		return;
@@ -84,6 +84,7 @@ void CHoneyBeeEvent::Update(CMonster * pMob, CCharacter * pPlayer)
 
 	if (pMob->GetTblidx() == 2741101)
 	{
+		ERR_LOG(LOG_GENERAL, "[DropTrace] HoneyBee CreateSingleDrop item=%u", 11160033);
 		CItemDrop* pDrop = g_pItemManager->CreateSingleDrop(90.f, 11160033);
 		if (pDrop)
 		{
@@ -102,6 +103,7 @@ void CHoneyBeeEvent::Update(CMonster * pMob, CCharacter * pPlayer)
 	}
 	else if (pMob->GetTblidx() == 2741102)
 	{
+		ERR_LOG(LOG_GENERAL, "[DropTrace] HoneyBee CreateSingleDrop item=%u", 11160034);
 		CItemDrop* pDrop = g_pItemManager->CreateSingleDrop(90.f, 11160034);
 		if (pDrop)
 		{
@@ -120,6 +122,7 @@ void CHoneyBeeEvent::Update(CMonster * pMob, CCharacter * pPlayer)
 	}
 	else if (pMob->GetTblidx() == 7441101)
 	{
+		ERR_LOG(LOG_GENERAL, "[DropTrace] HoneyBee CreateSingleDrop item=%u", 11160035);
 		CItemDrop* pDrop = g_pItemManager->CreateSingleDrop(90.f, 11160035);
 		if (pDrop)
 		{
@@ -242,7 +245,7 @@ void CHoneyBeeEvent::EndEvent()
 	CNtlStringW msg;
 
 	CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
-	sGU_SYSTEM_DISPLAY_TEXT * res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+	sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
 	res->wOpCode = GU_SYSTEM_DISPLAY_TEXT;
 	res->wMessageLengthInUnicode = (WORD)msg.Format(L"HoneyBee Event Ended");
 	res->byDisplayType = SERVER_TEXT_EMERGENCY;
@@ -259,7 +262,7 @@ void CHoneyBeeEvent::LoadEvent(HSESSION hSession)
 	CNtlStringW msg;
 
 	CNtlPacket packetMsg(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
-	sGU_SYSTEM_DISPLAY_TEXT * resMsg = (sGU_SYSTEM_DISPLAY_TEXT *)packetMsg.GetPacketData();
+	sGU_SYSTEM_DISPLAY_TEXT* resMsg = (sGU_SYSTEM_DISPLAY_TEXT*)packetMsg.GetPacketData();
 	resMsg->wOpCode = GU_SYSTEM_DISPLAY_TEXT;
 	resMsg->byDisplayType = SERVER_TEXT_EMERGENCY;
 	resMsg->wMessageLengthInUnicode = (WORD)msg.Format(L"HoneyBee Event is currently running!");

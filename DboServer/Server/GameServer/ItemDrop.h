@@ -45,6 +45,9 @@ public:
 	inline void					SetZeni(DWORD zeni) { m_dwZeniDrop = zeni; }
 	inline DWORD				GetZeni() { return m_dwZeniDrop; }
 
+	inline void                 SetStackCount(BYTE byCount) { m_byStackCount = byCount; }
+	inline BYTE                 GetStackCount() const { return m_byStackCount; }
+
 	void						GenerateOptionSet(sITEM_TBLDAT* table, bool bEnchantAble = false);
 	inline sITEM_OPTION_SET*	GetOptionSet() { return m_sOptionSet; }
 				
@@ -75,6 +78,7 @@ private:
 
 	//used for dice
 	bool						m_bLocked;
+	BYTE                        m_byStackCount;
 	static bool					IsStoneTblidx(TBLIDX id);
 	static bool					InRange(TBLIDX id, TBLIDX a, TBLIDX b) { return id >= a && id <= b; }
 

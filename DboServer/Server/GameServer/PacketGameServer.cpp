@@ -53,6 +53,7 @@
 #include "ExpEvent.h"
 #include "HoneyBeeEvent.h"
 #include "Fairy Event.h"
+#include "CustomDropEvent.h"
 
 #include "NtlNavi.h"
 #include "battle.h"
@@ -578,6 +579,7 @@ void CClientSession::RecvCharReadyToSpawn(CNtlPacket* pPacket)
 		g_pBudokaiManager->LoadBudokaiStateInfo(cPlayer);
 		g_pHoneyBeeEvent->LoadEvent(GetHandle());
 		g_pFairyEvent->LoadEvent(GetHandle());
+		g_pCustomDropEvent->LoadEvent(GetHandle());
 		if (cPlayer->GetCurWorld())
 		{
 			if (cPlayer->GetCurWorld()->GetRuleType() == GAMERULE_DOJO) // if enter dojo, then add item

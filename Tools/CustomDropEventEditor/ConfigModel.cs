@@ -1,0 +1,281 @@
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
+using System.Linq;
+
+namespace CustomDropEventEditor
+{
+    public sealed class ConfigModel
+    {
+        public Dictionary<uint, List<DropEntry>> Drops { get; } = new();
+        public Dictionary<uint, Modifiers> Mods { get; } = new();
+        public Dictionary<uint, List<SpawnEntry>> Spawns { get; } = new(); // key 0 = all
+
+        public static ConfigModel Load(string path)
+        {
+            var model = new ConfigModel();
+            if (!File.Exists(path)) return model;
+            foreach (var raw in File.ReadAllLines(path))
+            {
+                var line = raw.Trim();
+                if (string.IsNullOrWhiteSpace(line)) continue;
+                // strip comments (#, ;, //) anywhere in the line
+                int c1 = line.IndexOf('#');
+                int c2 = line.IndexOf(';');
+                int c3 = line.IndexOf("//", StringComparison.Ordinal);
+                int cut = -1;
+                foreach (var c in new[] { c1, c2, c3 })
+                {
+                    if (c >= 0) cut = cut < 0 ? c : Math.Min(cut, c);
+                }
+                if (cut >= 0) line = line[..cut].Trim();
+                if (string.IsNullOrWhiteSpace(line)) continue;
+
+                // support both ':' and '=' as key/value separator; take the first occurring
+                int iColon = line.IndexOf(':');
+                int iEq = line.IndexOf('=');
+                int sep = -1;
+                if (iColon >= 0 && iEq >= 0) sep = Math.Min(iColon, iEq);
+                else if (iColon >= 0) sep = iColon; else sep = iEq;
+                if (sep < 0) continue;
+                var key = line.Substring(0, sep).Trim();
+                var value = line[(sep + 1)..].Trim();
+
+                // key could be "<id>", "<id> modifiers", or "<id> spawn(s)"
+                var parts = key.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                uint id = 0;
+                bool isMods = false, isSpawn = false;
+                if (parts.Length == 1)
+                {
+                    if (parts[0].Equals("all", StringComparison.OrdinalIgnoreCase))
+                        id = 0;
+                    else if (!uint.TryParse(parts[0], out id))
+                        continue;
+                }
+                else if (parts.Length >= 2)
+                {
+                    if (parts[0].Equals("all", StringComparison.OrdinalIgnoreCase))
+                        id = 0;
+                    else if (!uint.TryParse(parts[0], out id))
+                        continue;
+                    var tail = parts[1];
+                    if (tail.Equals("modifiers", StringComparison.OrdinalIgnoreCase)) isMods = true;
+                    else if (tail.Equals("spawn", StringComparison.OrdinalIgnoreCase) || tail.Equals("spawns", StringComparison.OrdinalIgnoreCase)) isSpawn = true;
+                }
+
+                if (isMods)
+                {
+                    var m = Modifiers.Parse(value);
+                    model.Mods[id] = m;
+                }
+                else if (isSpawn)
+                {
+                    var list = new List<SpawnEntry>();
+                    foreach (var tok in value.Split(','))
+                    {
+                        var t = tok.Trim();
+                        if (string.IsNullOrEmpty(t)) continue;
+                        var at = t.IndexOf('@');
+                        uint mob = 0; float rate = 100f; byte count = 1;
+                        if (at >= 0)
+                        {
+                            if (!uint.TryParse(t[..at].Trim(), out mob)) continue;
+                            var rx = t[(at + 1)..].Trim();
+                            // allow 'x' or 'X' for count
+                            var x = rx.IndexOf('x');
+                            if (x < 0) x = rx.IndexOf('X');
+                            // allow trailing % in rate (e.g., 50%)
+                            if (rx.EndsWith("%", StringComparison.Ordinal)) rx = rx[..^1];
+                            if (x >= 0)
+                            {
+                                var rOnly = rx[..x].Trim();
+                                if (rOnly.EndsWith("%", StringComparison.Ordinal)) rOnly = rOnly[..^1];
+                                if (!float.TryParse(rOnly, NumberStyles.Float, CultureInfo.InvariantCulture, out rate)) rate = 100f;
+                                if (!byte.TryParse(rx[(x + 1)..], out count)) count = 1;
+                            }
+                            else
+                            {
+                                if (!float.TryParse(rx, NumberStyles.Float, CultureInfo.InvariantCulture, out rate)) rate = 100f;
+                            }
+                        }
+                        else
+                        {
+                            if (!uint.TryParse(t, out mob)) continue;
+                        }
+                        list.Add(new SpawnEntry { MobTblidx = mob, Rate = rate, Count = count });
+                    }
+                    if (list.Count > 0) model.Spawns[id] = list;
+                }
+                else
+                {
+                    var list = new List<DropEntry>();
+                    foreach (var tok in value.Split(','))
+                    {
+                        var t = tok.Trim();
+                        if (string.IsNullOrEmpty(t)) continue;
+                        var at = t.IndexOf('@');
+                        uint item = 0; float rate = 100f;
+                        if (at >= 0)
+                        {
+                            if (!uint.TryParse(t[..at].Trim(), out item)) continue;
+                            var rv = t[(at + 1)..].Trim();
+                            // allow trailing % in rate
+                            if (rv.EndsWith("%", StringComparison.Ordinal)) rv = rv[..^1];
+                            if (!float.TryParse(rv, NumberStyles.Float, CultureInfo.InvariantCulture, out rate)) rate = 100f;
+                        }
+                        else
+                        {
+                            if (!uint.TryParse(t, out item)) continue;
+                        }
+                        list.Add(new DropEntry { ItemTblidx = item, Rate = rate });
+                    }
+                    if (list.Count > 0) model.Drops[id] = list;
+                }
+            }
+            return model;
+        }
+
+        public void Save(string path)
+        {
+            using var sw = new StreamWriter(path);
+            sw.WriteLine("# CustomDropEvent configuration");
+            sw.WriteLine("# Generated by CustomDropEventEditor");
+            // Global spawns first (id 0)
+            if (Spawns.TryGetValue(0, out var global))
+            {
+                sw.Write("all spawn: ");
+                WriteSpawnList(sw, global);
+            }
+            // Mods
+            foreach (var (id, m) in Mods.OrderBy(k => k.Key))
+            {
+                if (id == 0) continue;
+                sw.Write($"{id} modifiers: ");
+                sw.WriteLine(m.ToString());
+            }
+            // Drops
+            foreach (var (id, list) in Drops.OrderBy(k => k.Key))
+            {
+                sw.Write($"{id}: ");
+                sw.WriteLine(string.Join(", ", list.Select(e => e.Rate >= 100f ? e.ItemTblidx.ToString() : $"{e.ItemTblidx}@{e.Rate.ToString(CultureInfo.InvariantCulture)}")));
+            }
+            // Spawns
+            foreach (var (id, list) in Spawns.OrderBy(k => k.Key))
+            {
+                if (id == 0) continue; // already wrote global
+                sw.Write($"{id} spawn: ");
+                WriteSpawnList(sw, list);
+            }
+        }
+
+        private static void WriteSpawnList(StreamWriter sw, List<SpawnEntry> list)
+        {
+            sw.WriteLine(string.Join(
+                ", ",
+                list.Select(e =>
+                {
+                    var rate = e.Rate >= 100f ? "" : $"@{e.Rate.ToString(CultureInfo.InvariantCulture)}";
+                    var cnt = e.Count > 1 ? $"x{e.Count}" : string.Empty;
+                    if (rate.Length == 0 && cnt.Length == 0)
+                        rate = "@100"; // explicit
+                    return $"{e.MobTblidx}{rate}{cnt}";
+                })));
+        }
+    }
+
+    public sealed class DropEntry
+    {
+        public uint ItemTblidx { get; set; }
+        public float Rate { get; set; }
+    }
+
+    public sealed class SpawnEntry
+    {
+        public uint MobTblidx { get; set; }
+        public float Rate { get; set; }
+        public byte Count { get; set; }
+    }
+
+    public sealed class Modifiers
+    {
+        public float Hp { get; set; } = 1f;
+        public float PhysAtk { get; set; } = 1f;
+        public float EngAtk { get; set; } = 1f;
+        public float PhysDef { get; set; } = 1f;
+        public float EngDef { get; set; } = 1f;
+        public float AtkSpd { get; set; } = 1f;
+        public float RunSpd { get; set; } = 1f;
+        public float PhysCrit { get; set; } = 1f;
+        public float EngCrit { get; set; } = 1f;
+        public float PhysCritDmg { get; set; } = 1f;
+        public float EngCritDmg { get; set; } = 1f;
+        public float AttackRate { get; set; } = 1f;
+        public float DodgeRate { get; set; } = 1f;
+        public float BlockRate { get; set; } = 1f;
+        public float BlockDmg { get; set; } = 1f;
+        public float GuardRate { get; set; } = 1f;
+        public int SizeRate { get; set; } = 0;
+
+        public static Modifiers Parse(string value)
+        {
+            var m = new Modifiers();
+            var toks = value.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
+            foreach (var tok in toks)
+            {
+                var kv = tok.Split('=');
+                if (kv.Length != 2) continue;
+                var key = kv[0];
+                var vs = kv[1];
+                float vf = 1f; int vi = 0;
+                float.TryParse(vs, NumberStyles.Float, CultureInfo.InvariantCulture, out vf);
+                int.TryParse(vs, NumberStyles.Integer, CultureInfo.InvariantCulture, out vi);
+                switch (key)
+                {
+                    case "hp": m.Hp = vf; break;
+                    case "physAtk": m.PhysAtk = vf; break;
+                    case "engAtk": m.EngAtk = vf; break;
+                    case "physDef": m.PhysDef = vf; break;
+                    case "engDef": m.EngDef = vf; break;
+                    case "atkSpd": m.AtkSpd = vf; break;
+                    case "runSpd": m.RunSpd = vf; break;
+                    case "physCrit": m.PhysCrit = vf; break;
+                    case "engCrit": m.EngCrit = vf; break;
+                    case "physCritDmg": m.PhysCritDmg = vf; break;
+                    case "engCritDmg": m.EngCritDmg = vf; break;
+                    case "attackRate": m.AttackRate = vf; break;
+                    case "dodgeRate": m.DodgeRate = vf; break;
+                    case "blockRate": m.BlockRate = vf; break;
+                    case "blockDmg": m.BlockDmg = vf; break;
+                    case "guardRate": m.GuardRate = vf; break;
+                    case "sizeRate": m.SizeRate = vi; break;
+                }
+            }
+            return m;
+        }
+
+        public override string ToString()
+        {
+            return string.Join(" ", new[]
+            {
+                $"hp={Hp.ToString(CultureInfo.InvariantCulture)}",
+                $"physAtk={PhysAtk.ToString(CultureInfo.InvariantCulture)}",
+                $"engAtk={EngAtk.ToString(CultureInfo.InvariantCulture)}",
+                $"physDef={PhysDef.ToString(CultureInfo.InvariantCulture)}",
+                $"engDef={EngDef.ToString(CultureInfo.InvariantCulture)}",
+                $"atkSpd={AtkSpd.ToString(CultureInfo.InvariantCulture)}",
+                $"runSpd={RunSpd.ToString(CultureInfo.InvariantCulture)}",
+                $"physCrit={PhysCrit.ToString(CultureInfo.InvariantCulture)}",
+                $"engCrit={EngCrit.ToString(CultureInfo.InvariantCulture)}",
+                $"physCritDmg={PhysCritDmg.ToString(CultureInfo.InvariantCulture)}",
+                $"engCritDmg={EngCritDmg.ToString(CultureInfo.InvariantCulture)}",
+                $"attackRate={AttackRate.ToString(CultureInfo.InvariantCulture)}",
+                $"dodgeRate={DodgeRate.ToString(CultureInfo.InvariantCulture)}",
+                $"blockRate={BlockRate.ToString(CultureInfo.InvariantCulture)}",
+                $"blockDmg={BlockDmg.ToString(CultureInfo.InvariantCulture)}",
+                $"guardRate={GuardRate.ToString(CultureInfo.InvariantCulture)}",
+                $"sizeRate={SizeRate.ToString(CultureInfo.InvariantCulture)}",
+            });
+        }
+    }
+}

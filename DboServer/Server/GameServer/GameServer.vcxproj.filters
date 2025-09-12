@@ -2610,6 +2610,9 @@
     <ClCompile Include="StoneDropEvent.cpp">
       <Filter>In-Game Event System\StoneDrop Event</Filter>
     </ClCompile>
+    <ClCompile Include="CustomDropEvent.cpp">
+      <Filter>In-Game Event System\Custom Drop Event</Filter>
+    </ClCompile>
     <ClCompile Include="RejoinSystem.cpp">
       <Filter>Rejoin</Filter>
     </ClCompile>
@@ -4651,6 +4654,9 @@
     </ClInclude>
     <ClInclude Include="StoneDropEvent.h">
       <Filter>In-Game Event System\StoneDrop Event</Filter>
+    </ClInclude>
+    <ClInclude Include="CustomDropEvent.h">
+      <Filter>In-Game Event System\Custom Drop Event</Filter>
     </ClInclude>
     <ClInclude Include="RejoinSystem.h">
       <Filter>Rejoin</Filter>

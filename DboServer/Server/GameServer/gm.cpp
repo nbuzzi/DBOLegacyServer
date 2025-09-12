@@ -31,6 +31,7 @@
 #include "DungeonManager.h"
 #include "StoneDropEvent.h"
 #include "Fairy Event.h"
+#include "CustomDropEvent.h"
 
 void gm_read_command(sUG_SERVER_COMMAND* sPacket, CPlayer* pPlayer)
 {
@@ -142,6 +143,9 @@ ACMD(do_stop_dbscramble);
 ACMD(do_big);
 ACMD(do_start_stonedrop);
 ACMD(do_stop_stonedrop);
+ACMD(do_start_customdrop);
+ACMD(do_stop_customdrop);
+ACMD(do_reload_customdrop_cfg);
 
 struct command_info cmd_info[] =
 {
@@ -219,6 +223,9 @@ struct command_info cmd_info[] =
 	{ L"@stop_dbscramble",do_stop_dbscramble,ADMIN_LEVEL_GAME_MASTER},
 	{ L"@start_stonedrop", do_start_stonedrop, ADMIN_LEVEL_GAME_MASTER },
 	{ L"@stop_stonedrop", do_stop_stonedrop, ADMIN_LEVEL_GAME_MASTER },
+	{ L"@start_customdrop", do_start_customdrop, ADMIN_LEVEL_GAME_MASTER },
+	{ L"@stop_customdrop", do_stop_customdrop, ADMIN_LEVEL_GAME_MASTER },
+	{ L"@reload_customdrop", do_reload_customdrop_cfg, ADMIN_LEVEL_GAME_MASTER },
 
 	{ L"@qwasawedsadas", NULL, ADMIN_LEVEL_ADMIN }
 };
@@ -300,6 +307,44 @@ ACMD(do_stop_stonedrop)
 {
 	g_pStoneDropEvent->EndEvent();
 	NTL_PRINT(PRINT_APP, "Double Stone Drop Event Stopped");
+}
+
+ACMD(do_start_customdrop)
+{
+	pToken->PopToPeek();
+	std::wstring strToken = pToken->PeekNextToken(NULL, &iLine);
+	BYTE byHours = (BYTE)atof(ws2s(strToken).c_str());
+
+	if (byHours > 24)
+		byHours = 24;
+
+	if (byHours == 0)
+		g_pCustomDropEvent->StartEvent();
+	else
+		g_pCustomDropEvent->StartEvent(byHours);
+
+	NTL_PRINT(PRINT_APP, "Custom Drop Event Started");
+}
+
+ACMD(do_stop_customdrop)
+{
+	g_pCustomDropEvent->EndEvent();
+	NTL_PRINT(PRINT_APP, "Custom Drop Event Stopped");
+}
+
+ACMD(do_reload_customdrop_cfg)
+{
+	// optional path parameter
+	pToken->PopToPeek();
+	std::wstring strToken = pToken->PeekNextToken(NULL, &iLine);
+	std::string path = ws2s(strToken);
+	if (path.empty())
+		path = ".\\config\\CustomDropEvent.cfg";
+
+	if (g_pCustomDropEvent->ReloadConfig(path.c_str()))
+		NTL_PRINT(PRINT_APP, "CustomDropEvent: config reloaded from %s", path.c_str());
+	else
+		NTL_PRINT(PRINT_APP, "CustomDropEvent: failed to reload config from %s", path.c_str());
 }
 
 ACMD(do_buff)
@@ -2570,6 +2615,7 @@ ACMD(do_createloot)
 		CItemDrop* pBall = NULL;
 		if (g_pItemManager->IsValidSingleDropIdx(ItemId))
 		{
+			ERR_LOG(LOG_GENERAL, "[DropTrace] GM CreateSingleDrop char=%u item=%u", pPlayer->GetCharID(), ItemId);
 			pBall = g_pItemManager->CreateSingleDrop(100.f, ItemId);
 		}
 		if (pBall)

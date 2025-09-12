@@ -19,6 +19,7 @@
 #include "SummonPet.h"
 #include "HoneyBeeEvent.h"
 #include "StoneDropEvent.h"
+#include "CustomDropEvent.h"
 #include "Fairy Event.h"
 #include <queue>
 
@@ -184,6 +185,7 @@ bool CMonster::CreateDataAndSpawn(WORLDID worldId, sMOB_TBLDAT* mobTbldat, sSPAW
 		LoadSkillTable(bot_profile.sBotSubData.tblidxOnlyOneSkillUse);
 
 		GetCharAtt()->CalculateAll();
+		g_pCustomDropEvent->ApplyModifiers(this);
 		Spawn(bSpawnOnServerStart);
 		return true;
 	}
@@ -282,6 +284,7 @@ bool CMonster::CreateDataAndSpawn(sMOB_DATA& sData, sMOB_TBLDAT* mobTbldat, BYTE
 		LoadSkillTable(bot_profile.sBotSubData.tblidxOnlyOneSkillUse);
 
 		GetCharAtt()->CalculateAll();
+		g_pCustomDropEvent->ApplyModifiers(this);
 		Spawn(false);
 		return true;
 	}
@@ -349,6 +352,8 @@ void CMonster::Spawn(bool bSpawnOnServerStart)
 	SetZeni(tbldat->dwDrop_Zenny);
 	SetCurEP(GetCharAtt()->GetMaxEP());
 	SetRunSpeed(tbldat->fRun_Speed);
+	// Re-apply event modifiers after base speeds set
+	g_pCustomDropEvent->ApplyModifiers(this);
 
 	m_vecFirstBattleLoc = (GetEnterLoc());
 	m_vecFirstBattleDir = (GetEnterDir());
@@ -509,6 +514,7 @@ bool CMonster::Faint(CCharacterObject* pkKiller, eFAINT_REASON byReason)
 			g_pHoneyBeeEvent->Update(this, pKiller);
 			g_pStoneDropEvent->Update(this, pKiller);
 			g_pFairyEvent->Update(this, pKiller);
+			g_pCustomDropEvent->Update(this, pKiller);
 			int l_LevelGap = abs(pKiller->GetLevel() - GetLevel());
 			//printf("l_LevelGap %d \n", l_LevelGap);
 			if (l_LevelGap <= 10)
@@ -949,6 +955,7 @@ void CMonster::CreateKillReward(bool bItemDrop)
 				CItemDrop* pBall = NULL;
 				if (g_pItemManager->IsValidSingleDropIdx(m_dropItem_Tblidx))
 				{
+					ERR_LOG(LOG_GENERAL, "[DropTrace] Monster custom CreateSingleDrop mob=%u item=%u", GetTblidx(), m_dropItem_Tblidx);
 					pBall = g_pItemManager->CreateSingleDrop(100.f, m_dropItem_Tblidx);
 				}
 				if (pBall)

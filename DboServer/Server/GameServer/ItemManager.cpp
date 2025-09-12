@@ -17,6 +17,8 @@
 #include "DragonballScramble.h"
 #include "QuestProbabilityTable.h"
 #include "FormulaTable.h"
+#include <unordered_map>
+#include <ctime>
 
 
 const DWORD ITEM_DELETE_DELAY = 5000;
@@ -351,11 +353,44 @@ bool CItemManager::CreateItemDrop(CMonster* pkMob, CPlayer* pkKiller, std::vecto
 
 CItemDrop* CItemManager::CreateSingleDrop(float fRate, TBLIDX itemTblidx)
 {
+	// Simple re-entrancy guard (defensive)
+	static thread_local bool s_inProgress = false;
+	if (s_inProgress)
+	{
+		ERR_LOG(LOG_GENERAL, "[DropTrace] Re-entrant CreateSingleDrop detected for item %u — preventing loop", itemTblidx);
+		return NULL;
+	}
+
+	// Per-second hot-path counters to detect suspicious loops
+	static time_t s_windowStart = 0;
+	static std::unordered_map<TBLIDX, int> s_counts;
+	static int s_totalCalls = 0;
+	time_t now = time(0);
+	if (now != s_windowStart)
+	{
+		s_windowStart = now;
+		s_counts.clear();
+		s_totalCalls = 0;
+	}
+	int& cnt = s_counts[itemTblidx];
+	cnt++;
+	s_totalCalls++;
+	if (cnt == 100 || cnt == 500 || cnt == 1000 || (cnt % 5000) == 0)
+	{
+		ERR_LOG(LOG_GENERAL, "[DropTrace] CreateSingleDrop hot item=%u count=%d in current second, totalCalls=%d", itemTblidx, cnt, s_totalCalls);
+	}
+	if (s_totalCalls > 20000)
+	{
+		ERR_LOG(LOG_GENERAL, "[DropTrace] CreateSingleDrop global safeguard tripped (totalCalls=%d in 1s). Blocking further drops this second.", s_totalCalls);
+		return NULL;
+	}
+
 	// NICO: Review why this item is missing in tables
 	if (itemTblidx == 4294967041) {
 		return NULL; //hack to avoid crashing, this value is from some quest reward
 	}
 
+	s_inProgress = true;
 	if (Dbo_CheckProbabilityF(fRate)) //check percent
 	{
 		sITEM_TBLDAT* pItemData = (sITEM_TBLDAT*)g_pTableContainer->GetItemTable()->FindData(itemTblidx);
@@ -368,13 +403,15 @@ CItemDrop* CItemManager::CreateSingleDrop(float fRate, TBLIDX itemTblidx)
 
 			m_map_pkItemDrop.insert(std::make_pair(item->GetID(), item));
 
+			s_inProgress = false;
 			return item;
 		}
-		else {
-			ERR_LOG(LOG_SYSTEM, "Couldnt find item tblidx %u", itemTblidx);
-		}
+		// NICO: Review why this item is missing in tables - Disable cause its generating a lot of spam in logs
+		//else {
+		//	ERR_LOG(LOG_SYSTEM, "Couldnt find item tblidx %u", itemTblidx);
+		//}
 	}
-
+	s_inProgress = false;
 	return NULL;
 }
 
@@ -573,12 +610,16 @@ bool CItemManager::CreateItem(CPlayer* ch, CItemDrop* pDrop)
 	else byRestrictState = GetDefaultRestrictState(itemtbl->byRestrictType, itemtbl->byItem_Type, true);
 
 	//check if same tblidx already exist && can stack
+	BYTE byCreateCount = pDrop->GetStackCount();
+	if (byCreateCount < 1) byCreateCount = 1;
+	if (itemtbl->byMax_Stack > 0 && byCreateCount > itemtbl->byMax_Stack)
+		byCreateCount = itemtbl->byMax_Stack;
 	if (itemtbl->byMax_Stack > 1 && !pDrop->NeedToIdentify())
 	{
-		CItem* itemcheck = ch->GetPlayerItemContainer()->CheckStackItem(itemTblidx, 1, itemtbl->byMax_Stack, byRestrictState);
+		CItem* itemcheck = ch->GetPlayerItemContainer()->CheckStackItem(itemTblidx, byCreateCount, itemtbl->byMax_Stack, byRestrictState);
 		if (itemcheck)
 		{
-			itemcheck->SetCount(itemcheck->GetCount() + 1, true, true);
+			itemcheck->SetCount(itemcheck->GetCount() + byCreateCount, true, true);
 			return true;
 		}
 	}
@@ -597,7 +638,7 @@ bool CItemManager::CreateItem(CPlayer* ch, CItemDrop* pDrop)
 		res->sItem.Init();
 		res->sItem.charId = ch->GetCharID();
 		res->sItem.itemNo = itemtbl->tblidx;
-		res->sItem.byStackcount = 1;
+		res->sItem.byStackcount = byCreateCount;
 		res->sItem.byPlace = inv.first;
 		res->sItem.byPosition = inv.second;
 		res->sItem.byCurrentDurability = itemtbl->byDurability;
