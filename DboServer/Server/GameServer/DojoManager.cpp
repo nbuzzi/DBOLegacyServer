@@ -744,9 +744,7 @@ void CDojoManager::TickProcess(DWORD dwTickDiff)
 	tm timeStruct = {};
 	localtime_s(&timeStruct, &curTime);
 
-	// NICO: Only process dojo war on sundays between 16 and 20 o'clock
-	// NICO: Disable scheduled dojo war for now
-	/*if (timeStruct.tm_wday == 0 && (timeStruct.tm_hour >= 16 && timeStruct.tm_hour <= 20)) //check if its sunday
+	if (timeStruct.tm_wday == 0 && (timeStruct.tm_hour >= 16 && timeStruct.tm_hour <= 20)) //check if its sunday
 	{
 		for (std::map<GUILDID, CDojo*>::const_iterator it = GetDojoSetBegin(); it != GetDojoSetEnd(); it++)
 		{
@@ -754,6 +752,6 @@ void CDojoManager::TickProcess(DWORD dwTickDiff)
 			if (pDojo)
 				pDojo->TickProcess(dwTickDiff);
 		}
-	}*/
+	}
 }
 
