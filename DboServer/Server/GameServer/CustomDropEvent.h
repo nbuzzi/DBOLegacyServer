@@ -5,6 +5,7 @@
 #include "NtlSharedType.h"
 #include "NtlString.h"
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 class CMonster;
@@ -75,6 +76,25 @@ public:
         DWORD intervalMs;          // optional resend interval (not yet used; reserved)
     };
 
+    struct TotemRule
+    {
+        unsigned int beaconMobTblidx; // mob to spawn as the totem/beacon
+        DWORD lifeMs;                  // lifetime of the beacon in ms
+        float radius;                  // buff application radius (meters)
+        DWORD intervalMs;              // pulse interval in ms
+        std::vector<BuffEntry> buffs;  // buffs to apply to players in range every pulse
+    };
+
+    struct ActiveTotem
+    {
+        HOBJECT hBeacon;               // spawned beacon handle
+        DWORD expireTick;              // GetTickCount time when totem expires
+        DWORD nextPulseTick;           // next time to pulse buffs
+        float radius;                  // radius copied from rule
+        DWORD intervalMs;              // pulse interval
+        std::vector<BuffEntry> buffs;  // buffs to apply
+    };
+
 public:
     CCustomDropEvent();
     virtual ~CCustomDropEvent();
@@ -96,12 +116,15 @@ public:
     void ApplyBuffs(CMonster *pMob);
     void ApplyTitles(CMonster *pMob);
     void ApplyVisuals(CMonster *pMob);
+    void SetAllowChainSpawns(bool allow) { m_allowChainSpawns = allow; }
+    bool IsAllowChainSpawns() const { return m_allowChainSpawns; }
 
 private:
     bool m_bOn;
     DBOTIME m_timeStart;
     DBOTIME m_timeEnd;
     DWORD m_dwNextUpdateTick;
+    DWORD m_dwNextTotemTick;
 
     // mob tblidx -> list of possible drops
     std::unordered_map<unsigned int, std::vector<DropEntry>> m_mobDrops;
@@ -117,7 +140,26 @@ private:
     std::unordered_map<unsigned int, std::vector<VisualEntry>> m_mobVisuals;
     // mob tblidx -> explicit level to set on spawned mobs (1..255)
     std::unordered_map<unsigned int, BYTE> m_mobLevels;
+    // mob tblidx -> totem rules (spawn beacon and pulse buffs)
+    std::unordered_map<unsigned int, std::vector<TotemRule>> m_mobTotems;
+    // active totems currently in the world
+    std::vector<ActiveTotem> m_activeTotems;
+    // exceptions for global (all) rules: skip applying for these mob ids
+    std::unordered_set<unsigned int> m_exceptDrops;
+    std::unordered_set<unsigned int> m_exceptMods;
+    std::unordered_set<unsigned int> m_exceptSpawns;
+    std::unordered_set<unsigned int> m_exceptBuffs;
+    std::unordered_set<unsigned int> m_exceptTitles;
+    std::unordered_set<unsigned int> m_exceptVisuals;
+    std::unordered_set<unsigned int> m_exceptTotems;
+    // handles of mobs spawned by this event (including beacons) to prevent chain triggers
+    std::unordered_set<HOBJECT> m_eventSpawned;
+    // global totem defaults
+    float m_totemDefaultRadius;           // default radius when not specified
+    DWORD m_totemDefaultIntervalMs;       // default interval when not specified
+    float m_totemHealMultiplier;          // multiplier for HoT magnitude
     CNtlString m_cfgPath;
+    bool m_allowChainSpawns;              // allow event-spawned mobs to trigger spawn/totem rules
 
 private:
     bool LoadLevelsSidecar(const char* cfgPath);

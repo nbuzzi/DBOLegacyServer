@@ -146,6 +146,7 @@ ACMD(do_stop_stonedrop);
 ACMD(do_start_customdrop);
 ACMD(do_stop_customdrop);
 ACMD(do_reload_customdrop_cfg);
+ACMD(do_customdrop_chainspawns);
 
 struct command_info cmd_info[] =
 {
@@ -226,6 +227,7 @@ struct command_info cmd_info[] =
 	{ L"@start_customdrop", do_start_customdrop, ADMIN_LEVEL_GAME_MASTER },
 	{ L"@stop_customdrop", do_stop_customdrop, ADMIN_LEVEL_GAME_MASTER },
 	{ L"@reload_customdrop", do_reload_customdrop_cfg, ADMIN_LEVEL_GAME_MASTER },
+	{ L"@customdrop_chainspawns", do_customdrop_chainspawns, ADMIN_LEVEL_GAME_MASTER },
 
 	{ L"@qwasawedsadas", NULL, ADMIN_LEVEL_ADMIN }
 };
@@ -337,14 +339,50 @@ ACMD(do_reload_customdrop_cfg)
 	// optional path parameter
 	pToken->PopToPeek();
 	std::wstring strToken = pToken->PeekNextToken(NULL, &iLine);
-	std::string path = ws2s(strToken);
-	if (path.empty())
+	std::string arg = ws2s(strToken);
+	std::string path;
+	if (arg.empty())
+	{
 		path = ".\\config\\CustomDropEvent.cfg";
+	}
+	else
+	{
+		// If user passed a bare name (e.g., Config1), build the full path
+		bool hasBackslash = arg.find('\\') != std::string::npos || arg.find('/') != std::string::npos;
+		bool hasExt = arg.rfind('.') != std::string::npos;
+		if (!hasBackslash && !hasExt)
+		{
+			path = ".\\config\\" + arg + ".cfg";
+		}
+		else
+		{
+			path = arg; // treat as explicit path
+		}
+	}
 
 	if (g_pCustomDropEvent->ReloadConfig(path.c_str()))
 		NTL_PRINT(PRINT_APP, "CustomDropEvent: config reloaded from %s", path.c_str());
 	else
 		NTL_PRINT(PRINT_APP, "CustomDropEvent: failed to reload config from %s", path.c_str());
+}
+
+ACMD(do_customdrop_chainspawns)
+{
+	// usage: @customdrop_chainspawns on|off (no arg prints state)
+	pToken->PopToPeek();
+	std::wstring strToken = pToken->PeekNextToken(NULL, &iLine);
+	std::string arg = ws2s(strToken);
+	if (!arg.empty())
+	{
+		bool on = (_stricmp(arg.c_str(), "on") == 0 || _stricmp(arg.c_str(), "1") == 0 || _stricmp(arg.c_str(), "true") == 0);
+		g_pCustomDropEvent->SetAllowChainSpawns(on);
+		NTL_PRINT(PRINT_APP, "CustomDropEvent: chain spawns %s", on ? "ENABLED" : "DISABLED");
+	}
+	else
+	{
+		bool on = g_pCustomDropEvent->IsAllowChainSpawns();
+		NTL_PRINT(PRINT_APP, "CustomDropEvent: chain spawns currently %s", on ? "ENABLED" : "DISABLED");
+	}
 }
 
 ACMD(do_buff)

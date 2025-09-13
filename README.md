@@ -204,6 +204,45 @@ all spawn: 3131102@100x2, 3131103@25x1    # mobId@ratexcount (use lowercase x)
 3131102 visuals: 56789@0
 ```
 
+### Event Totems (AoE buffs on kill)
+- Spawn a neutral beacon NPC on mob kill that periodically applies buffs in an area.
+- Supports per-mob and global rules that merge like other sections.
+
+#### Syntax
+- `<id> totem: beaconMobTblidx@lifeMs@radius@intervalMs: skillTblidx[@durationMs], skillTblidx[@durationMs], ...`
+- Omit `radius` or `intervalMs` to use global defaults (see settings below).
+- Duration `@0` or omitted uses the skill’s default keep time.
+
+#### Global Totem Settings
+- `all settings: radius=<meters> interval=<ms> healMul=<float>`
+- `radius`: default area if a totem rule omits radius (default 30.0).
+- `interval`: default pulse interval if omitted (default 2000 ms).
+- `healMul`: multiplier for Heal-over-Time and EP-over-Time magnitudes applied by totems (default 3.0 for strong heals).
+
+#### Behavior
+- On kill, each matching totem rule spawns the specified beacon at the mob’s position.
+- While alive, the beacon pulses buffs to all players within `radius` every `intervalMs`.
+- HoT and EP-over-Time effects are boosted by `healMul`.
+- Beacons despawn automatically after `lifeMs` or when the event ends.
+
+#### Examples
+```
+# Global defaults for big area and strong heals
+all settings: radius=60 interval=2000 healMul=4
+
+# Global speed zone + regen in huge area (good durations)
+all totem: 16454201@45000@@: 300500@20000, 300510@20000, 300200@15000
+# (beacon 16454201 lasts 45s, default 60m radius and 2s pulses; speed up, attack speed up, heal over time)
+
+# Per-mob totem with explicit large radius and faster pulses
+46661101 totem: 16454203@30000@80@1500: 300500@25000, 300200@15000
+```
+
+#### Tips
+- Add any number of buffs to a totem rule. Use per-buff `@durationMs` to control lifetime; re-applies on each pulse for players who remain in range.
+- For pure visuals, prefer `visuals:` or use long-duration buffs that keep visuals.
+- Combine with `buffs:` and `modifiers:` on the beacon mob ID if you want the beacon to show effects or have altered stats (optional).
+
 ### Notes & tips
 - “all …” lines append; use multiple lines as needed.
 - `spawn` tokens are `mobId@ratexcount` with lowercase `x`.

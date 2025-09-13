@@ -17,7 +17,10 @@
 #include "NtlSkill.h"
 #include "CharTitleTable.h"
 #include "calcs.h"
+#include "CPlayer.h"
 #include <string>
+
+// Heal multiplier is configurable via settings; default initialized in Init().
 
 CCustomDropEvent::CCustomDropEvent()
 {
@@ -34,10 +37,25 @@ void CCustomDropEvent::Init()
 	m_timeStart = 0;
 	m_timeEnd = 0;
 	m_dwNextUpdateTick = 0;
+	m_dwNextTotemTick = 0;
+	m_totemDefaultRadius = 30.0f;
+	m_totemDefaultIntervalMs = 2000;
+	m_totemHealMultiplier = 3.0f;
 	m_mobDrops.clear();
 	m_mobMods.clear();
 	m_mobVisuals.clear();
+	m_mobTotems.clear();
+	m_activeTotems.clear();
+	m_exceptDrops.clear();
+	m_exceptMods.clear();
+	m_exceptSpawns.clear();
+	m_exceptBuffs.clear();
+	m_exceptTitles.clear();
+	m_exceptVisuals.clear();
+	m_exceptTotems.clear();
+	m_eventSpawned.clear();
 	m_cfgPath = ".\\config\\CustomDropEvent.cfg";
+	m_allowChainSpawns = false; // default: prevent chain spawns
 	LoadConfigInternal(m_cfgPath.c_str());
 	LoadLevelsSidecar(m_cfgPath.c_str());
 }
@@ -46,8 +64,11 @@ bool CCustomDropEvent::ReloadConfig(const char* path)
 {
 	if (!path)
 		path = m_cfgPath.c_str();
-	bool ok = LoadConfigInternal(path);
-	LoadLevelsSidecar(path);
+	// Remember the new path if provided so subsequent reloads use it
+	if (path && *path)
+		m_cfgPath = path;
+	bool ok = LoadConfigInternal(m_cfgPath.c_str());
+	LoadLevelsSidecar(m_cfgPath.c_str());
 	return ok;
 }
 
@@ -60,6 +81,15 @@ bool CCustomDropEvent::LoadConfigInternal(const char* path)
 	m_mobLevels.clear();
 	m_mobTitles.clear();
 	m_mobVisuals.clear();
+	m_mobTotems.clear();
+	m_eventSpawned.clear();
+	m_exceptDrops.clear();
+	m_exceptMods.clear();
+	m_exceptSpawns.clear();
+	m_exceptBuffs.clear();
+	m_exceptTitles.clear();
+	m_exceptVisuals.clear();
+	m_exceptTotems.clear();
 
 	FILE* f = nullptr;
 	errno_t e = fopen_s(&f, path, "rt");
@@ -88,11 +118,16 @@ bool CCustomDropEvent::LoadConfigInternal(const char* path)
 		const char* buffsKw = "buffs";
 		const char* titlesKw = "titles";
 		const char* visualsKw = "visuals";
+		const char* totemKw = "totem";
+		const char* settingsKw = "settings"; // global settings for defaults
 		bool isMods = false;
 		bool isSpawn = false;
 		bool isBuffs = false;
 		bool isTitles = false;
 		bool isVisuals = false;
+		bool isTotem = false;
+		bool isSettings = false;
+		bool isExcept = false;
 		char* colon = strchr(p, ':');
 		if (!colon)
 			continue;
@@ -113,9 +148,19 @@ bool CCustomDropEvent::LoadConfigInternal(const char* path)
 					mobId = 0; // wildcard: apply to all mobs
 				else
 					mobId = (unsigned int)strtoul(sp, nullptr, 10);
-				const char* tail = sp2 + 1;
+				char* tail = sp2 + 1;
 				while (*tail == ' ' || *tail == '\t')
 					++tail;
+				// allow optional second token 'except' => marks exclusion list for this section
+				char* tail2 = strchr(tail, ' ');
+				if (tail2)
+				{
+					*tail2 = '\0';
+					char* extra = tail2 + 1;
+					while (*extra == ' ' || *extra == '\t') ++extra;
+					if (_stricmp(extra, "except") == 0)
+						isExcept = true;
+				}
 				if (_stricmp(tail, modsKw) == 0)
 					isMods = true;
 				else if (_stricmp(tail, spawnKw) == 0 || _stricmp(tail, spawnsKw) == 0)
@@ -126,11 +171,46 @@ bool CCustomDropEvent::LoadConfigInternal(const char* path)
 					isTitles = true;
 				else if (_stricmp(tail, visualsKw) == 0)
 					isVisuals = true;
+				else if (_stricmp(tail, totemKw) == 0)
+					isTotem = true;
+				else if (_stricmp(tail, settingsKw) == 0)
+					isSettings = true;
+				else if (_stricmp(tail, "except") == 0)
+				{
+					// special-case: "all except: ..." => drops exclusion
+					isExcept = true;
+				}
 			}
 			else
 			{
 				mobId = (unsigned int)strtoul(sp, nullptr, 10);
 			}
+		}
+
+		// Handle exception lists: only allowed with mobId==0 (global)
+		if (isExcept && mobId == 0)
+		{
+			// parse comma-separated IDs from RHS
+			auto parseExcept = [&](std::unordered_set<unsigned int>& dst) {
+				char* list = colon + 1;
+				char* tok = strtok(list, ",\n\r");
+				while (tok)
+				{
+					while (*tok == ' ' || *tok == '\t') ++tok;
+					unsigned int id = (unsigned int)strtoul(tok, nullptr, 10);
+					if (id)
+						dst.insert(id);
+					tok = strtok(nullptr, ",\n\r");
+				}
+				};
+			if (isSpawn)          parseExcept(m_exceptSpawns);
+			else if (isBuffs)     parseExcept(m_exceptBuffs);
+			else if (isTitles)    parseExcept(m_exceptTitles);
+			else if (isVisuals)   parseExcept(m_exceptVisuals);
+			else if (isTotem)     parseExcept(m_exceptTotems);
+			else if (isMods)      parseExcept(m_exceptMods);
+			else                  parseExcept(m_exceptDrops); // default (drops)
+			continue;
 		}
 
 		if (isMods)
@@ -187,7 +267,7 @@ bool CCustomDropEvent::LoadConfigInternal(const char* path)
 			}
 			m_mobMods[mobId] = m;
 		}
-	else if (isSpawn)
+		else if (isSpawn)
 		{
 			// format: mobId spawn: mobId@ratexcount, mobId@ratexcount
 			char* list = colon + 1;
@@ -234,11 +314,11 @@ bool CCustomDropEvent::LoadConfigInternal(const char* path)
 			}
 			if (!entries.empty())
 			{
-				auto &dst = m_mobSpawns[mobId];
+				auto& dst = m_mobSpawns[mobId];
 				dst.insert(dst.end(), entries.begin(), entries.end());
 			}
 		}
-	else if (isBuffs)
+		else if (isBuffs)
 		{
 			// format: mobId buffs: skillTblidx@durationMs, skillTblidx@durationMs, ...
 			char* list = colon + 1;
@@ -269,8 +349,119 @@ bool CCustomDropEvent::LoadConfigInternal(const char* path)
 			}
 			if (!entries.empty())
 			{
-				auto &dst = m_mobBuffs[mobId];
+				auto& dst = m_mobBuffs[mobId];
 				dst.insert(dst.end(), entries.begin(), entries.end());
+			}
+		}
+		else if (isSettings)
+		{
+			// format: all settings: radius=50 interval=2000 healMul=3.5
+			// Only allowed with mobId 0/all
+			if (mobId != 0)
+				continue;
+			char* s = colon + 1;
+			char* t = strtok(s, " \t\n\r");
+			while (t)
+			{
+				char* eq = strchr(t, '=');
+				if (eq)
+				{
+					*eq = '\0';
+					const char* key = t;
+					const char* val = eq + 1;
+					if (_stricmp(key, "radius") == 0)
+						m_totemDefaultRadius = (float)atof(val);
+					else if (_stricmp(key, "interval") == 0)
+						m_totemDefaultIntervalMs = (DWORD)strtoul(val, nullptr, 10);
+					else if (_stricmp(key, "healMul") == 0)
+						m_totemHealMultiplier = (float)atof(val);
+				}
+				t = strtok(nullptr, " \t\n\r");
+			}
+		}
+		else if (isTotem)
+		{
+			// format: mobId totem: beaconMob@lifeMs@radius@intervalMs: skill@dur, skill@dur
+			// second colon separates beacon spec from buff list
+			char* rest = colon + 1;
+			// find second colon
+			char* colon2 = strchr(rest, ':');
+			if (!colon2)
+				continue;
+			*colon2 = '\0';
+			// parse beacon spec
+			unsigned int beaconMob = 0; DWORD lifeMs = 0; float radius = 0.f; DWORD interval = 0;
+			{
+				char* tok = rest;
+				while (*tok == ' ' || *tok == '\t') ++tok;
+				char* at1 = strchr(tok, '@');
+				if (at1)
+				{
+					*at1 = '\0';
+					beaconMob = (unsigned int)strtoul(tok, nullptr, 10);
+					char* at2 = strchr(at1 + 1, '@');
+					if (at2)
+					{
+						*at2 = '\0';
+						lifeMs = (DWORD)strtoul(at1 + 1, nullptr, 10);
+						char* at3 = strchr(at2 + 1, '@');
+						if (at3)
+						{
+							*at3 = '\0';
+							radius = (float)atof(at2 + 1);
+							interval = (DWORD)strtoul(at3 + 1, nullptr, 10);
+						}
+						else
+						{
+							radius = (float)atof(at2 + 1);
+						}
+					}
+					else
+					{
+						lifeMs = (DWORD)strtoul(at1 + 1, nullptr, 10);
+					}
+				}
+				else
+				{
+					beaconMob = (unsigned int)strtoul(tok, nullptr, 10);
+				}
+			}
+			// parse buff list after colon2
+			std::vector<BuffEntry> buffs;
+			{
+				char* list = colon2 + 1;
+				char* btok = strtok(list, ",\n\r");
+				while (btok)
+				{
+					while (*btok == ' ' || *btok == '\t') ++btok;
+					if (*btok)
+					{
+						unsigned int skillId = 0; DWORD durationMs = 0;
+						char* at = strchr(btok, '@');
+						if (at)
+						{
+							*at = '\0';
+							skillId = (unsigned int)strtoul(btok, nullptr, 10);
+							durationMs = (DWORD)strtoul(at + 1, nullptr, 10);
+						}
+						else
+						{
+							skillId = (unsigned int)strtoul(btok, nullptr, 10);
+						}
+						if (skillId)
+							buffs.push_back(BuffEntry{ skillId, durationMs });
+					}
+					btok = strtok(nullptr, ",\n\r");
+				}
+			}
+			// Apply sensible defaults if some values omitted
+			if (radius <= 0.f) radius = m_totemDefaultRadius; // HUGE default range
+			if (interval == 0) interval = m_totemDefaultIntervalMs; // default pulse
+			if (beaconMob && lifeMs > 0 && radius > 0.f && interval > 0 && !buffs.empty())
+			{
+				TotemRule r; r.beaconMobTblidx = beaconMob; r.lifeMs = lifeMs; r.radius = radius; r.intervalMs = interval; r.buffs = buffs;
+				auto& dst = m_mobTotems[mobId];
+				dst.push_back(r);
 			}
 		}
 		else if (isTitles)
@@ -292,7 +483,7 @@ bool CCustomDropEvent::LoadConfigInternal(const char* path)
 			}
 			if (!entries.empty())
 			{
-				auto &dst = m_mobTitles[mobId];
+				auto& dst = m_mobTitles[mobId];
 				dst.insert(dst.end(), entries.begin(), entries.end());
 			}
 		}
@@ -327,7 +518,7 @@ bool CCustomDropEvent::LoadConfigInternal(const char* path)
 			}
 			if (!entries.empty())
 			{
-				auto &dst = m_mobVisuals[mobId];
+				auto& dst = m_mobVisuals[mobId];
 				dst.insert(dst.end(), entries.begin(), entries.end());
 			}
 		}
@@ -375,7 +566,7 @@ bool CCustomDropEvent::LoadConfigInternal(const char* path)
 					DropEntry e;
 					e.itemTblidx = itemId;
 					e.rate = rate;
-								// Apply configured title attribute effects, if any
+					// Apply configured title attribute effects, if any
 					e.count = count;
 					entries.push_back(e);
 				}
@@ -431,19 +622,120 @@ void CCustomDropEvent::TickProcess(DWORD dwTick)
 	}
 
 	m_dwNextUpdateTick = dwTick + 5000; // update every 5 seconds
+
+	// Pulse active totems frequently (200ms granularity)
+	if (dwTick >= m_dwNextTotemTick)
+	{
+		DWORD now = GetTickCount();
+		if (!m_activeTotems.empty())
+		{
+			for (size_t i = 0; i < m_activeTotems.size(); )
+			{
+				ActiveTotem& t = m_activeTotems[i];
+				bool remove = false;
+				// Remove if beacon object no longer exists
+				CCharacter* pBeacon = g_pObjectManager->GetChar(t.hBeacon);
+				if (!pBeacon || !pBeacon->IsInitialized())
+				{
+					remove = true;
+				}
+				else if (now >= t.expireTick)
+				{
+					// expire and delete beacon
+					g_pObjectManager->DestroyCharacter(pBeacon);
+					remove = true;
+				}
+				else if (now >= t.nextPulseTick)
+				{
+					// apply buffs to players in radius
+					CWorldCell* pCell = pBeacon->GetCurWorldCell();
+					if (pCell)
+					{
+						CWorldCell::QUADPAGE page = pCell->GetCellQuadPage(pBeacon->GetCurLoc());
+						for (int dir = CWorldCell::QUADDIR_SELF; dir <= CWorldCell::QUADDIR_VERTICAL; dir++)
+						{
+							CWorldCell* pSibling = pCell->GetQuadSibling(page, (CWorldCell::QUADDIR)dir);
+							if (!pSibling) continue;
+							CPlayer* pPlr = (CPlayer*)pSibling->GetObjectList()->GetFirst(OBJTYPE_PC);
+							while (pPlr && pPlr->IsInitialized())
+							{
+								if (pBeacon->IsInRange(pPlr, t.radius))
+								{
+									for (const BuffEntry& be : t.buffs)
+									{
+										sSKILL_TBLDAT* pSkill = (sSKILL_TBLDAT*)g_pTableContainer->GetSkillTable()->FindData(be.skillTblidx);
+										if (!pSkill) continue;
+
+										eSYSTEM_EFFECT_CODE aeEffectCode[NTL_MAX_EFFECT_IN_SKILL];
+										for (int i2 = 0; i2 < NTL_MAX_EFFECT_IN_SKILL; ++i2)
+										{
+											if (pSkill->skill_Effect[i2] != INVALID_TBLIDX)
+												aeEffectCode[i2] = g_pTableContainer->GetSystemEffectTable()->GetEffectCodeWithTblidx(pSkill->skill_Effect[i2]);
+											else
+												aeEffectCode[i2] = INVALID_SYSTEM_EFFECT_CODE;
+										}
+										sDBO_BUFF_PARAMETER aBuffParameter[NTL_MAX_EFFECT_IN_SKILL];
+										for (int i3 = 0; i3 < NTL_MAX_EFFECT_IN_SKILL; ++i3)
+										{
+											aBuffParameter[i3].byBuffParameterType = DBO_BUFF_PARAMETER_TYPE_DEFAULT;
+											// Seed parameters from table so non-HOT buffs have effect values
+											float base = (float)pSkill->aSkill_Effect_Value[i3];
+											aBuffParameter[i3].buffParameter.fParameter = base;
+											aBuffParameter[i3].buffParameter.dwRemainValue = (DWORD)pSkill->aSkill_Effect_Value[i3];
+
+											if (aeEffectCode[i3] == ACTIVE_HEAL_OVER_TIME || aeEffectCode[i3] == ACTIVE_EP_OVER_TIME)
+											{
+												aBuffParameter[i3].byBuffParameterType = DBO_BUFF_PARAMETER_TYPE_HOT;
+												aBuffParameter[i3].buffParameter.dwRemainTime = (be.durationMs != 0 ? be.durationMs : pSkill->dwKeepTimeInMilliSecs);
+												// Scale HOT/EP-Over-Time magnitude
+												aBuffParameter[i3].buffParameter.fParameter = base * m_totemHealMultiplier;
+												aBuffParameter[i3].buffParameter.dwRemainValue = (DWORD)(base * m_totemHealMultiplier);
+											}
+											else if (aeEffectCode[i3] == ACTIVE_BLEED || aeEffectCode[i3] == ACTIVE_POISON || aeEffectCode[i3] == ACTIVE_STOMACHACHE || aeEffectCode[i3] == ACTIVE_BURN)
+											{
+												aBuffParameter[i3].byBuffParameterType = DBO_BUFF_PARAMETER_TYPE_DOT;
+												aBuffParameter[i3].buffParameter.dwRemainTime = (be.durationMs != 0 ? be.durationMs : pSkill->dwKeepTimeInMilliSecs);
+											}
+										}
+										DWORD durMs = be.durationMs != 0 ? be.durationMs : pSkill->dwKeepTimeInMilliSecs;
+										if (durMs == 0) durMs = 30000;
+										pPlr->GetBuffManager()->RegisterBuff(durMs, aeEffectCode, aBuffParameter, pBeacon->GetID(), BUFF_TYPE_BLESS, pSkill);
+									}
+								}
+								pPlr = (CPlayer*)pSibling->GetObjectList()->GetNext(pPlr->GetWorldCellObjectLinker());
+							}
+						}
+					}
+					// schedule next pulse by interval
+					t.nextPulseTick = now + (t.intervalMs ? t.intervalMs : 1000);
+				}
+
+				if (remove)
+				{
+					// Ensure beacon handle is no longer tracked
+					m_eventSpawned.erase(t.hBeacon);
+					m_activeTotems.erase(m_activeTotems.begin() + i);
+				}
+				else
+				{
+					++i;
+				}
+			}
+		}
+		m_dwNextTotemTick = dwTick + 200; // check totems every 200ms
+	}
 }
 
 void CCustomDropEvent::Update(CMonster* pMob, CCharacter* pPlayer)
 {
-	if (!pPlayer->GetCurWorld())
-		return;
-	if (pPlayer->GetCurWorld()->GetRuleType() != GAMERULE_NORMAL)
-		return;
+	if (!pPlayer->GetCurWorld()) { m_eventSpawned.erase(pMob->GetID()); return; }
+	if (pPlayer->GetCurWorld()->GetRuleType() != GAMERULE_NORMAL) { m_eventSpawned.erase(pMob->GetID()); return; }
 
-	if (!m_bOn)
-		return;
+	if (!m_bOn) { m_eventSpawned.erase(pMob->GetID()); return; }
 
 	// Config-driven spawn logic: spawn configured mobs on kill
+	// Skip for mobs spawned by this event to avoid infinite chains (unless explicitly allowed)
+	if (m_allowChainSpawns || m_eventSpawned.find(pMob->GetID()) == m_eventSpawned.end())
 	{
 		int levelGap = abs((int)pPlayer->GetLevel() - (int)pMob->GetLevel());
 		// Gather specific and global (all) spawn lists
@@ -454,7 +746,7 @@ void CCustomDropEvent::Update(CMonster* pMob, CCharacter* pPlayer)
 			spawns.insert(spawns.end(), itS->second.begin(), itS->second.end());
 		}
 		auto itAll = m_mobSpawns.find(0);
-		if (itAll != m_mobSpawns.end())
+		if (itAll != m_mobSpawns.end() && m_exceptSpawns.find(pMob->GetTblidx()) == m_exceptSpawns.end())
 		{
 			spawns.insert(spawns.end(), itAll->second.begin(), itAll->second.end());
 		}
@@ -530,6 +822,8 @@ void CCustomDropEvent::Update(CMonster* pMob, CCharacter* pPlayer)
 									}
 								}
 								pNewMob->SetStandAlone(true);
+								// Track event-spawned mob handle to prevent chain triggers
+								m_eventSpawned.insert(pNewMob->GetID());
 								// Apply configured buffs, if any
 								ApplyBuffs(pNewMob);
 								// Apply any configured title attribute effects, if any
@@ -561,27 +855,72 @@ void CCustomDropEvent::Update(CMonster* pMob, CCharacter* pPlayer)
 		list.insert(list.end(), itD->second.begin(), itD->second.end());
 	}
 	auto itDAll = m_mobDrops.find(0);
-	if (itDAll != m_mobDrops.end())
+	if (itDAll != m_mobDrops.end() && m_exceptDrops.find(pMob->GetTblidx()) == m_exceptDrops.end())
 	{
 		list.insert(list.end(), itDAll->second.begin(), itDAll->second.end());
 	}
-	if (list.empty())
-		return;
-	for (const DropEntry& d : list)
+	// Handle totem spawning according to rules (independent of drops)
+	// Skip for mobs spawned by this event to avoid chains (unless allowed)
+	if (m_allowChainSpawns || m_eventSpawned.find(pMob->GetID()) == m_eventSpawned.end())
 	{
-		if (d.itemTblidx == 0)
-			continue;
-		if (g_pItemManager->IsValidSingleDropIdx(d.itemTblidx) == false)
-			continue;
-		if (d.rate >= 100.f || Dbo_CheckProbabilityF(d.rate))
+		std::vector<TotemRule> rules;
+		auto itT = m_mobTotems.find(pMob->GetTblidx());
+		if (itT != m_mobTotems.end())
+			rules.insert(rules.end(), itT->second.begin(), itT->second.end());
+		auto itTAll = m_mobTotems.find(0);
+		if (itTAll != m_mobTotems.end() && m_exceptTotems.find(pMob->GetTblidx()) == m_exceptTotems.end())
+			rules.insert(rules.end(), itTAll->second.begin(), itTAll->second.end());
+		for (const TotemRule& r : rules)
 		{
-			BYTE cnt = d.count ? d.count : 1;
-			if (cnt > 1)
-				CreateStackedDrop(pMob, pPlayer, d.itemTblidx, cnt);
-			else
-				CreateSingleDrop(pMob, pPlayer, d.itemTblidx);
+			sMOB_TBLDAT* pTbldat = (sMOB_TBLDAT*)g_pTableContainer->GetMobTable()->FindData(r.beaconMobTblidx);
+			if (!pTbldat) continue;
+
+			sMOB_DATA data; InitMobData(data);
+			data.worldID = pMob->GetWorldID();
+			data.worldtblidx = pMob->GetWorldTblidx();
+			data.tblidx = pTbldat->tblidx;
+			pMob->GetCurLoc().CopyTo(data.vCurLoc);
+			pMob->GetCurLoc().CopyTo(data.vSpawnLoc);
+			pMob->GetCurDir().CopyTo(data.vCurDir);
+			pMob->GetCurDir().CopyTo(data.vSpawnDir);
+			data.actionpatternTblIdx = 1;
+
+			if (CMonster* pBeacon = (CMonster*)g_pObjectManager->CreateCharacter(OBJTYPE_MOB))
+			{
+				if (pBeacon->CreateDataAndSpawn(data, pTbldat))
+				{
+					pBeacon->SetStandAlone(true);
+					// Track event-spawned beacon
+					m_eventSpawned.insert(pBeacon->GetID());
+					ActiveTotem t; t.hBeacon = pBeacon->GetID(); t.radius = r.radius; t.intervalMs = r.intervalMs; t.buffs = r.buffs;
+					DWORD now = GetTickCount();
+					t.expireTick = now + r.lifeMs;
+					t.nextPulseTick = now + r.intervalMs;
+					m_activeTotems.push_back(t);
+				}
+			}
 		}
 	}
+	if (!list.empty())
+	{
+		for (const DropEntry& d : list)
+		{
+			if (d.itemTblidx == 0)
+				continue;
+			if (g_pItemManager->IsValidSingleDropIdx(d.itemTblidx) == false)
+				continue;
+			if (d.rate >= 100.f || Dbo_CheckProbabilityF(d.rate))
+			{
+				BYTE cnt = d.count ? d.count : 1;
+				if (cnt > 1)
+					CreateStackedDrop(pMob, pPlayer, d.itemTblidx, cnt);
+				else
+					CreateSingleDrop(pMob, pPlayer, d.itemTblidx);
+			}
+		}
+	}
+	// After processing, forget this mob so set doesn't grow without bound
+	m_eventSpawned.erase(pMob->GetID());
 }
 
 // Helper: load levels from a JSON sidecar next to the cfg
@@ -589,7 +928,7 @@ void CCustomDropEvent::Update(CMonster* pMob, CCharacter* pPlayer)
 bool CCustomDropEvent::LoadLevelsSidecar(const char* cfgPath)
 {
 	// Build sidecar path by replacing extension with .levels.json
-	char sidecar[1024] = {0};
+	char sidecar[1024] = { 0 };
 	strncpy_s(sidecar, sizeof(sidecar), cfgPath, _TRUNCATE);
 	char* dot = strrchr(sidecar, '.');
 	if (!dot)
@@ -624,7 +963,7 @@ bool CCustomDropEvent::LoadLevelsSidecar(const char* cfgPath)
 		if (*p != '"') { ++p; continue; }
 		++p;
 		// read key until next quote
-		char key[64] = {0};
+		char key[64] = { 0 };
 		int ki = 0;
 		while (*p && *p != '"' && ki < 63) key[ki++] = *p++;
 		key[ki] = '\0';
@@ -636,7 +975,7 @@ bool CCustomDropEvent::LoadLevelsSidecar(const char* cfgPath)
 		++p;
 		// read value (integer)
 		while (*p == ' ' || *p == '\t') ++p;
-		char valbuf[16] = {0};
+		char valbuf[16] = { 0 };
 		int vi = 0;
 		while (*p && ((*p >= '0' && *p <= '9'))) { if (vi < 15) valbuf[vi++] = *p; ++p; }
 		valbuf[vi] = '\0';
@@ -660,6 +999,21 @@ void CCustomDropEvent::EndEvent()
 	m_timeStart = 0;
 	m_timeEnd = 0;
 	m_dwNextUpdateTick = 0;
+	// Cleanup active totems
+	if (!m_activeTotems.empty())
+	{
+		for (ActiveTotem& t : m_activeTotems)
+		{
+			if (CCharacter* p = g_pObjectManager->GetChar(t.hBeacon))
+				g_pObjectManager->DestroyCharacter(p);
+			// Ensure we drop tracking for this beacon
+			m_eventSpawned.erase(t.hBeacon);
+		}
+		m_activeTotems.clear();
+	}
+
+	// Clear any remaining tracked handles for safety
+	m_eventSpawned.clear();
 
 	CNtlStringW msg;
 	CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
@@ -765,9 +1119,9 @@ void CCustomDropEvent::ApplyModifiers(CMonster* pMob)
 	// Merge global (id=0) modifiers with per-mob, multiplicatively. sizeRate from specific overrides if set; otherwise use global if set.
 	Modifiers m; // start with identity
 	auto itAll = m_mobMods.find(0);
-	if (itAll != m_mobMods.end())
+	if (itAll != m_mobMods.end() && m_exceptMods.find(pMob->GetTblidx()) == m_exceptMods.end())
 	{
-		const Modifiers &g = itAll->second;
+		const Modifiers& g = itAll->second;
 		m.hp *= g.hp; m.physAtk *= g.physAtk; m.engAtk *= g.engAtk; m.physDef *= g.physDef; m.engDef *= g.engDef;
 		m.atkSpd *= g.atkSpd; m.runSpd *= g.runSpd; m.physCrit *= g.physCrit; m.engCrit *= g.engCrit;
 		m.physCritDmg *= g.physCritDmg; m.engCritDmg *= g.engCritDmg; m.attackRate *= g.attackRate; m.dodgeRate *= g.dodgeRate;
@@ -777,7 +1131,7 @@ void CCustomDropEvent::ApplyModifiers(CMonster* pMob)
 	auto it = m_mobMods.find(pMob->GetTblidx());
 	if (it != m_mobMods.end())
 	{
-		const Modifiers &s = it->second;
+		const Modifiers& s = it->second;
 		m.hp *= s.hp; m.physAtk *= s.physAtk; m.engAtk *= s.engAtk; m.physDef *= s.physDef; m.engDef *= s.engDef;
 		m.atkSpd *= s.atkSpd; m.runSpd *= s.runSpd; m.physCrit *= s.physCrit; m.engCrit *= s.engCrit;
 		m.physCritDmg *= s.physCritDmg; m.engCritDmg *= s.engCritDmg; m.attackRate *= s.attackRate; m.dodgeRate *= s.dodgeRate;
@@ -960,7 +1314,7 @@ void CCustomDropEvent::ApplyBuffs(CMonster* pMob)
 	if (it != m_mobBuffs.end())
 		buffs.insert(buffs.end(), it->second.begin(), it->second.end());
 	auto itAll = m_mobBuffs.find(0);
-	if (itAll != m_mobBuffs.end())
+	if (itAll != m_mobBuffs.end() && m_exceptBuffs.find(pMob->GetTblidx()) == m_exceptBuffs.end())
 		buffs.insert(buffs.end(), itAll->second.begin(), itAll->second.end());
 
 	if (buffs.empty())
@@ -1007,7 +1361,7 @@ void CCustomDropEvent::ApplyTitles(CMonster* pMob)
 	if (it != m_mobTitles.end())
 		titles.insert(titles.end(), it->second.begin(), it->second.end());
 	auto itAll = m_mobTitles.find(0);
-	if (itAll != m_mobTitles.end())
+	if (itAll != m_mobTitles.end() && m_exceptTitles.find(pMob->GetTblidx()) == m_exceptTitles.end())
 		titles.insert(titles.end(), itAll->second.begin(), itAll->second.end());
 
 	if (titles.empty())
@@ -1044,7 +1398,7 @@ void CCustomDropEvent::ApplyVisuals(CMonster* pMob)
 	if (it != m_mobVisuals.end())
 		visuals.insert(visuals.end(), it->second.begin(), it->second.end());
 	auto itAll = m_mobVisuals.find(0);
-	if (itAll != m_mobVisuals.end())
+	if (itAll != m_mobVisuals.end() && m_exceptVisuals.find(pMob->GetTblidx()) == m_exceptVisuals.end())
 		visuals.insert(visuals.end(), itAll->second.begin(), itAll->second.end());
 
 	if (visuals.empty())
