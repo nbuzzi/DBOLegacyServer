@@ -65,6 +65,7 @@ public:
     {
         unsigned int skillTblidx; // skill to apply as a buff
         DWORD durationMs;         // optional override duration in ms (0 = use skill default)
+        DWORD periodMs;           // optional per-buff pulse period in ms (0 = use totem interval)
     };
     struct TitleEntry
     {
@@ -83,16 +84,18 @@ public:
         float radius;                  // buff application radius (meters)
         DWORD intervalMs;              // pulse interval in ms
         std::vector<BuffEntry> buffs;  // buffs to apply to players in range every pulse
+        std::vector<SpawnEntry> guards; // optional: mobs to spawn immediately near beacon
     };
 
     struct ActiveTotem
     {
         HOBJECT hBeacon;               // spawned beacon handle
         DWORD expireTick;              // GetTickCount time when totem expires
-        DWORD nextPulseTick;           // next time to pulse buffs
+        DWORD nextPulseTick;           // deprecated group tick; kept for compatibility
         float radius;                  // radius copied from rule
         DWORD intervalMs;              // pulse interval
         std::vector<BuffEntry> buffs;  // buffs to apply
+        std::vector<DWORD> buffNextTicks; // per-buff next pulse times
     };
 
 public:
@@ -118,6 +121,10 @@ public:
     void ApplyVisuals(CMonster *pMob);
     void SetAllowChainSpawns(bool allow) { m_allowChainSpawns = allow; }
     bool IsAllowChainSpawns() const { return m_allowChainSpawns; }
+    void SetTotemHealMultiplier(float mul) { m_totemHealMultiplier = mul; }
+    float GetTotemHealMultiplier() const { return m_totemHealMultiplier; }
+    void SetTotemBuffDurationOverrideMs(DWORD ms) { m_totemBuffDurationOverrideMs = ms; }
+    DWORD GetTotemBuffDurationOverrideMs() const { return m_totemBuffDurationOverrideMs; }
 
 private:
     bool m_bOn;
@@ -158,6 +165,7 @@ private:
     float m_totemDefaultRadius;           // default radius when not specified
     DWORD m_totemDefaultIntervalMs;       // default interval when not specified
     float m_totemHealMultiplier;          // multiplier for HoT magnitude
+    DWORD m_totemBuffDurationOverrideMs;  // override duration for totem-applied buffs (0 = use skill/default)
     CNtlString m_cfgPath;
     bool m_allowChainSpawns;              // allow event-spawned mobs to trigger spawn/totem rules
 

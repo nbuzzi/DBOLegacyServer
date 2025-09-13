@@ -147,6 +147,8 @@ ACMD(do_start_customdrop);
 ACMD(do_stop_customdrop);
 ACMD(do_reload_customdrop_cfg);
 ACMD(do_customdrop_chainspawns);
+ACMD(do_customdrop_healmul);
+ACMD(do_customdrop_buffduration);
 
 struct command_info cmd_info[] =
 {
@@ -228,6 +230,8 @@ struct command_info cmd_info[] =
 	{ L"@stop_customdrop", do_stop_customdrop, ADMIN_LEVEL_GAME_MASTER },
 	{ L"@reload_customdrop", do_reload_customdrop_cfg, ADMIN_LEVEL_GAME_MASTER },
 	{ L"@customdrop_chainspawns", do_customdrop_chainspawns, ADMIN_LEVEL_GAME_MASTER },
+    { L"@customdrop_healmul", do_customdrop_healmul, ADMIN_LEVEL_GAME_MASTER },
+    { L"@customdrop_buffduration", do_customdrop_buffduration, ADMIN_LEVEL_GAME_MASTER },
 
 	{ L"@qwasawedsadas", NULL, ADMIN_LEVEL_ADMIN }
 };
@@ -385,10 +389,49 @@ ACMD(do_customdrop_chainspawns)
 	}
 }
 
+ACMD(do_customdrop_healmul)
+{
+	// usage: @customdrop_healmul <float>; no arg prints current
+	pToken->PopToPeek();
+	std::wstring strToken = pToken->PeekNextToken(NULL, &iLine);
+	std::string arg = ws2s(strToken);
+	if (!arg.empty())
+	{
+		float mul = (float)atof(arg.c_str());
+		if (mul < 0.0f) mul = 0.0f;
+		g_pCustomDropEvent->SetTotemHealMultiplier(mul);
+		NTL_PRINT(PRINT_APP, "CustomDropEvent: totem heal multiplier set to %.2f", mul);
+	}
+	else
+	{
+		NTL_PRINT(PRINT_APP, "CustomDropEvent: totem heal multiplier = %.2f", g_pCustomDropEvent->GetTotemHealMultiplier());
+	}
+}
+
+ACMD(do_customdrop_buffduration)
+{
+	// usage: @customdrop_buffduration <ms>; 0 resets to skill/default. No arg prints current.
+	pToken->PopToPeek();
+	std::wstring strToken = pToken->PeekNextToken(NULL, &iLine);
+	std::string arg = ws2s(strToken);
+	if (!arg.empty())
+	{
+		DWORD ms = (DWORD)strtoul(arg.c_str(), nullptr, 10);
+		g_pCustomDropEvent->SetTotemBuffDurationOverrideMs(ms);
+		NTL_PRINT(PRINT_APP, "CustomDropEvent: totem buff duration override set to %u ms", ms);
+	}
+	else
+	{
+		NTL_PRINT(PRINT_APP, "CustomDropEvent: totem buff duration override = %u ms", g_pCustomDropEvent->GetTotemBuffDurationOverrideMs());
+	}
+}
+
 ACMD(do_buff)
 {
 	/*
-		@buff BUFF_ID DURATION(SECONDS)
+		@buff BUFF_ID DURATION(SECONDS) [RADIUS_METERS] [TARGET_NAME]
+		- If RADIUS_METERS > 0, applies to all PCs within radius of target (or caster if no target).
+		- If RADIUS_METERS omitted or 0, applies only to target (or caster if target missing).
 	*/
 	pToken->PopToPeek();
 	std::wstring strToken = pToken->PeekNextToken(NULL, &iLine);
@@ -398,35 +441,58 @@ ACMD(do_buff)
 	std::wstring strToken1 = pToken->PeekNextToken(NULL, &iLine);
 	int nSeconds = (int)atof(ws2s(strToken1).c_str());
 
+	// optional radius
 	pToken->PopToPeek();
-	strToken = pToken->PeekNextToken(NULL, &iLine);
-
-	std::wstring name = std::wstring(strToken.begin(), strToken.end());
-	const wchar_t* wname = name.c_str();
-
-	CPlayer* cTarget = g_pObjectManager->FindByName(wname);
-	if (!cTarget || !cTarget->IsInitialized())
+	std::wstring strToken2 = pToken->PeekNextToken(NULL, &iLine);
+	std::string opt2 = ws2s(strToken2);
+	float fRadius = 0.0f;
+	const wchar_t* wname = L"";
+	if (!opt2.empty())
 	{
-		cTarget = pPlayer;
+		// decide if this token is a number (radius) or start of name
+		bool isNum = !opt2.empty() && (isdigit((unsigned char)opt2[0]) || opt2[0] == '.' || opt2[0] == '-');
+		if (isNum)
+		{
+			fRadius = (float)atof(opt2.c_str());
+			// optional 4th token: name
+			pToken->PopToPeek();
+			std::wstring strToken3 = pToken->PeekNextToken(NULL, &iLine);
+			if (!strToken3.empty())
+			{
+				static std::wstring name; name = strToken3; wname = name.c_str();
+			}
+		}
+		else
+		{
+			static std::wstring name; name = std::wstring(strToken2.begin(), strToken2.end()); wname = name.c_str();
+		}
 	}
 
-	if (nSeconds == 0 || nSeconds > 3600)
+	CPlayer* cTarget = nullptr;
+	if (wname && *wname)
+		cTarget = g_pObjectManager->FindByName(wname);
+	if (!cTarget || !cTarget->IsInitialized())
+		cTarget = pPlayer;
+
+	if (nSeconds <= 0 || nSeconds > 3600)
 		nSeconds = 3600;
 
-	sDBO_BUFF_PARAMETER aBuffParameter[NTL_MAX_EFFECT_IN_SKILL];
 	sSKILL_TBLDAT* pSkillTbldat = (sSKILL_TBLDAT*)g_pTableContainer->GetSkillTable()->FindData(buffindex);
+	if (!pSkillTbldat)
+		return;
 
-	if (pSkillTbldat) {
+	// helper lambda to apply to one player
+	auto applyTo = [&](CPlayer* tgt)
+	{
+		if (!tgt || !tgt->IsInitialized()) return;
+		sDBO_BUFF_PARAMETER aBuffParameter[NTL_MAX_EFFECT_IN_SKILL];
 		eSYSTEM_EFFECT_CODE aeEffectCode[NTL_MAX_EFFECT_IN_SKILL];
-
 		for (int i = 0; i < NTL_MAX_EFFECT_IN_SKILL; i++)
 		{
 			aBuffParameter[i].byBuffParameterType = DBO_BUFF_PARAMETER_TYPE_DEFAULT;
 			aBuffParameter[i].buffParameter.fParameter = (float)(pSkillTbldat->aSkill_Effect_Value[i]);
 			aBuffParameter[i].buffParameter.dwRemainValue = (DWORD)pSkillTbldat->aSkill_Effect_Value[i];
-
 			aeEffectCode[i] = g_pTableContainer->GetSystemEffectTable()->GetEffectCodeWithTblidx(pSkillTbldat->skill_Effect[i]);
-
 			if (aeEffectCode[i] == ACTIVE_HEAL_OVER_TIME || aeEffectCode[i] == ACTIVE_EP_OVER_TIME)
 			{
 				aBuffParameter[i].byBuffParameterType = DBO_BUFF_PARAMETER_TYPE_HOT;
@@ -438,10 +504,50 @@ ACMD(do_buff)
 				aBuffParameter[i].buffParameter.dwRemainTime = pSkillTbldat->dwKeepTimeInMilliSecs;
 			}
 		}
+		// Handle direct heal instantly and do not register as a buff
+		bool hasBuffable = false;
+		for (int i = 0; i < NTL_MAX_EFFECT_IN_SKILL; ++i)
+		{
+			//if (aeEffectCode[i] == ACTIVE_DIRECT_HEAL)
+			//{
+			//	float amt = 0.0f;
+			//	CalcDirectHeal(pPlayer, pSkillTbldat, (BYTE)i, amt);
+			//	if (amt != 0.0f)
+			//	{
+			//		tgt->UpdateCurLP((int)amt, true, false);
+			//		tgt->SendEffectAffected(g_pTableContainer->GetSystemEffectTable()->GetEffectTblidx(aeEffectCode[i]), DBO_OBJECT_SOURCE_SKILL, pSkillTbldat->tblidx, amt, 0.0f, pPlayer->GetID());
+			//	}
+			//	aeEffectCode[i] = INVALID_SYSTEM_EFFECT_CODE;
+			//}
+			if (aeEffectCode[i] != INVALID_SYSTEM_EFFECT_CODE)
+				hasBuffable = true;
+		}
+		DWORD dwDurationInMs = (DWORD)(nSeconds * 1000);
+		if (hasBuffable)
+			tgt->GetBuffManager()->RegisterBuff(dwDurationInMs, aeEffectCode, aBuffParameter, INVALID_HOBJECT, BUFF_TYPE_BLESS, pSkillTbldat);
+	};
 
-		DWORD dwDurationInMs = nSeconds * 1000;
-
-		cTarget->GetBuffManager()->RegisterBuff(dwDurationInMs, aeEffectCode, aBuffParameter, INVALID_HOBJECT, BUFF_TYPE_BLESS, pSkillTbldat);
+	if (fRadius > 0.0f && cTarget->GetCurWorldCell())
+	{
+		// iterate nearby PCs within radius
+		CWorldCell* pCell = cTarget->GetCurWorldCell();
+		CWorldCell::QUADPAGE page = pCell->GetCellQuadPage(cTarget->GetCurLoc());
+		for (int dir = CWorldCell::QUADDIR_SELF; dir <= CWorldCell::QUADDIR_VERTICAL; dir++)
+		{
+			CWorldCell* pSibling = pCell->GetQuadSibling(page, (CWorldCell::QUADDIR)dir);
+			if (!pSibling) continue;
+			CPlayer* pPlr = (CPlayer*)pSibling->GetObjectList()->GetFirst(OBJTYPE_PC);
+			while (pPlr && pPlr->IsInitialized())
+			{
+				if (cTarget->IsInRange(pPlr, fRadius))
+					applyTo(pPlr);
+				pPlr = (CPlayer*)pSibling->GetObjectList()->GetNext(pPlr->GetWorldCellObjectLinker());
+			}
+		}
+	}
+	else
+	{
+		applyTo(cTarget);
 	}
 }
 

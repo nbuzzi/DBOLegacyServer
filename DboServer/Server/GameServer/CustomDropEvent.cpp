@@ -16,6 +16,7 @@
 #include "SystemEffectTable.h"
 #include "NtlSkill.h"
 #include "CharTitleTable.h"
+#include "battle.h"
 #include "calcs.h"
 #include "CPlayer.h"
 #include <string>
@@ -41,6 +42,7 @@ void CCustomDropEvent::Init()
 	m_totemDefaultRadius = 30.0f;
 	m_totemDefaultIntervalMs = 2000;
 	m_totemHealMultiplier = 3.0f;
+	m_totemBuffDurationOverrideMs = 0;
 	m_mobDrops.clear();
 	m_mobMods.clear();
 	m_mobVisuals.clear();
@@ -355,7 +357,7 @@ bool CCustomDropEvent::LoadConfigInternal(const char* path)
 		}
 		else if (isSettings)
 		{
-			// format: all settings: radius=50 interval=2000 healMul=3.5
+			// format: all settings: radius=50 interval=2000 healMul=3.5 duration=60000
 			// Only allowed with mobId 0/all
 			if (mobId != 0)
 				continue;
@@ -375,13 +377,15 @@ bool CCustomDropEvent::LoadConfigInternal(const char* path)
 						m_totemDefaultIntervalMs = (DWORD)strtoul(val, nullptr, 10);
 					else if (_stricmp(key, "healMul") == 0)
 						m_totemHealMultiplier = (float)atof(val);
+					else if (_stricmp(key, "duration") == 0 || _stricmp(key, "buffDuration") == 0)
+						m_totemBuffDurationOverrideMs = (DWORD)strtoul(val, nullptr, 10);
 				}
 				t = strtok(nullptr, " \t\n\r");
 			}
 		}
 		else if (isTotem)
 		{
-			// format: mobId totem: beaconMob@lifeMs@radius@intervalMs: skill@dur, skill@dur
+			// format: mobId totem: beaconMob@lifeMs@radius@intervalMs: skill@dur[@period], skill@dur[@period]
 			// second colon separates beacon spec from buff list
 			char* rest = colon + 1;
 			// find second colon
@@ -436,20 +440,44 @@ bool CCustomDropEvent::LoadConfigInternal(const char* path)
 					while (*btok == ' ' || *btok == '\t') ++btok;
 					if (*btok)
 					{
-						unsigned int skillId = 0; DWORD durationMs = 0;
+						unsigned int skillId = 0; DWORD durationMs = 0; DWORD periodMs = 0;
 						char* at = strchr(btok, '@');
 						if (at)
 						{
 							*at = '\0';
 							skillId = (unsigned int)strtoul(btok, nullptr, 10);
-							durationMs = (DWORD)strtoul(at + 1, nullptr, 10);
+							char* p1 = at + 1;
+							// support 'Xs' suffix for seconds
+							bool secs = false;
+							char* pEnd = p1;
+							while (*pEnd && *pEnd != '@' && *pEnd != ',' && *pEnd != '\n' && *pEnd != '\r') ++pEnd;
+							char saved = *pEnd; *pEnd = '\0';
+							size_t len = strlen(p1);
+							if (len > 0 && (p1[len-1] == 's' || p1[len-1] == 'S')) { secs = true; p1[len-1] = '\0'; }
+							durationMs = (DWORD)strtoul(p1, nullptr, 10);
+							if (secs) durationMs *= 1000;
+							*pEnd = saved;
+							if (*pEnd == '@')
+							{
+								char* p2 = pEnd + 1;
+								// optional period with 's' support
+								bool secs2 = false;
+								char* pEnd2 = p2;
+								while (*pEnd2 && *pEnd2 != ',' && *pEnd2 != '\n' && *pEnd2 != '\r') ++pEnd2;
+								char saved2 = *pEnd2; *pEnd2 = '\0';
+								size_t len2 = strlen(p2);
+								if (len2 > 0 && (p2[len2-1] == 's' || p2[len2-1] == 'S')) { secs2 = true; p2[len2-1] = '\0'; }
+								periodMs = (DWORD)strtoul(p2, nullptr, 10);
+								if (secs2) periodMs *= 1000;
+								*pEnd2 = saved2;
+							}
 						}
 						else
 						{
 							skillId = (unsigned int)strtoul(btok, nullptr, 10);
 						}
 						if (skillId)
-							buffs.push_back(BuffEntry{ skillId, durationMs });
+							buffs.push_back(BuffEntry{ skillId, durationMs, periodMs });
 					}
 					btok = strtok(nullptr, ",\n\r");
 				}
@@ -645,9 +673,9 @@ void CCustomDropEvent::TickProcess(DWORD dwTick)
 					g_pObjectManager->DestroyCharacter(pBeacon);
 					remove = true;
 				}
-				else if (now >= t.nextPulseTick)
+				else
 				{
-					// apply buffs to players in radius
+					// apply buffs to players in radius when each per-buff timer elapses
 					CWorldCell* pCell = pBeacon->GetCurWorldCell();
 					if (pCell)
 					{
@@ -661,8 +689,11 @@ void CCustomDropEvent::TickProcess(DWORD dwTick)
 							{
 								if (pBeacon->IsInRange(pPlr, t.radius))
 								{
-									for (const BuffEntry& be : t.buffs)
+									for (size_t bi = 0; bi < t.buffs.size(); ++bi)
 									{
+										if (now < t.buffNextTicks[bi])
+											continue;
+										const BuffEntry &be = t.buffs[bi];
 										sSKILL_TBLDAT* pSkill = (sSKILL_TBLDAT*)g_pTableContainer->GetSkillTable()->FindData(be.skillTblidx);
 										if (!pSkill) continue;
 
@@ -697,17 +728,45 @@ void CCustomDropEvent::TickProcess(DWORD dwTick)
 												aBuffParameter[i3].buffParameter.dwRemainTime = (be.durationMs != 0 ? be.durationMs : pSkill->dwKeepTimeInMilliSecs);
 											}
 										}
-										DWORD durMs = be.durationMs != 0 ? be.durationMs : pSkill->dwKeepTimeInMilliSecs;
-										if (durMs == 0) durMs = 30000;
-										pPlr->GetBuffManager()->RegisterBuff(durMs, aeEffectCode, aBuffParameter, pBeacon->GetID(), BUFF_TYPE_BLESS, pSkill);
+										// Handle direct-heal immediately; don't register as a buff
+										bool hasBuffableEffect = false;
+										for (int i4 = 0; i4 < NTL_MAX_EFFECT_IN_SKILL; ++i4)
+										{
+											if (aeEffectCode[i4] == ACTIVE_DIRECT_HEAL)
+											{
+												float amt = 0.0f;
+												CalcDirectHeal(pBeacon, pSkill, (BYTE)i4, amt);
+												if (amt != 0.0f)
+												{
+													// allow heal multiplier to influence direct heals too
+													float scaled = amt * m_totemHealMultiplier;
+													pPlr->UpdateCurLP((int)scaled, true, false);
+													pPlr->SendEffectAffected(g_pTableContainer->GetSystemEffectTable()->GetEffectTblidx(aeEffectCode[i4]), DBO_OBJECT_SOURCE_SKILL, pSkill->tblidx, scaled, 0.0f, pBeacon->GetID());
+												}
+												// Mark as consumed so we don't try to register it as a buff
+												aeEffectCode[i4] = INVALID_SYSTEM_EFFECT_CODE;
+											}
+											if (aeEffectCode[i4] != INVALID_SYSTEM_EFFECT_CODE)
+												hasBuffableEffect = true;
+										}
+										// Only register a buff if any effect remains (HoT/DoT/other sustained)
+										if (hasBuffableEffect)
+										{
+											DWORD durMs = be.durationMs != 0 ? be.durationMs : pSkill->dwKeepTimeInMilliSecs;
+											if (m_totemBuffDurationOverrideMs != 0)
+												durMs = m_totemBuffDurationOverrideMs;
+											if (durMs == 0) durMs = 30000;
+											pPlr->GetBuffManager()->RegisterBuff(durMs, aeEffectCode, aBuffParameter, pBeacon->GetID(), BUFF_TYPE_BLESS, pSkill);
+										}
+										// schedule next tick for this buff
+										DWORD per = be.periodMs ? be.periodMs : t.intervalMs;
+										t.buffNextTicks[bi] = now + per;
 									}
 								}
 								pPlr = (CPlayer*)pSibling->GetObjectList()->GetNext(pPlr->GetWorldCellObjectLinker());
 							}
 						}
 					}
-					// schedule next pulse by interval
-					t.nextPulseTick = now + (t.intervalMs ? t.intervalMs : 1000);
 				}
 
 				if (remove)
@@ -765,6 +824,8 @@ void CCustomDropEvent::Update(CMonster* pMob, CCharacter* pPlayer)
 					if (!pTbldat)
 						continue;
 					BYTE cnt = se.count ? se.count : 1;
+					// capture base position once; apply slight random offsets per spawn to avoid overlap
+					sVECTOR3 basePos; pMob->GetCurLoc().CopyTo(basePos);
 					for (BYTE i = 0; i < cnt; ++i)
 					{
 						sMOB_DATA data;
@@ -772,8 +833,12 @@ void CCustomDropEvent::Update(CMonster* pMob, CCharacter* pPlayer)
 						data.worldID = pMob->GetWorldID();
 						data.worldtblidx = pMob->GetWorldTblidx();
 						data.tblidx = pTbldat->tblidx;
-						pMob->GetCurLoc().CopyTo(data.vCurLoc);
-						pMob->GetCurLoc().CopyTo(data.vSpawnLoc);
+						// slightly offset each spawn to prevent collision/merge at exact same coordinates
+						sVECTOR3 pos = basePos;
+						pos.x += RandomRangeF(-2.0f, 2.0f);
+						pos.z += RandomRangeF(-2.0f, 2.0f);
+						data.vCurLoc = pos;
+						data.vSpawnLoc = pos;
 						pMob->GetCurDir().CopyTo(data.vCurDir);
 						pMob->GetCurDir().CopyTo(data.vSpawnDir);
 						data.actionpatternTblIdx = 1;
@@ -896,6 +961,12 @@ void CCustomDropEvent::Update(CMonster* pMob, CCharacter* pPlayer)
 					DWORD now = GetTickCount();
 					t.expireTick = now + r.lifeMs;
 					t.nextPulseTick = now + r.intervalMs;
+					t.buffNextTicks.resize(t.buffs.size());
+					for (size_t bi = 0; bi < t.buffs.size(); ++bi)
+					{
+						DWORD per = t.buffs[bi].periodMs ? t.buffs[bi].periodMs : r.intervalMs;
+						t.buffNextTicks[bi] = now + per;
+					}
 					m_activeTotems.push_back(t);
 				}
 			}
