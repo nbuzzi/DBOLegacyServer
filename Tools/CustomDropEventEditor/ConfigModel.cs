@@ -11,6 +11,9 @@ namespace CustomDropEventEditor
         public Dictionary<uint, List<DropEntry>> Drops { get; } = new();
         public Dictionary<uint, Modifiers> Mods { get; } = new();
         public Dictionary<uint, List<SpawnEntry>> Spawns { get; } = new(); // key 0 = all
+        public Dictionary<uint, List<BuffEntry>> Buffs { get; } = new(); // key 0 = all
+        public Dictionary<uint, List<uint>> Titles { get; } = new(); // key 0 = all
+    public Dictionary<uint, List<VisualEntry>> Visuals { get; } = new(); // key 0 = all
 
         public static ConfigModel Load(string path)
         {
@@ -42,10 +45,10 @@ namespace CustomDropEventEditor
                 var key = line.Substring(0, sep).Trim();
                 var value = line[(sep + 1)..].Trim();
 
-                // key could be "<id>", "<id> modifiers", or "<id> spawn(s)"
+                // key could be "<id>", "<id> modifiers", "<id> spawn(s)", "<id> buffs", "<id> titles", or "<id> visuals"
                 var parts = key.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
                 uint id = 0;
-                bool isMods = false, isSpawn = false;
+                bool isMods = false, isSpawn = false, isBuffs = false, isTitles = false, isVisuals = false;
                 if (parts.Length == 1)
                 {
                     if (parts[0].Equals("all", StringComparison.OrdinalIgnoreCase))
@@ -62,6 +65,9 @@ namespace CustomDropEventEditor
                     var tail = parts[1];
                     if (tail.Equals("modifiers", StringComparison.OrdinalIgnoreCase)) isMods = true;
                     else if (tail.Equals("spawn", StringComparison.OrdinalIgnoreCase) || tail.Equals("spawns", StringComparison.OrdinalIgnoreCase)) isSpawn = true;
+                    else if (tail.Equals("buffs", StringComparison.OrdinalIgnoreCase)) isBuffs = true;
+                    else if (tail.Equals("titles", StringComparison.OrdinalIgnoreCase)) isTitles = true;
+                    else if (tail.Equals("visuals", StringComparison.OrdinalIgnoreCase)) isVisuals = true;
                 }
 
                 if (isMods)
@@ -105,7 +111,105 @@ namespace CustomDropEventEditor
                         }
                         list.Add(new SpawnEntry { MobTblidx = mob, Rate = rate, Count = count });
                     }
-                    if (list.Count > 0) model.Spawns[id] = list;
+                    if (list.Count > 0)
+                    {
+                        if (model.Spawns.TryGetValue(id, out var existing) && existing != null)
+                            existing.AddRange(list);
+                        else
+                            model.Spawns[id] = list;
+                    }
+                }
+                else if (isBuffs)
+                {
+                    var list = new List<BuffEntry>();
+                    foreach (var tok in value.Split(','))
+                    {
+                        var t = tok.Trim();
+                        if (string.IsNullOrEmpty(t)) continue;
+                        var at = t.IndexOf('@');
+                        uint skill = 0; uint durationMs = 0;
+                        if (at >= 0)
+                        {
+                            if (!uint.TryParse(t[..at].Trim(), out skill)) continue;
+                            var dv = t[(at + 1)..].Trim();
+                            // allow trailing ms or s suffixes (e.g., 30s, 60000)
+                            if (dv.EndsWith("ms", StringComparison.OrdinalIgnoreCase)) dv = dv[..^2];
+                            if (dv.EndsWith("s", StringComparison.OrdinalIgnoreCase))
+                            {
+                                if (uint.TryParse(dv[..^1], out var secs)) durationMs = secs * 1000u; else durationMs = 0;
+                            }
+                            else
+                            {
+                                uint.TryParse(dv, out durationMs);
+                            }
+                        }
+                        else
+                        {
+                            if (!uint.TryParse(t, out skill)) continue;
+                        }
+                        list.Add(new BuffEntry { SkillTblidx = skill, DurationMs = durationMs });
+                    }
+                    if (list.Count > 0)
+                    {
+                        if (model.Buffs.TryGetValue(id, out var existing) && existing != null)
+                            existing.AddRange(list);
+                        else
+                            model.Buffs[id] = list;
+                    }
+                }
+                else if (isTitles)
+                {
+                    var list = new List<uint>();
+                    foreach (var tok in value.Split(','))
+                    {
+                        var t = tok.Trim();
+                        if (string.IsNullOrEmpty(t)) continue;
+                        if (uint.TryParse(t, out var titleId)) list.Add(titleId);
+                    }
+                    if (list.Count > 0)
+                    {
+                        if (model.Titles.TryGetValue(id, out var existing) && existing != null)
+                            existing.AddRange(list);
+                        else
+                            model.Titles[id] = list;
+                    }
+                }
+                else if (isVisuals)
+                {
+                    var list = new List<VisualEntry>();
+                    foreach (var tok in value.Split(','))
+                    {
+                        var t = tok.Trim();
+                        if (string.IsNullOrEmpty(t)) continue;
+                        var at = t.IndexOf('@');
+                        uint effectTblidx = 0; uint intervalMs = 0;
+                        if (at >= 0)
+                        {
+                            if (!uint.TryParse(t[..at].Trim(), out effectTblidx)) continue;
+                            var dv = t[(at + 1)..].Trim();
+                            if (dv.EndsWith("ms", StringComparison.OrdinalIgnoreCase)) dv = dv[..^2];
+                            if (dv.EndsWith("s", StringComparison.OrdinalIgnoreCase))
+                            {
+                                if (uint.TryParse(dv[..^1], out var secs)) intervalMs = secs * 1000u; else intervalMs = 0;
+                            }
+                            else
+                            {
+                                uint.TryParse(dv, out intervalMs);
+                            }
+                        }
+                        else
+                        {
+                            if (!uint.TryParse(t, out effectTblidx)) continue;
+                        }
+                        list.Add(new VisualEntry { EffectTblidx = effectTblidx, IntervalMs = intervalMs });
+                    }
+                    if (list.Count > 0)
+                    {
+                        if (model.Visuals.TryGetValue(id, out var existing) && existing != null)
+                            existing.AddRange(list);
+                        else
+                            model.Visuals[id] = list;
+                    }
                 }
                 else
                 {
@@ -153,11 +257,29 @@ namespace CustomDropEventEditor
             using var sw = new StreamWriter(path);
             sw.WriteLine("# CustomDropEvent configuration");
             sw.WriteLine("# Generated by CustomDropEventEditor");
-            // Global spawns first (id 0)
+            // Global spawns first (id 0) — write as a single line with comma-separated entries
             if (Spawns.TryGetValue(0, out var global))
             {
                 sw.Write("all spawn: ");
                 WriteSpawnList(sw, global);
+            }
+            // Global buffs next (id 0)
+            if (Buffs.TryGetValue(0, out var gBuffs))
+            {
+                sw.Write("all buffs: ");
+                WriteBuffList(sw, gBuffs);
+            }
+            // Global visuals (id 0)
+            if (Visuals.TryGetValue(0, out var gVisuals))
+            {
+                sw.Write("all visuals: ");
+                WriteVisualList(sw, gVisuals);
+            }
+            // Global titles (id 0)
+            if (Titles.TryGetValue(0, out var gTitles))
+            {
+                sw.Write("all titles: ");
+                WriteTitleList(sw, gTitles);
             }
             // Mods
             foreach (var (id, m) in Mods.OrderBy(k => k.Key))
@@ -189,6 +311,27 @@ namespace CustomDropEventEditor
                 sw.Write($"{id} spawn: ");
                 WriteSpawnList(sw, list);
             }
+            // Buffs
+            foreach (var (id, list) in Buffs.OrderBy(k => k.Key))
+            {
+                if (id == 0) continue; // already wrote global
+                sw.Write($"{id} buffs: ");
+                WriteBuffList(sw, list);
+            }
+            // Visuals
+            foreach (var (id, list) in Visuals.OrderBy(k => k.Key))
+            {
+                if (id == 0) continue; // already wrote global
+                sw.Write($"{id} visuals: ");
+                WriteVisualList(sw, list);
+            }
+            // Titles
+            foreach (var (id, list) in Titles.OrderBy(k => k.Key))
+            {
+                if (id == 0) continue; // already wrote global
+                sw.Write($"{id} titles: ");
+                WriteTitleList(sw, list);
+            }
         }
 
         private static void WriteSpawnList(StreamWriter sw, List<SpawnEntry> list)
@@ -204,6 +347,33 @@ namespace CustomDropEventEditor
                     return $"{e.MobTblidx}{rate}{cnt}";
                 })));
         }
+
+        private static void WriteBuffList(StreamWriter sw, List<BuffEntry> list)
+        {
+            sw.WriteLine(string.Join(
+                ", ",
+                list.Select(e => e.DurationMs > 0 ? $"{e.SkillTblidx}@{e.DurationMs}" : $"{e.SkillTblidx}")));
+        }
+
+        private static void WriteTitleList(StreamWriter sw, List<uint> list)
+        {
+            sw.WriteLine(string.Join(
+                ", ",
+                list.Select(id => id.ToString(CultureInfo.InvariantCulture))));
+        }
+
+        private static void WriteVisualList(StreamWriter sw, List<VisualEntry> list)
+        {
+            sw.WriteLine(string.Join(
+                ", ",
+                list.Select(e => e.IntervalMs > 0 ? $"{e.EffectTblidx}@{e.IntervalMs}" : $"{e.EffectTblidx}")));
+        }
+    }
+
+    public sealed class BuffEntry
+    {
+        public uint SkillTblidx { get; set; }
+        public uint DurationMs { get; set; } // 0 = default
     }
 
     public sealed class DropEntry
@@ -218,6 +388,12 @@ namespace CustomDropEventEditor
         public uint MobTblidx { get; set; }
         public float Rate { get; set; }
         public byte Count { get; set; }
+    }
+
+    public sealed class VisualEntry
+    {
+        public uint EffectTblidx { get; set; }
+        public uint IntervalMs { get; set; } // 0 = on-spawn only
     }
 
     public sealed class Modifiers

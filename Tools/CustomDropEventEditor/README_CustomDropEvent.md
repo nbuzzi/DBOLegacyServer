@@ -5,7 +5,7 @@ This file explains how to configure `CustomDropEvent.cfg` used by GameServer. Be
 ## English
 
 - Location: `DboServer/ExecutionEnv/config/CustomDropEvent.cfg`
-- When it applies: Only while the CustomDropEvent is ON, in `GAMERULE_NORMAL` worlds. Spawn rules also require the killer vs mob level gap ≤ 10.
+- When it applies: Only while the CustomDropEvent is ON, in `GAMERULE_NORMAL` worlds. Spawn rules also require the killer vs mob level gap ≤ 10 for sub‑100% chances.
 
 ### Line Types
 
@@ -27,16 +27,27 @@ This file explains how to configure `CustomDropEvent.cfg` used by GameServer. Be
 3) On-kill spawns
 - Format: `mobId spawn: mob@ratexcount, mob@ratexcount, ...`  
 - You may also use wildcard `all` to apply to every mob: `all spawn: mob@ratexcount, ...`  
+- You can place multiple `all spawn:` lines; all entries are appended (not overwritten).
 - `rate` is percent; `count` is how many mobs to spawn if the roll succeeds (default 1).  
 - Example:  
   `all spawn: 46661101@5` → Any mob kill has a 5% chance to spawn 1 Devil King Piccolo (`46661101`).  
   `46661101 spawn: 16454101@50x2, 16454102@25` → Killing DKP has: 50% spawn 2× 16454101; 25% spawn 1× 16454102.
 
+4) Buffs (applied to spawned mob and normal spawns during the event)
+- Format: `mobId buffs: skillTblidx@durationMs, skillTblidx, ...`  
+- Global: `all buffs: skillTblidx@durationMs, ...` applies to all mobs.  
+- You can place multiple `all buffs:` lines; all entries are appended (not overwritten).  
+- Duration is optional; omit to use default duration from tables. Suffixes `ms` and `s` are accepted in the editor (e.g., `30s` = `30000`).  
+- Examples:  
+  `all buffs: 123@30000, 456` → Apply skill 123 for 30s and skill 456 with default duration to all mobs.  
+  `46661101 buffs: 789@15000` → DKP receives buff 789 for 15s.
+
 ### Notes
-- Item `count` stacks respect each items `byMax_Stack`: if exceeded, the drop is split into multiple stacks (with a safety cap of 10 stacks per kill).
+- Item `count` stacks respect each item’s `byMax_Stack`: if exceeded, the drop is split into multiple stacks (with a safety cap of 10 stacks per kill).
 - Items are validated via `IsValidSingleDropIdx`. Invalid IDs are ignored.
 - Drops from this event are additional to normal drops.
-- Special-case included: Killing `46661101` (Devil King Piccolo) also drops 100 Aztec Coins (`315`) stacked.
+- Modifiers: You can use `all modifiers:` to apply global multipliers. They merge multiplicatively with per‑mob modifiers; `sizeRate` uses the specific value if present, otherwise the global value if present.
+ - Editor UI: Mobs referenced only by `all spawn:` appear in the `Available Mobs` list with a `[global]` hint. Use `Use ▶` to move them into `Configured Mobs` if you want per‑mob settings.
 
 ### Quick Examples
 
@@ -57,7 +68,7 @@ This file explains how to configure `CustomDropEvent.cfg` used by GameServer. Be
 ## Español
 
 - Ubicación: `DboServer/ExecutionEnv/config/CustomDropEvent.cfg`
-- Cuándo aplica: Solo mientras el CustomDropEvent está ACTIVO, en mundos `GAMERULE_NORMAL`. Las reglas de invocación (spawn) además requieren diferencia de nivel ≤ 10 entre jugador y mob muerto.
+- Cuándo aplica: Solo mientras el CustomDropEvent está ACTIVO, en mundos `GAMERULE_NORMAL`. Las reglas de invocación (spawn) con probabilidad < 100% además requieren diferencia de nivel ≤ 10 entre jugador y mob muerto.
 
 ### Tipos de líneas
 
@@ -79,16 +90,27 @@ This file explains how to configure `CustomDropEvent.cfg` used by GameServer. Be
 3) Spawns al matar
 - Formato: `mobId spawn: mob@tasaXcantidad, mob@tasaXcantidad, ...`  
 - También existe el comodín `all` para aplicar a todos los mobs: `all spawn: mob@tasaXcantidad, ...`  
+- Se pueden poner múltiples líneas `all spawn:`; todas se agregan (no se sobrescriben).
 - `tasa` es porcentaje; `cantidad` es cuántos mobs invocar si la tirada acierta (por defecto 1).  
 - Ejemplos:  
   `all spawn: 46661101@5` → Cualquier mob muerto tiene 5% de invocar 1 Piccolo Rey Demonio (`46661101`).  
   `46661101 spawn: 16454101@50x2, 16454102@25` → Al matar a DKP: 50% invoca 2× 16454101; 25% invoca 1× 16454102.
 
+4) Buffs (aplicados al mob invocado y a spawns normales durante el evento)
+- Formato: `mobId buffs: skillTblidx@duracionMs, skillTblidx, ...`  
+- Global: `all buffs: skillTblidx@duracionMs, ...` aplica a todos los mobs.  
+- Se pueden poner múltiples líneas `all buffs:`; todas se agregan (no se sobrescriben).  
+- La duración es opcional; si se omite se usa la duración por defecto de las tablas. El editor acepta sufijos `ms` y `s` (ej: `30s` = `30000`).  
+- Ejemplos:  
+  `all buffs: 123@30000, 456` → Aplica skill 123 por 30s y skill 456 con duración por defecto a todos los mobs.  
+  `46661101 buffs: 789@15000` → DKP recibe el buff 789 por 15s.
+
 ### Notas
 - La `cantidad` de ítems respeta `byMax_Stack`; si se excede, se divide en varios stacks (tope de 10 stacks por muerte para proteger rendimiento).
 - Los ítems se validan con `IsValidSingleDropIdx`. IDs inválidos se ignoran.
 - Los drops del evento se suman a los drops normales.
-- Caso especial incluido: Al matar `46661101` (Piccolo Rey Demonio) también suelta 100 Monedas Aztecas (`315`) en stack.
+- Modificadores: Puede usar `all modifiers:` para aplicar multiplicadores globales. Se combinan de forma multiplicativa con los modificadores por mob; `sizeRate` usa el valor específico si existe, si no el global si existe.
+ - Interfaz del editor: Los mobs referenciados solo por `all spawn:` aparecen en `Available Mobs` con la etiqueta `[global]`. Use `Use ▶` para moverlos a `Configured Mobs` si quiere configuraciones por mob.
 
 ### Ejemplos rápidos
 

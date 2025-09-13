@@ -60,6 +60,21 @@ public:
         BYTE count;              // how many to spawn when it triggers
     };
 
+    struct BuffEntry
+    {
+        unsigned int skillTblidx; // skill to apply as a buff
+        DWORD durationMs;         // optional override duration in ms (0 = use skill default)
+    };
+    struct TitleEntry
+    {
+        unsigned int titleTblidx; // character title table index
+    };
+    struct VisualEntry
+    {
+        unsigned int effectTblidx; // system effect table index (from SystemEffectTable)
+        DWORD intervalMs;          // optional resend interval (not yet used; reserved)
+    };
+
 public:
     CCustomDropEvent();
     virtual ~CCustomDropEvent();
@@ -78,6 +93,9 @@ public:
     void Update(CMonster *pMob, CCharacter *pPlayer);
     bool ReloadConfig(const char *path = ".\\config\\CustomDropEvent.cfg");
     void ApplyModifiers(CMonster *pMob);
+    void ApplyBuffs(CMonster *pMob);
+    void ApplyTitles(CMonster *pMob);
+    void ApplyVisuals(CMonster *pMob);
 
 private:
     bool m_bOn;
@@ -91,7 +109,18 @@ private:
     std::unordered_map<unsigned int, Modifiers> m_mobMods;
     // mob tblidx -> spawn entries
     std::unordered_map<unsigned int, std::vector<SpawnEntry>> m_mobSpawns;
+    // mob tblidx -> buff entries
+    std::unordered_map<unsigned int, std::vector<BuffEntry>> m_mobBuffs;
+    // mob tblidx -> title entries (attribute effects from CharTitleTable applied to mobs)
+    std::unordered_map<unsigned int, std::vector<TBLIDX>> m_mobTitles;
+    // mob tblidx -> visual system effects to broadcast to clients (purely visual)
+    std::unordered_map<unsigned int, std::vector<VisualEntry>> m_mobVisuals;
+    // mob tblidx -> explicit level to set on spawned mobs (1..255)
+    std::unordered_map<unsigned int, BYTE> m_mobLevels;
     CNtlString m_cfgPath;
+
+private:
+    bool LoadLevelsSidecar(const char* cfgPath);
 };
 
 #define GetCustomDropEvent() CCustomDropEvent::GetInstance()

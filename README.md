@@ -128,5 +128,87 @@ All required third party tools can be obtained from [our 3rd party repository](h
 </details>
 Alternatively there's a video showcasing this process: https://www.youtube.com/watch?v=lWDffP81ACw
 
+## Custom Drop Event (server)
+- Config-driven drops, spawns, modifiers, buffs, titles (attributes), and visuals for mobs.
+
+### Location
+- Config: `DboServer/ExecutionEnv/config/CustomDropEvent.cfg`
+- Optional levels sidecar: `DboServer/ExecutionEnv/config/CustomDropEvent.levels.json`
+
+### Lifecycle
+- Event can be started via server control path (internally managed). While active, all rules apply to normal spawns and to event-created spawns.
+
+### Syntax overview (in `CustomDropEvent.cfg`)
+- General format per line: `<id> [section]: <values>`
+- `<id>`: numeric mob tblidx. Use `all` for global rules.
+- Supported sections:
+    - Drops (default when section omitted): `itemId@ratexcount` (rate in 0..100, lowercase `x`, count default 1)
+    - `modifiers`: space-separated key/value multipliers (see keys below)
+    - `spawn` or `spawns`: `mobId@ratexcount`
+    - `buffs`: `skillTblidx[@durationMs]` (duration 0/omitted = skill default)
+    - `titles`: `titleTblidx, ...` (attribute effects from CharTitleTable applied to mobs)
+    - `visuals`: `systemEffectTblidx[@intervalMs]` (visual-only; interval reserved; use `@0`)
+
+#### Modifiers keys
+- `hp`, `physAtk`, `engAtk`, `physDef`, `engDef`, `atkSpd`, `runSpd`, `physCrit`, `engCrit`, `physCritDmg`, `engCritDmg`, `attackRate`, `dodgeRate`, `blockRate`, `blockDmg`, `guardRate`, `sizeRate`
+- All are multiplicative except `sizeRate` which is an absolute rate (client typical default 10). Specific overrides global when set (>0).
+
+### Merge and precedence rules
+- You can have multiple lines per section. Values append (drops/spawns/buffs/titles/visuals) or multiply (modifiers).
+- Global (`all`) and specific (`<id>`) rules combine:
+    - Lists (drops/spawns/buffs/titles/visuals): global entries + specific entries.
+    - Modifiers: multiply each field; `sizeRate` chosen from specific if set, else global if set.
+
+### Spawns and scaling
+- On mob kill, if event is active, each configured spawn entry rolls independently. `rate < 100` spawns are skipped if killer-target level gap > 10.
+- Event-created mobs:
+    - Use per-mob level if present in sidecar; otherwise base on killer mob level.
+    - Scaled stats: HP +1.5%/level, ATK +1.0%/level, DEF +1.0%/level.
+    - Apply configured modifiers, buffs, titles, and visuals.
+
+### Titles (attributes-only)
+- Mobs don’t have a `charTitle` visual field; titles here apply only attribute effects by reading `CharTitleTable` system effects and applying them to the mob’s attributes.
+
+### Visuals (purely visual)
+- Use `visuals:` to always broadcast SystemEffect visuals to clients when the mob spawns (normal or event-created). No stat change.
+- For aura-like persistent visuals via buffs, use `buffs:` with long durations and choose skills that have keep visuals (the editor’s Visuals picker helps).
+
+### Levels sidecar (`CustomDropEvent.levels.json`)
+- Flat JSON map of mobId to spawn level (1..255). Example:
+```json
+{
+    "3131102": 50,
+    "46661101": 70
+}
+```
+
+### Examples
+```
+# ===== Global (applies to all mobs) =====
+all buffs: 700101@600000, 700202          # skillId@durationMs; 0/omitted = skill default
+all visuals: 12345@0, 23456               # SystemEffect tblidx; @interval reserved (use 0)
+all modifiers: hp=1.5 physAtk=1.2 runSpd=1.1 sizeRate=12
+all titles: 1201, 1205                    # CharTitle tblidx (attributes only)
+all spawn: 3131102@100x2, 3131103@25x1    # mobId@ratexcount (use lowercase x)
+
+# ===== Per-mob rules (merge with globals) =====
+46661101: 315@100x100                     # drops: itemId@ratexcount
+46661101 spawn: 3131102@50x3
+46661101 buffs: 701234@900000, 700777     # second uses skill keep time
+46661101 visuals: 34567@0, 45678@0        # visuals broadcast on spawn
+46661101 modifiers: hp=2.0 physDef=1.3 engDef=1.3
+46661101 titles: 1302
+
+# Another mob with only visuals/buffs
+3131102 buffs: 700555@0
+3131102 visuals: 56789@0
+```
+
+### Notes & tips
+- “all …” lines append; use multiple lines as needed.
+- `spawn` tokens are `mobId@ratexcount` with lowercase `x`.
+- `visuals:` require SystemEffect tblidx values, not skill ids. For long-lived visuals via buffs, list the skill ids under `buffs:` with a long `@durationMs`.
+- Safety caps exist internally to avoid spam (e.g., stacked drops). Keep values reasonable.
+
 ## Acknowledgements
 All and any copyrighted material belongs to their respective owners, this is just a non-profit fan project aiming for game preservation. Thanks to DBOG for providing the base for this source code.

@@ -27,4 +27,10 @@
     </None>
     <!-- Additional aliases copied if present -->
   </ItemGroup>
+
+  <ItemGroup>
+    <None Update="README_CustomDropEvent.md">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 </Project>

@@ -352,6 +352,12 @@ void CMonster::Spawn(bool bSpawnOnServerStart)
 	SetRunSpeed(tbldat->fRun_Speed);
 	// Re-apply event modifiers after base speeds set
 	g_pCustomDropEvent->ApplyModifiers(this);
+	// Apply configured buffs when event is active
+	g_pCustomDropEvent->ApplyBuffs(this);
+	// Apply configured title attribute effects when event is active
+	g_pCustomDropEvent->ApplyTitles(this);
+	// Broadcast configured visual effects when event is active
+	g_pCustomDropEvent->ApplyVisuals(this);
 
 	m_vecFirstBattleLoc =(GetEnterLoc());
 	m_vecFirstBattleDir =(GetEnterDir());
