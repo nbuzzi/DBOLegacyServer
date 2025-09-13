@@ -125,18 +125,6 @@ bool CWPSNodeAction_AddMob::AddParam(CControlScriptNodeParam_Number* pNode)
 		return CControlScriptNode::AddParam(pNode);
 	}
 
-	if (_stricmp(name, "drop item") == 0)
-	{
-		m_sDropItem_tblIdx = (TBLIDX)pNode->GetValue();
-		return CControlScriptNode::AddParam(pNode);
-	}
-
-	if (_stricmp(name, "drop item amount") == 0)
-	{
-		m_sDropItem_amount = (DWORD)pNode->GetValue();
-		return CControlScriptNode::AddParam(pNode);
-	}
-
 	printf("CWPSNodeAction_AddMob: [%s] not exist \n", name);
 	return false;
 }
@@ -258,6 +246,4 @@ void CWPSNodeAction_AddMob::Init()
 	m_faintBuffIndex = INVALID_TBLIDX;
 	m_byFaintBuffApplyType = eMOB_FAINT_BUFF_SLAYER;
 	m_fFaintBuffRange = 0.0f;
-	m_sDropItem_tblIdx = INVALID_TBLIDX;
-	m_sDropItem_amount = 1;
 }

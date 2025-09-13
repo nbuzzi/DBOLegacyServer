@@ -55,9 +55,6 @@ bool CWpsAlgoAction_AddMob::AttachControlScriptNode(CControlScriptNode* pControl
 		m_byFaintBuffApplyType = pAction->m_byFaintBuffApplyType;
 		m_fFaintBuffRange = pAction->m_fFaintBuffRange;
 
-		m_sDropItem_tblIdx = pAction->m_sDropItem_tblIdx;
-		m_sDropItem_amount = pAction->m_sDropItem_amount;
-
 		return true;
 	}
 
@@ -140,12 +137,6 @@ int CWpsAlgoAction_AddMob::OnUpdate(DWORD dwTickDiff, float fMultiple)
 			{
 				if (pMob->CreateDataAndSpawn(data, pTbldat))
 				{
-					// We can create custom drops for mobs
-					if (m_sDropItem_tblIdx != NULL)
-					{
-						pMob->SetItemDrop(m_sDropItem_tblIdx, m_sDropItem_amount);
-					}
-
 					pMob->SetFaintBuff(m_faintBuffIndex, m_byFaintBuffApplyType, m_fFaintBuffRange);
 					pMob->SetDropItemProbabilityTblidx(m_dropItem_ProbabilityTblidx);
 					pMob->AddScript(GetOwner());	//add script

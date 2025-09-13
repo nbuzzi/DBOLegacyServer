@@ -305,7 +305,7 @@ void CClientSession::RecvEnterWorld(CNtlPacket* pPacket)
 		for (int i = 0; i < 66; i++)
 			content->byUnknown[i] = 0;
 
-		content->dwCCBD_LastFloor = 150; // CC BD Last Floor
+		content->dwCCBD_LastFloor = 150;
 		content->PetSystemOldNew = 2;
 		onof.SetPacketLen(sizeof(sGU_SERVER_CONTENTS_ONOFF));
 		g_pApp->Send(GetHandle(), &onof);

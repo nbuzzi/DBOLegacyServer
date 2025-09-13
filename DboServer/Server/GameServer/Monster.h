@@ -73,7 +73,6 @@ public:
 
 	bool				IsSightAngle(CCharacter* pTarget);
 
-	virtual void		SetItemDrop(TBLIDX tblIdx, DWORD amount);
 private:
 
 	SPAWNGROUPID		m_SpawnGroupID;
@@ -90,10 +89,6 @@ private:
 	TBLIDX				m_dropItem_ProbabilityTblidx;
 
 	BYTE				m_byKillerLevel;
-
-	TBLIDX				m_dropItem_Tblidx;
-
-	DWORD				m_sDropItem_amount;
 
 };
 
