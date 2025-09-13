@@ -33,20 +33,20 @@ void CCustomDropEvent::Init()
 	LoadConfigInternal(m_cfgPath.c_str());
 }
 
-bool CCustomDropEvent::ReloadConfig(const char* path)
+bool CCustomDropEvent::ReloadConfig(const char *path)
 {
 	if (!path)
 		path = m_cfgPath.c_str();
 	return LoadConfigInternal(path);
 }
 
-bool CCustomDropEvent::LoadConfigInternal(const char* path)
+bool CCustomDropEvent::LoadConfigInternal(const char *path)
 {
 	m_mobDrops.clear();
 	m_mobMods.clear();
 	m_mobSpawns.clear();
 
-	FILE* f = nullptr;
+	FILE *f = nullptr;
 	errno_t e = fopen_s(&f, path, "rt");
 	if (e != 0 || !f)
 		return false;
@@ -59,19 +59,19 @@ bool CCustomDropEvent::LoadConfigInternal(const char* path)
 	while (fgets(line, sizeof(line), f))
 	{
 		// trim leading spaces
-		char* p = line;
+		char *p = line;
 		while (*p == ' ' || *p == '\t')
 			++p;
 		if (*p == '\0' || *p == '\n' || *p == '#')
 			continue;
 
 		// detect optional sections: "modifiers", "spawn" or "spawns"
-		const char* modsKw = "modifiers";
-		const char* spawnKw = "spawn";
-		const char* spawnsKw = "spawns";
+		const char *modsKw = "modifiers";
+		const char *spawnKw = "spawn";
+		const char *spawnsKw = "spawns";
 		bool isMods = false;
 		bool isSpawn = false;
-		char* colon = strchr(p, ':');
+		char *colon = strchr(p, ':');
 		if (!colon)
 			continue;
 		*colon = '\0';
@@ -79,11 +79,11 @@ bool CCustomDropEvent::LoadConfigInternal(const char* path)
 		unsigned int mobId = 0;
 		{
 			// split p by spaces to detect keyword
-			char* sp = p;
+			char *sp = p;
 			while (*sp == ' ' || *sp == '\t')
 				++sp;
 			// find space
-			char* sp2 = strchr(sp, ' ');
+			char *sp2 = strchr(sp, ' ');
 			if (sp2)
 			{
 				*sp2 = '\0';
@@ -91,7 +91,7 @@ bool CCustomDropEvent::LoadConfigInternal(const char* path)
 					mobId = 0; // wildcard: apply to all mobs
 				else
 					mobId = (unsigned int)strtoul(sp, nullptr, 10);
-				const char* tail = sp2 + 1;
+				const char *tail = sp2 + 1;
 				while (*tail == ' ' || *tail == '\t')
 					++tail;
 				if (_stricmp(tail, modsKw) == 0)
@@ -109,16 +109,16 @@ bool CCustomDropEvent::LoadConfigInternal(const char* path)
 		{
 			// parse key=value pairs separated by spaces
 			Modifiers m;
-			char* s = colon + 1;
+			char *s = colon + 1;
 			// tokenize by whitespace
-			char* t = strtok(s, " \t\n\r");
+			char *t = strtok(s, " \t\n\r");
 			while (t)
 			{
-				char* eq = strchr(t, '=');
+				char *eq = strchr(t, '=');
 				if (eq)
 				{
 					*eq = '\0';
-					const char* key = t;
+					const char *key = t;
 					float val = (float)atof(eq + 1);
 					if (_stricmp(key, "hp") == 0)
 						m.hp = val;
@@ -162,23 +162,25 @@ bool CCustomDropEvent::LoadConfigInternal(const char* path)
 		else if (isSpawn)
 		{
 			// format: mobId spawn: mobId@ratexcount, mobId@ratexcount
-			char* list = colon + 1;
+			char *list = colon + 1;
 			std::vector<SpawnEntry> entries;
 			// split by comma
-			char* tok = strtok(list, ",\n\r");
+			char *tok = strtok(list, ",\n\r");
 			while (tok)
 			{
 				// trim
 				while (*tok == ' ' || *tok == '\t')
 					++tok;
-				unsigned int toSpawn = 0; float rate = 100.f; BYTE cnt = 1;
-				char* at = strchr(tok, '@');
+				unsigned int toSpawn = 0;
+				float rate = 100.f;
+				BYTE cnt = 1;
+				char *at = strchr(tok, '@');
 				if (at)
 				{
 					*at = '\0';
 					toSpawn = (unsigned int)strtoul(tok, nullptr, 10);
-					char* rx = at + 1;
-					char* x = strchr(rx, 'x');
+					char *rx = at + 1;
+					char *x = strchr(rx, 'x');
 					if (x)
 					{
 						*x = '\0';
@@ -196,8 +198,9 @@ bool CCustomDropEvent::LoadConfigInternal(const char* path)
 				}
 				if (toSpawn != 0)
 				{
-					if (cnt == 0) cnt = 1;
-					entries.push_back(SpawnEntry{ toSpawn, rate, cnt });
+					if (cnt == 0)
+						cnt = 1;
+					entries.push_back(SpawnEntry{toSpawn, rate, cnt});
 				}
 				tok = strtok(nullptr, ",\n\r");
 			}
@@ -208,10 +211,10 @@ bool CCustomDropEvent::LoadConfigInternal(const char* path)
 		}
 		else
 		{
-			char* list = colon + 1;
+			char *list = colon + 1;
 			std::vector<DropEntry> entries;
 			// split by comma
-			char* tok = strtok(list, ",\n\r");
+			char *tok = strtok(list, ",\n\r");
 			while (tok)
 			{
 				// trim
@@ -221,19 +224,20 @@ bool CCustomDropEvent::LoadConfigInternal(const char* path)
 				unsigned int itemId = 0;
 				float rate = 100.f;
 				BYTE count = 1;
-				char* at = strchr(tok, '@');
+				char *at = strchr(tok, '@');
 				if (at)
 				{
 					*at = '\0';
 					itemId = (unsigned int)strtoul(tok, nullptr, 10);
-					char* rx = at + 1;
-					char* x = strchr(rx, 'x');
+					char *rx = at + 1;
+					char *x = strchr(rx, 'x');
 					if (x)
 					{
 						*x = '\0';
 						rate = (float)atof(rx);
 						count = (BYTE)strtoul(x + 1, nullptr, 10);
-						if (count == 0) count = 1;
+						if (count == 0)
+							count = 1;
 					}
 					else
 					{
@@ -246,7 +250,10 @@ bool CCustomDropEvent::LoadConfigInternal(const char* path)
 				}
 				if (itemId != 0)
 				{
-					DropEntry e; e.itemTblidx = itemId; e.rate = rate; e.count = count;
+					DropEntry e;
+					e.itemTblidx = itemId;
+					e.rate = rate;
+					e.count = count;
 					entries.push_back(e);
 				}
 				tok = strtok(nullptr, ",\n\r");
@@ -267,7 +274,7 @@ void CCustomDropEvent::StartEvent(BYTE byHours /* = 3*/)
 	if (m_bOn)
 		return;
 
-	CGameServer* app = (CGameServer*)g_pApp;
+	CGameServer *app = (CGameServer *)g_pApp;
 
 	m_bOn = true;
 	m_timeStart = app->GetTime();
@@ -276,7 +283,7 @@ void CCustomDropEvent::StartEvent(BYTE byHours /* = 3*/)
 	CNtlStringW msg;
 
 	CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
-	sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+	sGU_SYSTEM_DISPLAY_TEXT *res = (sGU_SYSTEM_DISPLAY_TEXT *)packet.GetPacketData();
 	res->wOpCode = GU_SYSTEM_DISPLAY_TEXT;
 	res->wMessageLengthInUnicode = (WORD)msg.Format(L"Custom Drop Event Started! Duration: %u Hours.", byHours);
 	res->byDisplayType = SERVER_TEXT_EMERGENCY;
@@ -287,7 +294,7 @@ void CCustomDropEvent::StartEvent(BYTE byHours /* = 3*/)
 
 void CCustomDropEvent::TickProcess(DWORD dwTick)
 {
-	CGameServer* app = (CGameServer*)g_pApp;
+	CGameServer *app = (CGameServer *)g_pApp;
 
 	if (dwTick < m_dwNextUpdateTick)
 		return;
@@ -303,7 +310,7 @@ void CCustomDropEvent::TickProcess(DWORD dwTick)
 	m_dwNextUpdateTick = dwTick + 5000; // update every 5 seconds
 }
 
-void CCustomDropEvent::Update(CMonster* pMob, CCharacter* pPlayer)
+void CCustomDropEvent::Update(CMonster *pMob, CCharacter *pPlayer)
 {
 	if (!pPlayer->GetCurWorld())
 		return;
@@ -316,83 +323,82 @@ void CCustomDropEvent::Update(CMonster* pMob, CCharacter* pPlayer)
 	// Config-driven spawn logic: spawn configured mobs on kill
 	{
 		int levelGap = abs((int)pPlayer->GetLevel() - (int)pMob->GetLevel());
-		if (levelGap <= 10)
+		// Gather specific and global (all) spawn lists
+		std::vector<SpawnEntry> spawns;
+		auto itS = m_mobSpawns.find(pMob->GetTblidx());
+		if (itS != m_mobSpawns.end())
 		{
-			// Gather specific and global (all) spawn lists
-			std::vector<SpawnEntry> spawns;
-			auto itS = m_mobSpawns.find(pMob->GetTblidx());
-			if (itS != m_mobSpawns.end())
+			spawns.insert(spawns.end(), itS->second.begin(), itS->second.end());
+		}
+		auto itAll = m_mobSpawns.find(0);
+		if (itAll != m_mobSpawns.end())
+		{
+			spawns.insert(spawns.end(), itAll->second.begin(), itAll->second.end());
+		}
+		if (!spawns.empty())
+		{
+			for (const SpawnEntry &se : spawns)
 			{
-				spawns.insert(spawns.end(), itS->second.begin(), itS->second.end());
-			}
-			auto itAll = m_mobSpawns.find(0);
-			if (itAll != m_mobSpawns.end())
-			{
-				spawns.insert(spawns.end(), itAll->second.begin(), itAll->second.end());
-			}
-			if (!spawns.empty())
-			{
-				for (const SpawnEntry& se : spawns)
+				if (se.mobTblidx == INVALID_TBLIDX)
+					continue;
+				// Enforce level-gap gating only for sub-100% rates
+				if (se.rate < 100.f && levelGap > 10)
+					continue;
+				if (se.rate >= 100.f || Dbo_CheckProbabilityF(se.rate))
 				{
-					if (se.mobTblidx == INVALID_TBLIDX)
+					sMOB_TBLDAT *pTbldat = (sMOB_TBLDAT *)g_pTableContainer->GetMobTable()->FindData(se.mobTblidx);
+					if (!pTbldat)
 						continue;
-					if (se.rate >= 100.f || Dbo_CheckProbabilityF(se.rate))
+					BYTE cnt = se.count ? se.count : 1;
+					for (BYTE i = 0; i < cnt; ++i)
 					{
-						sMOB_TBLDAT* pTbldat = (sMOB_TBLDAT*)g_pTableContainer->GetMobTable()->FindData(se.mobTblidx);
-						if (!pTbldat)
-							continue;
-						BYTE cnt = se.count ? se.count : 1;
-						for (BYTE i = 0; i < cnt; ++i)
+						sMOB_DATA data;
+						InitMobData(data);
+						data.worldID = pMob->GetWorldID();
+						data.worldtblidx = pMob->GetWorldTblidx();
+						data.tblidx = pTbldat->tblidx;
+						pMob->GetCurLoc().CopyTo(data.vCurLoc);
+						pMob->GetCurLoc().CopyTo(data.vSpawnLoc);
+						pMob->GetCurDir().CopyTo(data.vCurDir);
+						pMob->GetCurDir().CopyTo(data.vSpawnDir);
+						data.actionpatternTblIdx = 1;
+
+						if (CMonster *pNewMob = (CMonster *)g_pObjectManager->CreateCharacter(OBJTYPE_MOB))
 						{
-							sMOB_DATA data;
-							InitMobData(data);
-							data.worldID = pMob->GetWorldID();
-							data.worldtblidx = pMob->GetWorldTblidx();
-							data.tblidx = pTbldat->tblidx;
-							pMob->GetCurLoc().CopyTo(data.vCurLoc);
-							pMob->GetCurLoc().CopyTo(data.vSpawnLoc);
-							pMob->GetCurDir().CopyTo(data.vCurDir);
-							pMob->GetCurDir().CopyTo(data.vSpawnDir);
-							data.actionpatternTblIdx = 1;
-
-							if (CMonster* pNewMob = (CMonster*)g_pObjectManager->CreateCharacter(OBJTYPE_MOB))
+							if (pNewMob->CreateDataAndSpawn(data, pTbldat))
 							{
-								if (pNewMob->CreateDataAndSpawn(data, pTbldat))
+								// Dynamically scale spawned mobs based on killer mob level
 								{
-									// Dynamically scale spawned Devil King Piccolo based on killer mob level
-									if (se.mobTblidx == 46661101)
+									BYTE baseLvl = pMob->GetLevel();
+									CCharacterAtt *att = pNewMob->GetCharAtt();
+									if (att)
 									{
-										BYTE baseLvl = pMob->GetLevel();
-										CCharacterAtt* att = pNewMob->GetCharAtt();
-										if (att)
-										{
-											float hpMul = 1.0f + (baseLvl * 0.015f);   // +1.5% per level
-											float atkMul = 1.0f + (baseLvl * 0.010f);  // +1.0% per level
-											float defMul = 1.0f + (baseLvl * 0.010f);  // +1.0% per level
+										float hpMul = 1.0f + (baseLvl * 0.015f);  // +1.5% per level
+										float atkMul = 1.0f + (baseLvl * 0.010f); // +1.0% per level
+										float defMul = 1.0f + (baseLvl * 0.010f); // +1.0% per level
 
-											DWORD maxLp = att->GetMaxLP();
-											DWORD newMaxLp = (DWORD)((float)maxLp * hpMul);
-											att->SetMaxLP((int)newMaxLp);
-											pNewMob->SetCurLP((int)newMaxLp);
+										DWORD maxLp = att->GetMaxLP();
+										DWORD newMaxLp = (DWORD)((float)maxLp * hpMul);
+										att->SetMaxLP((int)newMaxLp);
+										pNewMob->SetCurLP((int)newMaxLp);
 
-											WORD physAtk = att->GetPhysicalOffence();
-											WORD energyAtk = att->GetEnergyOffence();
-											att->SetPhysicalOffence((WORD)((float)physAtk * atkMul));
-											att->SetEnergyOffence((WORD)((float)energyAtk * atkMul));
+										WORD physAtk = att->GetPhysicalOffence();
+										WORD energyAtk = att->GetEnergyOffence();
+										att->SetPhysicalOffence((WORD)((float)physAtk * atkMul));
+										att->SetEnergyOffence((WORD)((float)energyAtk * atkMul));
 
-											WORD physDef = att->GetPhysicalDefence();
-											WORD energyDef = att->GetEnergyDefence();
-											att->SetPhysicalDefence((WORD)((float)physDef * defMul));
-											float targetED = (float)energyDef * defMul;
-											float diffED = targetED - (float)energyDef;
-											if (diffED > 0.0f)
-												att->CalculateEnergyDefence(diffED, SYSTEM_EFFECT_APPLY_TYPE_VALUE, true);
-											else if (diffED < 0.0f)
-												att->CalculateEnergyDefence(-diffED, SYSTEM_EFFECT_APPLY_TYPE_VALUE, false);
-										}
+										WORD physDef = att->GetPhysicalDefence();
+										WORD energyDef = att->GetEnergyDefence();
+										att->SetPhysicalDefence((WORD)((float)physDef * defMul));
+										float targetED = (float)energyDef * defMul;
+										float diffED = targetED - (float)energyDef;
+										if (diffED > 0.0f)
+											att->CalculateEnergyDefence(diffED, SYSTEM_EFFECT_APPLY_TYPE_VALUE, true);
+										else if (diffED < 0.0f)
+											att->CalculateEnergyDefence(-diffED, SYSTEM_EFFECT_APPLY_TYPE_VALUE, false);
 									}
-									pNewMob->SetStandAlone(true);
 								}
+								pNewMob->SetStandAlone(true);
 							}
 						}
 					}
@@ -402,43 +408,41 @@ void CCustomDropEvent::Update(CMonster* pMob, CCharacter* pPlayer)
 	}
 
 	// Special case: Devil King Piccolo guaranteed 100 Aztec Coins (315)
-	if (pMob->GetTblidx() == 46661101)
-	{
-		if (g_pItemManager->IsValidSingleDropIdx(315))
-		{
-			CreateStackedDrop(pMob, pPlayer, 315, 100);
-		}
-	}
+	// if (pMob->GetTblidx() == 46661101)
+	// {
+	// 	if (g_pItemManager->IsValidSingleDropIdx(315))
+	// 	{
+	// 		CreateStackedDrop(pMob, pPlayer, 315, 100);
+	// 	}
+	// }
 
-	auto it = m_mobDrops.find(pMob->GetTblidx());
-	if (it == m_mobDrops.end())
+	// Gather specific and global (all) drop lists
+	std::vector<DropEntry> list;
+	auto itD = m_mobDrops.find(pMob->GetTblidx());
+	if (itD != m_mobDrops.end())
+	{
+		list.insert(list.end(), itD->second.begin(), itD->second.end());
+	}
+	auto itDAll = m_mobDrops.find(0);
+	if (itDAll != m_mobDrops.end())
+	{
+		list.insert(list.end(), itDAll->second.begin(), itDAll->second.end());
+	}
+	if (list.empty())
 		return;
-
-	const std::vector<DropEntry>& list = it->second;
-	int extraRolls = 0;
-	if (pMob->GetTblidx() == 46661101)
+	for (const DropEntry &d : list)
 	{
-		// Bonus drop passes based on player level (proxy for difficulty)
-		if (pPlayer->GetLevel() >= 70) extraRolls = 2;
-		else if (pPlayer->GetLevel() >= 50) extraRolls = 1;
-	}
-	int passes = 1 + extraRolls;
-	for (int pass = 0; pass < passes; ++pass)
-	{
-		for (const DropEntry& d : list)
+		if (d.itemTblidx == 0)
+			continue;
+		if (g_pItemManager->IsValidSingleDropIdx(d.itemTblidx) == false)
+			continue;
+		if (d.rate >= 100.f || Dbo_CheckProbabilityF(d.rate))
 		{
-			if (d.itemTblidx == 0)
-				continue;
-			if (g_pItemManager->IsValidSingleDropIdx(d.itemTblidx) == false)
-				continue;
-			if (d.rate >= 100.f || Dbo_CheckProbabilityF(d.rate))
-			{
-				BYTE cnt = d.count ? d.count : 1;
-				if (cnt > 1)
-					CreateStackedDrop(pMob, pPlayer, d.itemTblidx, cnt);
-				else
-					CreateSingleDrop(pMob, pPlayer, d.itemTblidx);
-			}
+			BYTE cnt = d.count ? d.count : 1;
+			if (cnt > 1)
+				CreateStackedDrop(pMob, pPlayer, d.itemTblidx, cnt);
+			else
+				CreateSingleDrop(pMob, pPlayer, d.itemTblidx);
 		}
 	}
 }
@@ -455,7 +459,7 @@ void CCustomDropEvent::EndEvent()
 
 	CNtlStringW msg;
 	CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
-	sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+	sGU_SYSTEM_DISPLAY_TEXT *res = (sGU_SYSTEM_DISPLAY_TEXT *)packet.GetPacketData();
 	res->wOpCode = GU_SYSTEM_DISPLAY_TEXT;
 	res->wMessageLengthInUnicode = (WORD)msg.Format(L"Custom Drop Event ended!");
 	res->byDisplayType = SERVER_TEXT_EMERGENCY;
@@ -471,7 +475,7 @@ void CCustomDropEvent::LoadEvent(HSESSION hSession)
 
 	CNtlStringW msg;
 	CNtlPacket packetMsg(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
-	sGU_SYSTEM_DISPLAY_TEXT* resMsg = (sGU_SYSTEM_DISPLAY_TEXT*)packetMsg.GetPacketData();
+	sGU_SYSTEM_DISPLAY_TEXT *resMsg = (sGU_SYSTEM_DISPLAY_TEXT *)packetMsg.GetPacketData();
 	resMsg->wOpCode = GU_SYSTEM_DISPLAY_TEXT;
 	resMsg->byDisplayType = SERVER_TEXT_EMERGENCY;
 	resMsg->wMessageLengthInUnicode = (WORD)msg.Format(L"Custom Drop Event is currently running!");
@@ -479,10 +483,10 @@ void CCustomDropEvent::LoadEvent(HSESSION hSession)
 	g_pApp->Send(hSession, &packetMsg);
 }
 
-void CCustomDropEvent::CreateSingleDrop(CMonster* pMob, CCharacter* pPlayer, unsigned int dropId)
+void CCustomDropEvent::CreateSingleDrop(CMonster *pMob, CCharacter *pPlayer, unsigned int dropId)
 {
 	ERR_LOG(LOG_GENERAL, "[DropTrace] CustomDropEvent CreateSingleDrop mob=%u player=%u item=%u", pMob->GetTblidx(), pPlayer->GetID(), dropId);
-	CItemDrop* pDrop = g_pItemManager->CreateSingleDrop(100.f, dropId);
+	CItemDrop *pDrop = g_pItemManager->CreateSingleDrop(100.f, dropId);
 	if (pDrop)
 	{
 		sVECTOR3 pos;
@@ -497,7 +501,7 @@ void CCustomDropEvent::CreateSingleDrop(CMonster* pMob, CCharacter* pPlayer, uns
 	}
 }
 
-void CCustomDropEvent::CreateStackedDrop(CMonster* pMob, CCharacter* pPlayer, unsigned int dropId, BYTE count)
+void CCustomDropEvent::CreateStackedDrop(CMonster *pMob, CCharacter *pPlayer, unsigned int dropId, BYTE count)
 {
 	if (count <= 1)
 	{
@@ -505,7 +509,7 @@ void CCustomDropEvent::CreateStackedDrop(CMonster* pMob, CCharacter* pPlayer, un
 		return;
 	}
 
-	sITEM_TBLDAT* pItemData = (sITEM_TBLDAT*)g_pTableContainer->GetItemTable()->FindData(dropId);
+	sITEM_TBLDAT *pItemData = (sITEM_TBLDAT *)g_pTableContainer->GetItemTable()->FindData(dropId);
 	if (!pItemData)
 	{
 		CreateSingleDrop(pMob, pPlayer, dropId);
@@ -520,7 +524,7 @@ void CCustomDropEvent::CreateStackedDrop(CMonster* pMob, CCharacter* pPlayer, un
 		while (remaining > 0 && dropsSpawned < 10) // safety cap to avoid spam
 		{
 			BYTE stack = remaining > maxStack ? maxStack : remaining;
-			CItemDrop* pDrop = g_pItemManager->CreateSingleDrop(100.f, dropId);
+			CItemDrop *pDrop = g_pItemManager->CreateSingleDrop(100.f, dropId);
 			if (pDrop)
 			{
 				sVECTOR3 pos;
@@ -550,18 +554,18 @@ void CCustomDropEvent::CreateStackedDrop(CMonster* pMob, CCharacter* pPlayer, un
 	}
 }
 
-void CCustomDropEvent::ApplyModifiers(CMonster* pMob)
+void CCustomDropEvent::ApplyModifiers(CMonster *pMob)
 {
 	if (!m_bOn)
 		return;
 	auto it = m_mobMods.find(pMob->GetTblidx());
 	if (it == m_mobMods.end())
 		return;
-	const Modifiers& m = it->second;
+	const Modifiers &m = it->second;
 	if (m.IsIdentity())
 		return;
 
-	CCharacterAtt* att = pMob->GetCharAtt();
+	CCharacterAtt *att = pMob->GetCharAtt();
 	if (!att)
 		return;
 
@@ -620,40 +624,50 @@ void CCustomDropEvent::ApplyModifiers(CMonster* pMob)
 		float cur = (float)att->GetAttackRate();
 		float target = cur * m.attackRate;
 		float diff = target - cur;
-		if (diff > 0.0f) att->CalculateAttackRate(diff, SYSTEM_EFFECT_APPLY_TYPE_VALUE, true);
-		else if (diff < 0.0f) att->CalculateAttackRate(-diff, SYSTEM_EFFECT_APPLY_TYPE_VALUE, false);
+		if (diff > 0.0f)
+			att->CalculateAttackRate(diff, SYSTEM_EFFECT_APPLY_TYPE_VALUE, true);
+		else if (diff < 0.0f)
+			att->CalculateAttackRate(-diff, SYSTEM_EFFECT_APPLY_TYPE_VALUE, false);
 	}
 	if (m.dodgeRate != 1.f)
 	{
 		float cur = (float)att->GetDodgeRate();
 		float target = cur * m.dodgeRate;
 		float diff = target - cur;
-		if (diff > 0.0f) att->CalculateDodgeRate(diff, SYSTEM_EFFECT_APPLY_TYPE_VALUE, true);
-		else if (diff < 0.0f) att->CalculateDodgeRate(-diff, SYSTEM_EFFECT_APPLY_TYPE_VALUE, false);
+		if (diff > 0.0f)
+			att->CalculateDodgeRate(diff, SYSTEM_EFFECT_APPLY_TYPE_VALUE, true);
+		else if (diff < 0.0f)
+			att->CalculateDodgeRate(-diff, SYSTEM_EFFECT_APPLY_TYPE_VALUE, false);
 	}
 	if (m.blockRate != 1.f)
 	{
 		float cur = (float)att->GetBlockRate();
 		float target = cur * m.blockRate;
 		float diff = target - cur;
-		if (diff > 0.0f) att->CalculateBlockRate(diff, SYSTEM_EFFECT_APPLY_TYPE_VALUE, true);
-		else if (diff < 0.0f) att->CalculateBlockRate(-diff, SYSTEM_EFFECT_APPLY_TYPE_VALUE, false);
+		if (diff > 0.0f)
+			att->CalculateBlockRate(diff, SYSTEM_EFFECT_APPLY_TYPE_VALUE, true);
+		else if (diff < 0.0f)
+			att->CalculateBlockRate(-diff, SYSTEM_EFFECT_APPLY_TYPE_VALUE, false);
 	}
 	if (m.blockDmg != 1.f)
 	{
 		float cur = (float)att->GetBlockDamageRate();
 		float target = cur * m.blockDmg;
 		float diff = target - cur;
-		if (diff > 0.0f) att->CalculateBlockDamageRate(diff, SYSTEM_EFFECT_APPLY_TYPE_VALUE, true);
-		else if (diff < 0.0f) att->CalculateBlockDamageRate(-diff, SYSTEM_EFFECT_APPLY_TYPE_VALUE, false);
+		if (diff > 0.0f)
+			att->CalculateBlockDamageRate(diff, SYSTEM_EFFECT_APPLY_TYPE_VALUE, true);
+		else if (diff < 0.0f)
+			att->CalculateBlockDamageRate(-diff, SYSTEM_EFFECT_APPLY_TYPE_VALUE, false);
 	}
 	if (m.guardRate != 1.f)
 	{
 		float cur = (float)att->GetGuardRate();
 		float target = cur * m.guardRate;
 		float diff = target - cur;
-		if (diff > 0.0f) att->CalculateGuardRate(diff, SYSTEM_EFFECT_APPLY_TYPE_VALUE, true);
-		else if (diff < 0.0f) att->CalculateGuardRate(-diff, SYSTEM_EFFECT_APPLY_TYPE_VALUE, false);
+		if (diff > 0.0f)
+			att->CalculateGuardRate(diff, SYSTEM_EFFECT_APPLY_TYPE_VALUE, true);
+		else if (diff < 0.0f)
+			att->CalculateGuardRate(-diff, SYSTEM_EFFECT_APPLY_TYPE_VALUE, false);
 	}
 
 	if (m.physCrit != 1.f)
@@ -661,16 +675,20 @@ void CCustomDropEvent::ApplyModifiers(CMonster* pMob)
 		float cur = (float)att->GetPhysicalCriticalRate();
 		float target = cur * m.physCrit;
 		float diff = target - cur;
-		if (diff > 0.0f) att->CalculatePhysicalCriticalRate(diff, SYSTEM_EFFECT_APPLY_TYPE_VALUE, true);
-		else if (diff < 0.0f) att->CalculatePhysicalCriticalRate(-diff, SYSTEM_EFFECT_APPLY_TYPE_VALUE, false);
+		if (diff > 0.0f)
+			att->CalculatePhysicalCriticalRate(diff, SYSTEM_EFFECT_APPLY_TYPE_VALUE, true);
+		else if (diff < 0.0f)
+			att->CalculatePhysicalCriticalRate(-diff, SYSTEM_EFFECT_APPLY_TYPE_VALUE, false);
 	}
 	if (m.engCrit != 1.f)
 	{
 		float cur = (float)att->GetEnergyCriticalRate();
 		float target = cur * m.engCrit;
 		float diff = target - cur;
-		if (diff > 0.0f) att->CalculateEnergyCriticalRate(diff, SYSTEM_EFFECT_APPLY_TYPE_VALUE, true);
-		else if (diff < 0.0f) att->CalculateEnergyCriticalRate(-diff, SYSTEM_EFFECT_APPLY_TYPE_VALUE, false);
+		if (diff > 0.0f)
+			att->CalculateEnergyCriticalRate(diff, SYSTEM_EFFECT_APPLY_TYPE_VALUE, true);
+		else if (diff < 0.0f)
+			att->CalculateEnergyCriticalRate(-diff, SYSTEM_EFFECT_APPLY_TYPE_VALUE, false);
 	}
 
 	// Crit damage rates are floats
