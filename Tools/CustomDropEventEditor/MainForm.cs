@@ -18,30 +18,31 @@ namespace CustomDropEventEditor
         public ItemsDialog(Dictionary<uint, string> items)
         {
             Text = "Items"; Width = 520; Height = 600; StartPosition = FormStartPosition.CenterParent;
-            BackColor = Color.FromArgb(32,33,36); ForeColor = Color.Gainsboro; Font = new Font("Segoe UI", 10);
+            BackColor = Color.FromArgb(32, 33, 36); ForeColor = Color.Gainsboro; Font = new Font("Segoe UI", 10);
             var panelButtons = new Panel { Dock = DockStyle.Bottom, Height = 36 };
             panelButtons.Controls.Add(_ok); panelButtons.Controls.Add(_cancel);
             _ok.Width = 100; _cancel.Width = 100; _ok.Left = 520 - 220; _cancel.Left = 520 - 110;
             Controls.Add(_list); Controls.Add(panelButtons); Controls.Add(_filter);
             _data = items.Select(kv => (kv.Key, kv.Value)).OrderBy(t => t.Key).ToList();
-            void applyTheme(Control c){ c.BackColor = Color.FromArgb(40,41,45); c.ForeColor = Color.Gainsboro; }
+            void applyTheme(Control c) { c.BackColor = Color.FromArgb(40, 41, 45); c.ForeColor = Color.Gainsboro; }
             applyTheme(_list); applyTheme(_filter); applyTheme(_ok); applyTheme(_cancel);
             _filter.PlaceholderText = "Filter by id or name";
-            _filter.TextChanged += (s,e)=> Refresh();
-            _list.DoubleClick += (s,e)=> { if (_list.SelectedItem is not null) { pick(); } };
-            _ok.Click += (s,e)=> { pick(); };
-            _cancel.Click += (s,e)=> { DialogResult = DialogResult.Cancel; Close(); };
+            _filter.TextChanged += (s, e) => Refresh();
+            _list.DoubleClick += (s, e) => { if (_list.SelectedItem is not null) { pick(); } };
+            _ok.Click += (s, e) => { pick(); };
+            _cancel.Click += (s, e) => { DialogResult = DialogResult.Cancel; Close(); };
             Refresh();
-            void pick(){
-                if (_list.SelectedItem is ItemWrapper w){ SelectedId = w.Id; DialogResult = DialogResult.OK; Close(); }
+            void pick()
+            {
+                if (_list.SelectedItem is ItemWrapper w) { SelectedId = w.Id; DialogResult = DialogResult.OK; Close(); }
             }
         }
-        private sealed class ItemWrapper { public uint Id; private readonly string _t; public ItemWrapper(uint id,string t){Id=id;_t=t;} public override string ToString()=>_t; }
+        private sealed class ItemWrapper { public uint Id; private readonly string _t; public ItemWrapper(uint id, string t) { Id = id; _t = t; } public override string ToString() => _t; }
         private void Refresh()
         {
             var f = _filter.Text?.Trim();
             _list.Items.Clear();
-            foreach (var (id,name) in _data)
+            foreach (var (id, name) in _data)
             {
                 var display = string.IsNullOrWhiteSpace(name) ? id.ToString() : $"{id} - {name}";
                 if (!string.IsNullOrWhiteSpace(f))
@@ -66,9 +67,10 @@ namespace CustomDropEventEditor
 
         private TextBox txtPath;
         private Button btnBrowse, btnLoad, btnSave;
-    private ListBox lstCfgMobs, lstAvailMobs;
+        private Button btnHelp;
+        private ListBox lstCfgMobs, lstAvailMobs;
         private TextBox txtMobFilter;
-    private Label lblMobFilter, lblCfgMobs, lblAvailMobs;
+        private Label lblMobFilter, lblCfgMobs, lblAvailMobs;
         private Button btnClearFilter;
         private TextBox txtDrops, txtSpawns, txtMods, txtGlobalSpawns;
         private Label lblDrops, lblSpawns, lblMods, lblGlobalSpawns;
@@ -76,14 +78,16 @@ namespace CustomDropEventEditor
         private Label _lblStatus;
         private ListBox lstDrops, lstSpawns;
         private TextBox txtDropItemId, txtSpawnMobId;
-        private NumericUpDown numDropRate, numSpawnRate, numSpawnCount;
+        private NumericUpDown numDropRate, numDropCount, numSpawnRate, numSpawnCount, numLevel;
         private Button btnAddDrop, btnRemoveDrop, btnAddSpawn, btnRemoveSpawn;
         private TextBox txtNewMobId;
-    private Button btnAddMob, btnUseAvailable;
-        private Label lblAddMob, lblDropItem, lblDropRate, lblSpawnMob, lblSpawnRate, lblSpawnCount;
+        private Button btnAddMob, btnUseAvailable;
+        private Label lblAddMob, lblDropItem, lblDropRate, lblSpawnMob, lblSpawnRate, lblSpawnCount, lblLevel;
         private ConfigModel _model = new();
         private Dictionary<uint, string> _mobNames = new();
         private Dictionary<uint, string> _itemNames = new();
+        private Dictionary<uint, int> _levels = new();
+        private ContextMenuStrip _cmsCfgMobs;
 
         public MainForm()
         {
@@ -95,7 +99,8 @@ namespace CustomDropEventEditor
             BackColor = Color.FromArgb(32, 33, 36);
             ForeColor = Color.Gainsboro;
 
-            txtPath = new TextBox { Left = 10, Top = 10, Width = 800, Height = 28, Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right };
+            txtPath = new TextBox { Left = 10, Top = 10, Width = 720, Height = 28, Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right };
+            btnHelp = new Button { Left = 740, Top = 8, Width = 70, Height = 28, Text = "Help" };
             btnBrowse = new Button { Left = 820, Top = 8, Width = 80, Height = 28, Text = "Browse" };
             btnLoad = new Button { Left = 910, Top = 8, Width = 80, Height = 28, Text = "Load" };
             btnSave = new Button { Left = 1000, Top = 8, Width = 80, Height = 28, Text = "Save" };
@@ -119,23 +124,27 @@ namespace CustomDropEventEditor
             lblSpawns = new Label { Left = 320, Top = 350, AutoSize = true, Text = "Spawns (mob@ratexcount, ...)" };
             txtSpawns = new TextBox { Left = 320, Top = 370, Width = 760, Height = 28, Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right };
 
-            lstDrops = new ListBox { Left = 320, Top = 182, Width = 760, Height = 120, Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right, IntegralHeight = false };
-            lblDropItem = new Label { Left = 320, Top = 286, AutoSize = true, Text = "Item ID" };
+            lstDrops = new ListBox { Left = 320, Top = 182, Width = 760, Height = 100, Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right, IntegralHeight = false };
+            lblDropItem = new Label { Left = 320, Top = 286, AutoSize = true, Text = "Item ID", BackColor = Color.FromArgb(32, 33, 36) };
             txtDropItemId = new TextBox { Left = 320, Top = 306, Width = 140, Height = 28, Anchor = AnchorStyles.Top | AnchorStyles.Left };
-            lblDropRate = new Label { Left = 470, Top = 286, AutoSize = true, Text = "Rate" };
+            lblDropRate = new Label { Left = 470, Top = 286, AutoSize = true, Text = "Rate (%)", BackColor = Color.FromArgb(32, 33, 36) };
             numDropRate = new NumericUpDown { Left = 470, Top = 306, Width = 100, Height = 28, DecimalPlaces = 2, Minimum = 0, Maximum = 100000, Increment = 1, Anchor = AnchorStyles.Top | AnchorStyles.Left };
-            btnAddDrop = new Button { Left = 580, Top = 306, Width = 90, Height = 28, Text = "Add" };
-            btnRemoveDrop = new Button { Left = 680, Top = 306, Width = 90, Height = 28, Text = "Remove" };
+            var lblDropCount = new Label { Left = 580, Top = 286, AutoSize = true, Text = "Count", BackColor = Color.FromArgb(32, 33, 36) };
+            numDropCount = new NumericUpDown { Left = 580, Top = 306, Width = 80, Height = 28, DecimalPlaces = 0, Minimum = 1, Maximum = 255, Increment = 1, Anchor = AnchorStyles.Top | AnchorStyles.Left };
+            btnAddDrop = new Button { Left = 670, Top = 306, Width = 90, Height = 28, Text = "Add" };
+            btnRemoveDrop = new Button { Left = 770, Top = 306, Width = 90, Height = 28, Text = "Remove" };
 
             lstSpawns = new ListBox { Left = 320, Top = 418, Width = 760, Height = 120, Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right, IntegralHeight = false };
-            lblSpawnMob = new Label { Left = 320, Top = 548, AutoSize = true, Text = "Mob ID" };
+            lblSpawnMob = new Label { Left = 320, Top = 548, AutoSize = true, Text = "Mob ID", BackColor = Color.FromArgb(32, 33, 36) };
             txtSpawnMobId = new TextBox { Left = 320, Top = 568, Width = 140, Height = 28, Anchor = AnchorStyles.Top | AnchorStyles.Left };
-            lblSpawnRate = new Label { Left = 470, Top = 548, AutoSize = true, Text = "Rate" };
+            lblSpawnRate = new Label { Left = 470, Top = 548, AutoSize = true, Text = "Rate (%)", BackColor = Color.FromArgb(32, 33, 36) };
             numSpawnRate = new NumericUpDown { Left = 470, Top = 568, Width = 100, Height = 28, DecimalPlaces = 2, Minimum = 0, Maximum = 100000, Increment = 1, Anchor = AnchorStyles.Top | AnchorStyles.Left };
-            lblSpawnCount = new Label { Left = 580, Top = 548, AutoSize = true, Text = "Count" };
+            lblSpawnCount = new Label { Left = 580, Top = 548, AutoSize = true, Text = "Count", BackColor = Color.FromArgb(32, 33, 36) };
             numSpawnCount = new NumericUpDown { Left = 580, Top = 568, Width = 80, Height = 28, DecimalPlaces = 0, Minimum = 1, Maximum = 255, Increment = 1, Anchor = AnchorStyles.Top | AnchorStyles.Left };
-            btnAddSpawn = new Button { Left = 670, Top = 568, Width = 90, Height = 28, Text = "Add" };
-            btnRemoveSpawn = new Button { Left = 770, Top = 568, Width = 90, Height = 28, Text = "Remove" };
+            lblLevel = new Label { Left = 670, Top = 548, AutoSize = true, Text = "Level", BackColor = Color.FromArgb(32, 33, 36) };
+            numLevel = new NumericUpDown { Left = 670, Top = 568, Width = 80, Height = 28, DecimalPlaces = 0, Minimum = 1, Maximum = 255, Increment = 1, Anchor = AnchorStyles.Top | AnchorStyles.Left };
+            btnAddSpawn = new Button { Left = 760, Top = 568, Width = 90, Height = 28, Text = "Add" };
+            btnRemoveSpawn = new Button { Left = 860, Top = 568, Width = 90, Height = 28, Text = "Remove" };
 
             lblMods = new Label { Left = 320, Top = 608, AutoSize = true, Text = "Modifiers (hp= engAtk= physAtk= ... sizeRate=)" };
             txtMods = new TextBox { Left = 320, Top = 628, Width = 760, Height = 28, Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right };
@@ -145,15 +154,25 @@ namespace CustomDropEventEditor
             btnAddMob = new Button { Left = 250, Top = 38, Width = 60, Height = 28, Text = "Add" };
             btnUseAvailable = new Button { Left = 240, Top = 410, Width = 70, Height = 24, Text = "Use ▶" };
 
-            Controls.AddRange(new Control[] { txtPath, btnBrowse, btnLoad, btnSave, btnImportMobs, btnImportItems, lblMobFilter, txtMobFilter, btnClearFilter, lblCfgMobs, lstCfgMobs, lblAvailMobs, lstAvailMobs, btnUseAvailable, lblGlobalSpawns, txtGlobalSpawns, lblDrops, txtDrops, lstDrops, txtDropItemId, numDropRate, btnAddDrop, btnRemoveDrop, lblSpawns, txtSpawns, lstSpawns, txtSpawnMobId, numSpawnRate, numSpawnCount, btnAddSpawn, btnRemoveSpawn, lblMods, txtMods, lblAddMob, txtNewMobId, btnAddMob });
+            Controls.AddRange(new Control[] { txtPath, btnHelp, btnBrowse, btnLoad, btnSave, btnImportMobs, btnImportItems, lblMobFilter, txtMobFilter, btnClearFilter, lblCfgMobs, lstCfgMobs, lblAvailMobs, lstAvailMobs, btnUseAvailable, lblGlobalSpawns, txtGlobalSpawns, lblDrops, txtDrops, lstDrops, lblDropItem, txtDropItemId, lblDropRate, numDropRate, lblDropCount, numDropCount, btnAddDrop, btnRemoveDrop, lblSpawns, txtSpawns, lstSpawns, lblSpawnMob, txtSpawnMobId, lblSpawnRate, numSpawnRate, lblSpawnCount, numSpawnCount, lblLevel, numLevel, btnAddSpawn, btnRemoveSpawn, lblMods, txtMods, lblAddMob, txtNewMobId, btnAddMob });
 
             btnBrowse.Click += (s, e) => BrowsePath();
             btnLoad.Click += (s, e) => LoadCfg();
             btnSave.Click += (s, e) => SaveCfg();
+            btnHelp.Click += (s, e) => ShowHelp();
             btnImportMobs.Click += (s, e) => ImportMobs();
             btnImportItems.Click += (s, e) => ImportItems();
             lstCfgMobs.SelectedIndexChanged += (s, e) => { if (lstCfgMobs.SelectedIndex >= 0) { lstAvailMobs.ClearSelected(); LoadMobIntoEditors(); } };
             lstAvailMobs.SelectedIndexChanged += (s, e) => { if (lstAvailMobs.SelectedIndex >= 0) { lstCfgMobs.ClearSelected(); LoadMobIntoEditors(); } };
+            lstCfgMobs.KeyDown += (s, e) => { if (e.KeyCode == Keys.Delete) { DeleteSelectedConfiguredMob(); e.Handled = true; } };
+            lstCfgMobs.MouseDown += (s, e) =>
+            {
+                if (e.Button == MouseButtons.Right)
+                {
+                    int idx = lstCfgMobs.IndexFromPoint(e.Location);
+                    if (idx >= 0) lstCfgMobs.SelectedIndex = idx;
+                }
+            };
             txtDrops.Leave += (s, e) => SaveMobFromEditors();
             txtSpawns.Leave += (s, e) => SaveMobFromEditors();
             txtMods.Leave += (s, e) => SaveMobFromEditors();
@@ -169,11 +188,16 @@ namespace CustomDropEventEditor
             btnClearFilter.Click += (s, e) => { txtMobFilter.Text = string.Empty; RefreshMobList(); };
             lstDrops.KeyDown += (s, e) => { if (e.KeyCode == Keys.Delete) { RemoveSelectedDrop(); e.Handled = true; } };
             lstSpawns.KeyDown += (s, e) => { if (e.KeyCode == Keys.Delete) { RemoveSelectedSpawn(); e.Handled = true; } };
+            lstDrops.SelectedIndexChanged += (s, e) => { btnAddDrop.Text = lstDrops.SelectedIndex >= 0 ? "Update" : "Add"; FillDropInputsFromSelection(); };
+            lstSpawns.SelectedIndexChanged += (s, e) => { btnAddSpawn.Text = lstSpawns.SelectedIndex >= 0 ? "Update" : "Add"; };
             txtDropItemId.KeyDown += (s, e) => { if (e.KeyCode == Keys.Enter) { AddDropFromInputs(); e.Handled = true; } };
             txtSpawnMobId.KeyDown += (s, e) => { if (e.KeyCode == Keys.Enter) { AddSpawnFromInputs(); e.Handled = true; } };
             numDropRate.KeyDown += (s, e) => { if (e.KeyCode == Keys.Enter) { AddDropFromInputs(); e.Handled = true; } };
+            numDropCount.KeyDown += (s, e) => { if (e.KeyCode == Keys.Enter) { AddDropFromInputs(); e.Handled = true; } };
             numSpawnRate.KeyDown += (s, e) => { if (e.KeyCode == Keys.Enter) { AddSpawnFromInputs(); e.Handled = true; } };
             numSpawnCount.KeyDown += (s, e) => { if (e.KeyCode == Keys.Enter) { AddSpawnFromInputs(); e.Handled = true; } };
+            numLevel.KeyDown += (s, e) => { if (e.KeyCode == Keys.Enter) { SaveMobFromEditors(); e.Handled = true; } };
+            numLevel.Leave += (s, e) => SaveMobFromEditors();
 
             ApplyFieldTheme(txtPath);
             ApplyFieldTheme(txtGlobalSpawns);
@@ -185,10 +209,23 @@ namespace CustomDropEventEditor
             ApplyFieldTheme(txtNewMobId);
             ApplyFieldTheme(txtMobFilter);
             ApplyLabelTheme(lblMobFilter);
+            ApplyLabelTheme(lblCfgMobs);
+            ApplyLabelTheme(lblAvailMobs);
+            ApplyLabelTheme(lblDrops);
             ApplyLabelTheme(lblSpawns);
+            ApplyLabelTheme(lblGlobalSpawns);
+            ApplyLabelTheme(lblMods);
+            ApplyLabelTheme(lblDropItem);
+            ApplyLabelTheme(lblDropRate);
+            ApplyLabelTheme(lblSpawnMob);
+            ApplyLabelTheme(lblSpawnRate);
+            ApplyLabelTheme(lblSpawnCount);
+            ApplyLabelTheme(lblLevel);
             ApplyNumericTheme(numDropRate);
+            ApplyNumericTheme(numDropCount);
             ApplyNumericTheme(numSpawnRate);
             ApplyNumericTheme(numSpawnCount);
+            ApplyNumericTheme(numLevel);
             ApplyListTheme(lstCfgMobs);
             ApplyListTheme(lstAvailMobs);
             ApplyListTheme(lstDrops);
@@ -205,21 +242,106 @@ namespace CustomDropEventEditor
             StyleButton(btnAddMob);
             StyleButton(btnClearFilter);
             StyleButton(btnUseAvailable);
+            StyleButton(btnHelp);
+
+            // Context menu for configured mobs
+            _cmsCfgMobs = new ContextMenuStrip();
+            var miDelete = new ToolStripMenuItem("Delete Mob...");
+            miDelete.Click += (s, e) => DeleteSelectedConfiguredMob();
+            _cmsCfgMobs.Items.Add(miDelete);
+            lstCfgMobs.ContextMenuStrip = _cmsCfgMobs;
 
             KeyPreview = true;
             KeyDown += (s, e) =>
             {
                 if (e.Control && e.KeyCode == Keys.S) { btnSave.PerformClick(); e.Handled = true; }
                 else if (e.Control && e.KeyCode == Keys.O) { btnLoad.PerformClick(); e.Handled = true; }
+                else if (e.KeyCode == Keys.F1) { ShowHelp(); e.Handled = true; }
             };
 
-            var __status = new Panel { Height = 26, Dock = DockStyle.Bottom, BackColor = Color.FromArgb(45, 47, 51), Padding = new Padding(8, 0, 8, 0) };
+            var __status = new Panel { Height = 32, Dock = DockStyle.Bottom, BackColor = Color.FromArgb(45, 47, 51), Padding = new Padding(8, 0, 8, 0) };
             _lblStatus = new Label { Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft, ForeColor = Color.Gainsboro, Text = "Ready" };
             __status.Controls.Add(_lblStatus);
             Controls.Add(__status);
 
             var defaultPath = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "DboServer", "ExecutionEnv", "config", "CustomDropEvent.cfg");
             txtPath.Text = Path.GetFullPath(defaultPath);
+
+            // Attempt to auto-load mob/item catalogs from the app runtime folder
+            try { AutoLoadCatalogs(); }
+            catch { /* non-fatal */ }
+        }
+
+        private void DeleteSelectedConfiguredMob()
+        {
+            if (lstCfgMobs.SelectedItem is not ListViewItemWrapper w) return;
+            var id = w.Id;
+            var name = _mobNames.TryGetValue(id, out var n) && !string.IsNullOrWhiteSpace(n) ? $"{id} - {n}" : id.ToString();
+            var res = MessageBox.Show(this, $"Delete all data for mob {name} from the config?\nThis removes drops, spawns and modifiers.", "Delete Mob", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+            if (res != DialogResult.Yes) return;
+
+            _model.Drops.Remove(id);
+            _model.Spawns.Remove(id);
+            _model.Mods.Remove(id);
+
+            try
+            {
+                // Persist and reload for canonical state
+                _model.Save(txtPath.Text);
+                _model = ConfigModel.Load(txtPath.Text);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(this, ex.Message, "Save Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+
+            // Refresh lists and clear/select defaults
+            RefreshMobList(txtMobFilter.Text);
+            LoadGlobalIntoEditors();
+            if (lstCfgMobs.Items.Count > 0) lstCfgMobs.SelectedIndex = 0;
+            else if (lstAvailMobs.Items.Count > 0) lstAvailMobs.SelectedIndex = 0;
+            else
+            {
+                txtDrops.Text = txtSpawns.Text = txtMods.Text = string.Empty;
+                lstDrops.Items.Clear();
+                lstSpawns.Items.Clear();
+            }
+            _lblStatus.Text = $"Deleted mob {id} and saved.";
+        }
+
+        private void AutoLoadCatalogs()
+        {
+            string baseDir = AppContext.BaseDirectory;
+            string? FindFirstExisting(params string[] names)
+            {
+                foreach (var n in names)
+                {
+                    var p = Path.Combine(baseDir, n);
+                    if (File.Exists(p)) return p;
+                }
+                return null;
+            }
+
+            var mobPath = FindFirstExisting("Mobs.txt", "mobs.txt", "MobList.txt", "moblist.txt", "mobs.cfg");
+            var itemPath = FindFirstExisting("Items.txt", "items.txt", "ItemList.txt", "itemlist.txt", "items.cfg");
+
+            int mobCount = 0, itemCount = 0;
+            if (mobPath != null)
+            {
+                _mobNames = MobsItemsCatalog.ParseMobs(mobPath);
+                mobCount = _mobNames.Count;
+            }
+            if (itemPath != null)
+            {
+                _itemNames = MobsItemsCatalog.ParseItems(itemPath);
+                itemCount = _itemNames.Count;
+            }
+
+            if (mobCount > 0 || itemCount > 0)
+            {
+                RefreshMobList();
+                _lblStatus.Text = $"Auto-loaded catalogs: mobs={mobCount}, items={itemCount}";
+            }
         }
 
         private void UseAvailableSelected()
@@ -250,21 +372,28 @@ namespace CustomDropEventEditor
 
         private void ImportItems()
         {
-            using var ofd = new OpenFileDialog();
-            ofd.Title = "Import Item List";
-            ofd.Filter = "Text files (*.txt;*.cfg)|*.txt;*.cfg|All files (*.*)|*.*";
-            if (ofd.ShowDialog(this) == DialogResult.OK)
+            // If we already have items loaded, open the picker directly
+            if (_itemNames != null && _itemNames.Count > 0)
             {
-                _itemNames = MobsItemsCatalog.ParseItems(ofd.FileName);
                 using var dlg = new ItemsDialog(_itemNames);
                 if (dlg.ShowDialog(this) == DialogResult.OK && dlg.SelectedId.HasValue)
-                {
                     txtDropItemId.Text = dlg.SelectedId.Value.ToString();
-                }
+                return;
+            }
+
+            using var ofd = new OpenFileDialog
+            {
+                Title = "Import Item List",
+                Filter = "Text files (*.txt;*.cfg)|*.txt;*.cfg|All files (*.*)|*.*"
+            };
+            if (ofd.ShowDialog(this) != DialogResult.OK) return;
+            _itemNames = MobsItemsCatalog.ParseItems(ofd.FileName);
+            using (var dlg2 = new ItemsDialog(_itemNames))
+            {
+                if (dlg2.ShowDialog(this) == DialogResult.OK && dlg2.SelectedId.HasValue)
+                    txtDropItemId.Text = dlg2.SelectedId.Value.ToString();
                 else
-                {
                     MessageBox.Show(this, $"Imported {_itemNames.Count} items.");
-                }
             }
         }
 
@@ -283,6 +412,7 @@ namespace CustomDropEventEditor
             try
             {
                 _model = ConfigModel.Load(txtPath.Text);
+                _levels = LevelsSidecar.Load(txtPath.Text);
                 RefreshMobList();
                 LoadGlobalIntoEditors();
                 if (lstCfgMobs.Items.Count > 0) lstCfgMobs.SelectedIndex = 0; else if (lstAvailMobs.Items.Count > 0) lstAvailMobs.SelectedIndex = 0;
@@ -290,7 +420,7 @@ namespace CustomDropEventEditor
                 var dropCount = _model.Drops.Sum(kv => kv.Value.Count);
                 var spawnKeys = _model.Spawns.Keys.Count;
                 var modKeys = _model.Mods.Keys.Count;
-                _lblStatus.Text = $"Loaded: mobs={mobCount} drops={dropCount} spawnKeys={spawnKeys} modKeys={modKeys}";
+                _lblStatus.Text = $"Loaded: mobs={mobCount} drops={dropCount} spawnKeys={spawnKeys} modKeys={modKeys} levels={_levels.Count}";
                 MessageBox.Show(this, "Config loaded.");
             }
             catch (Exception ex)
@@ -304,10 +434,33 @@ namespace CustomDropEventEditor
         {
             try
             {
+                uint? selectedId = null;
+                if (lstCfgMobs.SelectedItem is ListViewItemWrapper w1) selectedId = w1.Id; else if (lstAvailMobs.SelectedItem is ListViewItemWrapper w2) selectedId = w2.Id;
                 SaveGlobalFromEditors();
                 SaveMobFromEditors();
                 _model.Save(txtPath.Text);
-                MessageBox.Show(this, "Config saved.");
+                LevelsSidecar.Save(txtPath.Text, _levels);
+                // Reload from disk to ensure lists are filled from canonical persisted state
+                _model = ConfigModel.Load(txtPath.Text);
+                _levels = LevelsSidecar.Load(txtPath.Text);
+                RefreshMobList(txtMobFilter.Text);
+                LoadGlobalIntoEditors();
+                if (selectedId is uint id)
+                {
+                    bool selected = false;
+                    for (int i = 0; i < lstCfgMobs.Items.Count; i++)
+                    {
+                        if (lstCfgMobs.Items[i] is ListViewItemWrapper w && w.Id == id) { lstCfgMobs.SelectedIndex = i; selected = true; break; }
+                    }
+                    if (!selected)
+                    {
+                        for (int i = 0; i < lstAvailMobs.Items.Count; i++)
+                        {
+                            if (lstAvailMobs.Items[i] is ListViewItemWrapper w && w.Id == id) { lstAvailMobs.SelectedIndex = i; selected = true; break; }
+                        }
+                    }
+                }
+                _lblStatus.Text = "Config saved and reloaded.";
             }
             catch (Exception ex)
             {
@@ -331,7 +484,9 @@ namespace CustomDropEventEditor
 
             foreach (var id in configured.OrderBy(x => x))
             {
-                var display = _mobNames.TryGetValue(id, out var name) && !string.IsNullOrWhiteSpace(name) ? $"{id} - {name}" : id.ToString();
+                var displayBase = _mobNames.TryGetValue(id, out var name) && !string.IsNullOrWhiteSpace(name) ? $"{id} - {name}" : id.ToString();
+                var display = displayBase;
+                if (_levels.TryGetValue(id, out var lvl)) display += $" (Lv {Math.Clamp(lvl, 1, 255)})";
                 if (!string.IsNullOrWhiteSpace(filterText) && display.IndexOf(filterText, StringComparison.OrdinalIgnoreCase) < 0) continue;
                 lstCfgMobs.Items.Add(new ListViewItemWrapper(id, display));
             }
@@ -407,6 +562,8 @@ namespace CustomDropEventEditor
             else if (lstAvailMobs.SelectedItem is ListViewItemWrapper w2) selectedId = w2.Id;
             if (selectedId is null) { txtDrops.Text = txtSpawns.Text = txtMods.Text = string.Empty; lstDrops.Items.Clear(); lstSpawns.Items.Clear(); return; }
             var id = selectedId.Value;
+            // Level sidecar
+            try { numLevel.Value = _levels.TryGetValue(id, out var lvl) ? Math.Clamp(lvl, 1, 255) : 1; } catch { /* ignore */ }
 
             // Prefill spawn input fields with defaults for quick add
             txtSpawnMobId.Text = id.ToString();
@@ -416,10 +573,26 @@ namespace CustomDropEventEditor
             {
                 txtDrops.Text = string.Join(
                     ", ",
-                    drops.Select(e => e.Rate >= 100f ? $"{e.ItemTblidx}" : $"{e.ItemTblidx}@{e.Rate}"));
+                    drops.Select(e =>
+                    {
+                        var hasRate = e.Rate < 100f || e.Count > 1;
+                        var rate = hasRate ? $"@{e.Rate}" : string.Empty;
+                        var cnt = e.Count > 1 ? $"x{e.Count}" : string.Empty;
+                        return e.Rate >= 100f && e.Count <= 1 ? $"{e.ItemTblidx}" : $"{e.ItemTblidx}{rate}{cnt}";
+                    }));
                 lstDrops.Items.Clear();
                 foreach (var d in drops)
-                    lstDrops.Items.Add(d.Rate >= 100f ? $"{d.ItemTblidx}" : $"{d.ItemTblidx}@{d.Rate}");
+                {
+                    var hasRate = d.Rate < 100f || d.Count > 1;
+                    var rate = hasRate ? $"@{d.Rate}" : string.Empty;
+                    var cnt = d.Count > 1 ? $"x{d.Count}" : string.Empty;
+                    lstDrops.Items.Add(d.Rate >= 100f && d.Count <= 1 ? $"{d.ItemTblidx}" : $"{d.ItemTblidx}{rate}{cnt}");
+                }
+                if (lstDrops.Items.Count > 0)
+                {
+                    lstDrops.SelectedIndex = 0;
+                    FillDropInputsFromSelection();
+                }
             }
             else { txtDrops.Text = string.Empty; lstDrops.Items.Clear(); }
 
@@ -431,6 +604,11 @@ namespace CustomDropEventEditor
                 lstSpawns.Items.Clear();
                 foreach (var s in spawns)
                     lstSpawns.Items.Add(s.Rate >= 100f && s.Count <= 1 ? $"{s.MobTblidx}" : $"{s.MobTblidx}@{s.Rate}x{s.Count}");
+                if (lstSpawns.Items.Count > 0)
+                {
+                    lstSpawns.SelectedIndex = 0;
+                    FillSpawnInputsFromSelection();
+                }
             }
             else { txtSpawns.Text = string.Empty; lstSpawns.Items.Clear(); }
 
@@ -448,6 +626,9 @@ namespace CustomDropEventEditor
             if (selectedId2 is null) return;
             var id = selectedId2.Value;
 
+            // Persist level for this mob
+            try { _levels[id] = (int)Math.Clamp((int)numLevel.Value, 1, 255); } catch { /* ignore */ }
+
             // Prefer list content if available; otherwise parse from text fields
             if (lstDrops.Items.Count > 0)
             {
@@ -457,18 +638,27 @@ namespace CustomDropEventEditor
                     var t = it.Trim();
                     if (t.Length == 0) continue;
                     var at = t.IndexOf('@');
-                    uint item = 0; float rate = 100f;
+                    uint item = 0; float rate = 100f; byte count = 1;
                     if (at >= 0)
                     {
                         if (!uint.TryParse(t[..at].Trim(), out item)) continue;
                         var rv = t[(at + 1)..].Trim();
-                        float.TryParse(rv, out rate);
+                        var x = rv.IndexOf('x'); if (x < 0) x = rv.IndexOf('X');
+                        if (x >= 0)
+                        {
+                            float.TryParse(rv[..x], out rate);
+                            byte.TryParse(rv[(x + 1)..], out count);
+                        }
+                        else
+                        {
+                            float.TryParse(rv, out rate);
+                        }
                     }
                     else
                     {
                         if (!uint.TryParse(t, out item)) continue;
                     }
-                    list.Add(new DropEntry { ItemTblidx = item, Rate = rate });
+                    list.Add(new DropEntry { ItemTblidx = item, Rate = rate, Count = count });
                 }
                 if (list.Count > 0) _model.Drops[id] = list; else _model.Drops.Remove(id);
             }
@@ -484,38 +674,49 @@ namespace CustomDropEventEditor
                         var t = tok.Trim();
                         if (string.IsNullOrEmpty(t)) continue;
                         var at = t.IndexOf('@');
-                        uint item = 0; float rate = 100f;
+                        uint item = 0; float rate = 100f; byte count = 1;
                         if (at >= 0)
                         {
                             if (!uint.TryParse(t[..at].Trim(), out item)) continue;
                             var rv = t[(at + 1)..].Trim();
-                            float.TryParse(rv, out rate);
+                            var x = rv.IndexOf('x'); if (x < 0) x = rv.IndexOf('X');
+                            if (x >= 0)
+                            {
+                                float.TryParse(rv[..x], out rate);
+                                byte.TryParse(rv[(x + 1)..], out count);
+                            }
+                            else
+                            {
+                                float.TryParse(rv, out rate);
+                            }
                         }
                         else
                         {
                             if (!uint.TryParse(t, out item)) continue;
                         }
-                        list.Add(new DropEntry { ItemTblidx = item, Rate = rate });
+                        list.Add(new DropEntry { ItemTblidx = item, Rate = rate, Count = count });
                     }
                     if (list.Count > 0) _model.Drops[id] = list; else _model.Drops.Remove(id);
                 }
                 else _model.Drops.Remove(id);
             }
 
-            if (lstSpawns.Items.Count > 0)
+            // Prefer parsing from the spawns text box to respect direct edits
+            var sText = txtSpawns.Text.Trim();
+            if (!string.IsNullOrEmpty(sText))
             {
                 var list = new List<SpawnEntry>();
-                foreach (var it in lstSpawns.Items.Cast<string>())
+                foreach (var tok in sText.Split(','))
                 {
-                    var t = it.Trim();
-                    if (t.Length == 0) continue;
+                    var t = tok.Trim();
+                    if (string.IsNullOrEmpty(t)) continue;
                     var at = t.IndexOf('@');
                     uint mob = 0; float rate = 100f; byte count = 1;
                     if (at >= 0)
                     {
                         if (!uint.TryParse(t[..at].Trim(), out mob)) continue;
                         var rx = t[(at + 1)..].Trim();
-                        var x = rx.IndexOf('x');
+                        var x = rx.IndexOf('x'); if (x < 0) x = rx.IndexOf('X');
                         if (x >= 0)
                         {
                             float.TryParse(rx[..x], out rate);
@@ -532,26 +733,34 @@ namespace CustomDropEventEditor
                     }
                     list.Add(new SpawnEntry { MobTblidx = mob, Rate = rate, Count = count });
                 }
-                if (list.Count > 0) _model.Spawns[id] = list; else _model.Spawns.Remove(id);
+                if (list.Count > 0)
+                {
+                    _model.Spawns[id] = list;
+                    RefreshSpawnsUI(list);
+                }
+                else
+                {
+                    _model.Spawns.Remove(id);
+                    RefreshSpawnsUI(null);
+                }
             }
             else
             {
-                // fallback to text parsing
-                var sText = txtSpawns.Text.Trim();
-                if (!string.IsNullOrEmpty(sText))
+                // If text is empty, keep or remove based on list content
+                if (lstSpawns.Items.Count > 0)
                 {
                     var list = new List<SpawnEntry>();
-                    foreach (var tok in sText.Split(','))
+                    foreach (var it in lstSpawns.Items.Cast<string>())
                     {
-                        var t = tok.Trim();
-                        if (string.IsNullOrEmpty(t)) continue;
+                        var t = it.Trim();
+                        if (t.Length == 0) continue;
                         var at = t.IndexOf('@');
                         uint mob = 0; float rate = 100f; byte count = 1;
                         if (at >= 0)
                         {
                             if (!uint.TryParse(t[..at].Trim(), out mob)) continue;
                             var rx = t[(at + 1)..].Trim();
-                            var x = rx.IndexOf('x');
+                            var x = rx.IndexOf('x'); if (x < 0) x = rx.IndexOf('X');
                             if (x >= 0)
                             {
                                 float.TryParse(rx[..x], out rate);
@@ -580,6 +789,46 @@ namespace CustomDropEventEditor
             LoadMobIntoEditors();
         }
 
+        private void FillDropInputsFromSelection()
+        {
+            try
+            {
+                uint? id = null;
+                if (lstCfgMobs.SelectedItem is ListViewItemWrapper w1) id = w1.Id; else if (lstAvailMobs.SelectedItem is ListViewItemWrapper w2) id = w2.Id;
+                if (id is null) return;
+                var idx = lstDrops.SelectedIndex;
+                if (idx < 0) { btnAddDrop.Text = "Add"; return; }
+                if (_model.Drops.TryGetValue(id.Value, out var list) && idx >= 0 && idx < list.Count)
+                {
+                    var d = list[idx];
+                    txtDropItemId.Text = d.ItemTblidx.ToString();
+                    try { numDropRate.Value = (decimal)d.Rate; } catch { /* ignore */ }
+                    try { numDropCount.Value = d.Count <= 0 ? 1 : d.Count; } catch { /* ignore */ }
+                }
+            }
+            catch { /* ignore */ }
+        }
+
+        private void FillSpawnInputsFromSelection()
+        {
+            try
+            {
+                uint? id = null;
+                if (lstCfgMobs.SelectedItem is ListViewItemWrapper w1) id = w1.Id; else if (lstAvailMobs.SelectedItem is ListViewItemWrapper w2) id = w2.Id;
+                if (id is null) return;
+                var idx = lstSpawns.SelectedIndex;
+                if (idx < 0) { btnAddSpawn.Text = "Add"; return; }
+                if (_model.Spawns.TryGetValue(id.Value, out var list) && idx >= 0 && idx < list.Count)
+                {
+                    var s = list[idx];
+                    txtSpawnMobId.Text = s.MobTblidx.ToString();
+                    try { numSpawnRate.Value = (decimal)s.Rate; } catch { /* ignore */ }
+                    try { numSpawnCount.Value = s.Count <= 0 ? 1 : s.Count; } catch { /* ignore */ }
+                }
+            }
+            catch { /* ignore */ }
+        }
+
         private void AddDropFromInputs()
         {
             uint? selectedId = null;
@@ -587,9 +836,10 @@ namespace CustomDropEventEditor
             if (selectedId is null) return;
             if (!uint.TryParse(txtDropItemId.Text.Trim(), out var itemId)) { MessageBox.Show(this, "Invalid Item ID"); return; }
             var rate = (float)numDropRate.Value;
+            var count = (byte)numDropCount.Value;
             var id = selectedId.Value;
             if (!_model.Drops.TryGetValue(id, out var list)) { list = new List<DropEntry>(); _model.Drops[id] = list; }
-            list.Add(new DropEntry { ItemTblidx = itemId, Rate = rate });
+            list.Add(new DropEntry { ItemTblidx = itemId, Rate = rate, Count = count });
             RefreshDropsUI(list);
         }
 
@@ -614,10 +864,21 @@ namespace CustomDropEventEditor
             if (list != null)
             {
                 foreach (var d in list)
-                    lstDrops.Items.Add(d.Rate >= 100f ? $"{d.ItemTblidx}" : $"{d.ItemTblidx}@{d.Rate}");
+                {
+                    var hasRate = d.Rate < 100f || d.Count > 1;
+                    var rate = hasRate ? $"@{d.Rate}" : string.Empty;
+                    var cnt = d.Count > 1 ? $"x{d.Count}" : string.Empty;
+                    lstDrops.Items.Add(d.Rate >= 100f && d.Count <= 1 ? $"{d.ItemTblidx}" : $"{d.ItemTblidx}{rate}{cnt}");
+                }
                 txtDrops.Text = string.Join(
                     ", ",
-                    list.Select(e => e.Rate >= 100f ? $"{e.ItemTblidx}" : $"{e.ItemTblidx}@{e.Rate}"));
+                    list.Select(e =>
+                    {
+                        var hasRate = e.Rate < 100f || e.Count > 1;
+                        var rate = hasRate ? $"@{e.Rate}" : string.Empty;
+                        var cnt = e.Count > 1 ? $"x{e.Count}" : string.Empty;
+                        return e.Rate >= 100f && e.Count <= 1 ? $"{e.ItemTblidx}" : $"{e.ItemTblidx}{rate}{cnt}";
+                    }));
             }
             else
             {
@@ -635,8 +896,20 @@ namespace CustomDropEventEditor
             var count = (byte)numSpawnCount.Value;
             var id = selectedId.Value;
             if (!_model.Spawns.TryGetValue(id, out var list)) { list = new List<SpawnEntry>(); _model.Spawns[id] = list; }
-            list.Add(new SpawnEntry { MobTblidx = mobId, Rate = rate, Count = count });
+            var sel = lstSpawns.SelectedIndex;
+            var entry = new SpawnEntry { MobTblidx = mobId, Rate = rate, Count = count };
+            if (sel >= 0 && sel < list.Count)
+            {
+                // Update existing
+                list[sel] = entry;
+            }
+            else
+            {
+                // Add new
+                list.Add(entry);
+            }
             RefreshSpawnsUI(list);
+            lstSpawns.ClearSelected();
         }
 
         private void RemoveSelectedSpawn()
@@ -732,6 +1005,34 @@ namespace CustomDropEventEditor
                 }
             }
             _lblStatus.Text = $"Mob {id} ready. Add drops/spawns on the right.";
+        }
+
+        private void ShowHelp()
+        {
+            try
+            {
+                using var hf = new HelpForm(ResolveReadmePath());
+                hf.ShowDialog(this);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(this, ex.Message, "Help", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+        }
+
+        private string ResolveReadmePath()
+        {
+            var candidates = new[]
+            {
+                Path.Combine(AppContext.BaseDirectory, "README_CustomDropEvent.md"),
+                Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "README_CustomDropEvent.md")),
+                Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "README_CustomDropEvent.md"))
+            };
+            foreach (var c in candidates)
+            {
+                if (File.Exists(c)) return c;
+            }
+            return "README_CustomDropEvent.md";
         }
     }
 }

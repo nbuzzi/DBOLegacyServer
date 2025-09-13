@@ -17,6 +17,7 @@ public:
     {
         unsigned int itemTblidx;
         float rate; // 0..100
+        BYTE count; // optional amount per successful roll (default 1)
     };
 
     struct Modifiers

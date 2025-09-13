@@ -115,20 +115,32 @@ namespace CustomDropEventEditor
                         var t = tok.Trim();
                         if (string.IsNullOrEmpty(t)) continue;
                         var at = t.IndexOf('@');
-                        uint item = 0; float rate = 100f;
+                        uint item = 0; float rate = 100f; byte count = 1;
                         if (at >= 0)
                         {
                             if (!uint.TryParse(t[..at].Trim(), out item)) continue;
                             var rv = t[(at + 1)..].Trim();
-                            // allow trailing % in rate
-                            if (rv.EndsWith("%", StringComparison.Ordinal)) rv = rv[..^1];
-                            if (!float.TryParse(rv, NumberStyles.Float, CultureInfo.InvariantCulture, out rate)) rate = 100f;
+                            // allow trailing % in rate and optional xcount
+                            var x = rv.IndexOf('x');
+                            if (x < 0) x = rv.IndexOf('X');
+                            if (x >= 0)
+                            {
+                                var rOnly = rv[..x].Trim();
+                                if (rOnly.EndsWith("%", StringComparison.Ordinal)) rOnly = rOnly[..^1];
+                                if (!float.TryParse(rOnly, NumberStyles.Float, CultureInfo.InvariantCulture, out rate)) rate = 100f;
+                                if (!byte.TryParse(rv[(x + 1)..], out count)) count = 1;
+                            }
+                            else
+                            {
+                                if (rv.EndsWith("%", StringComparison.Ordinal)) rv = rv[..^1];
+                                if (!float.TryParse(rv, NumberStyles.Float, CultureInfo.InvariantCulture, out rate)) rate = 100f;
+                            }
                         }
                         else
                         {
                             if (!uint.TryParse(t, out item)) continue;
                         }
-                        list.Add(new DropEntry { ItemTblidx = item, Rate = rate });
+                        list.Add(new DropEntry { ItemTblidx = item, Rate = rate, Count = count });
                     }
                     if (list.Count > 0) model.Drops[id] = list;
                 }
@@ -158,7 +170,17 @@ namespace CustomDropEventEditor
             foreach (var (id, list) in Drops.OrderBy(k => k.Key))
             {
                 sw.Write($"{id}: ");
-                sw.WriteLine(string.Join(", ", list.Select(e => e.Rate >= 100f ? e.ItemTblidx.ToString() : $"{e.ItemTblidx}@{e.Rate.ToString(CultureInfo.InvariantCulture)}")));
+                sw.WriteLine(string.Join(
+                    ", ",
+                    list.Select(e =>
+                    {
+                        var needRate = e.Rate < 100f || e.Count > 1;
+                        var rate = needRate ? $"@{e.Rate.ToString(CultureInfo.InvariantCulture)}" : string.Empty;
+                        var cnt = e.Count > 1 ? $"x{e.Count}" : string.Empty;
+                        if (rate.Length == 0 && cnt.Length == 0)
+                            rate = "@100"; // explicit default
+                        return $"{e.ItemTblidx}{rate}{cnt}";
+                    })));
             }
             // Spawns
             foreach (var (id, list) in Spawns.OrderBy(k => k.Key))
@@ -188,6 +210,7 @@ namespace CustomDropEventEditor
     {
         public uint ItemTblidx { get; set; }
         public float Rate { get; set; }
+        public byte Count { get; set; }
     }
 
     public sealed class SpawnEntry
@@ -215,7 +238,7 @@ namespace CustomDropEventEditor
         public float BlockRate { get; set; } = 1f;
         public float BlockDmg { get; set; } = 1f;
         public float GuardRate { get; set; } = 1f;
-        public int SizeRate { get; set; } = 0;
+    public int SizeRate { get; set; } = 10;
 
         public static Modifiers Parse(string value)
         {

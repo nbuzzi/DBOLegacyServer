@@ -1,0 +1,7434 @@
+GM COMMANDS:
+
+skills:
+@addskill 30611
+@addhtb
+@setlevel :Level player up
+@setclass 1-10
+@addskill2 :Get mastery class
+@additem 11140184
+@setzenny 999999999999
+@size :cambias tamaño de tu avatar (valor 10 estandar) 1-1000
+@hide on/off
+
+DragonBall (All) 
+@additem 11140327
+
+@invincible
+
+@purge :Kill all mobs/boss
+@additem 202 auras.
+@addmobs 
+
+@addskill 21011 SSJ MARTIAL
+
+@addskill 17013 SSJ SPIRIT
+
+htb1 (ADD htb 1)
+@addhtb 30611
+
+mobs 
+
+Mobs:
+
+@addmob 7011101 - Radish
+@addmob 1581101 -Vegeta
+@addmob 5711101 -Nappa
+@addmob 1213101 - Dracula
+@addmob 1212101 - Dracula 2
+@addmob 1211101 - Dracula 3
+@addmob 4612101 - Cyborg 8000 (TMQ1)
+@addmob 2312119 - Lucertola Gialla
+@addmob 2131101 - Topo Blu
+@addmob 2611102 - Ruspa Gialla
+@addmob 2612104 - Ruspa Rossa
+@addmob 2914101 - Occhio Robot
+@addmob 4264101 - Ape con Spuntoni
+@addmob 4311101 - Volpe
+@addmob 4311201 - Volpe Bianca
+@addmob 4311302 - Volpe Rossa
+@addmob 4611201 - Cyborg 8000mk2
+@addmob 4611219 - Cyborg 8000 piccolo
+@addmob 4612134 - Cyborg 8000 piccolo tuta bianca
+@addmob 4912107 - Scoiattolo rosso
+@addmob 5011101 - Korin
+@addmob 5681201 - Gohan Scimmione
+@addmob 5682101 - Vegeta Scimmione
+@addmob 5951107 - Donna Trio di Pilaf di pietra
+@addmob 6011101 - Robot Celeste
+@addmob 6012101 - Robot Viola
+@addmob 6611113 - Orso con Scopa
+@addmob 6582107 - Pilaf di pietra
+@addmob 7485101 - Julia
+@addmob 1612101 - Masked Man ( Bardak )
+@addmob 5811110 - Serpente Verde
+@addmob 1651201 - Robot Gigante Verde
+@addmob 1656101 - Robot Distrutto
+@addmob 7451101 - Nonno Gohan
+@addmob 5684101 napa gorila gigante
+@addmob 4612134
+
+
+MOBS 2
+
+NPC
+@addmob 1581101 	
+
+@addmob 1211101: Super Demon
+ 1211102: Super Demon
+ 1211103: Super Demon
+ 1211104: Death
+ 121110 Bleach
+ 1211106: Death
+ 1212101: Fierce Demon
+ 1212102: Fierce Demon
+ 1212103: Fierce Demon
+ 1213101: Extreme Demon
+ 1213102: Extreme Demon
+ 1213103: Extreme Demon
+ 1411101: Bean Cultivator
+ 1411102: bean cultivator
+ 1411103: bean cultivator
+ 1411104: Bean Cultivator
+ 141110 Bean Cultivator
+ 1411106: Bean Cultivator
+ 1412101: potato growers
+ 1412102: potato growers
+ 1412103: potato growers
+ 1412104: soil potato growers
+ 141210 Soil potato grower
+ 1412106: soil potato growers
+ 1412107: Bean Cultivator
+ 1412108: Bean Cultivator
+ 1412109: Bean Cultivator
+ 1412110: walnut cultivator
+ 1412111: Walnut cultivator
+ 1412112: Walnut cultivator
+ 1412113: dried fruit cultivator
+ 1412114: dried fruit cultivator
+ 141211 dried fruit grower
+ 1412116: Magical Walnut Cultivator @addmob
+ 1412117: Magical Walnut Cultivator
+ 1412118: Magical Walnut Cultivator
+ 1412119: Soybean growers
+ 1412120: Soybean growers
+ 1412121: Soybean growers
+ 1412122: Ruins walnut growers
+ 1412123: Ruins Walnut Cultivator
+ 1412124: Ruins Walnut Cultivator
+ 141212 Hard Shell Cultivator for Practice
+ 1412126: Cultivating people with hard shells for spiritual practice
+ 1412127: Cultivating people with hard shells for spiritual practice
+ 1413101: Stone bean cultivator
+ 1413102: Stone bean cultivator
+ 1413103: Stone bean cultivator
+ 1413104: Da Shidou Cultivator
+ 141310 Dashi Bean Cultivator
+ 1413106: Da Shidou Cultivator
+ 1413107: Longyan Cultivator
+ 1413108: Longyan Cultivator
+ 1413109: Longyan Cultivator
+ 1413110: Stone Head Cultivator
+ 1413111: Stone Head Cultivator
+ 1413112: Stone Head Cultivator
+ 1413113: Iron Cultivator
+ 1413114: Iron Cultivator
+ 141311 Ironhide Cultivator
+ 1413116: Bean Mine Cultivator
+ 1413117: Bean Mine Cultivator
+ 1413118: Bean Mine Cultivator
+ 1414104: Bean Scale Cultivator
+ 141410 Bean Scale Cultivator
+ 1414106: Bean Scale Cultivator
+ 1414107: Stone Bean Scale Cultivator
+ 1414108: Stone Bean Scale Cultivator
+ 1414109: Stone Bean Scale Cultivator
+ 1414110: Boulder Bean Scale Cultivator
+ 1414111: Boulder Bean Scale Cultivator
+ 1414112: Boulder Bean Scale Cultivator
+ 1414113: Sharkskin Cultivator
+ 1414114: Sharkskin cultivator
+ 141411 Shark Skin Cultivator
+ 1414116: Lime growers
+ 1414117: Lime growers
+ 1414118: Lime growers
+ 1414119: grass grower
+ 1415101: Brainwashing bean seed cultivator
+ 1415102: Brainwashing bean seed cultivator
+ 1415103: Brainwashing bean seed cultivator
+ 1415104: Brainwashing bean seed cultivator
+ 141510 Brainwashing Bean Seed Cultivator
+ 1415106: Brainwashing bean seed cultivator
+ 1415107: Brainwashing bean seed cultivator
+ 1415108: Brainwashing bean seed cultivator
+ 1415109: Brainwashing bean seed cultivator
+ 1415110: Brainwashing bean seed cultivator
+ 1415111: Brainwashing bean seed cultivator
+ 1415112: Brainwashing bean seed cultivator
+ 1415113: brainwashing bean seed cultivator
+ 1415114: Brainwashing bean seed cultivator
+ 141511 Brainwashed bean seed cultivator
+ 1415116: Brainwashing bean seed cultivator
+ 1415117: Brainwashing bean seed cultivator
+ 1415118: Brainwashing bean seed cultivator
+ 1415149: Brainwashing Cultivator
+ 1415150: Brainwashing Cultivator
+ 1415151: Brainwashing Cultivator
+ 1415201: strong brainwashing cultivator
+ 1415202: Powerful Brainwashing Cultivation
+ 1415203: Powerful Brainwashing Cultivation
+ 1415204: Powerful Brainwashing Cultivation
+ 141520 Strong Brainwashing Cultivator
+ 1415206: strong brainwashing cultivator
+ 1415207: strong brainwashing cultivator
+ 1415208: Powerful Brainwashing Cultivation
+ 1415209: strong brainwashing cultivator
+ 1415210: Brainwashing and self-exploding bean seed cultivators
+ 1416101: mung bean cultivator
+ 1416102: mung bean cultivator
+ 1416103: mung bean cultivator
+ 1511101: Bad Bat Soldier
+ 1511102: Inferior Bat Soldier
+ 1511103: Bad Bat Soldier
+ 1511104: Inferior Bat Corporal
+ 151110 Corporal Bad Bat
+ 1511106: Inferior Bat Corporal
+ 1511107: Captain Delton
+ 1511108: Captain Delton
+ 1511109: Captain Delton
+ 1511110: Captain of the Prague Plunder
+ 1511111: Captain of the Prague Plunder
+ 1511112: Captain of the Prague Plunder
+ 1511113: Grabbing Soldiers
+ 1511114: Grabbing Soldiers
+ 151111 Food Capture Soldiers
+ 1511116: Inferior Red Pants Captive
+ 1511119: Red Pants Army Escapes Captive
+ 1511122: Captain Evil Bat
+ 1511123: Captain Evil Bat
+ 1511124: Captain Evil Bat
+ 151112 One-Eyed Bat Soldiers
+ 1511126: One-eyed Bat
+ 1511127: One-eyed Bats
+ 1511128: Evil Bat Task Force
+ 1511129: Evil Bat Task Force
+ 1511130: Evil Bat Task Force
+ 1511131: Nabu
+ 1511134: Oil Mine Bat Watcher
+ 1512101: Pan-Pop Investigation Team
+ 1512102: Pan-Pop Investigation Team
+ 1512103: Pan-Pop Investigation Team
+ 1512104: Panpu Assassination Team
+ 151210 Panpu Assassination Team
+ 1512106: Panpu Assassination Team
+ 1512107: Panpu Signal Corps
+ 1512108: Pan & Poor's Signal Corps
+ 1512109: Pan & Poor's Signal Corps
+ 1512110: Evil Bat Player
+ 1512111: Evil Bat Player
+ 1512112: Evil Bat Player
+ 1512113: Bat Monitor
+ 1512114: Bat Monitor
+ 151211 Bat Monitor
+ 1512116: Police Bat Scout
+ 1512117: Police Bat Scout
+ 1512118: Police Bat Scout
+ 1512119: Bat Monitor Team
+ 1512120: Bat Monitor Team
+ 1512121: Bat Monitor Team
+ 1512122: Evil Bat Chaser
+ 1512123: Evil Bat Chaser
+ 1512124: Evil Bat Chaser
+ 151212 Vicious Dog Gang
+ 1512126: Vicious Dog Gang
+ 1512127: Vicious Dog Gang
+ 1512128: Bat Infantry Sentry
+ 1512129: Bat Infantry Sentry
+ 1512130: Bat Infantry Sentry
+ 1512131: deserter family
+ 1512132: deserter family
+ 1512133: Deserter Family
+ 1512134: Black Bat Head
+ 151213 Black Bat Head
+ 1512136: Black Bat Head
+ 1512137: Black Bat Guerrilla Captain
+ 1512138: Black Bat Guerrilla Captain
+ 1512139: Black Bat Guerrilla Captain
+ 1513101: Black Bat Commando
+ 1513102: Black Bat Commando
+ 1513103: Black Bat Commando
+ 1513104: Black Bat Gale Team
+ 151310 Black Bat Gale Team
+ 1513106: Black Bat Gale Team
+ 1513107: Blood Bat Commando Captain
+ 1513108: Blood Bat Commando Captain
+ 1513109: Blood Bat Commando Captain
+ 1513110: Captain Evil Bat
+ 1513111: Captain Evil Bat
+ 1513112: Captain Evil Bat
+ 1513113: Blake Bat Predator
+ 1513114: Blake Bat Predator
+ 151311 Blake Bat Predator
+ 1513116: Blake Bats Guerrilla
+ 1513117: Blake Bats Guerrilla
+ 1513118: Blake Bats Guerrilla
+ 1513119: Blake Bat Air Force
+ 1513120: Blake Bat Air Force
+ 1513121: Blake Bat Air Force
+ 1513122: Rebel Buggy
+ 1513123: Rebel Buggy
+ 1513124: Rebel Buggy
+ 151312 Blood Bat Special Team
+ 1513126: Blood Bat Special Team
+ 1513127: Blood Bat Special Team
+ 1513128: Evil Bat Mercenary
+ 1513129: Evil Bat Mercenary
+ 1513130: Evil Bat Mercenary
+ 1513131: Captain Blake Bat Air Strike
+ 1513132: Captain Blake Bat Air Strike
+ 1513133: Captain Blake Bat Air Strike
+ 1513134: Blake Bat Watch
+ 151313 Blake Bat Watch Team
+ 1513136: Blake Bat Watch
+ 1513137: Bat Patrol Team
+ 1514101: Major Barto
+ 1514102: Major Barto
+ 1514103: Major Barto
+ 1514107: Blake Bats Battle Team
+ 1514108: Blake Bats Battle Team
+ 1514109: Blake Bats Battle Team
+ 1515101: Mushroom Gang Detective
+ 1515104: Mushroom Gang Blood Fighter
+ 1515107: Mushroom Gang Flying Group Member
+ 1515110: Mushroom Gang Explorer
+ 1541101: Bart
+ 1541102: Bart
+ 1541103: Bart
+ 1581101: Dahl
+ 1581102: Dahl
+ 1581103: Dahl
+ 1581104: Dahl
+ 158110 Dahl
+ 1581106: Dahl
+ 1581107: Dahl
+ 1581201: Dahl
+ 1581202: Dahl
+ 1581203: Dahl
+ 1581204: Dahl
+ 158120 Dahl
+ 1581206: Dahl
+ 1581301: Dahl
+ 1581302: Dahl
+ 1581303: Dahl
+ 1581401: Dahl
+ 1581402: Dahl
+ 1581403: Dahl
+ 1581501: Dahl
+ 1581502: Dahl
+ 1581503: Dahl
+ 1591101: Gang leader
+ 1591102: Gang leader
+ 1591103: Gang leader
+ 1612101: Masked Man
+ 1612102: Masked Man
+ 1612103: Masked Man
+ 1612104: Masked Man
+ 161210 Masked Man
+ 1612106: Masked Man
+ 1612107: Masked Man
+ 1612108: Masked Man
+ 1612109: Masked Man
+ 1612110: Masked Man
+ 1612111: Masked Man
+ 1612112: Masked Man
+ 1612113: Masked Man
+ 1612114: Masked Man
+ 161211 Masked Man
+ 1631101: Bighorn sheep
+ 1631102: Bighorn sheep
+ 1631103: Bighorn sheep
+ 1631104: Bighorn sheep
+ 163110 bighorn sheep
+ 1631106: Bighorn sheep
+ 1631107: Bighorn sheep
+ 1631108: Bighorn sheep
+ 1631109: Bighorn sheep
+ 1633101: Brainwashing Bighorn Sheep
+ 1633102: Brainwashing Bighorn Sheep
+ 1633103: Brainwashing Bighorn Sheep
+ 1633104: Brainwashing Big Horn Sheep
+ 163310 Brainwashing Big Horn Sheep
+ 1633106: Brainwashing Bighorn Sheep
+ 1633107: Brainwashing Giant Horn Sheep
+ 1633108: Brainwashing Giant Horn Sheep
+ 1633109: Brainwashing Giant Horn Sheep
+ 1633110: Brainwashing Giant Horn Sheep
+ 1633111: Brainwashing Giant Horn Sheep
+ 1633112: Brainwashing Giant Horn Sheep
+ 1633113: Brainwashing Bighorn Sheep
+ 1651101: Battle Jack R
+ 1651102: Battle Jack R
+ 1651103: Battle Jack R
+ 1651104: Combat Jack A1
+ 165110 Combat Jack A1
+ 1651106: Combat Jack A1
+ 1651107: Combat Jack A2
+ 1651108: Combat Jack A2
+ 1651109: Combat Jack A2
+ 1651110: Payeriya Robot
+ 1651111: Payeriya Robot
+ 1651112: Payeriya Robot
+ 1651113: Battle Jack RR
+ 1651114: Battle Jack RR
+ 165111 Battle Jack RR
+ 1651116: Payeriya Robot I
+ 1651117: Payeriya Robot I
+ 1651118: Payeriya Robot I
+ 1651119: Meat Bomb Robot
+ 1651120: Meat Bomb Robot
+ 1651121: Meat Bomb Robot
+ 1651122: Restoring Battle Jack
+ 1651123: Restoring Battle Jack
+ 1651124: Restoration of Battle Jack
+ 165112 Meat Bomb Robot
+ 1651126: Meat Bomb Robot
+ 1651127: Meat Bomb Robot
+ 1651201: Payeriya Robot I
+ 1651202: Payeriya Robot I
+ 1651203: Payeriya Robot I
+ 1651204: dispatch collection robots
+ 1651301: Payeriya Robot II
+ 1651302: Payeriya Robot II
+ 1651303: Payeriya Robot II
+ 1652101: Undead Battle Jack
+ 1652102: Undead Battle Jack
+ 1652103: Undead Fighting Jack
+ 1652104: Last Red Pants
+ 165210 Rast Red Pants
+ 1652106: Last Red Pants
+ 1652107: Payeriya Robot II
+ 1652108: Payeriya Robot II
+ 1652109: Payeriya Robot II
+ 1652110: Iron Jack
+ 1652111: Iron Jack
+ 1652112: Iron Jack
+ 1652113: Restored Iron Jack
+ 1652114: Restored Iron Jack
+ 165211 Restored Iron Jack
+ 1652116: Oil Mine Security Robot
+ 1652117: Oil Mine Security Robot
+ 1652118: Oil Mine Security Robot
+ 1652119: Oil Mine Security Robot
+ 1652201: Super Capsule Robot RP
+ 1652202: Super Capsule Robot RP
+ 1652203: Super Capsule Robot RP
+ 1653101: Bello Jack
+ 1653102: Bello Jack
+ 1653103: Bello Jack
+ 1655101: Super Capsule Robot No. 1
+ 1655102: Super Capsule Robot No. 1
+ 1655103: Super Capsule Robot No. 1
+ 1656101: Broken Meat Bomb Robot
+ 1656102: Broken Meat Bomb Robot
+ 1656103: Broken Meat Bomb Robot
+ 1656104: Repair robot
+ 1656107: No wafer repair robot
+ 1656110: Forward Robot
+ 1662101: Uncle Yahe
+ 1662102: Uncle Yahe
+ 1662103: Uncle Yahe
+ 1662104: Dabudai
+ 1663101: Cooper
+ 1663102: Cooper
+ 1663103: Cooper
+ 1681101: Mrs. Bonn
+ 1681102: Mrs. Bonn
+ 1681103: Mrs. Bonn
+ 1681104: Ju Lai
+ 168110 Ju Lai
+ 1681106: Ju Lai
+ 1681107: Mrs. Bonn
+ 1691101: Margaret's guardian
+ 1711101: Pick soldiers
+ 1711102: Pick soldiers
+ 1711103: Pick soldiers
+ 1711104: Sergeant Pick
+ 171110 Sergeant Pick
+ 1711106: Sergeant Pick
+ 1711107: Captain Biz Plunder
+ 1711108: Captain Biz Predation
+ 1711109: Captain Biz Predation
+ 1711110: Pique Raiders
+ 1711111: Pique Raiders
+ 1711112: Pique Raiders
+ 1711113: Wild Pick Fighter
+ 1711114: Wild Pick Fighter
+ 171111 Wild Pick Fighter
+ 1711116: Gu Li Advancing
+ 1711117: Gu Li Advancing
+ 1711118: Guli Advancing
+ 1711119: Sawada
+ 1711120: Sawada
+ 1711121: Sawada
+ 1711122: Iwata
+ 1711123: Iwata
+ 1711124: Iwata
+ 171112 Pique Cultivator
+ 1711126: Pique Cultivator
+ 1711127: Pique Cultivator
+ 1711128: Pique dispatched troops
+ 1711129: Pique dispatched troops
+ 1711130: Pique dispatched troops
+ 1711131: Peak Warehouse Management Officer
+ 1711132: Peak Warehouse Management Officer
+ 1711133: Pique Warehouse Management Officer
+ 1712101: Cubby Guerrilla
+ 1712102: Kube Guerrilla
+ 1712103: Kube Guerrilla
+ 1712104: Sergeant Cooper Guerrilla
+ 171210 Cooper Guerrilla Sergeant
+ 1712106: Sergeant Kobe Guerrilla
+ 1712107: Corporal Extraordinary Coolby
+ 1712108: Corporal Extraordinary Coolby
+ 1712109: Corporal Extraordinary Coolby
+ 1712110: Cooper Commando
+ 1712111: Cooper Commando
+ 1712112: Cooper Commando
+ 1712113: Kobe Supply Team
+ 1712114: Kobe Supply Team
+ 171211 Cooper Supply Team
+ 1712116: Poisoned Red Pants Army
+ 1712117: Poisoned Red Pants Army
+ 1712118: Poisoned Red Pants Army
+ 1712119: Cool Bit Fighter
+ 1712120: Cool Bit Fighter
+ 1712121: Cool Bit Fighter
+ 1712122: Cool Bit Attack Team
+ 1712123: Cool Bit Attack Team
+ 1712124: Cool Bit Attack Team
+ 171212 Poisoned Red Pants Army
+ 1712201: Cube Detective Team
+ 1712202: Cube Detective Team
+ 1712203: Cube Detective Team
+ 1712204: Rob Guerrilla
+ 171220 Rob Guerrilla
+ 1712206: Rob Guerrilla
+ 1712207: Sergeant Rob
+ 1712208: Sergeant Rob
+ 1712209: Sergeant Rob
+ 1712210: Black Dolphin Captain
+ 1712211: Black Dolphin Captain
+ 1712212: Black Dolphin Captain
+ 1712213: Kubi Infantry Sentry
+ 1712214: Kubi Infantry Sentry
+ 171221 Kubi Infantry Sentry
+ 1712216: Rob Marauder
+ 1712217: Rob Marauder
+ 1712218: Rob Marauder
+ 1712219: Sombra Cube Sentry
+ 1712220: Sombra Cube Sentry
+ 1712221: Sombra Cube Sentry
+ 1712222: Head of Guli
+ 1712223: Head of Guli
+ 1712224: Head of Guli
+ 171222 Head of Brie
+ 1712226: Head of Brie
+ 1712227: Head of Brie
+ 1712228: Chief Zori
+ 1712229: Chief Zori
+ 1712230: Chief Zori
+ 1712231: Red Label Team Leader
+ 1712232: Red Label Team Leader
+ 1712233: Red Label Team Leader
+ 1712234: Sombra Coolby Deserter
+ 171223 Sombra Kubby Deserter
+ 1712236: Sombra Coolby Deserter
+ 1712237: Kobe Boomerang
+ 1712238: Kobe Boomerang
+ 1712239: Kobe Boomerang
+ 1712240: Kobe Boomerang
+ 1712241: Cooper's Boomerang
+ 1712242: Kobe Boomerang
+ 1712243: Kobe Boomerang squad leader
+ 1712244: Kobe Boomerang squad leader
+ 171224 Kobe Boomerang Squad Leader
+ 1712246: Blue Hat Scout Pioneer
+ 1712247: Blue Hat Scout Pioneer
+ 1712248: Blue Hat Scout Pioneer
+ 1712249: Rob Observer
+ @addmob 1712250: Rob Observer
+ 1712251: Rob Observer
+ 1712252: Kobe Boomerang Thrower
+ 1712253: Kobe Boomerang Thrower
+ 1712254: Kobe Boomerang Thrower
+ 171225 Cooper Inspector
+ 1712256: Cooper Inspector
+ 1712257: Cooper Inspector
+ 1713101: Katri Gale
+ 1713102: Katri Gale
+ 1713103: Katri Gale
+ 1713104: Katri Sanitary Soldier
+ 171310 Katerry Health Soldier
+ 1713106: Katri Health Soldier
+ @addmob 1713107: Pilekart
+ 1713108: Pilekart
+ 1713109: Pilekart
+ 1713110: Chubb Detective Team
+ 1713111: Chubb Detective Team
+ 1713112: Chubb Detective Team
+ 1713113: Katerry Expendables
+ @addmob 1713114: Katerry Expendables
+ 171311 Katerry Expendables
+ 1713116: Kubi Drug War Soldiers
+ 1713117: Kubi Drug War Soldiers
+ 1713118: Kubi Drug War Soldiers
+ 1713119: Cube Search Team
+ 1713120: Cube Search Team
+ 1713121: Cube Search Team
+ 1713122: deserter family
+ 1713123: deserter family
+ 1713124: deserter family
+ 171312 Inferior Red Pants Army Captive
+ 1713128: Coolby takes the team
+ 1713129: Coolby takes the team
+ 1713130: Coolby takes the team
+ 1713131: Guli Soldier
+ 1713132: Guli Soldier
+ 1713133: Guli Soldier
+ 1713134: Brie soldiers
+ 171313 Brie Soldier
+ 1713136: Brie soldiers
+ 1713137: Cube Soldier
+ 1713138: Cube Soldier
+ 1713139: Cube Soldier
+ 1713140: Squall
+ 1713141: Squall
+ 1713142: Squall
+ @addmob 1713143: Reid disarms
+ 1713144: Reid disarms
+ 171314 Reid's Soldiers
+ 1713146: Cuckoo Executive Officer
+ 1713147: Cuckoo Executive Officer
+ 1713148: Cuckoo Executive Officer
+ 1713149: Coolby Deserter
+ 1713150: Coolby Deserter
+ 1713151: Coolby Deserter
+ 1713152: Fortress Sentinel Dun Dun
+ 1713153: Fortress Infantry Sentinel Dun Dun
+ 1713154: Fortress Infantry Sentinel Dun Dun
+ 171315 Fortress Search Bing Dun Dun
+ 1713156: Fortress Search Bing Dun Dun
+ 1713157: Fortress Search Bing Dun Dun
+ 1713158: Pick Sentry
+ 1713159: Pick Sentry
+ 1713160: Pick Sentry
+ 1713161: Cuckoo Supply Soldier
+ 1713162: Cuckoo Supply Soldier
+ 1713163: Cuckoo Supply Soldier
+ 1713164: Katerry Beast Tamer
+ 171316 Catri Beast Tamer
+ 1713166: Katerry Beast Tamer
+ 1713167: Cooper Patrol
+ 1713170: Cuckoo Logistician
+ 1714101: Coolby Predator
+ 1714102: Coolby Predator
+ 1714103: Coolby Predator
+ 1714104: Infantry Sentinel Dundon
+ 171410 Infantry Sentinel Dundon
+ 1714106: Infantry Sentinel Dundon
+ 1714107: Scout Dun Dun
+ 1714108: Scout Dundun
+ 1714109: Scout Dundun
+ @addmob 1714110: Guerrilla Coolby Deserter
+ 1714111: Guerrilla Coolby Deserter
+ 1714112: Guerrilla Coolby Deserter
+ 1714113: Red Pants Army Work Support Soldier
+ @addmob 1714116: Templey
+ 1715101: Mushroom Gang Supply Soldier
+ 1715104: Mushroom Gang Clown
+ 1715107: Mushroom Gang General
+ 1715110: Mushroom Gang
+ 1715113: Ninple
+ 1751201: Item Box
+ 1751202: Item Box
+ 1751203: Item Box
+ 1751204: Item Box
+ 175120 Item Box
+ 1751206: Item Box
+ 1751207: Item Box
+ 1751208: Item Box
+ 1751209: Item Box
+ 1751210: Item Box
+ 1751211: Item Box
+ 1751212: Item Box
+ 1751213: Item Box
+ 1751214: Item Box
+ 175121 Item Box
+ 1751216: Item Box
+ 1751217: Item Box
+ 1751218: Item Box
+ 1751219: Item Box
+ 1751220: Item Box
+ 1751221: Item Box
+ 1751222: Item Box
+ 1751223: Item Box
+ 1751224: Item Box
+ 175122 Item Box
+ 1751226: Item Box
+ 1751227: Item Box
+ 1751228: Item Box
+ 1751229: Item Box
+ 1751230: Item Box
+ 1751231: Item Box
+ 1751232: Item Box
+ 1751233: Item Box
+ 1751234: Item Box
+ 175123 Item Box
+ 1751301: Item Box
+ 1751302: Item Box
+ 1751401: Item Box
+ 1751402: Item Box
+ 1751403: Item Box
+ 1752101: Item Box
+ 1752102: Item Box
+ 1752103: Item Box
+ 1753101: Item Box
+ 1753104: Item Box
+ 1753201: Item Box
+ 1753301: Item Box
+ 1753302: Item Box
+ 1753303: Item Box
+ 1753304: Item Box
+ 175330 Item Box
+ 1753307: Item Box
+ 1753310: Item Box
+ 1753313: Item Box
+ 1753314: Item Box
+ 175331 Item Box
+ 1754101: Item Box
+ 1754102: Item Box
+ 1754103: Item Box
+ 1754104: Item Box
+ 175410 Item Box
+ 1754106: Item Box
+ 1754107: Item Box
+ 1754108: Item Box
+ 1754109: Item Box
+ 1754110: Item Box
+ 1754111: Item Box
+ 1754112: Item Box
+ 1754113: Item Box
+ 1754114: Item Box
+ 175411 Item Box
+ 1754116: Item Box
+ 1754117: Item Box
+ 1754118: Item Box
+ 1754119: Item Box
+ 1754120: Item Box
+ 1754121: Item Box
+ 1754122: Item Box
+ 1754123: Item Box
+ 1754124: Item Box
+ 175412 Item Box
+ 1754126: Item Box
+ 1754127: Item Box
+ 1754128: Item Box
+ 1754201: Item Box
+ 1754202: Item Box
+ 1755101: Item Box
+ 1755102: Item Box
+ 1755201: Item Box
+ 1755301: Item Box
+ 1755302: Ancient Spell Dragon Treasure Chest
+ 1756201: Item Box
+ 1756202: Item Box
+ 1756203: Item Box
+ 1756204: Item Box
+ 175620 Item Box
+ 1756206: Item Box
+ 1756207: Item Box
+ 1756208: Item Box
+ 1757101: Item Box
+ 1757102: Item Box
+ 1757103: Item Box
+ 1757104: Item Box
+ 175710 Item Box
+ 1757106: Item Box
+ 1758101: Item Box
+ 1758102: Item Box
+ 1758103: Item Box
+ 1758104: Item Box
+ 175810 Item Box
+ 1758106: Item Box
+ 1758107: Item Box
+ 1758108: Item Box
+ 1758201: Item Box
+ 1758202: Item Box
+ 1758301: Item Box
+ 1758304: Item Box
+ 1758307: Item Box
+ 1758310: Item Box
+ 1758311: Item Box
+ 1758312: Item Box
+ 1758401: FR super-efficiency battery
+ 1759101: Item Box
+ 1759102: Item Box
+ 1759103: Item Box
+ 1759104: Item Box
+ 175910 Item Box
+ 1759106: Item Box
+ 1759107: Item Box
+ 1759108: Item Box
+ 1759201: Item Box
+ 1759202: Item Box
+ 1759203: Item Box
+ 1759204: Item Box
+ 175920 Item Box
+ 1759206: Item Box
+ 1759207: Item Box
+ 1759208: Item Box
+ 1759209: Item Box
+ 1759301: Item Box
+ 1759302: Item Box
+ 1759303: Item Box
+ 1759304: Item Box
+ 175930 Item Box
+ 1759306: Item Box
+ 1759307: Item Box
+ 1759308: Item Box
+ 1759401: Item Box
+ 1759402: Item Box
+ 1759501: Item Box
+ 1759502: Item Box
+ 1759503: Item Box
+ 1760101: Item Box
+ 1760201: Item Box
+ 1760202: Item Box
+ 1760203: Item Box
+ 1760204: Item Box
+ 176020 Item Box
+ 1760206: Item Box
+ 1760207: Item Box
+ 1760208: Item Box
+ 1760209: Item Box
+ 1760210: Item Box
+ 1760211: Item Box
+ 1760212: Item Box
+ 1760213: Item Box
+ 1760214: Item Box
+ 176021 Item Box
+ 1760216: Item Box
+ 1760217: Item Box
+ 1760218: Item Box
+ 1760219: Item Box
+ 1760220: Item Box
+ 1760221: Item Box
+ 1760222: Item Box
+ 1760223: Item Box
+ 1760224: Item Box
+ 176022 Item Box
+ 1760226: Item Box
+ 1760227: Item Box
+ 1760228: Item Box
+ 1760301: Item Box
+ 1760302: Item Box
+ 1760303: Item Box
+ 1760401: Item Box
+ 1760402: Item Box
+ 1760403: Item Box
+ 1760404: Item Box
+ 176040 Item Box
+ 1760406: Item Box
+ 1760407: Item Box
+ 1760408: Item Box
+ 1760409: Item Box
+ 1760410: Item Box
+ 1760411: Item Box
+ 1760412: Item Box
+ 1760413: Item Box
+ 1760414: Item Box
+ 176041 Item Box
+ 1761101: Director Graham
+ 1761104: Director Graham
+ 1762101: cloth pot gold
+ 1762102: cloth pot gold
+ 1762103: cloth pot gold
+ 1762201: Poisoned Cloth Pot Gold
+ 1762202: Poisoned Cloth Pot Gold
+ 1762203: Poisoned Cloth Pot Gold
+ 1762204: Poisoned Cloth Pot Gold
+ 176220 Poisoned Cloth Pot Gold
+ 1762206: Poisoned Cloth Pot Gold
+ 1762301: Poisoned Cloth Pot Gold
+ 1762302: Poisoned Cloth Pot Gold
+ 1762303: Poisoned Cloth Pot Gold
+ 1762304: Poisoned Cloth Pot Gold
+ 176230 Poisoned Cloth Gold
+ 1762306: Poisoned Cloth Pot Gold
+ 1781104: Sawtooth Grasshopper
+ 178110 Sawtooth Grasshopper
+ 1781106: Sawtooth Grasshopper
+ 1781107: Flash Grasshopper
+ 1781108: Flash Grasshopper Man
+ 1781109: Flash Grasshopper Man
+ 1781110: Lost Grasshopper
+ 1781111: Lost Grasshopper
+ 1781112: Lost Grasshopper
+ 1781113: Sampling Grasshopper Man
+ 1781114: Sampling Grasshopper Man
+ 178111 Grasshopper Man for Sampling
+ 1781116: Two bats and grasshoppers
+ 1781117: Two bats and grasshoppers
+ 1781118: Two bats and grasshoppers
+ 1781119: Elastic Grasshopper
+ 1781122: Flying Grasshopper Man
+ 178112 Experimental Masked Man
+ 1782104: Metal Grasshopper Slug
+ 178210 Metal Grasshopper Slog
+ 1782106: Metal Grasshopper Slug
+ @addmob 1782107: Giant Bat and Grasshopper
+ 1782108: Giant Bat and Grasshopper
+ 1782109: Giant Bat and Grasshopper
+ 1782110: Sampling with Grasshopper King
+ 1782111: Sampling with Grasshopper King
+ 1782112: Sampling with Grasshopper King
+ 1782113: Metal Grasshopper
+ 1783104: Honest Grasshopper Pusven
+ 178310 Honest Grasshopper Pusven
+ 1783106: Honest Grasshopper Pusven
+ 1783107: Giant Cannon Bat and Grasshopper
+ 1783108: Giant Cannon Bat and Grasshopper
+ 1783109: Giant Cannon Bat and Grasshopper
+ 1783110: Giant Cannon Bat and Grasshopper
+ 1811101: Super forced to cultivate people
+ 1811102: Super forced to cultivate people
+ 1811103: Super forced to cultivate people
+ 1811104: Forced to cultivate people
+ 181110 Forced to cultivate people
+ 1811106: Forced to cultivate people
+ 1811119: Forced to cultivate people
+ 1811120: Forced to cultivate people
+ 1811121: Forced to cultivate people
+ 1811122: Ice Cultivator
+ 1811123: Ice Cultivator
+ 1811124: Ice Cultivator
+ 181112 Light Boom Cultivator
+ 1811126: Light Boom Cultivator
+ 1811127: Light Boom Cultivator
+ 1812101: Golden Boom Cultivator
+ 1812102: Golden Boom Cultivator
+ 1812103: Golden Boom Cultivator
+ 1812104: Golden Light Bang Bang Cultivator
+ 181210 Golden Light Bang Bang Cultivator
+ 1812106: Golden Light Bang Bang Cultivator
+ 1812107: Pure gold bang cultivator
+ 1812108: Pure gold bang cultivator
+ 1812109: Pure gold bang cultivator
+ 1812110: platinum boom cultivator
+ 1812111: platinum boom cultivator
+ 1812112: platinum boom cultivator
+ 1812113: gold bang cultivator
+ 1812114: Gold Popping Cultivator
+ 181211 Gold Boom Cultivator
+ 1812116: Bright Gold Boom Cultivator
+ 1812117: Bright Gold Boom Cultivator
+ 1812118: Bright Gold Boom Cultivator
+ 1813101: mold cultivator
+ 1813102: mold cultivator
+ 1813103: mold cultivator
+ 1813104: fungus cultivator
+ 181310 Fungus cultivator
+ 1813106: fungus cultivator
+ 1813107: bacteria growers
+ 1813108: bacteria growers
+ 1813109: bacteria growers
+ 1813110: Corruption Cultivator
+ 1813111: Corruption Cultivator
+ 1813112: Corruption Cultivator
+ 1813113: Spotted Cultivator
+ 1813114: Spotted Cultivator
+ 181311 Spotted Cultivator
+ @addmob 1814101: Water Monster Cultivator
+ 1814102: Water Monster Cultivator
+ 1814103: Water Monster Cultivator
+ 1814104: Flying Cultivator
+ 181410 Flying Cultivator
+ 1814106: Flying Cultivator
+ 1814107: Waterway Cultivator
+ 1814108: Waterway Cultivator
+ 1814109: Waterway Cultivator
+ 1814110: Pollution Flying Cultivator
+ 1815101: brainwashing and thumping cultivation people
+ 1815102: Brainwashing Cultivating People
+ 1815103: Brainwashing Cultivating People
+ 1815104: Brainwashing Cultivating People
+ 181510 Brainwashing Cultivator
+ 1815106: Brainwashing Cultivating People
+ 1815107: Brainwashing Cultivating People
+ 1815108: Brainwashing and popping cultivation people
+ 1815109: Brainwashing Cultivating People
+ 1815110: Brainwashing and cultivating people
+ 1815111: Brainwashing and popping cultivation people
+ 1815112: Brainwashing Cultivating People
+ 1815113: Brainwashing Om Cultivator
+ 1815114: Brainwashing Om Cultivator
+ 181511 Brainwashing Om Cultivator
+ 1815116: Brainwashing Buzzing Cultivator
+ 1815117: Brainwashing Buzzing Cultivator
+ 1815118: Brainwashing Buzzing Cultivator
+ 1815119: Brainwashing and thumping cultivation people
+ 1815120: Brainwashing and popping cultivation people
+ 1815121: Brainwashing and Booming Cultivating People
+ 1815122: brainwashing and thumping cultivation people
+ 1815123: Brainwashing Cultivating People
+ 1815124: Brainwashing and cultivating people
+ 181512 Flying Bomb Cultivator
+ 1815126: Flying Bomb Cultivator
+ 1815127: Flying Bomb Cultivator
+ 1815128: Flying warhead cultivator
+ 1815129: Flying warhead cultivator
+ 1815130: Flying warhead cultivator
+ 1815131: Brainwashing and thumping cultivation people
+ 1821107: Archie
+ 1821108: Archie
+ 1821109: Archie
+ 1821110: Archie
+ 1821111: Archie
+ 1821112: Archie
+ 1821113: Archie
+ 1821114: Archie
+ 182111 Archie
+ 1821116: Archie
+ 1821117: Archie
+ 1821118: Archie
+ 1831101: Pwong Star Exploration Soldier
+ 1831104: Pweng Star Labor Servicemen
+ 1831107: Pweng Star Guardsman
+ 1831110: Pwong Star Control Soldiers
+ 1831201: Pwong Star Coast Guard
+ 1831204: Pweng Starren Computer Soldier
+ 1831207: Pwong Star Health Soldier
+ @addmob 1831210: Chief Guard Left
+ 1831301: Pwong Star Predator
+ 1831304: Pwong Star Scouts
+ 1831307: Infiltrating Soldiers
+ 1831310: Central Facilities Management Corps
+ 1831401: Pwong Star Collector
+ 1831404: Pwong Stars Waste Cutter
+ 1832107: Sick Star Character Management Soldier
+ 1832110: Sikhs Watchmen
+ 1832113: Siks medical soldiers
+ 1832116: Chief Guard Reiter
+ 1832119: Hickman Supply Soldier
+ 1832122: Iron Head Management Captain
+ 1832201: captain of port management
+ 1832204: Chief Medical Officer of Field Treatment Clinic
+ 1833107: Misai Star Investigation Team
+ 1833110: Misai Star Defence Corporal
+ 1833113: Bagan
+ 1833201: Misai Star Investigation Captain
+ 1833204: Mi Sai Xingren Medical Director
+ 1833207: Friza selects scouts
+ 1833210: Mi Sai Xingren Medical Director
+ 1881104: God Buyou
+ 188110 God Buyou
+ 1881106: God Buyou
+ 1881107: huge cloth for experiment
+ 1881110: Metal Cloth
+ 1881111: Metal Cloth
+ 1881112: Metal Cloth
+ 1881113: Metal Concentrated Cloth
+ 1881114: Metal Concentrated Cloth
+ 188111 Metal Concentrated Cloth
+ 1881201: Metal Cloth
+ 1881202: Metal Cloth
+ 1881203: Metal Cloth
+ 1881204: Metal Concentrated Cloth
+ 188120 Metal Concentrated Cloth
+ 1881206: Metal Concentrated Cloth
+ 1881207: Friends of Metal Cloth
+ 1881210: Metal Concentrated Cloth
+ @addmob 1881301: Nana Monstruo blanco grande!
+
+ 2001301: Supply cart
+ 2001302: Supply cart
+ 2001303: Supply cart
+ 2001501: Insect Transporter
+ 2001502: Insect Transporter
+ 2001503: Insect Transporter
+ 2001504: Mira Army Transport Vehicle
+ 2001507: Kiri Transport Vehicle
+ 2131101: Little Flying Squirrel Soldier
+ 2131102: Little Flying Squirrel Soldier
+ 2131103: Little Flying Squirrel Soldier
+ 2131104: Sergeant Flying Squirrel
+ 213110 Sergeant Little Flying Squirrel
+ 2131106: Sergeant Flying Squirrel
+ 2131107: Sergeant Little Flying Squirrel
+ 2131108: Sergeant Little Flying Squirrel
+ 2131109: Sergeant Little Flying Squirrel
+ 2131110: Little Flying Squirrel Recruit
+ 2131111: Little Flying Squirrel Recruit
+ 2131112: Little Flying Squirrel Recruit
+ 2131113: Squeak Commando Captain
+ 2131114: Squeak Commando Captain
+ 213111 Squeak Commando Captain
+ 2131116: Captain Saibi Plunder
+ 2131117: Seby Plunder Captain
+ 2131118: Captain Saibi Plunder
+ 2131119: Chi Chi recruits
+ 2131120: Chi Chi recruits
+ 2131121: Chi Chi recruits
+ 2131122: Chaotic Predator
+ 2131123: Chaotic Predators
+ 2131124: Chaotic Predators
+ 213112 Little Flying Squirrel Commando
+ 2131126: Little Flying Squirrel Commando
+ 2131127: Little Flying Squirrel Commando
+ 2131128: Squeak Levy
+ 2131129: Squeak Levy
+ 2131130: Squeak Levying Soldiers
+ 2131131: Little Flying Squirrel Trainer
+ 2131132: Little Flying Squirrel Trainer
+ 2131133: Little Flying Squirrel Trainer
+ 2131134: Squeak Commando
+ 213113 Squeak Commando
+ 2131136: Squeak Commando
+ 2131137: Squeaky Stink Team
+ 2131138: Squeaky Stink Team
+ 2131139: Squeaky Stink Team
+ 2131140: sergeant
+ 2131141: sergeant
+ 2131142: sergeant
+ 2131143: Yuanzu Marine Captain
+ 2131144: Yuanzu Marine Captain
+ 213114 Yuanzu Marine Captain
+ 2131146: Hacker Staff
+ 2131147: Hacker Staff
+ 2131148: Hacker Staff
+ 2131149: Chasing Captain
+ 2131150: Chasing Captain
+ 2131151: Chicha Captain
+ 2131152: Tweet sent troops
+ 2131153: tweeted dispatch troops
+ 2131154: Tweet sent troops
+ 213115 Spar Search Soldier
+ 2131156: Spar Search Soldier
+ 2131157: Spare Search Soldier
+ 2131158: Chatting Supply Soldiers
+ 2131159: Chatting Supply Soldiers
+ 2131160: Chatting Supply Soldiers
+ 2131161: Little Flying Squirrel Warehouse Guard
+ 2131162: Little Flying Squirrel Warehouse Guard
+ 2131163: Little Flying Squirrel Warehouse Guard
+ 2131164: Chatting operatives
+ 2131201: Traitor Kiri
+ 2131202: Traitor Kiri
+ 2131203: Traitor Kiri
+ 2131204: Biological Management Soldier for Sampling
+ 213120 Biological Management Soldier for Sampling
+ 2131206: Biological Management Soldier for Sampling
+ 2132101: Squeak Commando
+ 2132102: Squeak Commando
+ 2132103: Squeak Commando
+ 2132104: Squeak Gale Team
+ 213210 Squeak Gale Team
+ 2132106: Squeak Gale Team
+ 2132107: Squeak Maintenance Soldier
+ 2132108: Squeak Maintenance Soldier
+ 2132109: Squeaking Guards
+ 2132110: tweeted surviving soldiers
+ 2132111: tweeted surviving soldiers
+ 2132112: Tweet
+ 2132113: Chasing Private
+ 2132114: Chatting Private
+ 213211 Chacha Private Soldier
+ 2132116: Spare Scout
+ 2132117: Spare Scout
+ 2132118: Spare Scout
+ 2132119: Crop Thieves
+ 2132120: Crop Thief
+ 2132121: Crop Thief
+ 2132122: Deserter Family
+ 2132123: Deserter Family
+ 2132124: Deserter Family
+ 213212 Inferior Red Pants Army Captive
+ 2132128: Squeaky Stink Team
+ 2132129: Squeaky Stink Team
+ 2132130: Squeaky Stink Team
+ 2132131: Zhizhi Field Management Soldier
+ 2132132: Zhizhi Field Management Soldier
+ 2132133: Zhizhi Field Management Soldier
+ 2132134: Chacha Labor Service
+ 213213 Chacha Labor Service
+ 2132136: Chacha Labor Service
+ 2132137: Reserve Hammer
+ 2132138: Reserve Hammermen
+ 2132139: Reserve Hammer
+ 2132140: Cheep Recruit
+ 2132141: Cheep Recruit
+ 2132142: Cheep Recruit
+ 2132143: Waterway Sentinel
+ 2132144: Waterway Sentinel
+ 213214 Waterway Infantry Sentinel
+ 2132146: Waterway Labor Servicemen
+ 2132147: Waterway Labor Service
+ 2132148: Waterway Labor Servicemen
+ 2132149: Chatting Wild Artillery Management Corps
+ 2132150: Chatting Wild Artillery Management Corps
+ 2132151: Chatting Wild Artillery Management Corps
+ 2132152: metal chat service
+ 2132153: metal chat service
+ 2132154: Metal Chatting Labor Service
+ 213215 Jiji Desert Patrol
+ 2132158: Little Flying Squirrel Predator
+ 2133101: Wild Mouse Signal Corps
+ 2133102: Wild Mouse Signal Corps
+ 2133103: Wild Mouse Signal Corps
+ 2133104: Captain Zhizhi Construction
+ 213310 Cheep Construction Captain
+ 2133106: Captain Zhizhi Construction
+ 2133107: Chi Chi Feeding and Raising Soldiers
+ 2133108: Chi Chi Feeding and Raising Soldiers
+ 2133109: Chi Chi Feeding and Raising Soldiers
+ 2133110: Hound Thief Bluff
+ 2133111: Hound Thief Bluff
+ 2133112: Hound Thief Bluff
+ 2133113: Red Pants Army Working Group
+ 2133114: Red Pants Army Working Group
+ 213311 Red Pants Army Working Group
+ 2133116: Squeaky Step Sentry
+ 2133117: Squeaky Sentry
+ 2133118: Squeaky Step Sentry
+ 2133119: Rat King Infantry Sentinel
+ 2133120: Rat King Infantry Sentinel
+ 2133121: Rat King Infantry Sentinel
+ 2133122: Squeak Commando Captain
+ 2133123: Squeak Commando Captain
+ 2133124: Squeak Commando Captain
+ 213312 Head of Jiji
+ 2133126: Jiji Head
+ 2133127: Jiji Head
+ 2133128: The Rat King Takes Forces
+ 2133129: Rat King Strongly Captures Soldiers
+ 2133130: Rat King Strongly Captures Soldiers
+ 2133131: Rat King Commando
+ 2133132: Rat King Commando
+ 2133133: Rat King Commando
+ 2133134: Fortress Wild Mouse Recruit
+ 213313 Fortress Wild Mouse Recruit
+ 2133136: Fortress Wild Mouse Recruit
+ 2133137: Rat King Soldier
+ 2133138: Rat King Soldier
+ 2133139: Rat King Soldier
+ 2134101: Captain Zhizhi Construction
+ 2134102: Captain Zhizhi Construction
+ 2134103: Captain Zhizhi Construction
+ 2311101: Green Spotted Lizard
+ 2311102: Green Spotted Lizard
+ 2311103: Green Spotted Lizard
+ 2311104: Green Spotted Lizard
+ 231110 Green Spotted Lizard
+ 2311106: Green Spotted Lizard
+ 2311107: Tongue Lizard
+ 2311108: Tongue Lizard
+ 2311109: Tongue Lizard
+ 2311110: tender lizard
+ 2311111: tender lizard
+ 2311112: tender lizard
+ 2311113: piebald lizard
+ 2311114: piebald lizard
+ 231111 Dalmatian Lizard
+ 2311116: Water Lizard
+ 2311117: Water Lizard
+ 2311118: Water Lizard
+ 2311119: Freshwater Lizard
+ 2311201: Blood Demon Lizard
+ 2312101: Sand Lizard
+ 2312102: Sand Lizard
+ 2312103: Sand Lizard
+ 2312104: Singing Sand Lizard
+ 231210 Singing Sand Lizard
+ @addmob 2312106: Singing Sand Lizard
+ 2312107: Bomb Green Spotted Lizard
+ 2312108: Bomb Green Spotted Lizard
+ 2312109: Bomb Green Spotted Lizard
+ 2312116: Quicksand Lizard
+ 2312117: Quicksand Lizard
+ 2312118: Quicksand Lizard
+ 2312119: King Sand Lizard
+ 2312120: King Sand Lizard
+ @addmob 2312121: King Sand Lizard
+ 2312122: Sand Lizard
+ 2312123: Sand Lizard
+ 2312124: Sand Lizard
+ 231212 Black Sand Lizard
+ 2312126: Black Sand Lizard
+ 2312127: Black Sand Lizard
+ 2312128: Blood Spark Lizard
+ 2312129: Blood Spark Lizard
+@addmob 2312130: Blood Spark Lizard
+ 2312131: Spark Lizard
+ 2312132: Spark Lizard
+ 2312133: Spark Lizard
+ 2312134: Fossil Lizard
+ 231213 Fossil Lizard
+ 2312136: Fossil Lizard
+ 2312137: Lizard in oil mine experiment
+ 2312138: Lizard in oil mine experiment
+ 2312139: Lizard in oil mine experiment
+ 2313101: Rock Lizard
+ 2313102: Rock Lizard
+ 2313103: Rock Lizard
+ 2313104: Ghost Rock Lizard
+ 231310 Ghost Rock Lizard
+ 2313106: Ghost Rock Lizard
+ 2313107: Barren Rock Lizard
+ 2313108: Wild Rock Lizard
+ 2313109: Wild Rock Lizard
+ 2313110: Horned Rock Lizard
+ 2313111: Horned Rock Lizard
+ 2313112: Horned Rock Lizard
+ 2313113: Red-eyed Lizard
+ 2313114: Red-eyed Lizard
+ 231311 Red Eyed Lizard
+ 2313116: Cave Lizard
+ 2313117: Cave Lizard
+ 2313118: Cave Lizard
+ 2313119: Deep Valley Cave Lizard
+ 2313120: Deep Valley Cave Lizard
+ 2313121: Deep Valley Cave Lizard
+ 2321101: Monte Paidoli
+ 2321102: Monte Patio
+ 2321103: Monte Paidoli
+ 2451101: Kiki
+ 2451102: Kiki
+ 2451103: Kiki
+ 2471101: Fighting King Kiba
+ 2471102: Fighting King Kiba
+ 2471103: Fighting King Kiba
+ 2481101: Waterway Monster
+ 2481102: Waterway Monster
+ 2481103: Waterway Monster
+ 2531101: Kiri storage device
+ 2531104: Large Kiri Power Controller
+ 253110 Large Kiri Power Controller
+ 2531106: Large Kiri Power Controller
+ 2581101: Dodory vs Dahl
+ 2581102: Dodory vs Dahl
+ 2581103: Dodory vs Dahl
+ 2611101: Civil Robot
+ 2611102: Civil Robot
+ 2611103: Civil Robot
+ 2611104: Large civil robot
+ 261110 Large civil robot
+ 2611106: Large civil robot
+ 2611107: Super Civil Robot
+ 2611108: Super Civil Robot
+ 2611109: Super Civil Robot
+ 2611110: Robots in fortifications
+ 2611111: Robots in fortifications
+ 2611112: Robots in fortifications
+ 2611113: Old type civil engineering robot
+ 2611114: Old type civil engineering robot
+ 261111 Old type civil engineering robot
+ 2611116: Kong Qiang Civil Robot
+ 2611117: Kong Qiang Civil Robot
+ 2611118: Kong Qiang Civil Robot
+ 2611119: Overworked civil robot
+ 2611120: Overworked civil robot
+ 2611121: Overworked civil robot
+ 2611122: Privately modified civil engineering robots
+ 2611123: Privately modified civil robots
+ 2611124: Privately modified civil engineering robots
+ 261112 Stealth Civil Robot
+ 2611126: Sneak Civil Robot
+ 2611127: Sneak Civil Robot
+ 2611128: Waterway Excavating Robot
+ 2611129: Waterway Excavating Robot
+ 2611130: Waterway Excavating Robot
+ 2611131: City Repair Robot
+ 2611132: City Repair Robot
+ 2611133: City Repair Robot
+ 2611134: Old harvesting robot
+ 261113 Old Harvest Robot
+ 2611136: Old harvesting robot
+ 2611137: Falling civil robot
+ 2611138: Falling Civil Robot
+ 2611139: Falling Civil Robot
+ 2611140: Transformation of excavation robots
+ 2611141: Transformation of excavation robots
+ 2611142: Transformation of excavation robots
+ 2611143: Garbage collection robot
+ 2611146: Muddy Civil Robot
+ 2611147: Muddy Civil Robot
+ 2611148: Muddy Civil Robot
+ 2611149: Multifunctional soil digging robot
+ 2611150: Multifunctional soil digging robot
+ 2611151: Multifunctional soil digging robot
+ 2611152: Antiquity Civil Robot
+ 2611153: Antiquity Civil Robot
+ 2611154: Antiquity Civil Robot
+ 261115 Large-scale destruction robot
+ 2611156: Large-scale destruction robot
+ 2611157: Large-scale destruction robot
+ 2611158: Transforming coolie robots
+ 2612101: Runaway Robot
+ 2612102: Runaway Robot
+ 2612103: Runaway Robot
+ 2612104: Violent Robot
+ 261210 Violent Robot
+ 2612106: Violent Robot
+ 2612107: Outbreak Robot
+ 2612108: Outbreak Robot
+ 2612109: Outbreak Robot
+ 2612110: Large violent robot
+ 2612111: Large violent robot
+ 2612112: Large violent robot
+ 2612113: Runaway Civil Robot
+ 2612114: Runaway Civil Robot
+ 261211 Runaway Civil Robot
+ 2612116: Excavating robot
+ 2612117: Excavating robot
+ 2612118: Excavating robot
+ 2612119: Runaway Disintegration Robot
+ 2612120: Runaway Disintegration Robot
+ 2612121: Runaway Disintegration Robot
+ 2612122: Runaway old disintegration robot
+ 2612123: Runaway old disintegration robot
+ 2612124: Runaway old disintegration robot
+ 261212 Old-style capsule mining robot
+ 2612126: Old-style capsule mining robot
+ 2612127: Old-style capsule mining robot
+ 2612128: Waterway Guard Robot
+ 2612129: Waterway Guard Robot
+ 2612130: Waterway Guard Robot
+ 2612131: Resource Collection Robot
+ 2612132: Resource Collection Robot
+ 2612133: Resource Collection Robot
+ 2612134: Combat Robot
+ 261213 戰鬥機器人
+ 2612136:戰鬥機器人
+ 2612137:全倒土木機器人
+ 2612138:全倒土木機器人
+ 2612139:全倒土木機器人
+ 2612140:古鐵波可波可
+ 2612141:古鐵波可波可
+ 2612142:古鐵波可波可
+ 2612143:轟隆土木機器人
+ 2612144:轟隆土木機器人
+ 261214 轟隆土木機器人
+ 2612146:處理場警衛機器人
+ 2612147:處理場警衛機器人
+ 2612148:處理場警衛機器人
+ 2612149:採掘機器人
+ 2612150:採掘機器人
+ 2612151:採掘機器人
+ 2612152:過熱機器人
+ 2612153:過熱機器人
+ 2612154:過熱機器人
+ 261215 作業用機器人
+ 2612156:作業用機器人
+ 2612157:作業用機器人
+ 2612158:維運採掘機器人
+ 2612159:維運採掘機器人
+ 2612160:維運採掘機器人
+ 2612161:新品波可波可
+ 2612162:新品波可波可
+ 2612163:新品波可波可
+ 2612164:改造移動機器人
+ 2612167:故障的苦力機器人
+ 2613101:狂暴機器人
+ 2613102:狂暴機器人
+ 2613103:狂暴機器人
+ 2613104:載礦機器人
+ 261310 載礦機器人
+ 2613106:載礦機器人
+ 2613107:資源回收機器人
+ 2613110:處理廠管理機器人
+ 2613111:處理廠管理機器人
+ 2613112:處理廠管理機器人
+ 2613113:派遣機器人.P
+ 2613114:派遣機器人.P
+ 261311 派遣機器人.P
+ 2613201:暴力機器王
+ 2613202:暴力機器王
+ 2613203:暴力機器王
+ 2613204:優良暴力機器人
+ 261320 優良暴力機器人
+ 2613206:優良暴力機器人
+ 2613207:煤煙機器王
+ 2613208:煤煙機器王
+ 2613209:煤煙機器王
+ 2613210:破壞環境機器人
+ 2614101:過勞土木機器人
+ 2614102:過勞土木機器人
+ 2614103:過勞土木機器人
+ 2641101:多多利
+ 2641102:多多利
+ 2641103:多多利
+ 2641201:多多利
+ 2641202:多多利
+ 2641203:多多利
+ 2642101:多多利
+ 2642102:多多利
+ 2642103:多多利
+ 2642104:洗腦多多利
+ 264210 洗腦多多利
+ 2642106:洗腦多多利
+ 2671101:試煉的太鼓
+ 2671102:試煉的太鼓
+ 2671103:試煉的太鼓
+ 2811101:多多利氣功體
+ 2811102:多多利氣功體
+ 2811103:多多利氣功體
+ 2811104:追蹤用氣功彈
+ 2811107:追蹤用氣功彈
+ 2811110:
+ 2811201:追擊用氣功彈
+ 2811204:追擊用氣功彈
+ 2811207:試煉之光
+ 2811208:試煉之光
+ 2811209:試煉之光
+ 2811301:誘導用氣功彈
+ 2811304:誘導用氣功彈
+ 2841101:甲蟲女王的蛋
+ 2841102:甲蟲女王的蛋
+ 2841104:甲蟲蛋
+ 284110 甲蟲蛋
+ 2911101:黑暗之眼
+ 2911102:黑暗之眼
+ 2911103:黑暗之眼
+ 2911104:黑暗之眼
+ 291110 黑暗之眼
+ 2911106:黑暗之眼
+ 2911107:黑暗之眼
+ 2911108:黑暗之眼
+ 2911109:黑暗之眼
+ 2911110:黑暗之眼
+ 2911111:黑暗之眼
+ 2911112:黑暗之眼
+ 2911113:黑暗之眼
+ 2911114:黑暗之眼
+ 291111 黑暗之眼
+ 2911116:黑暗之眼
+ 2911117:黑暗之眼
+ 2911118:黑暗之眼
+ 2911119:黑暗之眼
+ 2911120:黑暗之眼
+ 2911121:黑暗之眼
+ 2911122:黑暗之眼
+ 2911123:黑暗之眼
+ 2911124:黑暗之眼
+ 291112 黑暗之眼
+ 2911126:黑暗之眼
+ 2911127:黑暗之眼
+ 2911128:黑暗之眼
+ 2911129:黑暗之眼
+ 2911130:黑暗之眼
+ 2911131:M … 監視機器人
+ 2912101:黑暗之眼
+ 2912102:黑暗之眼
+ 2912103:黑暗之眼
+ 2912104:黑暗之眼
+ 291210 黑暗之眼
+ 2912106:黑暗之眼
+ 2912107:赤紅之眼
+ 2912108:赤紅之眼
+ 2912109:赤紅之眼
+ 2912110:黑暗之眼
+ 2912111:黑暗之眼
+ 2912112:黑暗之眼
+ 2912113:赤紅之眼
+ 2912114:赤紅之眼
+ 291211 赤紅之眼
+ 2912116:監視之眼
+ 2912117:監視之眼
+ 2912118:監視之眼
+ 2913101:破極之眼
+ 2913102:破極之眼
+ 2913103:破極之眼
+ 2914101:漆黑之眼
+ 2914102:漆黑之眼
+ 2914103:漆黑之眼
+ 2914104:漆黑之眼
+ 291410 漆黑之眼
+ 2914106:漆黑之眼
+ 2914107:漆黑之眼
+ 2914108:漆黑之眼
+ 2914109:漆黑之眼
+ 2914110:監視之眼
+ 2914116:漆黑之眼
+ 2914117:漆黑之眼
+ 2914118:漆黑之眼
+ 3101101:超傳導發電機
+ 3101102:超傳導發電機
+ 3101103:超傳導發電機
+ 3101104:超傳導發電機
+ 310110 超傳導發電機
+ 3101106:超傳導發電機
+ 3131101:弗力札
+ 3131102:弗力札
+ 3131103:弗力札
+ 3132101:弗力札
+ 3132102:弗力札
+ 3132103:弗力札
+ 3211101:龍蛙
+ 3211102:龍蛙
+ 3211103:龍蛙
+ 3211104:黃牛龍蛙
+ 321110 黃牛龍蛙
+ 3211106:黃牛龍蛙
+ 3211107:巨型龍蛙
+ 3211108:巨型龍蛙
+ 3211109:巨型龍蛙
+ 3211110:大王龍蛙
+ 3211111:大王龍蛙
+ 3211112:大王龍蛙
+ 3211113:怪龍蛙
+ 3211114:怪龍蛙
+ 321111 怪龍蛙
+ 3211116:長舌龍蛙
+ 3211117:長舌龍蛙
+ 3211118:長舌龍蛙
+ 3211119:龍蛙
+ 3211120:龍蛙
+ 3211121:龍蛙
+ 3211122:強猛龍蛙
+ 3211123:強猛龍蛙
+ 3211124:強猛龍蛙
+ 321112 豚蛙
+ 3211126:豚蛙
+ 3211127:豚蛙
+ 3211128:RP特種蛙
+ 3211129:RP特種蛙
+ 3211130:RP特種蛙
+ 3211131:要塞毒蛙
+ 3211132:要塞毒蛙
+ 3211133:要塞毒蛙
+ 3211134:岩蛙
+ 321113 岩蛙
+ 3211136:岩蛙
+ 3211137:水蛙
+ 3211138:水蛙
+ 3211139:水蛙
+ 3211140:發福龍蛙
+ 3211141:發福龍蛙
+ 3211142:發福龍蛙
+ 3211143:寵物蛙
+ 3211144:寵物蛙
+ 321114 寵物蛙
+ 3211146:突變生物
+ 3211149:洗腦蛙
+ 3211152:大王蛙
+ 3212101:焦蛙
+ 3212102:焦蛙
+ 3212103:焦蛙
+ 3212104:閃亮焦蛙
+ 321210 閃亮焦蛙
+ 3212106:閃亮焦蛙
+ 3212107:焦炭蛙
+ 3212108:焦炭蛙
+ 3212109:焦炭蛙
+ 3212110:黑土蛙
+ 3212111:黑土蛙
+ 3212112:黑土蛙
+ 3212113:火烤焦蛙
+ 3212114:火烤焦蛙
+ 321211 火烤焦蛙
+ 3212116:岩漿焦蛙
+ 3212117:岩漿焦蛙
+ 3212118:岩漿焦蛙
+ 3212119:怪物焦蛙
+ 3212120:怪物焦蛙
+ 3212121:怪物焦蛙
+ 3212122:毒焦蛙
+ 3212123:毒焦蛙
+ 3212124:毒焦蛙
+ 321212 巨型岩漿焦蛙
+ 3212126:巨型岩漿焦蛙
+ 3212127:巨型岩漿焦蛙
+ 3212128:巨毒焦蛙
+ 3212129:巨毒焦蛙
+ 3212130:巨毒焦蛙
+ 3212131:怪物部下
+ 3212132:怪物部下
+ 3212133:怪物部下
+ 3212134:半熟怪物焦蛙
+ 321213 半熟怪物焦蛙
+ 3212136:半熟怪物焦蛙
+ 3212137:全熟怪物焦蛙
+ 3212138:全熟怪物焦蛙
+ 3212139:全熟怪物焦蛙
+ 3212140:寵物岩漿焦蛙
+ 3212141:寵物岩漿焦蛙
+ 3212142:寵物岩漿焦蛙
+ 3212143:熔岩蛙
+ 3212144:熔岩蛙
+ 321214 熔岩蛙
+ 3212146:洗腦蛙
+ 3213101:毒蛙
+ 3213102:毒蛙
+ 3213103:毒蛙
+ 3213104:大王毒蛙
+ 321310 大王毒蛙
+ 3213106:大王毒蛙
+ 3213107:突變海怪
+ 3213110:油礦實驗蛙
+ 3213111:油礦實驗蛙
+ 3213112:油礦實驗蛙
+ 3213113:洗腦蛙
+ 3281101:契士
+ 3281102:契士
+ 3281103:契士
+ 3281104:契士
+ 328110 契士
+ 3281106:契士
+ 3311101:基藍奇
+ 3311102:基藍奇
+ 3311103:基藍奇
+ 3311201:基拉拉
+ 3311202:基拉拉
+ 3311203:基拉拉
+ 3311204:基拉基藍
+ 331120 基拉基藍
+ 3311206:基拉基藍
+ 3311207:基達基丹
+ 3311208:基達基丹
+ 3311209:基達基丹
+ 3312101:葛藍奇
+ 3312102:葛藍奇
+ 3312103:葛藍奇
+ 3312201:葛拉基藍
+ 3312202:葛拉基藍
+ 3312203:葛拉基藍
+ 3312204:特藍奇
+ 331220 特藍奇
+ 3312206:特藍奇
+ 3312207:特拉基藍
+ 3312208:特拉基藍
+ 3312209:特拉基藍
+ 3411201:童基藍
+ 3411202:童基藍
+ 3411203:童基藍
+ 3411204:修練中基藍族
+ 341120 修練中基藍族
+ 3411206:修練中基藍族
+ 3411207:基藍後裔
+ 3411208:基藍後裔
+ 3411209:基藍後裔
+ 3411210:基藍族修行戰士
+ 3411211:基藍族修行戰士
+ 3411212:基藍族修行戰士
+ 341121 基藍後裔
+ 3421101:基鈕
+ 3421102:基鈕
+ 3421103:基鈕
+ 3431101:基鈕
+ 3431102:基鈕
+ 3431103:基鈕
+ 3431104:洗腦基鈕蛙
+ 343110 洗腦基鈕蛙
+ 3431106:洗腦基鈕蛙
+ 3431107:巨大基鈕蛙
+ 3431108:巨大基鈕蛙
+ 3431109:巨大基鈕蛙
+ 3501101:甲蟲
+ 3501102:甲蟲
+ 3501103:甲蟲
+ 3501104:沙沙甲蟲
+ 3501107:歐薩甲蟲
+ 3501108:歐薩甲蟲
+ 3501109:歐薩甲蟲
+ 3501110:高達甲蟲
+ 3501111:高達甲蟲
+ 3501112:高達甲蟲
+ 3501113:鋸齒甲蟲
+ 3501114:鋸齒甲蟲
+ 350111 鋸齒甲蟲
+ 3501116:克魯甲蟲
+ 3501117:克魯甲蟲
+ 3501118:克魯甲蟲
+ 3501119:司查甲蟲
+ 3501120:司查甲蟲
+ 3501121:司查甲蟲
+ 350112 落單甲蟲
+ 3501126:落單甲蟲
+ 3501127:落單甲蟲
+ 3501128:鍬形蟲
+ 3501129:鍬形蟲
+ 3501130:鍬形蟲
+ 3501131:變型蟲
+ 3501132:變型蟲
+ 3501133:變型蟲
+ 3501134:司克甲蟲
+ 350113 司克甲蟲
+ 3501136:司克甲蟲
+ 3501137:垃圾蟲
+ 3501138:垃圾蟲
+ 3501139:垃圾蟲
+ 3501140:監視用甲蟲
+ 3501141:監視用甲蟲
+ 3501142:監視用甲蟲
+ 3501143:取樣用甲蟲
+ 3501144:取樣用甲蟲
+ 350114 取樣用甲蟲
+ 3501146:鐵頭金龜
+ 3501149:蚊札達甲蟲
+ 3501152:甲蟲
+ 3502101:窸窣甲蟲
+ 3502102:窸窣甲蟲
+ 3502103:窸窣甲蟲
+ 3502104:野菇甲蟲
+ 3502107:飛行甲蟲
+ 3502108:飛行甲蟲
+ 3502109:飛行甲蟲
+ 3502110:金基里伍斯
+ 3502111:金基里伍斯
+ 3502112:金基里伍斯
+ 3502113:鐵爪甲蟲
+ 3502114:鐵爪甲蟲
+ 350211 鐵爪甲蟲
+ 3502116:劇毒甲蟲
+ 3502117:劇毒甲蟲
+ 3502118:劇毒甲蟲
+ 3502119:香菇鍬形蟲
+ 3502120:香菇鍬形蟲
+ 3502121:香菇鍬形蟲
+ 3502122:洗腦強力甲蟲
+ 3502123:洗腦強力甲蟲
+ 3502124:洗腦強力甲蟲
+ 350212 鍬形甲蟲
+ 3502126:鍬形甲蟲
+ 3502127:鍬形甲蟲
+ 3502128:活力甲蟲
+ 3502129:活力甲蟲
+ 3502130:活力甲蟲
+ 3502131:活力甲蟲
+ 3502132:活力甲蟲
+ 3502133:活力甲蟲
+ 3502134:活力甲蟲幼蟲
+ 350213 活力甲蟲幼蟲
+ 3502136:活力甲蟲幼蟲
+ 3502137:活力甲蟲幼蟲
+ 3502138:活力甲蟲幼蟲
+ 3502139:活力甲蟲幼蟲
+ 3503101:窸窣變型蟲
+ 3503102:窸窣變型蟲
+ 3503103:窸窣變型蟲
+ 3503104:卡布里甲蟲
+ 3503107:毒菇甲蟲
+ 3503108:毒菇甲蟲
+ 3503109:毒菇甲蟲
+ 3503110:毛躁甲蟲
+ 3503111:毛躁甲蟲
+ 3503112:毛躁甲蟲
+ 3503113:陶製甲蟲
+ 3503114:陶製甲蟲
+ 350311 陶製甲蟲
+ 3503116:毒菇變型蟲
+ 3503117:毒菇變型蟲
+ 3503118:毒菇變型蟲
+ 3503119:毒菇鍬形蟲
+ 3503120:毒菇鍬形蟲
+ 3503121:毒菇鍬形蟲
+ 3503122:糯米甲蟲
+ 3503123:糯米甲蟲
+ 3503124:糯米甲蟲
+ 350312 取樣用汙染甲蟲
+ 3503126:取樣用汙染甲蟲
+ 3503127:取樣用汙染甲蟲
+ 3503128:實驗用變形甲蟲
+ 3503129:實驗用變形甲蟲
+ 3503130:實驗用變形甲蟲
+ 3503131:殺氣充電甲蟲
+ 3503134:毒生菇甲蟲
+ 3503137:甲蟲
+ 3503140:鐵拳甲蟲
+ 3504101:米加甲蟲
+ 3504102:米加甲蟲
+ 3504103:米加甲蟲
+ 3504104:半成品米加甲蟲
+ 350410 半成品米加甲蟲
+ 3504106:半成品米加甲蟲
+ 3504107:米加甲蟲
+ 3521101:孫悟空
+ 3531801:孫悟空
+ 3531802:孫悟空
+ 3531803:孫悟空
+ 3531901:基鈕
+ 3531902:基鈕
+ 3531903:基鈕
+ 3571101:巨型香菇株
+ 3571102:巨型香菇株
+ 3571103:巨型香菇株
+ 3591101:盤旋機器人
+ 3591102:盤旋機器人
+ 3591103:盤旋機器人
+ 3591104:盤旋機器人
+ 359110 盤旋機器人
+ 3591106:盤旋機器人
+ 3591107:油礦駐守機器人
+ 3591108:油礦駐守機器人
+ 3591109:油礦駐守機器人
+ 3591110:傑巴勒歐機器
+ 3591113:作業指揮機器人
+ 3591116:守護機器人
+ 3592101:巴巴利歐機器
+ 3592104:FR著陸指揮機器人
+ 3592107:修理完畢戰鬥機器人
+ 3593101:FR菇類監視機器人
+ 3593104:製作中FR機器人
+ 3603101:豪伊大叔
+ 3603102:豪伊大叔
+ 3603103:豪伊大叔
+ 3604101:夢夢
+ 3604102:夢夢
+ 3604103:夢夢
+ 3604104:葛多克殘影
+ 360410 葛多克殘影
+ 3604106:葛多克殘影
+ 3611101:老母咕咕雞
+ 3611102:老母咕咕雞
+ 3611103:老母咕咕雞
+ 3611104:咕咕咕雞
+ 361110 咕咕咕雞
+ 3611106:咕咕咕雞
+ 3611119:酋長咕咕雞
+ 3611120:酋長咕咕雞
+ 3611121:酋長咕咕雞
+ 3611122:咕咕叫咕咕雞
+ 3611123:咕咕叫咕咕雞
+ 3611124:咕咕叫咕咕雞
+ 361112 火焰咕咕雞
+ 3611201:落單咕咕雞
+ 3611202:落單咕咕雞
+ 3611203:落單咕咕雞
+ 3611204:巨型咕咕雞
+ 361120 巨型咕咕雞
+ 3611206:巨型咕咕雞
+ 3611207:王子咕咕雞
+ 3611208:王子咕咕雞
+ 3611209:王子咕咕雞
+ 3612101:焦炭火雞
+ 3612102:焦炭火雞
+ 3612103:焦炭火雞
+ 3612104:野生火雞
+ 361210 野生火雞
+ 3612106:野生火雞
+ 3612107:焦炭火雞
+ 3612108:焦炭火雞
+ 3612109:焦炭火雞
+ 3612110:咕咕先生
+ 3612113:派里火雞
+ 3612201:炭燒火雞
+ 3612202:炭燒火雞
+ 3612203:炭燒火雞
+ 3612204:野燒火雞
+ 361220 野燒火雞
+ 3612206:野燒火雞
+ 3613101:卡美博得
+ 3613102:卡美博得
+ 3613103:卡美博得
+ 3613104:巨人卡美博得
+ 361310 巨人卡美博得
+ 3613106:巨人卡美博得
+ 3613107:沙漠卡美博得
+ 3613108:沙漠卡美博得
+ 3613109:沙漠卡美博得
+ 3613110:咕歐斯咕咕雞
+ 3613201:野生競速博得
+ 3613202:野生競速博得
+ 3613203:野生競速博得
+ 3613204:葛雷博得
+ 361320 葛雷博得
+ 3613206:葛雷博得
+ 3613207:野性跑者
+ 3613208:野性跑者
+ 3613209:野性跑者
+ 3613210:趴趴走咕咕雞
+ 3613301:兇暴卡美博得
+ 3613302:兇暴卡美博得
+ 3613303:兇暴卡美博得
+ 3613304:泰坦咕咕雞
+ 3621101:凱特垃圾運輸車
+ 3621104:槍騎士
+ 3621107:凱特星人實驗管理兵
+ 3621110:油礦氣體設備監督
+ 3621111:油礦氣體設備監督
+ 3621112:油礦氣體設備監督
+ 3622101:螺絲掉落射手
+ 3622102:螺絲掉落射手
+ 3622103:螺絲掉落射手
+ 3622104:修習哨戒兵
+ 362210 修習哨戒兵
+ 3622106:修習哨戒兵
+ 3622107:凱特星人實驗管理兵
+ 3622110:熱血槍騎士
+ 3622113:雷金騎士
+ 3623104:要塞監視射手
+ 362310 要塞監視射手
+ 3623106:要塞監視射手
+ 3623107:凱特星人實驗管理兵
+ 3623108:弗力札選拔偵查兵
+ 3623111:凱特星人巡察官
+ 3631101:蓋洛克隆博士
+ 3631102:蓋洛克隆博士
+ 3631103:蓋洛克隆博士
+ 3651107:雷射對空加農砲
+ 3651108:雷射對空加農砲
+ 3651109:雷射對空加農砲
+ 3651110:雷射對空加農砲
+ 3651111:雷射對空加農砲
+ 3651112:雷射對空加農砲
+ 3651113:收容所火砲
+ 3651119:雷射對空加農砲
+ 3651120:雷射對空加農砲
+ 3651121:雷射對空加農砲
+ 3651122:米拉軍侵略用火砲
+ 3652201:瓦斯安全塔
+ 3661101:渥弗雷射
+ 3661102:渥弗雷射
+ 3661103:渥弗雷射
+ 3661104:渥弗雷射
+ 366110 渥弗雷射
+ 3661106:渥弗雷射
+ 3691101:古德
+ 3691102:古德
+ 3691103:古德
+ 3711101:賓格利
+ 3711102:賓格利
+ 3711103:賓格利
+ 3712101:毛賓格利
+ 3712102:毛賓格利
+ 3712103:毛賓格利
+ 3713101:白眼賓格利
+ 3713102:白眼賓格利
+ 3713103:白眼賓格利
+ 3751101:牛魔王
+ 3751102:牛魔王
+ 3751103:牛魔王
+ 3811101:哈凱
+ 3811102:哈凱
+ 3811103:哈凱
+ 3811104:哈凱完全體
+ 381110 哈凱完全體
+ 3811106:哈凱完全體
+ 3812101:火焰哈凱
+ 3812102:火焰哈凱
+ 3812103:火焰哈凱
+ 3812104:地獄哈凱
+ 381210 地獄哈凱
+ 3812106:地獄哈凱
+ 4021401:坎穆
+ 4021402:坎穆
+ 4021403:坎穆
+ 4031101:吉普蜥蜴
+ 4031102:吉普蜥蜴
+ 4031103:吉普蜥蜴
+ 4031104:渦輪蜥蜴
+ 403110 渦輪蜥蜴
+ 4031106:渦輪蜥蜴
+ 4031107:噴射蜥蜴
+ 4031108:噴射蜥蜴
+ 4031109:噴射蜥蜴
+ 4031110:呆呆蜥蜴
+ 4031111:呆呆蜥蜴
+ 4031112:呆呆蜥蜴
+ 4031113:轟隆隆蜥蜴
+ 4031114:轟隆隆蜥蜴
+ 403111 轟隆隆蜥蜴
+ 4031116:洗腦吉普蜥蜴
+ 4031117:洗腦吉普蜥蜴
+ 4031118:洗腦吉普蜥蜴
+ 4031119:洗腦吉普蜥蜴
+ 4031120:洗腦吉普蜥蜴
+ 4031121:洗腦吉普蜥蜴
+ 4031128:石化蜥蜴
+ 4031129:石化蜥蜴
+ 4031130:石化蜥蜴
+ 4031131:洗腦伊部蜥蜴
+ 4031134:峽谷蜥蜴
+ 403113 峽谷蜥蜴
+ 4031136:峽谷蜥蜴
+ 4031137:轟隆隆蜥蜴寶寶
+ 4032101:水滴蜥蜴
+ 4032102:水滴蜥蜴
+ 4032103:水滴蜥蜴
+ 4032110:古代蜥蜴
+ 4032111:古代蜥蜴
+ 4032112:古代蜥蜴
+ 4032113:波可蜥蜴
+ 4032114:波可蜥蜴
+ 403211 波可蜥蜴
+ 4032116:脆皮蜥蜴
+ 4032117:脆皮蜥蜴
+ 4032118:脆皮蜥蜴
+ 4032119:脆石蜥蜴
+ 4032120:脆石蜥蜴
+ 4032121:脆石蜥蜴
+ 4032122:黃沙蜥蜴
+ 4032123:黃沙蜥蜴
+ 4032124:黃沙蜥蜴
+ 403212 巨孔蜥蜴
+ 4032126:巨孔蜥蜴
+ 4032127:巨孔蜥蜴
+ 4032128:袋鼠獵人
+ 4032129:袋鼠獵人
+ 4032130:袋鼠獵人
+ 4032131:蜷曲蜥蜴
+ 4032132:蜷曲蜥蜴
+ 4032133:蜷曲蜥蜴
+ 4032146:半乾猛禽
+ 4032147:半乾猛禽
+ 4032148:半乾猛禽
+ 4033107:大腳蜥蜴
+ 4033108:大腳蜥蜴
+ 4033109:大腳蜥蜴
+ 4073101:格鬥家修行者
+ 4073102:格鬥家修行者
+ 4073103:格鬥家修行者
+ 4101101:桃白白弟子
+ 4101102:桃白白弟子
+ 4101103:桃白白弟子
+ 4131101:不良武道家
+ 4131102:不良武道家
+ 4131103:不良武道家
+ 4131104:不良修行者
+ 413110 不良修行者
+ 4131106:不良修行者
+ 4132101:惡棍氣功師
+ 4132102:惡棍氣功師
+ 4132103:惡棍氣功師
+ 4132104:不良修行者
+ 413210 不良修行者
+ 4132106:不良修行者
+ 4261101:黃蜂
+ 4261102:黃蜂
+ 4261103:黃蜂
+ 4261104:嗡嗡黃蜂
+ 426110 嗡嗡黃蜂
+ 4261106:嗡嗡黃蜂
+ 4261107:蜜糖黃蜂
+ 4261108:蜜糖黃蜂
+ 4261109:蜜糖黃蜂
+ 4261110:德克黃蜂
+ 4261111:德克黃蜂
+ 4261112:德克黃蜂
+ 4261113:土蜂
+ 4261114:土蜂
+ 426111 土蜂
+ 4261116:花園黃蜂
+ 4261117:花園黃蜂
+ 4261118:花園黃蜂
+ 4261119:監視黃蜂
+ 4261120:監視黃蜂
+ 4261121:監視黃蜂
+ 4261122:取樣用黃蜂
+ 4261123:取樣用黃蜂
+ 4261124:取樣用黃蜂
+ 4261204:傑特馬哈針蜂
+ 426120 傑特馬哈針蜂
+ 4261206:傑特馬哈針蜂
+ 4261207:中毒黃蜂
+ 4261208:中毒黃蜂
+ 4261209:中毒黃蜂
+ 4261210:洗腦巨大黃蜂
+ 4261211:洗腦巨大黃蜂
+ 4261212:洗腦巨大黃蜂
+ 4262101:毒黃蜂
+ 4262102:毒黃蜂
+ 4262103:毒黃蜂
+ 4262104:嗡嗡毒黃蜂
+ 426210 嗡嗡毒黃蜂
+ 4262106:嗡嗡毒黃蜂
+ 4262107:電子黃蜂
+ 4262108:電子黃蜂
+ 4262109:電子黃蜂
+ 4262110:蘭茲蜂
+ 4262111:蘭茲蜂
+ 4262112:蘭茲蜂
+ 4262113:血腥女王蜂
+ 4262114:血腥女王蜂
+ 426211 血腥女王蜂
+ 4262116:花園毒針蜂
+ 4262117:花園毒針蜂
+ 4262118:花園毒針蜂
+ 4262119:追擊黃蜂
+ 4262120:追擊黃蜂
+ 4262121:追擊黃蜂
+ 4262122:取樣用熱火黃蜂
+ 4262123:取樣用熱火黃蜂
+ 4262124:取樣用熱火黃蜂
+ 426212 迷幻黃蜂
+ 4262128:爆黃蜂
+ 4262131:布格蜜蜂
+ 4262134:取樣用熱火黃蜂
+ 4262204:[?]
+ 426220 [?]
+ 4262206:[?]
+ 4262301:中毒血黃蜂
+ 4262302:中毒血黃蜂
+ 4262303:中毒血黃蜂
+ 4263101:針毒黃蜂
+ 4263102:針毒黃蜂
+ 4263103:針毒黃蜂
+ 4263104:胎葉針蜂
+ 426310 胎葉針蜂
+ 4263106:胎葉針蜂
+ 4263107:惡鬼毒黃蜂
+ 4263108:惡鬼毒黃蜂
+ 4263109:惡鬼毒黃蜂
+ 4263110:針蜂
+ 4263111:針蜂
+ 4263112:針蜂
+ 4263113:取樣用毒針蜂
+ 4263114:取樣用毒針蜂
+ 426311 取樣用毒針蜂
+ 4263116:火大蜂
+ 4264101:米加黃蜂
+ 4264102:米加黃蜂
+ 4264103:米加黃蜂
+ 4264104:半成品米加黃蜂
+ 426410 半成品米加黃蜂
+ 4264106:半成品米加黃蜂
+ 4311101:黃鼠狼
+ 4311102:黃鼠狼
+ 4311103:黃鼠狼
+ 4311104:大黃鼠狼
+ 431110 大黃鼠狼
+ 4311106:大黃鼠狼
+ 4311107:土黃鼠狼
+ 4311108:土黃鼠狼
+ 4311109:土黃鼠狼
+ 4311110:靶子狼
+ 4311111:靶子狼
+ 4311112:靶子狼
+ 4311113:土黃鼠狼
+ 4311201:白黃鼠狼
+ 4311202:白黃鼠狼
+ 4311203:白黃鼠狼
+ 4311204:極地黃鼠狼
+ 431120 極地黃鼠狼
+ 4311206:極地黃鼠狼
+ 4311301:黃尾狼
+ 4311302:黃尾狼
+ 4311303:黃尾狼
+ 4311304:壞狼
+ 431130 壞狼
+ 4311306:壞狼
+ 4311307:摩克斯狐
+ 4511101:獵豹士兵
+ 4511102:獵豹士兵
+ 4511103:獵豹士兵
+ 4511104:獵豹烈風隊
+ 451110 獵豹烈風隊
+ 4511106:獵豹烈風隊
+ 4511110:西雅荷冠軍
+ 4511111:西雅荷冠軍
+ 4511112:西雅荷冠軍
+ 4511113:獵豹游擊隊
+ 4511114:獵豹游擊隊
+ 451111 獵豹游擊隊
+ 4511116:狂擊助教
+ 4511117:狂擊助教
+ 4511118:狂擊助教
+ 4511119:獵豹下士
+ 4511120:獵豹下士
+ 4511121:獵豹下士
+ 4511122:白罕德兵長
+ 4511123:白罕德兵長
+ 4511124:白罕德兵長
+ 451112 吱吱部下
+ 4511126:吱吱部下
+ 4511127:吱吱部下
+ 4511128:紅褲軍殘黨護衛兵
+ 4511129:紅褲軍殘黨護衛兵
+ 4511130:紅褲軍殘黨護衛兵
+ 4511131:布魯克林護衛兵
+ 4511132:布魯克林護衛兵
+ 4511133:布魯克林護衛兵
+ 4511134:美洲獅掠奪兵
+ 451113 美洲獅掠奪兵
+ 4511136:美洲獅掠奪兵
+ 4511137:中毒紅褲軍
+ 4512101:美洲獅偵查隊
+ 4512102:美洲獅偵查隊
+ 4512103:美洲獅偵查隊
+ 4512104:美洲獅烈風隊
+ 451210 美洲獅烈風隊
+ 4512106:美洲獅烈風隊
+ 4512107:山德比斯特
+ 4512108:山德比斯特
+ 4512109:山德比斯特
+ 4512110:美洲獅精銳部隊
+ 4512111:美洲獅精銳部隊
+ 4512112:美洲獅精銳部隊
+ 4512113:麥卡頓比斯特
+ 4512114:麥卡頓比斯特
+ 451211 麥卡頓比斯特
+ 4512116:美洲獅掠奪兵
+ 4512117:美洲獅掠奪兵
+ 4512118:美洲獅掠奪兵
+ 4512119:亞達勒1
+ 4512120:亞達勒1
+ 4512121:亞達勒1
+ 4512122:亞達勒2
+ 4512123:亞達勒2
+ 4512124:亞達勒2
+ 451212 紅褲軍殺手
+ 4512126:紅褲軍殺手
+ 4512127:紅褲軍殺手
+ 4512128:廢棄物搬運兵
+ 4512129:廢棄物搬運兵
+ 4512130:廢棄物搬運兵
+ 4512131:中級紅褲軍俘虜
+ 4512134:中褲軍炸藥兵
+ 4512137:中毒紅褲軍
+ 4513101:猛虎突擊隊
+ 4513102:猛虎突擊隊
+ 4513103:猛虎突擊隊
+ 4513104:猛虎決死隊
+ 451310 猛虎決死隊
+ 4513106:猛虎決死隊
+ 4513107:猛虎游擊隊
+ 4513108:猛虎游擊隊
+ 4513109:猛虎游擊隊
+ 4513110:屈伏塔
+ 4513111:屈伏塔
+ 4513112:屈伏塔
+ 4513113:猛虎掠奪隊
+ 4513114:猛虎掠奪隊
+ 451311 猛虎掠奪隊
+ 4513116:猛虎逃兵
+ 4513117:猛虎逃兵
+ 4513118:猛虎逃兵
+ 4513119:猛虎選拔隊
+ 4513120:猛虎選拔隊
+ 4513121:猛虎選拔隊
+ 4513122:獵豹工作隊
+ 4513123:獵豹工作隊
+ 4513124:獵豹工作隊
+ 451312 小屈伏塔
+ 4513126:小屈伏塔
+ 4513127:小屈伏塔
+ 4513128:屈伏塔三世
+ 4513129:屈伏塔三世
+ 4513130:屈伏塔三世
+ 4513131:屈伏塔隊長
+ 4513132:屈伏塔隊長
+ 4513133:屈伏塔隊長
+ 4513134:巴托少校心腹
+ 451313 巴托少校心腹
+ 4513136:巴托少校心腹
+ 4513137:天下第一武道會臨演
+ 4513138:天下第一武道會臨演
+ 4513139:天下第一武道會臨演
+ 4513140:格雷布魯斯
+ 4513141:格雷布魯斯
+ 4513142:格雷布魯斯
+ 4513143:逃兵魯丁
+ 4513144:逃兵魯丁
+ 451314 逃兵魯丁
+ 4513146:天下第一武道會臨演
+ 4513147:天下第一武道會臨演
+ 4513148:天下第一武道會臨演
+ 4513149:坑道清掃員
+ 4513150:坑道清掃員
+ 4513151:坑道清掃員
+ 4514101:史蒂芬中士
+ 4514102:史蒂芬中士
+ 4514103:史蒂芬中士
+ 4531101:干擾電波機器人
+ 4531102:干擾電波機器人
+ 4531103:干擾電波機器人
+ 4531104:干擾電波機器人
+ 453110 干擾電波機器人
+ 4531106:干擾電波機器人
+ 4531107:干擾電波機器人
+ 4531108:干擾電波機器人
+ 4531109:干擾電波機器人
+ 4531110:米拉軍摩托亨利
+ 4541101:查波
+ 4541102:查波
+ 4541103:查波
+ 4541201:查波
+ 4541202:查波
+ 4541203:查波
+ 4542101:查波
+ 4542102:查波
+ 4542103:查波
+ 4542104:洗腦查波
+ 454210 洗腦查波
+ 4542106:洗腦查波
+ 4551101:生化人9號
+ 4551102:生化人9號
+ 4551103:生化人9號
+ 4561101:查波
+ 4561102:查波
+ 4561103:查波
+ 4561104:洗腦變身查波
+ 456110 洗腦變身查波
+ 4561106:洗腦變身查波
+ 4581101:收容所長維坎德
+ 4584101:生化人19000SP
+ 4584102:生化人19000SP
+ 4584103:生化人19000SP
+ 4584104:生化人19000SP
+ 458410 生化人19000SP
+ 4584106:生化人19000SP
+ 4611101:生化人哨衛
+ 4611104:下級生化人管理兵
+ 4611107:基里電池護衛兵
+ 4611110:生化人生物統帥
+ 4611111:生化人生物統帥
+ 4611112:生化人生物統帥
+ 4611113:生化人副小隊長
+ 4611114:生化人副小隊長
+ 461111 生化人副小隊長
+ 4611116:生化人警衛
+ 4611117:生化人警衛
+ 4611118:生化人警衛
+ 4611119:生化人班長
+ 4611120:生化人班長
+ 4611121:生化人班長
+ 4611122:生化人侵略兵
+ 4611201:生化人8000mk2
+ 4611202:生化人8000mk2
+ 4611203:生化人8000mk2
+ 4611204:生化人8000mk2
+ 461120 生化人8000mk2
+ 4611206:生化人8000mk2
+ 4611207:生化人8000mk2
+ 4611208:生化人8000mk2
+ 4611209:生化人8000mk2
+ 4611210:生化人8000mk2
+ 4611211:生化人8000mk2
+ 4611212:生化人8000mk2
+ 4611213:生化人8000mk2
+ 4611214:生化人8000mk2
+ 461121 生化人8000mk2
+ 4611216:生化人8000mk2
+ 4611217:生化人8000mk2
+ 4611218:生化人8000mk2
+ 4611219:生化人補給兵
+ 4611220:生化人補給兵
+ 4611221:生化人補給兵
+ 4611222:中級管理兵察勒
+ 461122 中級基里蒐集兵
+ 4611228:米拉軍行動隊長
+ 4611229:米拉軍行動隊長
+ 4611230:米拉軍行動隊長
+ 4611231:米拉軍行動隊長
+ 4611232:米拉軍行動隊長
+ 4611233:米拉軍行動隊長
+ 4611234:生化人取出班長
+ 461123 生化人取出班長
+ 4611236:生化人取出班長
+ 4611237:上級基里蒐集兵
+ 4612101:生化人8000
+ 4612102:生化人8000
+ 4612103:生化人8000
+ 4612104:生化人8000
+ 461210 生化人8000
+ 4612106:生化人8000
+ 4612107:生化人8000
+ 4612108:生化人8000
+ 4612109:生化人8000
+ 4612110:生化人8000
+ 4612111:生化人8000
+ 4612112:生化人8000
+ 4612113:生化人8000
+ 4612114:生化人8000
+ 461211 生化人8000
+ 4612116:生化人8000
+ 4612117:生化人8000
+ 4612118:生化人8000
+ 4612119:生化人探查兵
+ 4612120:生化人探查兵
+ 4612121:生化人探查兵
+ 4612122:中級俘虜管理兵
+ 461212 官邸守衛兵
+ 4612134:生化人分隊長
+ 461213 生化人分隊長
+ 4612136:生化人分隊長
+ 4612137:生化人下士
+ 4612138:生化人下士
+ 4612139:生化人下士
+ 4612140:生化人統帥
+ 4612141:生化人統帥
+ 4612142:生化人統帥
+ 4612143:育蟲生化人
+ 4612144:育蟲生化人
+ 461214 育蟲生化人
+ 4612146:生化人防衛兵
+ 4613101:上級俘虜管理兵
+ 4613104:收容所長護衛下士
+ 4613107:米拉軍管理兵
+ 4613108:米拉軍管理兵
+ 4613109:米拉軍管理兵
+ 4621101:米拉軍生化人16號
+ 4621102:米拉軍生化人16號
+ 4621103:米拉軍生化人16號
+ 4621104:米拉軍生化人16號
+ 462110 米拉軍生化人16號
+ 4621106:米拉軍生化人16號
+ 4651101:薩麻羅
+ 4651102:薩麻羅
+ 4651103:薩麻羅
+ 4651104:巨型薩麻羅
+ 465110 巨型薩麻羅
+ 4651106:巨型薩麻羅
+ 4651107:連鎖薩麻羅
+ 4651108:連鎖薩麻羅
+ 4651109:連鎖薩麻羅
+ 4651110:凱迪安薩麻羅
+ 4651111:凱迪安薩麻羅
+ 4651112:凱迪安薩麻羅
+ 4652101:鐵爪薩麻羅
+ 4652102:鐵爪薩麻羅
+ 4652103:鐵爪薩麻羅
+ 4652104:巨型爪薩麻羅
+ 465210 巨型爪薩麻羅
+ 4652106:巨型爪薩麻羅
+ 4652107:鹿角薩麻怪
+ 4652108:鹿角薩麻怪
+ 4652109:鹿角薩麻怪
+ 4652110:取樣用生薩麻羅
+ 4652111:取樣用生薩麻羅
+ 4652112:取樣用生薩麻羅
+ 4652113:寇巴特薩麻羅
+ 4652114:寇巴特薩麻羅
+ 465211 寇巴特薩麻羅
+ 4652116:寵物薩麻羅
+ 4652117:寵物薩麻羅
+ 4652118:寵物薩麻羅
+ 4652122:睏薩麻羅
+ 4652301:中毒鐵爪薩麻羅
+ 4652302:中毒鐵爪薩麻羅
+ 4652303:中毒鐵爪薩麻羅
+ 4652304:基里中毒曼提斯
+ 4653101:原型薩麻羅
+ 4653102:原型薩麻羅
+ 4653103:原型薩麻羅
+ 4653104:化石薩麻羅
+ 465310 化石薩麻羅
+ 4653106:化石薩麻羅
+ 4653107:波路亞薩麻羅
+ 4653108:波路亞薩麻羅
+ 4653109:波路亞薩麻羅
+ 4653110:實驗中薩麻羅
+ 4653111:實驗中薩麻羅
+ 4653112:實驗中薩麻羅
+ 4653113:取樣用薩麻羅
+ 4653114:取樣用薩麻羅
+ 465311 取樣用薩麻羅
+ 4653116:監視薩麻羅
+ 4653117:監視薩麻羅
+ 4653118:監視薩麻羅
+ 4653119:鹿角薩麻怪
+ 4653120:鹿角薩麻怪
+ 4653121:鹿角薩麻怪
+ 4653122:噗噗薩麻羅
+ 4653123:噗噗薩麻羅
+ 4653124:噗噗薩麻羅
+ 465312 凱里薩麻羅
+ 4653126:凱里薩麻羅
+ 4653127:凱里薩麻羅
+ 4654101:米加薩麻羅
+ 4654102:米加薩麻羅
+ 4654103:米加薩麻羅
+ 4654104:史萊許
+ 465410 史萊許
+ 4654106:史萊許
+ 4654107:半成品米加薩麻羅
+ 4654108:半成品米加薩麻羅
+ 4654109:半成品米加薩麻羅
+ 4711101:卡邦
+ 4711102:卡邦
+ 4711103:卡邦
+ 4711104:卡邦王
+ 471110 卡邦王
+ 4711106:卡邦王
+ 4711107:卡邦女王
+ 4711108:卡邦女王
+ 4711109:卡邦女王
+ 4711110:塞爾卡邦
+ 4711111:塞爾卡邦
+ 4711112:塞爾卡邦
+ 4711113:指揮卡邦
+ 4711114:指揮卡邦
+ 471111 指揮卡邦
+ 4711116:巨型卡邦
+ 4711117:巨型卡邦
+ 4711118:巨型卡邦
+ 4711119:暴力卡邦
+ 4711120:暴力卡邦
+ 4711121:暴力卡邦
+ 4711122:邦邦血腥狂
+ 4711123:邦邦血腥狂
+ 4711124:邦邦血腥狂
+ 471112 洗腦巨大卡邦
+ 4711126:洗腦巨大卡邦
+ 4711127:洗腦巨大卡邦
+ 4711128:波路亞卡邦
+ 4711129:波路亞卡邦
+ 4711130:波路亞卡邦
+ 4711131:實驗流出品卡邦
+ 4711132:實驗流出品卡邦
+ 4711133:實驗流出品卡邦
+ 4711134:田鼠
+ 4711137:下水道卡邦
+ 4712101:乾癟卡邦
+ 4712102:乾癟卡邦
+ 4712103:乾癟卡邦
+ 4712104:摳門卡邦
+ 471210 摳門卡邦
+ 4712106:摳門卡邦
+ 4712107:小家卡邦
+ 4712108:小家卡邦
+ 4712109:小家卡邦
+ 4712110:巨型卡邦
+ 4712111:巨型卡邦
+ 4712112:巨型卡邦
+ 4712113:監視卡邦
+ 4712114:監視卡邦
+ 471211 監視卡邦
+ 4712116:毒血卡邦
+ 4712117:毒血卡邦
+ 4712118:毒血卡邦
+ 4712119:指揮官卡邦
+ 4712120:指揮官卡邦
+ 4712121:指揮官卡邦
+ 4713101:赤色卡邦
+ 4713102:赤色卡邦
+ 4713103:赤色卡邦
+ 4713104:血腥卡邦
+ 471310 血腥卡邦
+ 4713106:血腥卡邦
+ 4713107:鈍卡邦
+ 4713108:鈍卡邦
+ 4713109:鈍卡邦
+ 4713110:邦邦卡邦
+ 4713111:邦邦卡邦
+ 4713112:邦邦卡邦
+ 4713113:史萊許卡邦
+ 4713114:史萊許卡邦
+ 471311 史萊許卡邦
+ 4713116:嗜血卡邦首領
+ 4713117:嗜血卡邦首領
+ 4713118:嗜血卡邦首領
+ 4713119:邦邦嗜血王
+ 4713120:邦邦嗜血王
+ 4713121:邦邦嗜血王
+ 4713122:劇毒卡邦
+ 4713123:劇毒卡邦
+ 4713124:劇毒卡邦
+ 471312 劇毒卡邦
+ 4713126:劇毒卡邦
+ 4713127:劇毒卡邦
+ 4713128:火血卡邦
+ 4801101:雉老師
+ 4801102:雉老師
+ 4801103:雉老師
+ 4801201:鼈仙人
+ 4801202:鼈仙人
+ 4801203:鼈仙人
+ 4811101:基里上校
+ 4811102:基里上校
+ 4811103:基里上校
+ 4811104:戰敗基里里軍官
+ 481110 戰敗基里里軍官
+ 4811106:戰敗基里里軍官
+ 4811107:天下第一武道會臨演
+ 4811108:天下第一武道會臨演
+ 4811109:天下第一武道會臨演
+ 4811110:基里基里兵殘黨領袖
+ 4811111:基里基里兵殘黨領袖
+ 4811112:基里基里兵殘黨領袖
+ 4812101:基里基里生還兵
+ 4812102:基里基里生還兵
+ 4812103:基里基里生還兵
+ 4812104:基里基里逃兵
+ 481210 基里基里逃兵
+ 4812106:基里基里逃兵
+ 4812107:基里基里決戰隊
+ 4812108:基里基里決戰隊
+ 4812109:基里基里決戰隊
+ 4812110:基里基里兵殘黨
+ 4812111:基里基里兵殘黨
+ 4812112:基里基里兵殘黨
+ 4812113:基里基里兵特攻隊
+ 4812114:基里基里兵特攻隊
+ 481211 基里基里兵特攻隊
+ 4812201:基里基里親衛隊
+ 4812202:基里基里親衛隊
+ 4812203:基里基里親衛隊
+ 4812204:基里基里親衛中士
+ 481220 基里基里親衛中士
+ 4812206:基里基里親衛中士
+ 4812207:基里基里烈風隊
+ 4812208:基里基里烈風隊
+ 4812209:基里基里烈風隊
+ 4812210:庫里斯基里基里監督官
+ 4812211:庫里斯基里基里監督官
+ 4812212:庫里斯基里基里監督官
+ 4813104:基里基里戰敗兵
+ 481310 基里基里戰敗兵
+ 4813106:基里基里戰敗兵
+ 4813107:基里基里勞役兵
+ 4813108:基里基里勞役兵
+ 4813109:基里基里勞役兵
+ 4813110:基里勞役兵
+ 4813111:基里勞役兵
+ 4813112:基里勞役兵
+ 4813116:冠軍摩伍
+ 4813117:冠軍摩伍
+ 4813118:冠軍摩伍
+ 4813204:基里基里山賊兵
+ 481320 基里基里山賊兵
+ 4813206:基里基里山賊兵
+ 4813207:基里基里山賊頭目
+ 4813208:基里基里山賊頭目
+ 4813209:基里基里山賊頭目
+ 4813210:中級紅褲軍俘虜
+ 4813213:正規基里基里偵察兵
+ 4813214:正規基里基里偵察兵
+ 481321 正規基里基里偵察兵
+ 4813301:徬徨逃兵
+ 4813302:徬徨逃兵
+ 4813303:徬徨逃兵
+ 4831101:瑪格莉特的保鑣
+ 4851101:貝貝惡魔
+ 4851102:貝貝惡魔
+ 4851103:貝貝惡魔
+ 4852101:黑貝貝惡魔
+ 4852102:黑貝貝惡魔
+ 4852103:黑貝貝惡魔
+ 4853101:天使貝貝惡魔
+ 4853102:天使貝貝惡魔
+ 4853103:天使貝貝惡魔
+ 4881107:丹丹幼龍
+ 4881108:丹丹幼龍
+ 4881109:丹丹幼龍
+ 4881110:幼龍
+ 4881111:幼龍
+ 4881112:幼龍
+ 4881113:波可波可幼龍
+ 4881114:波可波可幼龍
+ 488111 波可波可幼龍
+ 4881116:愛司幼龍
+ 4881117:愛司幼龍
+ 4881118:愛司幼龍
+ 4881119:試煉的魔龍
+ 4881120:試煉的魔龍
+ 4881121:試煉的魔龍
+ 4881122:迷你龍
+ 4881123:迷你龍
+ 4881124:迷你龍
+ 488112 古代幼龍
+ 4881126:古代幼龍
+ 4881127:古代幼龍
+ 4881128:溪谷幼龍
+ 4882110:神水守護龍
+ 4882111:神水守護龍
+ 4882112:神水守護龍
+ 4882113:守護龍幼龍
+ 4882114:守護龍幼龍
+ 488211 守護龍幼龍
+ 4882116:上古幼龍
+ 4883101:神水守護龍
+ 4883102:神水守護龍
+ 4883103:神水守護龍
+ 4883104:修行用神水守護龍
+ 488310 修行用神水守護龍
+ 4883106:修行用神水守護龍
+ 4883107:古代咒術龍
+ 4911101:柯王鼠
+ 4911102:柯王鼠
+ 4911103:柯王鼠
+ 4911104:大柯王鼠
+ 491110 大柯王鼠
+ 4911106:大柯王鼠
+ 4911107:巨型柯王鼠
+ 4911108:巨型柯王鼠
+ 4911109:巨型柯王鼠
+ 4911110:柯王鼠
+ 4911111:柯王鼠
+ 4911112:柯王鼠
+ 4911113:森林柯王鼠
+ 4912101:跳鼠
+ 4912102:跳鼠
+ 4912103:跳鼠
+ 4912104:大跳鼠
+ 491210 大跳鼠
+ 4912106:大跳鼠
+ 4912107:超大跳鼠
+ 4912108:超大跳鼠
+ 4912109:超大跳鼠
+ 4912110:家屋跳鼠
+ 4912111:家屋跳鼠
+ 4912112:家屋跳鼠
+ 4912113:巨鼠
+ 4912114:巨鼠
+ 491211 巨鼠
+ 4913101:沙沙比
+ 4913102:沙沙比
+ 4913103:沙沙比
+ 4913104:大沙比
+ 491310 大沙比
+ 4913106:大沙比
+ 4913107:王沙比
+ 4913108:王沙比
+ 4913109:王沙比
+ 4913110:德拉沙比
+ 4913111:德拉沙比
+ 4913112:德拉沙比
+ 4913113:多樂沙比
+ 4913114:多樂沙比
+ 491311 多樂沙比
+ 4913116:麥斯沙比
+ 4913117:麥斯沙比
+ 4913118:麥斯沙比
+ 5011101:凱里神
+ 5011102:凱里神
+ 5011103:凱里神
+ 5011201:凱里神分身
+ 5011202:凱里神分身
+ 5011203:凱里神分身
+ 5211101:扇栽培人
+ 5211102:扇栽培人
+ 5211103:扇栽培人
+ 5211110:風栽培人
+ 5211111:風栽培人
+ 5211112:風栽培人
+ 5211113:葉綠栽培人
+ 5211114:葉綠栽培人
+ 521111 葉綠栽培人
+ 5211201:黑扇栽培人
+ 5211202:黑扇栽培人
+ 5211203:黑扇栽培人
+ 5211204:中毒的扇栽培人
+ 5212101:寬扇栽培人
+ 5212102:寬扇栽培人
+ 5212103:寬扇栽培人
+ 5212104:巨型栽培人
+ 521210 巨型栽培人
+ 5212106:巨型栽培人
+ 5212107:迎風栽培人
+ 5212108:迎風栽培人
+ 5212109:迎風栽培人
+ 5212110:霜風栽培人
+ 5212111:霜風栽培人
+ 5212112:霜風栽培人
+ 5212113:廢墟扇栽培人
+ 5212114:廢墟扇栽培人
+ 521211 廢墟扇栽培人
+ 5213101:巨扇栽培人
+ 5213102:巨扇栽培人
+ 5213103:巨扇栽培人
+ 5213104:水扇栽培人
+ 521310 水扇栽培人
+ 5213106:水扇栽培人
+ 5213107:風扇栽培人
+ 5213108:風扇栽培人
+ 5213109:風扇栽培人
+ 5213110:熱扇栽培人
+ 5213111:熱扇栽培人
+ 5213112:熱扇栽培人
+ 5213113:尖扇栽培人
+ 5213114:尖扇栽培人
+ 521311 尖扇栽培人
+ 5213116:針扇栽培人
+ 5213117:針扇栽培人
+ 5213118:針扇栽培人
+ 5214101:洗腦扇栽培人
+ 5214102:洗腦扇栽培人
+ 5214103:洗腦扇栽培人
+ 5214104:洗腦扇栽培人
+ 521410 洗腦扇栽培人
+ 5214106:洗腦扇栽培人
+ 5214107:洗腦扇栽培人
+ 5214108:洗腦扇栽培人
+ 5214109:洗腦扇栽培人
+ 5311101:雷射帷幕控制器
+ 5311102:雷射帷幕控制器
+ 5311103:雷射帷幕控制器
+ 5311104:雷射帷幕控制器
+ 531110 雷射帷幕控制器
+ 5311106:雷射帷幕控制器
+ 5401101:修行用黏土魔人
+ 5401102:修行用黏土魔人
+ 5401103:修行用黏土魔人
+ 5402101:修行用黏土魔人
+ 5402102:修行用黏土魔人
+ 5402103:修行用黏土魔人
+ 5403101:修行用黏土魔人
+ 5403102:修行用黏土魔人
+ 5403103:修行用黏土魔人
+ 5411101:異常電波啟動裝置
+ 5411102:異常電波啟動裝置
+ 5411103:異常電波啟動裝置
+ 5511101:神奇方盒
+ 5511201:神奇方盒
+ 5512101:神奇方盒
+ 5512201:神奇方盒
+ 5513101:神奇方盒
+ 5514101:神奇方盒
+ 5515101:神奇方盒
+ 5515104:神奇方盒
+ 5515107:神奇方盒
+ 5515110:神奇方盒
+ 5515113:神奇方盒
+ 5515116:神奇方盒
+ 5611101:藍帽士兵
+ 5611102:藍帽士兵
+ 5611103:藍帽士兵
+ 5611104:藍帽下士
+ 561110 藍帽下士
+ 5611106:藍帽下士
+ 5611107:藍帽機關兵
+ 5611108:藍帽機關兵
+ 5611109:藍帽機關兵
+ 5611110:難搞藍帽中士
+ 5611111:難搞藍帽中士
+ 5611112:難搞藍帽中士
+ 5611113:布爾收穫隊長
+ 5611114:布爾收穫隊長
+ 561111 布爾收穫隊長
+ 5611116:巴嗚兵
+ 5611117:巴嗚兵
+ 5611118:巴嗚兵
+ 5611119:巴嗚突擊隊
+ 5611120:巴嗚突擊隊
+ 5611121:巴嗚突擊隊
+ 5611122:巴嗚隊長
+ 5611123:巴嗚隊長
+ 5611124:巴嗚隊長
+ 561112 嗚巴掠奪隊長
+ 5611126:嗚巴掠奪隊長
+ 5611127:嗚巴掠奪隊長
+ 5611128:藍帽掠奪兵
+ 5611129:藍帽掠奪兵
+ 5611130:藍帽掠奪兵
+ 5611131:野性藍帽鬥士
+ 5611132:野性藍帽鬥士
+ 5611133:野性藍帽鬥士
+ 5611134:藍帽敢死補給隊
+ 561113 藍帽敢死補給隊
+ 5611136:藍帽敢死補給隊
+ 5611137:藍帽敢死熱血部隊
+ 5611138:藍帽敢死熱血部隊
+ 5611139:藍帽敢死熱血部隊
+ 5611140:藍帽敢死選拔隊
+ 5611141:藍帽敢死選拔隊
+ 5611142:藍帽敢死選拔隊
+ 5611143:汪汪游擊隊長
+ 5611144:汪汪游擊隊長
+ 561114 汪汪游擊隊長
+ 5611146:杜中校部下
+ 5611147:杜中校部下
+ 5611148:杜中校部下
+ 5611152:逃兵基摩特
+ 5611153:逃兵基摩特
+ 5611154:逃兵基摩特
+ 561115 警備兵
+ 5611156:警備兵
+ 5611157:警備兵
+ 5611158:藍帽飼育兵
+ 5611159:藍帽飼育兵
+ 5611160:藍帽飼育兵
+ 5611161:來得汪汪巡察官
+ 5611162:來得汪汪巡察官
+ 5611163:來得汪汪巡察官
+ 5611164:來得汪汪上兵
+ 561116 來得汪汪上兵
+ 5611166:來得汪汪上兵
+ 5611167:赤紅臂章管理兵
+ 5611168:赤紅臂章管理兵
+ 5611169:赤紅臂章管理兵
+ 5611170:赤紅臂章士官
+ 5611171:赤紅臂章士官
+ 5611172:赤紅臂章士官
+ 5611173:藍帽偵查主任
+ 5611174:藍帽偵查主任
+ 561117 藍帽偵查主任
+ 5611176:汪汪分隊長
+ 5611177:汪汪分隊長
+ 5611178:汪汪分隊長
+ 5611179:水路監察隊長
+ 5611180:水路監察隊長
+ 5611181:水路監察隊長
+ 5611182:藍帽敢死巡查隊
+ 5611183:藍帽敢死巡查隊
+ 5611184:藍帽敢死巡查隊
+ 561118 難搞藍帽工兵
+ 5611188:紅褲派遣兵
+ 5611201:叛徒烏拉
+ 5611202:叛徒烏拉
+ 5611203:叛徒烏拉
+ 5611204:取樣用生物調查兵
+ 561120 取樣用生物調查兵
+ 5611206:取樣用生物調查兵
+ 5612101:藍帽突擊隊
+ 5612102:藍帽突擊隊
+ 5612103:藍帽突擊隊
+ 5612104:藍帽突擊兵
+ 561210 藍帽突擊兵
+ 5612106:藍帽突擊兵
+ 5612107:藍帽工作兵
+ 5612108:藍帽工作兵
+ 5612109:藍帽工作兵
+ 5612110:巴嗚先遣隊
+ 5612111:巴嗚先遣隊
+ 5612112:巴嗚先遣隊
+ 5612113:巴嗚精銳部隊
+ 5612114:巴嗚精銳部隊
+ 561211 巴嗚精銳部隊
+ 5612116:強化藍帽掠奪兵
+ 5612117:強化藍帽掠奪兵
+ 5612118:強化藍帽掠奪兵
+ 5612119:多多暗黑兵
+ 5612120:多多暗黑兵
+ 5612121:多多暗黑兵
+ 5612122:空空憲兵隊長
+ 5612123:空空憲兵隊長
+ 5612124:空空憲兵隊長
+ 561212 藍帽強襲隊
+ 5612126:藍帽強襲隊
+ 5612127:藍帽強襲隊
+ 5612128:警備兵長
+ 5612129:警備兵長
+ 5612130:警備兵長
+ 5612131:逃兵家族
+ 5612132:逃兵家族
+ 5612133:逃兵家族
+ 5612134:汪汪游擊隊
+ 561213 汪汪游擊隊
+ 5612136:汪汪游擊隊
+ 5612137:下級紅褲軍俘虜
+ 5612140:藍帽支援兵
+ 5612141:藍帽支援兵
+ 5612142:藍帽支援兵
+ 5612143:藍帽守備隊
+ 5612144:藍帽守備隊
+ 561214 藍帽守備隊
+ 5612146:來得汪汪下兵
+ 5612147:來得汪汪下兵
+ 5612148:來得汪汪下兵
+ 5612149:汪汪下級巡查隊
+ 5612150:汪汪下級巡查隊
+ 5612151:汪汪下級巡查隊
+ 5612152:汪汪下兵
+ 5612153:汪汪下兵
+ 5612154:汪汪下兵
+ 561215 汪汪一兵
+ 5612156:汪汪一兵
+ 5612157:汪汪一兵
+ 5612158:來得汪汪初級巡查隊
+ 5612159:來得汪汪初級巡查隊
+ 5612160:來得汪汪初級巡查隊
+ 5612161:水路步哨分隊長
+ 5612162:水路步哨分隊長
+ 5612163:水路步哨分隊長
+ 5612164:水路勞役分隊長
+ 561216 水路勞役分隊長
+ 5612166:水路勞役分隊長
+ 5612167:逃兵家族
+ 5612201:招牌破壞團
+ 5612202:招牌破壞團
+ 5612203:招牌破壞團
+ 5612204:紅褲軍訓練兵
+ 561220 紅褲軍訓練兵
+ 5612206:紅褲軍訓練兵
+ 5612207:藍帽敢死逃兵
+ 5612208:藍帽敢死逃兵
+ 5612209:藍帽敢死逃兵
+ 5612210:特利德掠奪隊
+ 5612301:招牌破壞團長
+ 5612302:招牌破壞團長
+ 5612303:招牌破壞團長
+ 5612304:修理工廠勞役兵
+ 5612307:藍帽工兵
+ 5612308:藍帽工兵
+ 5612309:藍帽工兵
+ 5612310:藍帽土木兵
+ 5612311:藍帽土木兵
+ 5612312:藍帽土木兵
+ 5612313:警備隊員秀伍
+ 5612401:被收買的巴嗚
+ 5612402:被收買的巴嗚
+ 5612403:被收買的巴嗚
+ 5613101:藍帽游擊隊
+ 5613102:藍帽游擊隊
+ 5613103:藍帽游擊隊
+ 5613104:藍帽防護兵
+ 561310 藍帽防護兵
+ 5613106:藍帽防護兵
+ 5613107:藍帽偵查隊
+ 5613108:藍帽偵查隊
+ 5613109:藍帽偵查隊
+ 5613110:藍帽新兵
+ 5613111:藍帽新兵
+ 5613112:藍帽新兵
+ 5613113:虎托暗黑兵長
+ 5613114:虎托暗黑兵長
+ 561311 虎托暗黑兵長
+ 5613116:名譽守護團
+ 5613117:名譽守護團
+ 5613118:名譽守護團
+ 5613119:逃兵管理官
+ 5613120:逃兵管理官
+ 5613121:逃兵管理官
+ 5613122:難搞藍帽步哨兵
+ 5613123:難搞藍帽步哨兵
+ 5613124:難搞藍帽步哨兵
+ 561312 藍帽殘黨步哨兵
+ 5613126:藍帽殘黨步哨兵
+ 5613127:藍帽殘黨步哨兵
+ 5613128:藍帽巡察兵
+ 5613129:藍帽巡察兵
+ 5613130:藍帽巡察兵
+ 5613131:來得汪汪中隊長
+ 5613132:來得汪汪中隊長
+ 5613133:來得汪汪中隊長
+ 5613134:藍帽電擊隊
+ 561313 藍帽電擊隊
+ 5613136:藍帽電擊隊
+ 5613137:藍帽監視兵
+ 5613138:藍帽監視兵
+ 5613139:藍帽監視兵
+ 5613140:強化河馬管理兵
+ 5613141:強化河馬管理兵
+ 5613142:強化河馬管理兵
+ 5613143:難搞藍帽補給兵
+ 5613146:難搞藍帽護衛兵
+ 5613149:難搞藍帽輔助兵
+ 5614101:地下基地管理官
+ 5614102:地下基地管理官
+ 5614103:地下基地管理官
+ 5615101:蘑菇幫偵查員
+ 5615104:蘑菇幫戰士
+ 5615107:蘑菇幫亂入者
+ 5615110:蘑菇幫突擊隊員
+ 5615113:蘑菇幫施暴者
+ 5651101:大爾托
+ 5651102:大爾托
+ 5651103:大爾托
+ 5651104:怪奇大爾托
+ 565110 怪奇大爾托
+ 5651106:怪奇大爾托
+ 5651107:巨齒爾托
+ 5651108:巨齒爾托
+ 5651109:巨齒爾托
+ 5651110:超大爾托
+ 5651111:超大爾托
+ 5651112:超大爾托
+ 5651113:瘋狂雪原兔
+ 5651114:瘋狂雪原兔
+ 565111 瘋狂雪原兔
+ 5652101:幸運爾托
+ 5652102:幸運爾托
+ 5652103:幸運爾托
+ 5652104:加爾托
+ 565210 加爾托
+ 5652106:加爾托
+ 5652107:嚙齒爾托
+ 5652108:嚙齒爾托
+ 5652109:嚙齒爾托
+ 5652110:豪爾托
+ 5652111:豪爾托
+ 5652112:豪爾托
+ 5652113:超幸運爾托
+ 5652114:超幸運爾托
+ 565211 超幸運爾托
+ 5653101:魔爾托
+ 5653102:魔爾托
+ 5653103:魔爾托
+ 5653104:大爾托頭頭
+ 565310 大爾托頭頭
+ 5653106:大爾托頭頭
+ 5653107:羅爾托
+ 5653108:羅爾托
+ 5653109:羅爾托
+ 5653110:黑耳托
+ 5653111:黑耳托
+ 5653112:黑耳托
+ 5653113:嚙齒魔爾托
+ 5653114:嚙齒魔爾托
+ 565311 嚙齒魔爾托
+ 5653116:超魔爾托
+ 5653117:超魔爾托
+ 5653118:超魔爾托
+ 5654101:霸王爾托
+ 5654104:小沛王爾托
+ 5654107:小沛王爾托
+ 5654110:小沛王爾托
+ 5654113:小沛王爾托
+ 5661201:康康
+ 5661202:康康
+ 5661203:康康
+ 5662101:修修
+ 5662102:修修
+ 5662103:修修
+ 5671101:喜美
+ 5671102:喜美
+ 5671103:喜美
+ 5671104:桃子
+ 567110 桃子
+ 5671106:桃子
+ 5681201:孫悟飯
+ 5681202:孫悟飯
+ 5681203:孫悟飯
+ 5681204:孫悟飯
+ 568120 孫悟飯
+ 5681206:孫悟飯
+ 5681207:洗腦巨猿
+ 5681208:洗腦巨猿
+ 5681209:洗腦巨猿
+ 5681210:洗腦巨猿
+ 5681211:洗腦巨猿
+ 5681212:洗腦巨猿
+ 5681213:洗腦巨猿
+ 5681216:洗腦超大巨猿
+ 5682101:達爾
+ 5682102:達爾
+ 5682103:達爾
+ 5682104:達爾
+ 568210 達爾
+ 5682106:達爾
+ 5682107:達爾
+ 5682201:達爾
+ 5682202:達爾
+ 5682203:達爾
+ 5682204:達爾
+ 568220 達爾
+ 5682206:達爾
+ 5683101:拉帝茲
+ 5684101:那霸
+ 5691101:米拉
+ 5691102:米拉
+ 5691103:米拉
+ 5691104:米拉
+ 569110 米拉
+ 5691106:米拉
+ 5701101:巨大菇樹
+ 5701102:巨大菇樹
+ 5701103:巨大菇樹
+ 5702101:小水母菇
+ 5702102:小水母菇
+ 5702103:小水母菇
+ 5702104:天天菇
+ 5702107:天天菇
+ 5702108:天天菇
+ 5702109:天天菇
+ 5711101:那霸
+ 5711102:那霸
+ 5711103:那霸
+ 5711104:那霸
+ 571110 那霸
+ 5711106:那霸
+ 5711107:那霸
+ 5722101:野砲
+ 5722102:野砲
+ 5722103:野砲
+ 5722104:製作中野砲
+ 572210 製作中野砲
+ 5722106:製作中野砲
+ 5722107:改良野砲
+ 5722108:改良野砲
+ 5722109:改良野砲
+ 5731201:祖恩
+ 5731202:祖恩
+ 5731203:祖恩
+ 5731501:戰士卡拉拉
+ 5731502:戰士卡拉拉
+ 5731503:戰士卡拉拉
+ 5732101:沙步
+ 5741101:巨蟲巢穴
+ 5741102:巨蟲巢穴
+ 5741103:巨蟲巢穴
+ 5741104:巨蟲巢穴
+ 5761107:下級裝甲栽培人
+ 5761108:下級裝甲栽培人
+ 5761109:下級裝甲栽培人
+ 5761110:修行用巨大栽培人
+ 5761111:修行用巨大栽培人
+ 5761112:修行用巨大栽培人
+ 5761113:巨傘栽培人
+ 5761114:巨傘栽培人
+ 576111 巨傘栽培人
+ 5761116:天下太平栽培人
+ 5761117:天下太平栽培人
+ 5761118:天下太平栽培人
+ 5762101:苔甲栽培人
+ 5762102:苔甲栽培人
+ 5762103:苔甲栽培人
+ 5762104:眼球裝甲栽培人
+ 576210 眼球裝甲栽培人
+ 5762106:眼球裝甲栽培人
+ 5762107:烏克栽培人
+ 5763101:噗噗栽培人
+ 5763104:布普洛斯栽培人
+ 5763107:布普洛斯栽培人
+ 5764101:防空裝甲栽培人
+ 5764102:防空裝甲栽培人
+ 5764103:防空裝甲栽培人
+ 5765101:油氣巨傘栽培人
+ 5774201:黑那美克人
+ 5774202:黑那美克人
+ 5774203:黑那美克人
+ 5781201:惡魔分身
+ 5781202:惡魔分身
+ 5781203:惡魔分身
+ 5781204:那拉克入侵將軍
+ 5791101:那拉克盜賊
+ 5791102:那拉克盜賊
+ 5791103:那拉克盜賊
+ 5791104:那拉克魔界修行者
+ 579110 那拉克魔界修行者
+ 5791106:那拉克魔界修行者
+ 5791107:那拉克搜索戰士
+ 5791110:黑雲戰士
+ 5791113:那拉克入侵隊
+ 5811101:蠕動栽培人
+ 5811102:蠕動栽培人
+ 5811103:蠕動栽培人
+ 5811104:胖蠕動栽培人
+ 581110 胖蠕動栽培人
+ 5811106:胖蠕動栽培人
+ 5811107:大胖蠕動栽培人
+ 5811108:大胖蠕動栽培人
+ 5811109:大胖蠕動栽培人
+ 5811110:巨型蠕動栽培人
+ 5811111:巨型蠕動栽培人
+ 5811112:巨型蠕動栽培人
+ 581112 樹林蠕動栽培人
+ 5811126:樹林蠕動栽培人
+ 5811127:樹林蠕動栽培人
+ 5811128:斑紋栽培人
+ 5811129:斑紋栽培人
+ 5811130:斑紋栽培人
+ 5811131:水路蠕動栽培人
+ 5811132:水路蠕動栽培人
+ 5811133:水路蠕動栽培人
+ 5811134:巨型樹林蠕動栽培人
+ 581113 巨型樹林蠕動栽培人
+ 5811136:巨型樹林蠕動栽培人
+ 5811201:巨型紅蘿蔔寄生蟲
+ 5811202:巨型紅蘿蔔寄生蟲
+ 5811203:巨型紅蘿蔔寄生蟲
+ 5811204:煙燻蠕動栽培人
+ 581120 煙燻蠕動栽培人
+ 5811206:煙燻蠕動栽培人
+ 5811207:巨型樹林蠕動栽培人
+ 5811208:巨型樹林蠕動栽培人
+ 5811209:巨型樹林蠕動栽培人
+ 5811210:斑點蠕動栽培人
+ 5811211:斑點蠕動栽培人
+ 5811212:斑點蠕動栽培人
+ 5811213:地洞栽培人
+ 5811214:地洞栽培人
+ 581121 地洞栽培人
+ 5811216:怪藤栽培人
+ 5812101:蜷曲栽培人
+ 5812102:蜷曲栽培人
+ 5812103:蜷曲栽培人
+ 5812104:國王蠕動栽培人
+ 581210 國王蠕動栽培人
+ 5812106:國王蠕動栽培人
+ 5812107:海蛇栽培人
+ 5812108:海蛇栽培人
+ 5812109:海蛇栽培人
+ 5812110:東布里栽培人
+ 5812113:毒蠕動栽培人
+ 5812201:大蜷曲栽培人
+ 5812202:大蜷曲栽培人
+ 5812203:大蜷曲栽培人
+ 5812204:白蜷曲栽培人
+ 581220 白蜷曲栽培人
+ 5812206:白蜷曲栽培人
+ 5812207:巨蟒栽培人
+ 5812208:巨蟒栽培人
+ 5812209:巨蟒栽培人
+ 5812210:極地栽培人
+ 5812211:極地栽培人
+ 5812212:極地栽培人
+ 5812216:紅鵲栽培人
+ 5812301:灰蜷曲栽培人
+ 5812302:灰蜷曲栽培人
+ 5812303:灰蜷曲栽培人
+ 5812304:深灰蜷曲栽培人
+ 581230 深灰蜷曲栽培人
+ 5812306:深灰蜷曲栽培人
+ 5812307:古代海星栽培人
+ 5812308:古代海星栽培人
+ 5812309:古代海星栽培人
+ 5812310:黑鵲栽培人
+ 5812313:汙染蠕動栽培人
+ 5813101:骨溜蠕動栽培人
+ 5813102:骨溜蠕動栽培人
+ 5813103:骨溜蠕動栽培人
+ 5813104:蠕動栽培人大蛇
+ 581310 蠕動栽培人大蛇
+ 5813106:蠕動栽培人大蛇
+ 5813107:奇怪藤栽培人
+ 5813201:狡猾蠕動栽培人
+ 5813202:狡猾蠕動栽培人
+ 5813203:狡猾蠕動栽培人
+ 5813204:金德蠕動栽培人
+ 581320 金德蠕動栽培人
+ 5813206:金德蠕動栽培人
+ 5813207:長舌蠕動栽培人
+ 5813208:長舌蠕動栽培人
+ 5813209:長舌蠕動栽培人
+ 5813301:班德蠕動栽培人
+ 5813302:班德蠕動栽培人
+ 5813303:班德蠕動栽培人
+ 5813304:班班蠕動栽培人
+ 581330 班班蠕動栽培人
+ 5813306:班班蠕動栽培人
+ 5813307:史勒蠕動栽培人
+ 5813308:史勒蠕動栽培人
+ 5813309:史勒蠕動栽培人
+ 5813310:入侵時間栽培人
+ 5813311:入侵時間栽培人
+ 5813312:入侵時間栽培人
+ 5817101:洗腦蠕動栽培人
+ 5817102:洗腦蠕動栽培人
+ 5817103:洗腦蠕動栽培人
+ 5817104:洗腦蠕動栽培人
+ 581710 洗腦蠕動栽培人
+ 5817106:洗腦蠕動栽培人
+ 5817107:洗腦蠕動栽培人
+ 5817108:洗腦蠕動栽培人
+ 5817109:洗腦蠕動栽培人
+ 5817110:洗腦蠕動栽培人
+ 5817111:洗腦蠕動栽培人
+ 5817112:洗腦蠕動栽培人
+ 5817113:洗腦蠕動栽培人
+ 5817114:洗腦蠕動栽培人
+ 581711 洗腦蠕動栽培人
+ 5817116:洗腦蠕動栽培人
+ 5817117:洗腦蠕動栽培人
+ 5817118:洗腦蠕動栽培人
+ 5817119:洗腦蠕動栽培人
+ 5817122:洗腦蠕動栽培人
+ 5871101:那拉克士兵
+ 5871102:那拉克士兵
+ 5871103:那拉克士兵
+ 5871104:那拉克親衛隊員
+ 5871107:那拉克入侵隊
+ 5872101:那拉克暗殺團長
+ 5872102:那拉克暗殺團長
+ 5872103:那拉克暗殺團長
+ 5872104:混沌戰士
+ 5872107:那拉克庭園警衛
+ 5872110:那拉克特攻隊
+ 5873101:那拉克暗殺團員
+ 5873102:那拉克暗殺團員
+ 5873103:那拉克暗殺團員
+ 5873104:那拉克魔道修行者
+ 587310 那拉克魔道修行者
+ 5873106:那拉克魔道修行者
+ 5873107:那拉克隱者
+ 5873110:惡魔戰士
+ 5881101:德拉
+ 5882101:那拉克防衛戰士
+ 5891101:那拉克畫魔使
+ 5892101:那拉克土術士
+ 5931101:邪惡自我
+ 5931102:邪惡自我
+ 5931103:邪惡自我
+ 5931104:那拉克黑道士
+ 5931107:狂惡戰士
+ 5942201:順順
+ 5943101:哈魯茲
+ 5943102:哈魯茲
+ 5943103:哈魯茲
+ 5943104:哈魯茲
+ 594310 哈魯茲
+ 5943106:哈魯茲
+ 5943107:迷你哈魯茲
+ 5943108:迷你哈魯茲
+ 5943109:迷你哈魯茲
+ 5943110:迷你哈魯茲
+ 5943111:迷你哈魯茲
+ 5943112:迷你哈魯茲
+ 5943113:超迷你哈魯茲
+ 5943114:超迷你哈魯茲
+ 594311 超迷你哈魯茲
+ 5943116:超迷你哈魯茲
+ 5943117:超迷你哈魯茲
+ 5943118:超迷你哈魯茲
+ 5951101:梅石像
+ 5951102:梅石像
+ 5951103:梅石像
+ 5951104:梅石像
+ 595110 梅石像
+ 5951106:梅石像
+ 5951107:阿奇
+ 5951108:阿奇
+ 5951109:阿奇
+ 5951110:阿奇
+ 5951111:阿奇
+ 5951112:阿奇
+ 6011101:OK機器人
+ 6011102:OK機器人
+ 6011103:OK機器人
+ 6011104:出包機器人
+ 601110 出包機器人
+ 6011106:出包機器人
+ 6011107:OK機器人巡守
+ 6011108:OK機器人巡守
+ 6011109:OK機器人巡守
+ 6011110:寵物機器人
+ 6011111:寵物機器人
+ 6011112:寵物機器人
+ 6011113:散彈機器人
+ 6011114:散彈機器人
+ 601111 散彈機器人
+ 6011116:暴力機器人A
+ 6011117:暴力機器人A
+ 6011118:暴力機器人A
+ 6011119:暴力機器人D
+ 6011120:暴力機器人D
+ 6011121:暴力機器人D
+ 6011122:派耶里亞
+ 6011123:派耶里亞
+ 6011124:派耶里亞
+ 601112 魔親衛隊保羅
+ 6011126:魔親衛隊保羅
+ 6011127:魔親衛隊保羅
+ 6011128:魔親衛隊皮皮
+ 6011129:魔親衛隊皮皮
+ 6011130:魔親衛隊皮皮
+ 6011131:魔親衛隊噗噗
+ 6011132:魔親衛隊噗噗
+ 6011133:魔親衛隊噗噗
+ 6011134:戰鬥機器人
+ 6011137:魔親衛隊卡卡
+ 6011138:魔親衛隊卡卡
+ 6011139:魔親衛隊卡卡
+ 6011140:礦泉管理機器人
+ 6011141:礦泉管理機器人
+ 6011142:礦泉管理機器人
+ 6011143:野戰偵查機器人
+ 6011144:野戰偵查機器人
+ 601114 野戰偵查機器人
+ 6011201:搞鬼機器人
+ 6011202:搞鬼機器人
+ 6011203:搞鬼機器人
+ 6011204:米亞機器人
+ 601120 米亞機器人
+ 6011206:米亞機器人
+ 6011207:異常電波機器人
+ 6011208:異常電波機器人
+ 6011209:異常電波機器人
+ 6011210:舊型監督機器人
+ 6011211:舊型監督機器人
+ 6011212:舊型監督機器人
+ 6011213:孔鏘監督機器人
+ 6011214:孔鏘監督機器人
+ 601121 孔鏘監督機器人
+ 6011216:放浪監督機器人
+ 6011217:放浪監督機器人
+ 6011218:放浪監督機器人
+ 6011219:幽靈警備機器人
+ 6011220:幽靈警備機器人
+ 6011221:幽靈警備機器人
+ 6011222:超監督機器人
+ 6011223:超監督機器人
+ 6011224:超監督機器人
+ 601122 清掃機器人
+ 6011226:清掃機器人
+ 6011227:清掃機器人
+ 6011228:武器商機器人
+ 6011229:武器商機器人
+ 6011230:武器商機器人
+ 6011231:冒失管理機器人
+ 6011232:冒失管理機器人
+ 6011233:冒失管理機器人
+ 6011234:暴力機器人B
+ 601123 暴力機器人B
+ 6011236:暴力機器人B
+ 6011237:暴走實驗機器人
+ 6011238:暴走實驗機器人
+ 6011239:暴走實驗機器人
+ 6011240:機器人監視員
+ 6011241:機器人監視員
+ 6011242:機器人監視員
+ 6011243:迪拉機器人
+ 6011244:迪拉機器人
+ 601124 迪拉機器人
+ 6011246:守衛機器人
+ 6011247:守衛機器人
+ 6011248:守衛機器人
+ 6011249:親衛機器人
+ 6011250:親衛機器人
+ 6011251:親衛機器人
+ 6011252:修理中戰鬥機器人
+ 601125 礦山修理機器人
+ 6011256:礦山修理機器人
+ 6011257:礦山修理機器人
+ 6011258:水路偵察機器人
+ 6011259:水路偵察機器人
+ 6011260:水路偵察機器人
+ 6011261:野戰修理機器人
+ 6011262:野戰修理機器人
+ 6011263:野戰修理機器人
+ 6011264:生鏽基里基里
+ 601126 生鏽基里基里
+ 6011266:生鏽基里基里
+ 6011267:城牆管理機器人
+ 6011301:損壞放浪監督機器人
+ 6011302:損壞放浪監督機器人
+ 6011303:損壞放浪監督機器人
+ 6011304:運輸車輛管理機器人
+ 601130 運輸車輛管理機器人
+ 6011306:運輸車輛管理機器人
+ 6011307:育蟲機器人
+ 6011308:育蟲機器人
+ 6011309:育蟲機器人
+ 6011310:中毒機器人
+ 6011311:中毒機器人
+ 6011312:中毒機器人
+ 6011313:資源調查機器人
+ 6012101:自動機器人
+ 6012102:自動機器人
+ 6012103:自動機器人
+ 6012104:倔強機器人
+ 601210 倔強機器人
+ 6012106:倔強機器人
+ 6012107:自動機器人巡守
+ 6012108:自動機器人巡守
+ 6012109:自動機器人巡守
+ 6012110:警備機器人阿爾法
+ 6012111:警備機器人阿爾法
+ 6012112:警備機器人阿爾法
+ 6012113:暴力機器人C
+ 6012114:暴力機器人C
+ 601211 暴力機器人C
+ 6012116:奪菇機器人
+ 6012117:奪菇機器人
+ 6012118:奪菇機器人
+ 6012119:送菇機器人
+ 6012120:送菇機器人
+ 6012121:送菇機器人
+ 6012122:警備機器人貝塔
+ 6012123:警備機器人貝塔
+ 6012124:警備機器人貝塔
+ 601212 噪音機器人
+ 6012126:噪音機器人
+ 6012127:噪音機器人
+ 6012128:基里管理機器人
+ 6012131:突擊型戰鬥機器人
+ 6012137:待機中警備機器人
+ 6012138:待機中警備機器人
+ 6012139:待機中警備機器人
+ 6012140:維護機器人
+ 6012141:維護機器人
+ 6012142:維護機器人
+ 6012143:新基里基里
+ 6012201:自動偷竊機器人
+ 6012202:自動偷竊機器人
+ 6012203:自動偷竊機器人
+ 6012204:落單自動機器人
+ 601220 落單自動機器人
+ 6012206:落單自動機器人
+ 6012210:自動強奪機器人
+ 6012211:自動強奪機器人
+ 6012212:自動強奪機器人
+ 6012213:暴走監督機器人
+ 6012214:暴走監督機器人
+ 601221 暴走監督機器人
+ 6012216:廢棄的警備機器人
+ 6012222:燃料監視機器人
+ 6012223:燃料監視機器人
+ 6012224:燃料監視機器人
+ 601222 混亂警備機器人
+ 6012226:混亂警備機器人
+ 6012227:混亂警備機器人
+ 6012228:巡察用警備機器人
+ 6012229:巡察用警備機器人
+ 6012230:巡察用警備機器人
+ 6012231:基里混亂機器人
+ 6012232:基里混亂機器人
+ 6012233:基里混亂機器人
+ 6012234:損壞射擊機器人
+ 601223 損壞射擊機器人
+ 6012236:損壞射擊機器人
+ 6012237:基里澎澎機器人
+ 6012238:基里澎澎機器人
+ 6012239:基里澎澎機器人
+ 6012240:基里澎澎機器人
+ 6013101:搞鬼機器人
+ 6013102:搞鬼機器人
+ 6013103:搞鬼機器人
+ 6013104:幽靈機器人
+ 601310 幽靈機器人
+ 6013106:幽靈機器人
+ 6013107:MX…06J
+ 6013108:MX…06J
+ 6013109:MX…06J
+ 6013110:R型汲油機器人
+ 6013111:R型汲油機器人
+ 6013112:R型汲油機器人
+ 6013113:巡察機器人
+ 6013114:巡察機器人
+ 601311 巡察機器人
+ 6013116:治安機器人
+ 6013117:治安機器人
+ 6013118:治安機器人
+ 6013119:磁場機器王
+ 6013120:磁場機器王
+ 6013121:磁場機器王
+ 6013122:派遣機器人.A
+ 6013123:派遣機器人.A
+ 6013124:派遣機器人.A
+ 6013201:搞鬼機器王
+ 6013202:搞鬼機器王
+ 6013203:搞鬼機器王
+ 6013204:P型吸引機器人
+ 601320 P型吸引機器人
+ 6013206:P型吸引機器人
+ 6013207:MX…06S
+ 6013208:MX…06S
+ 6013209:MX…06S
+ 6013210:黑箱交易機器人
+ 6013211:黑箱交易機器人
+ 6013212:黑箱交易機器人
+ 6013213:O型漏油機器人
+ 6013214:O型漏油機器人
+ 601321 O型漏油機器人
+ 6013216:警備機器人
+ 6013217:警備機器人
+ 6013218:警備機器人
+ 6013301:MX…06F
+ 6013302:MX…06F
+ 6013303:MX…06F
+ 6013304:廢棄的戰鬥機器人
+ 6013307:奪菇機器人
+ 6014101:雷射衛兵
+ 6014102:雷射衛兵
+ 6014103:雷射衛兵
+ 6014104:超級雷射衛兵
+ 601410 超級雷射衛兵
+ 6014106:超級雷射衛兵
+ 6014107:雷射衛兵
+ 6014108:雷射衛兵
+ 6014109:雷射衛兵
+ 6014110:超級雷射衛兵
+ 6014111:超級雷射衛兵
+ 6014112:超級雷射衛兵
+ 6014113:迷路的雷射衛兵
+ 6014114:迷路的雷射衛兵
+ 601411 迷路的雷射衛兵
+ 6014116:維修機器人
+ 6014117:維修機器人
+ 6014118:維修機器人
+ 6014119:改造雷射衛兵
+ 6014120:改造雷射衛兵
+ 6014121:改造雷射衛兵
+ 6014122:收容所雷射衛兵
+ 601412 雷射衛兵
+ 6014126:雷射衛兵
+ 6014127:雷射衛兵
+ 6014128:超級雷射衛兵
+ 6014129:超級雷射衛兵
+ 6014130:超級雷射衛兵
+ 6014131:改造雷射衛兵
+ 6211101:螻蛄
+ 6211102:螻蛄
+ 6211103:螻蛄
+ 6211104:落單螻蛄
+ 621110 落單螻蛄
+ 6211106:落單螻蛄
+ 6211107:哇哇螻蛄
+ 6211110:甲殼螻蛄
+ 6211111:甲殼螻蛄
+ 6211112:甲殼螻蛄
+ 6211113:小鼓螻蛄
+ 6211114:小鼓螻蛄
+ 621111 小鼓螻蛄
+ 6211116:鬼妖螻蛄
+ 6211117:鬼妖螻蛄
+ 6211118:鬼妖螻蛄
+ 6211119:裝甲螻蛄
+ 6211120:裝甲螻蛄
+ 6211121:裝甲螻蛄
+ 6211122:推土螻蛄
+ 6211123:推土螻蛄
+ 6211124:推土螻蛄
+ 621112 巨型螻蛄
+ 6211126:巨型螻蛄
+ 6211127:巨型螻蛄
+ 6211128:冠軍螻蛄
+ 6211129:冠軍螻蛄
+ 6211130:冠軍螻蛄
+ 6211131:金屬螻蛄
+ 6211132:金屬螻蛄
+ 6211133:金屬螻蛄
+ 6211134:土生螻蛄
+ 621113 土生螻蛄
+ 6211136:土生螻蛄
+ 6211137:放浪螻蛄
+ 6211138:放浪螻蛄
+ 6211139:放浪螻蛄
+ 6211140:猛布里螻蛄
+ 6211143:民布里螻蛄
+ 6211146:光溜螻蛄
+ 6211201:暴君螻蛄
+ 6211204:超大螻蛄
+ 621120 超大螻蛄
+ 6211206:超大螻蛄
+ 6211207:半成品米加螻蛄
+ 6211208:半成品米加螻蛄
+ 6211209:半成品米加螻蛄
+ 6211210:不完全米加螻蛄
+ 6211211:不完全米加螻蛄
+ 6211212:不完全米加螻蛄
+ 6211213:取樣用改造螻蛄
+ 6211214:取樣用改造螻蛄
+ 621121 取樣用改造螻蛄
+ 6211216:渾沌螻蛄
+ 6211217:渾沌螻蛄
+ 6211218:渾沌螻蛄
+ 6211219:拿布里螻蛄
+ 6211222:木吉蟲
+ 6212101:巨角螻蛄
+ 6212102:巨角螻蛄
+ 6212103:巨角螻蛄
+ 6212104:鬼螻蛄
+ 6212107:大王螻蛄
+ 6212108:大王螻蛄
+ 6212109:大王螻蛄
+ 6212110:德拉姆羅
+ 6212111:德拉姆羅
+ 6212112:德拉姆羅
+ 6212113:蒸氣螻蛄
+ 6212114:蒸氣螻蛄
+ 621211 蒸氣螻蛄
+ 6212116:土螻蛄
+ 6212117:土螻蛄
+ 6212118:土螻蛄
+ 6212119:水路螻蛄
+ 6212120:水路螻蛄
+ 6212121:水路螻蛄
+ 6212122:迷路德拉姆羅
+ 6212123:迷路德拉姆羅
+ 6212124:迷路德拉姆羅
+ 621212 巨型土螻蛄
+ 6212126:巨型土螻蛄
+ 6212127:巨型土螻蛄
+ 6212128:鍍金螻蛄
+ 6212129:鍍金螻蛄
+ 6212130:鍍金螻蛄
+ 6212131:戰車螻蛄
+ 6212132:戰車螻蛄
+ 6212133:戰車螻蛄
+ 6212134:怪物昆蟲
+ 621213 怪物昆蟲
+ 6212136:怪物昆蟲
+ 6212137:取樣用螻蛄
+ 6212138:取樣用螻蛄
+ 6212139:取樣用螻蛄
+ 6212140:改造螻蛄
+ 6212141:改造螻蛄
+ 6212142:改造螻蛄
+ 6212143:改造螻蛄
+ 6212144:改造螻蛄
+ 621214 改造螻蛄
+ 6212146:黑鐵甲螻蛄
+ 6212147:黑鐵甲螻蛄
+ 6212148:黑鐵甲螻蛄
+ 6212149:鑄鐵螻蛄
+ 6212150:鑄鐵螻蛄
+ 6212151:鑄鐵螻蛄
+ 6212152:卡布螻蛄
+ 621215 生菇螻蛄
+ 6212158:古克螻蛄
+ 6212159:東布里螻蛄
+ 6212204:高級鐵頭金龜
+ 621220 高級鐵頭金龜
+ 6212206:高級鐵頭金龜
+ 6212207:警備螻蛄
+ 6212208:警備螻蛄
+ 6212209:警備螻蛄
+ 6212210:興奮螻蛄
+ 6212211:興奮螻蛄
+ 6212212:興奮螻蛄
+ 6213101:螻蛄蛄
+ 6213104:巨怪王布里
+ 6213107:巨怪王布里
+ 6213204:安德螻蛄
+ 621320 安德螻蛄
+ 6213206:安德螻蛄
+ 6411101:杜中校
+ 6411102:杜中校
+ 6411103:杜中校
+ 6411104:紅褲軍清洗兵
+ 641110 紅褲軍清洗兵
+ 6411106:紅褲軍清洗兵
+ 6411107:海象空輸部隊
+ 6411108:海象空輸部隊
+ 6411109:海象空輸部隊
+ 6411110:海象戰鬥兵
+ 6411111:海象戰鬥兵
+ 6411112:海象戰鬥兵
+ 6412101:海象敗戰兵
+ 6412102:海象敗戰兵
+ 6412103:海象敗戰兵
+ 6412104:海象敗戰中士
+ 641210 海象敗戰中士
+ 6412106:海象敗戰中士
+ 6412107:海象兵殘黨
+ 6412108:海象兵殘黨
+ 6412109:海象兵殘黨
+ 6412110:海象水兵殘黨
+ 6412111:海象水兵殘黨
+ 6412112:海象水兵殘黨
+ 6412113:海象選拔隊
+ 6412114:海象選拔隊
+ 641211 海象選拔隊
+ 6412116:化學處理兵
+ 6412117:化學處理兵
+ 6412118:化學處理兵
+ 6412119:紅褲軍強奪兵
+ 6412120:紅褲軍強奪兵
+ 6412121:紅褲軍強奪兵
+ 6412122:海象步哨兵
+ 6412123:海象步哨兵
+ 6412124:海象步哨兵
+ 641212 海象殘黨步哨兵
+ 6412126:海象殘黨步哨兵
+ 6412127:海象殘黨步哨兵
+ 6412131:海象掃除值日生
+ 6412132:海象掃除值日生
+ 6412133:海象掃除值日生
+ 6412134:實驗用海象兵
+ 641213 實驗用海象兵
+ 6412136:實驗用海象兵
+ 6412201:海象親衛隊
+ 6412202:海象親衛隊
+ 6412203:海象親衛隊
+ 6412204:海象親衛中士
+ 641220 海象親衛中士
+ 6412206:海象親衛中士
+ 6412207:海象決戰隊
+ 6412208:海象決戰隊
+ 6412209:海象決戰隊
+ 6412210:海象海盜
+ 6412211:海象海盜
+ 6412212:海象海盜
+ 6412213:天下第一武道會臨演
+ 6412214:天下第一武道會臨演
+ 641221 天下第一武道會臨演
+ 6412216:中級紅褲軍俘虜
+ 6412219:多克掠奪隊長
+ 6412220:多克掠奪隊長
+ 6412221:多克掠奪隊長
+ 6412401:紅褲軍釣王
+ 6412402:紅褲軍釣王
+ 6412403:紅褲軍釣王
+ 6413101:海象暗殺兵
+ 6413102:海象暗殺兵
+ 6413103:海象暗殺兵
+ 6413107:油礦蠻牛監視兵
+ 6413108:油礦蠻牛監視兵
+ 6413109:油礦蠻牛監視兵
+ 6414201:海象海賊團長
+ 6415101:步哨兵虎克
+ 6415102:步哨兵虎克
+ 6415103:步哨兵虎克
+ 6415104:步哨兵多克
+ 641510 步哨兵多克
+ 6415106:步哨兵多克
+ 6415107:特戰隊
+ 6415108:特戰隊
+ 6415109:特戰隊
+ 6415110:海象滲透兵
+ 6415111:海象滲透兵
+ 6415112:海象滲透兵
+ 6415113:紅褲軍射擊訓練兵
+ 6415114:紅褲軍射擊訓練兵
+ 641511 紅褲軍射擊訓練兵
+ 6415116:海象游擊隊
+ 6415117:海象游擊隊
+ 6415118:海象游擊隊
+ 6415119:海象射擊部隊
+ 6415120:海象射擊部隊
+ 6415121:海象射擊部隊
+ 6415122:海象要塞狙擊兵
+ 6415123:海象要塞狙擊兵
+ 6415124:海象要塞狙擊兵
+ 641512 來福槍手
+ 6415126:來福槍手
+ 6415127:來福槍手
+ 6415128:海象狙擊兵
+ 6415129:海象狙擊兵
+ 6415130:海象狙擊兵
+ 6415131:實驗用短槍兵
+ 6415132:實驗用短槍兵
+ 6415133:實驗用短槍兵
+ 6415134:海象特戰隊
+ 641513 海象特戰隊
+ 6415136:海象特戰隊
+ 6415137:苦力首席射手
+ 6415140:地下基地守衛
+ 6415141:地下基地守衛
+ 6415142:地下基地守衛
+ 6582101:比拉夫石像
+ 6582102:比拉夫石像
+ 6582103:比拉夫石像
+ 6582104:比拉夫石像
+ 658210 比拉夫石像
+ 6582106:比拉夫石像
+ 6582107:阿奇
+ 6582108:阿奇
+ 6582109:阿奇
+ 6582110:阿奇
+ 6582111:阿奇
+ 6582112:阿奇
+ 6611101:灰熊士兵
+ 6611102:灰熊士兵
+ 6611103:灰熊士兵
+ 6611104:灰熊中士
+ 661110 灰熊中士
+ 6611106:灰熊中士
+ 6611107:灰熊游擊隊
+ 6611108:灰熊游擊隊
+ 6611109:灰熊游擊隊
+ 6611110:小熊補給隊
+ 6611111:小熊補給隊
+ 6611112:小熊補給隊
+ 6611113:小熊教官
+ 6611114:小熊教官
+ 661111 小熊教官
+ 6611116:竊鳥熊
+ 6611117:竊鳥熊
+ 6611118:竊鳥熊
+ 6611119:小熊監督官
+ 6611120:小熊監督官
+ 6611121:小熊監督官
+ 6611122:大灰熊步哨兵
+ 6611123:大灰熊步哨兵
+ 6611124:大灰熊步哨兵
+ 6611201:灰熊戰敗兵
+ 6611202:灰熊戰敗兵
+ 6611203:灰熊戰敗兵
+ 6611204:灰熊突襲兵
+ 661120 灰熊突襲兵
+ 6611206:灰熊突襲兵
+ 6611207:吉拉 J
+ 6611208:吉拉 J
+ 6611209:吉拉 J
+ 6611210:灰熊奴隸兵
+ 6611211:灰熊奴隸兵
+ 6611212:灰熊奴隸兵
+ 6611213:金寶
+ 6611214:金寶
+ 661121 金寶
+ 6611216:小熊伐木團
+ 6611217:小熊伐木團
+ 6611218:小熊伐木團
+ 6611219:菜鳥演員
+ 6611220:菜鳥演員
+ 6611221:菜鳥演員
+ 6611222:灰熊步哨兵
+ 6611223:灰熊步哨兵
+ 6611224:灰熊步哨兵
+ 6611228:資產管理兵
+ 6611229:資產管理兵
+ 6611230:資產管理兵
+ 6611231:行政補給官
+ 6611232:行政補給官
+ 6611233:行政補給官
+ 6611301:告示板塗鴉團
+ 6611302:告示板塗鴉團
+ 6611303:告示板塗鴉團
+ 6611401:告示板塗鴉團長
+ 6611402:告示板塗鴉團長
+ 6611403:告示板塗鴉團長
+ 6611501:徬徨勞役兵
+ 6611502:徬徨勞役兵
+ 6611503:徬徨勞役兵
+ 6612101:貓熊親衛隊
+ 6612102:貓熊親衛隊
+ 6612103:貓熊親衛隊
+ 6612104:花斑將軍
+ 661210 花斑將軍
+ 6612106:花斑將軍
+ 6612107:貓熊決戰隊
+ 6612108:貓熊決戰隊
+ 6612109:貓熊決戰隊
+ 6612110:貓熊殘黨
+ 6612111:貓熊殘黨
+ 6612112:貓熊殘黨
+ 6612113:貓熊盜墓賊
+ 6612114:貓熊盜墓賊
+ 661211 貓熊盜墓賊
+ 6612116:貓熊特攻隊
+ 6612117:貓熊特攻隊
+ 6612118:貓熊特攻隊
+ 6612119:捲毛將軍代理人
+ 6612120:捲毛將軍代理人
+ 6612121:捲毛將軍代理人
+ 6612122:貓熊賊
+ 6612123:貓熊賊
+ 6612124:貓熊賊
+ 661212 飢餓清潔兵
+ 6612126:飢餓清潔兵
+ 6612127:飢餓清潔兵
+ 6612128:通信隊長
+ 6612129:通信隊長
+ 6612130:通信隊長
+ 6612201:貓熊烈風隊
+ 6612202:貓熊烈風隊
+ 6612203:貓熊烈風隊
+ 6612204:貓熊掠奪隊
+ 661220 貓熊掠奪隊
+ 6612206:貓熊掠奪隊
+ 6612207:貓熊奇襲隊
+ 6612208:貓熊奇襲隊
+ 6612209:貓熊奇襲隊
+ 6612210:貓熊逃兵
+ 6612211:貓熊逃兵
+ 6612212:貓熊逃兵
+ 6612213:貓熊灰狼馴獸師
+ 6612214:貓熊灰狼馴獸師
+ 661221 貓熊灰狼馴獸師
+ 6612216:貓熊鳥類馴獸師
+ 6612217:貓熊鳥類馴獸師
+ 6612218:貓熊鳥類馴獸師
+ 6612219:史麥爾的保鑣
+ 6612220:史麥爾的保鑣
+ 6612221:史麥爾的保鑣
+ 6612222:將軍近衛兵
+ 6612223:將軍近衛兵
+ 6612224:將軍近衛兵
+ 661222 史翠普將軍
+ 6612226:史翠普將軍
+ 6612227:史翠普將軍
+ 6612228:翹班將軍
+ 6612229:翹班將軍
+ 6612230:翹班將軍
+ 6612231:野砲輸送部隊
+ 6612232:野砲輸送部隊
+ 6612233:野砲輸送部隊
+ 6612237:貓熊侵透指揮官
+ 6612238:貓熊侵透指揮官
+ 6612239:貓熊侵透指揮官
+ 6612240:貓熊灰狼特攻隊
+ 6612241:貓熊灰狼特攻隊
+ 6612242:貓熊灰狼特攻隊
+ 6613101:極地突擊隊
+ 6613102:極地突擊隊
+ 6613103:極地突擊隊
+ 6613104:極地突擊中士
+ 661310 極地突擊中士
+ 6613106:極地突擊中士
+ 6613107:極地指揮官
+ 6613108:極地指揮官
+ 6613109:極地指揮官
+ 6613201:極地兵
+ 6613202:極地兵
+ 6613203:極地兵
+ 6613204:極地兵上士
+ 661320 極地兵上士
+ 6613206:極地兵上士
+ 6613207:灰熊勞役兵
+ 6613208:灰熊勞役兵
+ 6613209:灰熊勞役兵
+ 6613210:實驗型極地兵
+ 6613211:實驗型極地兵
+ 6613212:實驗型極地兵
+ 6613213:紅褲軍逃脫俘虜
+ 6613216:正規小熊打擊隊
+ 6613217:正規小熊打擊隊
+ 6613218:正規小熊打擊隊
+ 6613219:白熊中士
+ 6613220:白熊中士
+ 6613221:白熊中士
+ 6613301:極地新兵
+ 6613302:極地新兵
+ 6613303:極地新兵
+ 6613304:極地老兵
+ 661330 極地老兵
+ 6613306:極地老兵
+ 6613307:白熊人
+ 6613308:白熊人
+ 6613309:白熊人
+ 6613310:極地逃兵
+ 6613311:極地逃兵
+ 6613312:極地逃兵
+ 6613313:極地戰敗兵
+ 6613314:極地戰敗兵
+ 661331 極地戰敗兵
+ 6613316:白熊下士
+ 6613317:白熊下士
+ 6613318:白熊下士
+ 6613319:極地勞動兵
+ 6613320:極地勞動兵
+ 6613321:極地勞動兵
+ 6613322:薩斯老大
+ 6613323:薩斯老大
+ 6613324:薩斯老大
+ 6613401:強制勞動兵
+ 6614104:波波
+ 661410 波波
+ 6614106:波波
+ 6614107:貓熊賊首領
+ 6616101:補給兵萊爾
+ 6616102:補給兵萊爾
+ 6616103:補給兵萊爾
+ 6616104:火箭砲兵
+ 661610 火箭砲兵
+ 6616106:火箭砲兵
+ 6616107:火箭砲兵
+ 6616108:火箭砲兵
+ 6616109:火箭砲兵
+ 6616110:咕哩火箭砲兵
+ 6617101:蘑菇幫鬥士
+ 6617104:蘑菇幫鬧事者
+ 6617107:蘑菇幫長工
+ 6631201:魔神龍
+ 6631202:魔神龍
+ 6631203:魔神龍
+ 6631204:惡魔物
+ 663120 惡魔物
+ 6631206:惡魔物
+ 6631207:那拉克魔神龍
+ 6651201:魔神龍首
+ 6651202:魔神龍首
+ 6651203:魔神龍首
+ 6651204:魔物隊長
+ 665120 魔物隊長
+ 6651206:魔物隊長
+ 6651207:修行用魔神龍
+ 6651208:修行用魔神龍
+ 6651209:修行用魔神龍
+ 6651210:那拉克魔神龍
+ 6671101:巨型食蟲植物
+ 6671102:巨型食蟲植物
+ 6671103:巨型食蟲植物
+ 6681101:暴走魔人
+ 6681102:暴走魔人
+ 6681103:暴走魔人
+ 6681104:暴走魔人3號
+ 668110 暴走魔人3號
+ 6681106:暴走魔人3號
+ 6681107:暴走魔人2號
+ 6681108:暴走魔人2號
+ 6681109:暴走魔人2號
+ 6681110:暴走魔人1號
+ 6681111:暴走魔人1號
+ 6681112:暴走魔人1號
+ 6681113:暴走魔人4號
+ 6681114:暴走魔人4號
+ 
+:暴走魔人4號
+ 6681201:內心惡魔
+ 6681202:內心惡魔
+ 6681203:內心惡魔
+ 6681301:暴走魔人4號
+ 6681302:暴走魔人4號
+ 6681303:暴走魔人4號
+ 6692101:哈魯茲
+ 6692102:哈魯茲
+ 6692103:哈魯茲
+ 6692104:哈魯茲
+ 669210 哈魯茲
+ 6692106:哈魯茲
+ 6751101:改造型比拉夫機器
+ 6751102:改造型比拉夫機器
+ 6751103:改造型比拉夫機器
+ 6751104:狂爆修理機器人
+ 6751107:改造型比拉夫機器
+ 6751201:重裝機器人
+ 6751202:重裝機器人
+ 6751203:重裝機器人
+ 6751204:派遣監視機器人
+ 6752101:解體改造型比拉夫機器
+ 6752102:解體改造型比拉夫機器
+ 6752103:解體改造型比拉夫機器
+ 6752104:警備比拉夫機器
+ 6752107:警備比拉夫機器
+ 6781101:德萊亞
+ 6781104:歐索羅翼龍
+ 6811101:小栽培人
+ 6811102:小栽培人
+ 6811103:小栽培人
+ 6811104:小斧栽培人
+ 681110 小斧栽培人
+ 6811106:小斧栽培人
+ 6811119:多汁栽培人
+ 6811120:多汁栽培人
+ 6811121:多汁栽培人
+ 6811122:超巨童栽培人
+ 6811123:超巨童栽培人
+ 6811124:超巨童栽培人
+ 681112 香甜栽培人
+ 6811126:香甜栽培人
+ 6811127:香甜栽培人
+ 6811128:原始栽培人
+ 6811129:原始栽培人
+ 6811130:原始栽培人
+ 6811131:初生栽培人
+ 6811132:初生栽培人
+ 6811133:初生栽培人
+ 6811134:幼兒栽培人
+ 681113 幼兒栽培人
+ 6811136:幼兒栽培人
+ 6811137:幼幼栽培人
+ 6811138:幼幼栽培人
+ 6811139:幼幼栽培人
+ 6811140:草味栽培人
+ 6811141:草味栽培人
+ 6811142:草味栽培人
+ 6811143:食蟲栽培人
+ 6811144:食蟲栽培人
+ 681114 食蟲栽培人
+ 6811146:氣體特攻栽培人
+ 6811149:迷你栽培人
+ 6811152:迷你特工栽培人
+ 681115 迷你栽培人
+ 6811201:壯童栽培人
+ 6811202:壯童栽培人
+ 6811203:壯童栽培人
+ 6811204:影童栽培人
+ 681120 影童栽培人
+ 6811206:影童栽培人
+ 6811207:強化原始栽培人
+ 6811208:強化原始栽培人
+ 6811209:強化原始栽培人
+ 6811210:闇童栽培人
+ 6811211:闇童栽培人
+ 6811212:闇童栽培人
+ 6811213:洗腦自爆童栽培人
+ 6811301:大王童栽培人
+ 6811302:大王童栽培人
+ 6811303:大王童栽培人
+ 6811304:雪童栽培人
+ 681130 雪童栽培人
+ 6811306:雪童栽培人
+ 6811307:冰凍栽培人
+ 6811308:冰凍栽培人
+ 6811309:冰凍栽培人
+ 6811310:興奮童栽培人
+ 6811311:興奮童栽培人
+ 6811312:興奮童栽培人
+ 6811313:惡童栽培人
+ 6811314:惡童栽培人
+ 681131 惡童栽培人
+ 6811316:巨童栽培人
+ 6811317:巨童栽培人
+ 6811318:巨童栽培人
+ 6811319:大王栽培人
+ 6811320:大王栽培人
+ 6811321:大王栽培人
+ 6811322:鹽晶栽培人
+ 6811323:鹽晶栽培人
+ 6811324:鹽晶栽培人
+ 681132 麵包栽培人
+ 6811328:巨童栽培人
+ 6812101:虎狼栽培人
+ 6812102:虎狼栽培人
+ 6812103:虎狼栽培人
+ 6813104:溪岩栽培人
+ 6813107:碎石栽培人
+ 6813108:碎石栽培人
+ 6813109:碎石栽培人
+ 6813110:焦岩栽培人
+ 6813111:焦岩栽培人
+ 6813112:焦岩栽培人
+ 6813113:石塊栽培人
+ 6813114:石塊栽培人
+ 681311 石塊栽培人
+ 6813116:岩石栽培人
+ 6813117:岩石栽培人
+ 6813118:岩石栽培人
+ 6816110:漆黑幼栽培人
+ 6816111:漆黑幼栽培人
+ 6816112:漆黑幼栽培人
+ 6818101:洗腦童栽培人
+ 6818102:洗腦童栽培人
+ 6818103:洗腦童栽培人
+ 6818104:洗腦童栽培人
+ 681810 洗腦童栽培人
+ 6818106:洗腦童栽培人
+ 6818107:洗腦童栽培人
+ 6818108:洗腦童栽培人
+ 6818109:洗腦童栽培人
+ 6818110:洗腦巨童栽培人
+ 6818111:洗腦巨童栽培人
+ 6818112:洗腦巨童栽培人
+ 6818113:洗腦童栽培人
+ 6818114:洗腦童栽培人
+ 681811 洗腦童栽培人
+ 6818116:洗腦童栽培人
+ 6818117:洗腦童栽培人
+ 6818118:洗腦童栽培人
+ 6818119:洗腦童栽培人
+ 6818120:洗腦童栽培人
+ 6818121:洗腦童栽培人
+ 6881101:甲蟲女王
+ 6881104:甲蟲女王
+ 6911101:洗腦吉多拉
+ 6911102:洗腦吉多拉
+ 6911103:洗腦吉多拉
+ 6911104:洗腦吉多拉
+ 691110 洗腦吉多拉
+ 6911106:洗腦吉多拉
+ 7011101:拉帝茲
+ 7011102:拉帝茲
+ 7011103:拉帝茲
+ 7011104:拉帝茲
+ 701110 拉帝茲
+ 7011106:拉帝茲
+ 7011107:拉帝茲
+ 7011108:拉帝茲
+ 7011109:拉帝茲
+ 7011110:拉帝茲
+ 7111101:雷金星人
+ 7111102:雷金星人
+ 7111103:雷金星人
+ 7111104:特命雷金星人
+ 711110 特命雷金星人
+ 7111106:特命雷金星人
+ 7111107:可疑外星人
+ 7111108:可疑外星人
+ 7111109:可疑外星人
+ 7111110:雷金星人據點兵
+ 7111111:雷金星人據點兵
+ 7111112:雷金星人據點兵
+ 7111113:弗力札軍殘黨通信兵
+ 7111114:弗力札軍殘黨通信兵
+ 711111 弗力札軍殘黨通信兵
+ 7111116:雷金星人爆彈兵
+ 7111117:雷金星人爆彈兵
+ 7111118:雷金星人爆彈兵
+ 7111119:野戰治療所警備兵
+ 7111122:雷金星人守備隊
+ 7111123:雷金星人守備隊
+ 7111124:雷金星人守備隊
+ 711112 雷金星人補給隊
+ 7111126:雷金星人補給隊
+ 7111127:雷金星人補給隊
+ 7111128:雷金星人情報收集隊
+ 7111129:雷金星人情報收集隊
+ 7111130:雷金星人情報收集隊
+ 7111131:野蠻突擊兵
+ 7111132:野蠻突擊兵
+ 7111133:野蠻突擊兵
+ 7111134:贓物管理兵
+ 7111137:教官
+ 7111140:葛拉漢部下
+ 7111201:雷金星人菁英
+ 7111202:雷金星人菁英
+ 7111203:雷金星人菁英
+ 7111204:特命雷金星人菁英
+ 711120 特命雷金星人菁英
+ 7111206:特命雷金星人菁英
+ 7111207:監視兵霍德
+ 7111208:監視兵霍德
+ 7111209:監視兵霍德
+ 7111210:雷金星人老兵
+ 7111211:雷金星人老兵
+ 7111212:雷金星人老兵
+ 7111213:行動隊長賽拉德巴
+ 7111214:行動隊長賽拉德巴
+ 711121 行動隊長賽拉德巴
+ 7111216:雷金星人入侵兵
+ 7111219:雷金垃圾場監視兵
+ 7111222:野蠻戰鬥兵
+ 7111223:野蠻戰鬥兵
+ 7111224:野蠻戰鬥兵
+ 711122 野蠻監視兵
+ 7111226:野蠻監視兵
+ 7111227:野蠻監視兵
+ 7111228:退役老兵
+ 7111231:巴巴利歐野戰兵
+ 7111301:雷金星人偵察兵
+ 7111302:雷金星人偵察兵
+ 7111303:雷金星人偵察兵
+ 7111304:特命雷金星人偵察兵
+ 711130 特命雷金星人偵察兵
+ 7111306:特命雷金星人偵察兵
+ 7111310:洗腦基里收集兵
+ 7111311:洗腦基里收集兵
+ 7111312:洗腦基里收集兵
+ 7111313:野戰治療所管理兵
+ 7111319:龜毛的監視兵
+ 7111322:徘徊的弗力札入侵兵
+ 711132 雷金星人槍兵
+ 7111401:雷金栽培隊
+ 7111402:雷金栽培隊
+ 7111403:雷金栽培隊
+ 7111404:雷金栽培隊菁英
+ 711140 雷金栽培隊菁英
+ 7111406:雷金栽培隊菁英
+ 7111407:雷金栽培隊
+ 7111408:雷金栽培隊
+ 7111409:雷金栽培隊
+ 7111410:雷金栽培隊菁英
+ 7111411:雷金栽培隊菁英
+ 7111412:雷金栽培隊菁英
+ 7111413:雷金栽培隊
+ 7111414:雷金栽培隊
+ 711141 雷金栽培隊
+ 7111416:雷金栽培隊
+ 7111417:雷金栽培隊
+ 7111418:雷金栽培隊
+ 7111419:雷金栽培隊菁英
+ 7111420:雷金栽培隊菁英
+ 7111421:雷金栽培隊菁英
+ 7111422:雷金栽培隊菁英
+ 7111423:雷金栽培隊菁英
+ 7111424:雷金栽培隊菁英
+ 711142 雷金猛獸隊
+ 7111426:雷金猛獸隊
+ 7111427:雷金猛獸隊
+ 7111428:雷金猛獸隊
+ 7111429:雷金猛獸隊
+ 7111430:雷金猛獸隊
+ 7111431:雷金猛獸隊菁英
+ 7111432:雷金猛獸隊菁英
+ 7111433:雷金猛獸隊菁英
+ 7111434:雷金猛獸隊菁英
+ 711143 雷金猛獸隊菁英
+ 7111436:雷金猛獸隊菁英
+ 7111437:雷金栽培隊
+ 7111438:雷金栽培隊
+ 7111439:雷金栽培隊
+ 7111440:雷金栽培隊
+ 7111441:雷金栽培隊
+ 7111442:雷金栽培隊
+ 7111443:雷金栽培隊菁英
+ 7111444:雷金栽培隊菁英
+ 711144 雷金栽培隊菁英
+ 7111446:雷金栽培隊菁英
+ 7111447:雷金栽培隊菁英
+ 7111448:雷金栽培隊菁英
+ 7111449:洗腦雷金情報兵
+ 7111450:洗腦雷金情報兵
+ 7111451:洗腦雷金情報兵
+ 7111452:洗腦雷金警戒兵
+ 711145 洗腦雷金兵
+ 7111456:洗腦雷金兵
+ 7111457:洗腦雷金兵
+ 7111458:洗腦雷金基幹兵
+ 7111459:洗腦雷金基幹兵
+ 7111460:洗腦雷金基幹兵
+ 7111461:洗腦雷金據點兵
+ 7111462:洗腦雷金據點兵
+ 7111463:洗腦雷金據點兵
+ 7111464:雷金栽培隊
+ 711146 雷金栽培隊
+ 7111466:雷金栽培隊
+ 7111467:雷金栽培隊菁英
+ 7111468:雷金栽培隊菁英
+ 7111469:雷金栽培隊菁英
+ 7111470:雷金栽培隊
+ 7111471:雷金栽培隊
+ 7111472:雷金栽培隊
+ 7111473:雷金栽培隊菁英
+ 7111474:雷金栽培隊菁英
+ 711147 雷金栽培隊菁英
+ 7111476:雷金猛獸隊
+ 7111477:雷金猛獸隊
+ 7111478:雷金猛獸隊
+ 7111479:雷金猛獸隊菁英
+ 7111480:雷金猛獸隊菁英
+ 7111481:雷金猛獸隊菁英
+ 7111482:雷金偵查隊
+ 7111483:雷金偵查隊
+ 7111484:雷金偵查隊
+ 711148 雷金清潔工
+ 7111486:雷金清潔工
+ 7111487:雷金清潔工
+ 7111488:雷金洗腦輸送兵
+ 7111491:雷金猛獸隊
+ 7112101:托斯特星人
+ 7112102:托斯特星人
+ 7112103:托斯特星人
+ 7112104:覺醒托斯特星人
+ 711210 覺醒托斯特星人
+ 7112106:覺醒托斯特星人
+ 7112107:娃達星人司令官
+ 7112108:娃達星人司令官
+ 7112109:娃達星人司令官
+ 7112110:托斯特星人偵查兵
+ 7112111:托斯特星人偵查兵
+ 7112112:托斯特星人偵查兵
+ 7112113:洗腦護衛兵
+ 7112114:洗腦護衛兵
+ 711211 洗腦護衛兵
+ 7112116:托斯特星人據點兵
+ 7112117:托斯特星人據點兵
+ 7112118:托斯特星人據點兵
+ 7112119:托斯特星人爆彈兵
+ 7112120:托斯特星人爆彈兵
+ 7112121:托斯特星人爆彈兵
+ 7112122:受傷的托斯特星人
+ 711212 改造的托斯特修行者
+ 7112131:失神的米薩星人
+ 7112140:帥哥電算兵
+ 7112141:帥哥電算兵
+ 7112142:帥哥電算兵
+ 7112143:托斯特星人搜索隊
+ 7112144:托斯特星人搜索隊
+ 711214 托斯特星人搜索隊
+ 7112146:托斯特星人監察隊
+ 7112147:托斯特星人監察隊
+ 7112148:托斯特星人監察隊
+ 7112149:托斯特星人探查隊
+ 7112150:托斯特星人探查隊
+ 7112151:托斯特星人探查隊
+ 7112152:找碴的率領兵
+ 711215 脅迫奪取兵
+ 7112158:葛拉漢部下
+ 7112201:托斯特星人菁英
+ 7112202:托斯特星人菁英
+ 7112203:托斯特星人菁英
+ 7112204:覺醒托斯特星人菁英
+ 711220 覺醒托斯特星人菁英
+ 7112206:覺醒托斯特星人菁英
+ 7112207:奪取隊員
+ 7112208:奪取隊員
+ 7112209:奪取隊員
+ 7112210:托斯特星人老兵
+ 7112211:托斯特星人老兵
+ 7112212:托斯特星人老兵
+ 7112213:憤怒的普翁星人
+ 7112216:托斯特星人派迪
+ 7112219:覺醒的托斯特星人
+ 7112222:托斯特修習步兵
+ 7112223:托斯特修習步兵
+ 7112224:托斯特修習步兵
+ 711222 帥哥管理兵
+ 7112226:帥哥管理兵
+ 7112227:帥哥管理兵
+ 7112228:暴力奪取兵
+ 7112231:托斯特星人射手
+ 7112234:狂妄的米賽星人
+ 7112301:托斯特星人偵察兵
+ 7112302:托斯特星人偵察兵
+ 7112303:托斯特星人偵察兵
+ 7112304:覺醒托斯特星人偵察兵
+ 711230 覺醒托斯特星人偵察兵
+ 7112306:覺醒托斯特星人偵察兵
+ 7112307:破壞的希克星人
+ 7112310:托斯特垃圾輸送兵
+ 7112313:感染疫病的托斯特星人
+ 7112316:野性托斯特星人
+ 7112319:接受治療的普翁星人
+ 711232 托斯特星人除彈兵
+ 7112326:托斯特星人除彈兵
+ 7112327:托斯特星人除彈兵
+ 7112328:托斯特代理教官
+ 7112329:托斯特代理教官
+ 7112330:托斯特代理教官
+ 7112331:傑巴勒歐野戰兵
+ 7112334:哇卡達托斯特兵
+ 7112401:托斯特工兵隊
+ 7112402:托斯特工兵隊
+ 7112403:托斯特工兵隊
+ 7112410:努凱加藍德追擊兵
+ 7112413:托斯特工兵隊
+ 7112414:托斯特工兵隊
+ 711241 托斯特工兵隊
+ 7112416:托斯特工兵隊菁英
+ 7112417:托斯特工兵隊菁英
+ 7112418:托斯特工兵隊菁英
+ 7112419:托斯特工兵隊菁英
+ 7112420:托斯特工兵隊菁英
+ 7112421:托斯特工兵隊菁英
+ 7112422:托斯特工兵隊
+ 7112423:托斯特工兵隊
+ 7112424:托斯特工兵隊
+ 711242 托斯特工兵隊
+ 7112426:托斯特工兵隊
+ 7112427:托斯特工兵隊
+ 7112428:托斯特工兵隊菁英
+ 7112429:托斯特工兵隊菁英
+ 7112430:托斯特工兵隊菁英
+ 7112431:托斯特工兵隊菁英
+ 7112432:托斯特工兵隊菁英
+ 7112433:托斯特工兵隊菁英
+ 7112434:托斯特急救隊
+ 711243 托斯特急救隊
+ 7112436:托斯特急救隊
+ 7112437:托斯特急救隊
+ 7112438:托斯特急救隊
+ 7112439:托斯特急救隊
+ 7112440:托斯特急救隊菁英
+ 7112441:托斯特急救隊菁英
+ 7112442:托斯特急救隊菁英
+ 7112443:托斯特急救隊菁英
+ 7112444:托斯特急救隊菁英
+ 711244 托斯特急救隊菁英
+ 7112446:托斯特急救隊
+ 7112447:托斯特急救隊
+ 7112448:托斯特急救隊
+ 7112449:托斯特急救隊
+ 7112450:托斯特急救隊
+ 7112451:托斯特急救隊
+ 7112452:托斯特急救隊菁英
+ 7112453:托斯特急救隊菁英
+ 7112454:托斯特急救隊菁英
+ 711245 托斯特急救隊菁英
+ 7112456:托斯特急救隊菁英
+ 7112457:托斯特急救隊菁英
+ 7112458:托斯特急救隊
+ 7112459:托斯特急救隊
+ 7112460:托斯特急救隊
+ 7112461:托斯特急救隊
+ 7112462:托斯特急救隊
+ 7112463:托斯特急救隊
+ 7112464:托斯特急救隊菁英
+ 711246 托斯特急救隊菁英
+ 7112466:托斯特急救隊菁英
+ 7112467:托斯特急救隊菁英
+ 7112468:托斯特急救隊菁英
+ 7112469:托斯特急救隊菁英
+ 7112470:托斯特急救隊
+ 7112471:托斯特急救隊
+ 7112472:托斯特急救隊
+ 7112473:托斯特急救隊
+ 7112474:托斯特急救隊
+ 711247 托斯特急救隊
+ 7112476:托斯特急救隊菁英
+ 7112477:托斯特急救隊菁英
+ 7112478:托斯特急救隊菁英
+ 7112479:托斯特急救隊菁英
+ 7112480:托斯特急救隊菁英
+ 7112481:托斯特急救隊菁英
+ 7112482:托斯特急救隊
+ 7112483:托斯特急救隊菁英
+ 7112484:托斯特急救隊菁英
+ 711248 托斯特急救隊
+ 7112488:托斯特急救隊菁英
+ 7112489:托斯特急救隊菁英
+ 7112491:托斯特急救隊
+ 7112494:魔監視突擊兵
+ 7112501:洗腦調查隊長
+ 7112502:洗腦調查隊長
+ 7112503:洗腦調查隊長
+ 7112504:洗腦基里管理兵
+ 7112507:魔突擊支援兵
+ 7112510:托斯特基里抽取兵
+ 7113101:凱特星人
+ 7113102:凱特星人
+ 7113103:凱特星人
+ 7113104:奪取隊長
+ 711310 奪取隊長
+ 7113106:奪取隊長
+ 7113107:米拉二兵
+ 7113108:米拉二兵
+ 7113109:米拉二兵
+ 7113110:凱特星人據點兵
+ 7113111:凱特星人據點兵
+ 7113112:凱特星人據點兵
+ 7113113:凱特星人炸彈兵
+ 7113114:凱特星人炸彈兵
+ 711311 凱特星人炸彈兵
+ 7113116:育蟲生化人
+ 7113117:育蟲生化人
+ 7113118:育蟲生化人
+ 7113119:副所長格雷卡
+ 7113122:凱特星人採集兵
+ 711312 凱特星人實驗管理兵
+ 7113128:葛拉漢部下
+ 7113204:洗腦兵
+ 711320 洗腦兵
+ 7113206:洗腦兵
+ 7113207:凱特星鬥士
+ 7113208:凱特星鬥士
+ 7113209:凱特星鬥士
+ 7113210:凱特軍官
+ 7113211:凱特軍官
+ 7113212:凱特軍官
+ 7113213:火氣戰士
+ 7113214:火氣戰士
+ 711321 火氣戰士
+ 7113216:資料管理兵
+ 7113217:資料管理兵
+ 7113218:資料管理兵
+ 7113219:護衛隊戰士
+ 7113220:護衛隊戰士
+ 7113221:護衛隊戰士
+ 7113243:洗腦暗殺兵
+ 7113244:洗腦暗殺兵
+ 711324 洗腦暗殺兵
+ 7113246:關節炎格鬥家
+ 7113247:關節炎格鬥家
+ 7113248:關節炎格鬥家
+ 7113249:弗力札殘黨秘密機動隊
+ 7113252:凱特星人肉彈兵
+ 7113301:凱特星人菁英
+ 7113302:凱特星人菁英
+ 7113303:凱特星人菁英
+ 7113304:維護生化人
+ 711330 維護生化人
+ 7113306:維護生化人
+ 7113310:凱特超音波管理兵
+ 7113316:火爆鬥士
+ 7113317:火爆鬥士
+ 7113318:火爆鬥士
+ 7113319:秘書室歩哨兵
+ 7113320:秘書室歩哨兵
+ 7113321:秘書室歩哨兵
+ 7113322:護衛隊鬥士
+ 7113323:護衛隊鬥士
+ 7113324:護衛隊鬥士
+ 711332 德碘卡礦管理兵
+ 7113401:凱特星人偵察兵
+ 7113402:凱特星人偵察兵
+ 7113403:凱特星人偵察兵
+ 7113404:白臉男子
+ 711340 白臉男子
+ 7113406:白臉男子
+ 7113407:調查隊長泰伊
+ 7113408:調查隊長泰伊
+ 7113409:調查隊長泰伊
+ 7113410:帕斯特里博士
+ 7113413:凱特星人資源補給官
+ 7113416:凱特星人資源補給官
+ 7113501:調查隊長泰伊
+ 7113502:調查隊長泰伊
+ 7113503:調查隊長泰伊
+ 7113504:奮力的勞役兵
+ 7114101:洗腦凱特據點兵
+ 7114102:洗腦凱特據點兵
+ 7114103:洗腦凱特據點兵
+ 7114104:洗腦凱特警衛隊
+ 711410 洗腦凱特警衛隊
+ 7114106:洗腦凱特警衛隊
+ 7114107:洗腦兵
+ 7114108:洗腦兵
+ 7114109:洗腦兵
+ 7114158:白臉男子洗腦兵
+ 7114159:白臉男子洗腦兵
+ 7114160:白臉男子洗腦兵
+ 7114161:洗腦調查團
+ 7114162:洗腦調查團
+ 7114163:洗腦調查團
+ 7114164:洗腦搜索隊
+ 711416 洗腦搜索隊
+ 7114166:洗腦搜索隊
+ 7114167:洗腦凱特電擊隊
+ 7114168:洗腦凱特電擊隊
+ 7114169:洗腦凱特電擊隊
+ 7114170:基里運輸車護衛兵
+ 7114182:洗腦凱特保安隊
+ 7114183:洗腦凱特保安隊
+ 7114184:洗腦凱特保安隊
+ 711418 凱特打擊隊
+ 7114186:凱特打擊隊
+ 7114187:凱特打擊隊
+ 7114188:凱特支援兵
+ 7114191:米拉軍醫務兵
+ 7114194:米拉軍醫務兵
+ 7114197:葛拉漢的左手
+ 7114201:洗腦兵
+ 7114202:洗腦兵
+ 7114203:洗腦兵
+ 7114204:洗腦調查隊員
+ 711420 洗腦調查隊員
+ 7114206:洗腦調查隊員
+ 7114207:官邸警備兵
+ 7114210:副所長護衛兵
+ 7114222:洗腦凱特助教
+ 7114223:洗腦凱特助教
+ 7114224:洗腦凱特助教
+ 711422 洗腦凱特上兵
+ 7114226:洗腦凱特上兵
+ 7114227:洗腦凱特上兵
+ 7114228:凱特打擊隊長
+ 7114229:凱特打擊隊長
+ 7114230:凱特打擊隊長
+ 7114231:機器人昆蟲管理兵
+ 7114232:機器人昆蟲管理兵
+ 7114233:機器人昆蟲管理兵
+ 7114234:米拉軍管理監察官
+ 711423 米拉軍管理監察官
+ 7114236:米拉軍管理監察官
+ 7114237:魔監視派遣兵
+ 7114240:凱特打擊隊長
+ 7114301:凱特電擊隊
+ 7114302:凱特電擊隊
+ 7114303:凱特電擊隊
+ 7114304:凱特電擊隊
+ 711430 凱特電擊隊
+ 7114306:凱特電擊隊
+ 7114307:凱特電擊隊菁英
+ 7114308:凱特電擊隊菁英
+ 7114309:凱特電擊隊菁英
+ 7114310:凱特電擊隊菁英
+ 7114311:凱特電擊隊菁英
+ 7114312:凱特電擊隊菁英
+ 7114313:凱特電擊隊
+ 7114314:凱特電擊隊
+ 711431 凱特電擊隊
+ 7114316:凱特電擊隊
+ 7114317:凱特電擊隊
+ 7114318:凱特電擊隊
+ 7114319:凱特電擊隊菁英
+ 7114320:凱特電擊隊菁英
+ 7114321:凱特電擊隊菁英
+ 7114322:凱特電擊隊菁英
+ 7114323:凱特電擊隊菁英
+ 7114324:凱特電擊隊菁英
+ 711432 凱特電擊隊
+ 7114326:凱特電擊隊
+ 7114327:凱特電擊隊
+ 7114328:凱特電擊隊
+ 7114329:凱特電擊隊
+ 7114330:凱特電擊隊
+ 7114331:凱特電擊隊菁英
+ 7114332:凱特電擊隊菁英
+ 7114333:凱特電擊隊菁英
+ 7114334:凱特電擊隊菁英
+ 711433 凱特電擊隊菁英
+ 7114336:凱特電擊隊菁英
+ 7114337:凱特電擊隊
+ 7114338:凱特電擊隊
+ 7114339:凱特電擊隊
+ 7114340:凱特電擊隊菁英
+ 7114341:凱特電擊隊菁英
+ 7114342:凱特電擊隊菁英
+ 7114343:努凱加藍德駐守兵
+ 7114347:米拉軍資料蒐集兵
+ 7114352:洗腦凱特游擊隊
+ 7114353:洗腦凱特游擊隊
+ 7114354:洗腦凱特游擊隊
+ 711435 凱特勞役管理兵
+ 7114358:洗腦凱特監視隊
+ 7114359:洗腦凱特監視隊
+ 7114360:洗腦凱特監視隊
+ 7114361:洗腦凱特基幹兵
+ 7114362:洗腦凱特基幹兵
+ 7114363:洗腦凱特基幹兵
+ 7114364:凱特電擊隊
+ 711436 凱特電擊隊
+ 7114366:凱特電擊隊
+ 7114367:凱特電擊隊菁英
+ 7114368:凱特電擊隊菁英
+ 7114369:凱特電擊隊菁英
+ 7114401:馬倫勞役隊長
+ 7114402:馬倫勞役隊長
+ 7114403:馬倫勞役隊長
+ 7114404:魔突擊戰士
+ 7114407:下級俘虜區班長
+ 7114410:上級俘虜看守員
+ 7114413:努凱加藍德警備兵
+ 7114417:努凱加藍德警備兵
+ 7115101:熱血槍騎士
+ 7115102:熱血槍騎士
+ 7115103:熱血槍騎士
+ 7115104:葛拉漢的右手
+ 7116107:米拉軍打擊隊
+ 7116108:米拉軍打擊隊
+ 7116109:米拉軍打擊隊
+ 7116110:米拉軍打擊隊
+ 7116111:米拉軍打擊隊
+ 7116112:米拉軍打擊隊
+ 7116113:米拉軍打擊隊
+ 7116114:米拉軍打擊隊
+ 711611 米拉軍打擊隊
+ 7116116:米拉軍打擊隊
+ 7116117:米拉軍打擊隊
+ 7116118:米拉軍打擊隊
+ 7116119:米拉軍先鋒隊
+ 7116120:米拉軍先鋒隊
+ 7116121:米拉軍先鋒隊
+ 7116122:石拳巴特
+ 7116123:石拳巴特
+ 7116124:石拳巴特
+ 711612 鐵拳魔克力
+ 7116126:鐵拳魔克力
+ 7116127:鐵拳魔克力
+ 7116128:鐵頭奪取隊長
+ 7116131:電算室長雷斯特
+ 7116132:電算室長雷斯特
+ 7116133:電算室長雷斯特
+ 7116134:芭芭勒補給隊長
+ 7116137:技術員克羅伊杉
+ 7116140:凱特傳點管理兵
+ 7117101:洗腦雷金機動隊
+ 7117104:下級俘虜監視兵
+ 7117107:洗腦雷金先鋒隊
+ 7117108:洗腦雷金先鋒隊
+ 7117109:洗腦雷金先鋒隊
+ 7117110:洗腦雷金訓練兵
+ 7117111:洗腦雷金訓練兵
+ 7117112:洗腦雷金訓練兵
+ 7117113:洗腦雷金新兵
+ 7117114:洗腦雷金新兵
+ 711711 洗腦雷金新兵
+ 7117116:洗腦雷金守護兵
+ 7117117:洗腦雷金守護兵
+ 7117118:洗腦雷金守護兵
+ 7117119:洗腦雷金修習兵
+ 7117122:魔突擊格鬥兵
+ 711712 努凱加藍德輔助兵
+ 7117128:德碘卡礦監視兵
+ 7117131:補給巡查士兵
+ 7121101:利克姆
+ 7121102:利克姆
+ 7121103:利克姆
+ 7122101:利克姆
+ 7122102:利克姆
+ 7122103:利克姆
+ 7122104:洗腦利克姆
+ 712210 洗腦利克姆
+ 7122106:洗腦利克姆
+ 7122201:利克姆
+ 7151110:鐵頭管理隊長
+ 7211101:里歐
+ 7211102:里歐
+ 7211103:里歐
+ 7211104:里歐羅巴
+ 721110 里歐羅巴
+ 7211106:里歐羅巴
+ 7211107:里歐布拉柏
+ 7211108:里歐布拉柏
+ 7211109:里歐布拉柏
+ 7211110:大里歐
+ 7211111:大里歐
+ 7211112:大里歐
+ 7211113:里歐
+ 7211114:里歐
+ 721111 里歐
+ 7211116:歡樂里歐
+ 7211117:歡樂里歐
+ 7211118:歡樂里歐
+ 7211119:饑渴里歐
+ 7211120:饑渴里歐
+ 7211121:饑渴里歐
+ 7211122:清潔里歐
+ 7211123:清潔里歐
+ 7211124:清潔里歐
+ 7212101:森巴里歐
+ 7212102:森巴里歐
+ 7212103:森巴里歐
+ 7212104:森巴里歐阿明哥
+ 721210 森巴里歐阿明哥
+ 7212106:森巴里歐阿明哥
+ 7212107:森巴里歐多明哥
+ 7212108:森巴里歐多明哥
+ 7212109:森巴里歐多明哥
+ 7212110:森巴里歐多佛安
+ 7212111:森巴里歐多佛安
+ 7212112:森巴里歐多佛安
+ 7212113:列隊森巴里歐
+ 7212114:列隊森巴里歐
+ 721211 列隊森巴里歐
+ 7212116:森巴里歐卡莎諾瓦
+ 7212117:森巴里歐卡莎諾瓦
+ 7212118:森巴里歐卡莎諾瓦
+ 7213101:沙漠里歐
+ 7213102:沙漠里歐
+ 7213103:沙漠里歐
+ 7213104:沙漠里歐德萊
+ 721310 沙漠里歐德萊
+ 7213106:沙漠里歐德萊
+ 7213107:沙漠里歐超級德萊
+ 7213108:沙漠里歐超級德萊
+ 7213109:沙漠里歐超級德萊
+ 7213110:毒里歐
+ 7213111:毒里歐
+ 7213112:毒里歐
+ 7213113:毒里歐
+ 7213114:毒里歐
+ 721311 毒里歐
+ 7221101:強岩
+ 7221102:強岩
+ 7221103:強岩
+ 7251101:派遣技術員
+ 7251102:派遣技術員
+ 7251103:派遣技術員
+ 7251104:派遣技術員
+ 725110 派遣技術員
+ 7251106:派遣技術員
+ 7251107:基里實驗研究員
+ 7251108:基里實驗研究員
+ 7251109:基里實驗研究員
+ 7251110:被收買的科學家
+ 7251111:被收買的科學家
+ 7251112:被收買的科學家
+ 7251113:研究技術者
+ 7251114:研究技術者
+ 725111 研究技術者
+ 7251119:生物改造負責人
+ 7251120:生物改造負責人
+ 7251121:生物改造負責人
+ 7251122:機器人技師
+ 7251123:機器人技師
+ 7251124:機器人技師
+ 725112 洗腦實驗技師
+ 7251126:洗腦實驗技師
+ 7251127:洗腦實驗技師
+ 7251128:裘嶺博士
+ 7251131:油礦氣體研究員
+ 7251132:油礦氣體研究員
+ 7251133:油礦氣體研究員
+ 7251134:油礦建設監視員
+ 725113 油礦建設監視員
+ 7251136:油礦建設監視員
+ 7251137:裘嶺博士
+ 7251140:基里實驗研究員
+ 7253101:索巴石像
+ 7253102:索巴石像
+ 7253103:索巴石像
+ 7253104:索巴石像
+ 725310 索巴石像
+ 7253106:索巴石像
+ 7253107:阿奇
+ 7253108:阿奇
+ 7253109:阿奇
+ 7253110:阿奇
+ 7253111:阿奇
+ 7253112:阿奇
+ 7311101:栽培人
+ 7311102:栽培人
+ 7311103:栽培人
+ 7311104:栽培人
+ 7311107:毒栽培人
+ 7311110:特攻栽培人
+ 7312101:影栽培人
+ 7312102:影栽培人
+ 7312103:影栽培人
+ 7313101:惡栽培人
+ 7313102:惡栽培人
+ 7313103:惡栽培人
+ 7313104:洗腦栽培人
+ 731310 洗腦栽培人
+ 7313106:洗腦栽培人
+ 7313107:洗腦栽培人
+ 7313108:洗腦栽培人
+ 7313109:洗腦栽培人
+ 7313110:洗腦栽培人
+ 7313111:洗腦栽培人
+ 7313112:洗腦栽培人
+ 7313113:洗腦栽培人
+ 7313114:洗腦栽培人
+ 731311 洗腦栽培人
+ 7313116:洗腦栽培人
+ 7313117:洗腦栽培人
+ 7313118:洗腦栽培人
+ 7313119:洗腦栽培人
+ 7313120:洗腦栽培人
+ 7313121:洗腦栽培人
+ 7314101:有機栽培人
+ 7314102:有機栽培人
+ 7314103:有機栽培人
+ 7411101:史貝乙
+ 7411102:史貝乙
+ 7411103:史貝乙
+ 7411104:優克史貝乙
+ 741110 優克史貝乙
+ 7411106:優克史貝乙
+ 7411107:湯克史貝乙
+ 7411108:湯克史貝乙
+ 7411109:湯克史貝乙
+ 7411110:巨型史貝乙
+ 7411111:巨型史貝乙
+ 7411112:巨型史貝乙
+ 7411113:潘奇
+ 7411114:潘奇
+ 741111 潘奇
+ 7411116:藍色史貝乙
+ 7412101:布里史貝乙
+ 7412102:布里史貝乙
+ 7412103:布里史貝乙
+ 7412104:大王史貝乙
+ 741210 大王史貝乙
+ 7412106:大王史貝乙
+ 7412107:高弟史貝乙
+ 7412108:高弟史貝乙
+ 7412109:高弟史貝乙
+ 7412110:汪達史貝乙
+ 7412111:汪達史貝乙
+ 7412112:汪達史貝乙
+ 7412113:黑色史貝乙
+ 7431101:出氣機
+ 7451101:孫悟飯
+ 7451102:孫悟飯
+ 7451103:孫悟飯
+ 7451104:武道家試驗官
+ 745110 武道家試驗官
+ 7451106:武道家試驗官
+ 7451107:孫悟飯
+ 7451108:孫悟飯
+ 7451109:孫悟飯
+ 7485101:茱萊
+ 7485102:茱萊
+ 7485103:茱萊
+ 7485104:茱萊
+ 748510 茱萊
+ 7485106:茱萊
+ 7511110:蓋斯通
+ 7511111:蓋斯通
+ 7511112:蓋斯通
+ 7511116:砂暴賽魯斯
+ 7511117:砂暴賽魯斯
+ 7511118:砂暴賽魯斯
+ 7511119:奧索羅賽魯斯
+ 7512101:羅卡奈里賽魯斯
+ 7513101:姆加利賽魯斯
+ 7513102:姆加利賽魯斯
+ 7513103:姆加利賽魯斯
+ 7513110:暴力姆加利賽魯斯
+ 7513111:暴力姆加利賽魯斯
+ 7513112:暴力姆加利賽魯斯
+ 7513113:亞喜
+ 7513114:亞喜
+ 751311 亞喜
+ 7513116:姆加利賽魯斯
+ 7513117:姆加利賽魯斯
+ 7513118:姆加利賽魯斯
+ 7513119:姆加利賽魯斯
+ 7513120:姆加利賽魯斯
+ 7513121:姆加利賽魯斯
+ 7513122:布隆加利賽魯斯
+ 7513123:布隆加利賽魯斯
+ 7513124:布隆加利賽魯斯
+ 751312 姆加利賽魯斯
+ 7513126:姆加利賽魯斯
+ 7513127:姆加利賽魯斯
+ 7513128:姆加利賽魯斯
+ 7513129:姆加利賽魯斯
+ 7513130:姆加利賽魯斯
+ 7513131:姆加利賽魯斯
+ 7513132:姆加利賽魯斯
+ 7513133:姆加利賽魯斯
+ 7711101:史麥爾博士
+ 7711102:史麥爾博士
+ 7711103:史麥爾博士
+ 7711201:洗腦史麥爾博士
+ 7711202:洗腦史麥爾博士
+ 7711203:洗腦史麥爾博士
+ 7711204:洗腦上級俘虜
+ 7711207:機器人改造官
+ 7711208:機器人改造官
+ 7711209:機器人改造官
+ 7711210:甲蟲女王研究員
+ 7711213:甲蟲女王研究員
+ 7771101:巡察機器人隊長
+ 7771102:巡察機器人隊長
+ 7771103:巡察機器人隊長
+ 7771104:米拉軍警備機器人
+ 777110 米拉軍警備機器人
+ 7771106:米拉軍警備機器人
+ 7771107:昆蟲飼育機器人
+ 7771108:昆蟲飼育機器人
+ 7771109:昆蟲飼育機器人
+ 7771110:老兵守衛
+ 7771111:老兵守衛
+ 7771112:老兵守衛
+ 7771113:M … BOSS機器人
+ 7771116:米拉軍西茲機器人
+ 7771119:米拉軍巡查機器人
+ 7772101:凱迪安機器人
+ 7772102:凱迪安機器人
+ 7772103:凱迪安機器人
+ 7772104:雷射防衛老兵
+ 777210 雷射防衛老兵
+ 7772106:雷射防衛老兵
+ 7772107:電子育蟲機器人
+ 7772108:電子育蟲機器人
+ 7772109:電子育蟲機器人
+ 7772110:抽樣用生物管理機器人
+ 7772111:抽樣用生物管理機器人
+ 7772112:抽樣用生物管理機器人
+ 7772113:改造移動機器人
+ 7772116:M … 黑機器人
+ 7772119:下級勞動管理機器人
+ 7772122:米拉軍監視機器人
+ 7773101:馬倫機器人
+ 7773102:馬倫機器人
+ 7773103:馬倫機器人
+ 7773104:米拉軍鬥士
+ 7773107:M … 格鬥機器人
+ 7773110:中級勞動管理機器人
+ 7773113:補給巡查機器人
+ 7773116:努凱加藍德護衛機器人
+ 7811101:帶刺河馬
+ 7811102:帶刺河馬
+ 7811103:帶刺河馬
+ 7811104:巨刺河馬
+ 781110 巨刺河馬
+ 7811106:巨刺河馬
+ 7811107:怪音河馬
+ 7811108:怪音河馬
+ 7811109:怪音河馬
+ 7811110:河馬
+ 7811111:河馬
+ 7811112:河馬
+ 7811113:暴食河馬
+ 7811114:暴食河馬
+ 781111 暴食河馬
+ 7811116:腐舊河馬
+ 7811117:腐舊河馬
+ 7811118:腐舊河馬
+ 7811119:紅褲軍強化河馬
+ 7811120:紅褲軍強化河馬
+ 7811121:紅褲軍強化河馬
+ 7811122:豚河馬
+ 7812101:胖河馬
+ 7812102:胖河馬
+ 7812103:胖河馬
+ 7812104:大河馬
+ 781210 大河馬
+ 7812106:大河馬
+ 7812107:爆彈河馬
+ 7812108:爆彈河馬
+ 7812109:爆彈河馬
+ 7812110:紅褲軍胖河馬
+ 7812111:紅褲軍胖河馬
+ 7812112:紅褲軍胖河馬
+ 7813101:裝甲河馬
+ 7813102:裝甲河馬
+ 7813103:裝甲河馬
+ 7813104:大王河馬
+ 781310 大王河馬
+ 7813106:大王河馬
+ 7813107:海河馬
+ 7813108:海河馬
+ 7813109:海河馬
+ 7813110:河馬王
+ 7813111:河馬王
+ 7813112:河馬王
+ 7813113:紅褲軍河馬
+ 7813114:紅褲軍河馬
+ 781311 紅褲軍河馬
+ 7813201:鐵甲河馬
+ 7813202:鐵甲河馬
+ 7813203:鐵甲河馬
+ 7813204:波恩夫人的寵物
+ 781320 波恩夫人的寵物
+ 7813206:波恩夫人的寵物
+ 7813207:運輸用河馬
+ 7813208:運輸用河馬
+ 7813209:運輸用河馬
+ 7813210:尖刺河馬
+ 7901101:奇怪的干擾機
+ 7901102:奇怪的干擾機
+ 7901103:奇怪的干擾機
+ 7901104:電波干擾機
+ 790110 電波干擾機
+ 7901106:電波干擾機
+ 8111101:小鬼靈精
+ 8111102:小鬼靈精
+ 8111103:小鬼靈精
+ 8111104:鬼靈精
+ 811110 鬼靈精
+ 8111106:鬼靈精
+ 8111107:大鬼靈精
+ 8111108:大鬼靈精
+ 8111109:大鬼靈精
+ 8111110:[?]
+ 8111111:[?]
+ 8111112:[?]
+ 8111113:朦朧鬼靈精
+ 8111114:朦朧鬼靈精
+ 811111 朦朧鬼靈精
+ 8111116:混混鬼靈精
+ 8111117:混混鬼靈精
+ 8111118:混混鬼靈精
+ 8111119:雲霧鬼靈精
+ 8111120:雲霧鬼靈精
+ 8111121:雲霧鬼靈精
+ 8111122:箱子幽靈
+ 8111123:箱子幽靈
+ 8111124:箱子幽靈
+ 811112 氣息本體
+ 8111126:氣息本體
+ 8111127:氣息本體
+ 8112101:搗蛋鬼靈精
+ 8112102:搗蛋鬼靈精
+ 8112103:搗蛋鬼靈精
+ 8112104:大搗蛋鬼靈精
+ 811210 大搗蛋鬼靈精
+ 8112106:大搗蛋鬼靈精
+ 8112107:火焰鬼靈精
+ 8112108:火焰鬼靈精
+ 8112109:火焰鬼靈精
+ 8112110:魂靈精
+ 8112111:魂靈精
+ 8112112:魂靈精
+ 8112113:大魂靈精
+ 8112114:大魂靈精
+ 811211 大魂靈精
+ 8112116:亂魂靈精
+ 8112117:亂魂靈精
+ 8112118:亂魂靈精
+ 8112119:小搗蛋鬼靈精
+ 8112120:小搗蛋鬼靈精
+ 8112121:小搗蛋鬼靈精
+ 8112122:修行用鬼靈精
+ 8112123:修行用鬼靈精
+ 8112124:修行用鬼靈精
+ 811212 微笑魂靈
+ 8112126:微笑魂靈
+ 8112127:微笑魂靈
+ 8112128:閃亮鬼靈精
+ 8112129:閃亮鬼靈精
+ 8112130:閃亮鬼靈精
+ 8112131:驚悚幽靈
+ 8112132:驚悚幽靈
+ 8112133:驚悚幽靈
+ 8112134:油礦氣體犧牲者靈魂
+ 811213 油礦氣體犧牲者靈魂
+ 8112136:油礦氣體犧牲者靈魂
+ 8112137:氣體布幽守護靈
+ 8112138:搗蛋鬼靈精
+ 8112139:搗蛋鬼靈精
+ 8112140:搗蛋鬼靈精
+ 8112141:搗蛋鬼靈精
+ 8112142:搗蛋鬼靈精
+ 8113101:邪惡鬼靈精
+ 8113102:邪惡鬼靈精
+ 8113103:邪惡鬼靈精
+ 8113104:極惡鬼靈精
+ 811310 極惡鬼靈精
+ 8113106:極惡鬼靈精
+ 8113107:守護魂靈
+ 8113108:守護魂靈
+ 8113109:守護魂靈
+ 8113110:古井妖怪
+ 8113111:古井妖怪
+ 8113112:古井妖怪
+ 8113113:廢礦幽靈
+ 8113114:廢礦幽靈
+ 811311 廢礦幽靈
+ 8113116:驚嚇幽靈
+ 8113117:驚嚇幽靈
+ 8113118:驚嚇幽靈
+ 8113119:庫里斯靈媒
+ 8113120:庫里斯靈媒
+ 8113121:庫里斯靈媒
+ 8114101:托科王的靈魂
+ 8114102:托科王的靈魂
+ 8114103:托科王的靈魂
+ 8151101:翼龍
+ 8151102:翼龍
+ 8151103:翼龍
+ 8151104:狂暴翼龍
+ 8151107:翼龍
+ 8152101:野生翼龍
+ 8211101:幻龍
+ 8211102:幻龍
+ 8211103:幻龍
+ 8211104:幻龍
+ 821110 幻龍
+ 8211106:幻龍
+ 8211107:幻龍
+ 8211108:幻龍
+ 8211109:幻龍
+ 8211110:幻龍
+ 8211111:幻龍
+ 8211112:幻龍
+ 8211113:幻龍
+ 8211114:幻龍
+ 821111 幻龍
+ 8211116:幻龍
+ 8211117:幻龍
+ 8211118:幻龍
+ 8211119:戰鬥幻龍
+ 8211122:庫里斯幻龍
+ 8211201:洗腦幻龍
+ 8211202:洗腦幻龍
+ 8211203:洗腦幻龍
+ 8211204:洗腦幻龍
+ 821120 洗腦幻龍
+ 8211206:洗腦幻龍
+ 8211207:洗腦幻龍
+ 8211208:洗腦幻龍
+ 8211209:洗腦幻龍
+ 8212101:黑影幻龍
+ 8212102:黑影幻龍
+ 8212103:黑影幻龍
+ 8212104:黑影幻龍
+ 821210 黑影幻龍
+ 8212106:黑影幻龍
+ 8212107:小幻龍
+ 8212108:小幻龍
+ 8212109:小幻龍
+ 8212110:黑影幻龍
+ 8212111:黑影幻龍
+ 8212112:黑影幻龍
+ 8213101:赤幻龍
+ 8213102:赤幻龍
+ 8213103:赤幻龍
+ 8213104:赤幻龍
+ 821310 赤幻龍
+ 8213106:赤幻龍
+ 8213107:兇暴幻龍
+ 8213108:兇暴幻龍
+ 8213109:兇暴幻龍
+ 8213110:赤幻龍
+ 8213111:赤幻龍
+ 8213112:赤幻龍
+ 8213113:赤鬥幻龍
+ 8213116:殘暴咕哩龍
+ 8311101:尖頭栽培人
+ 8311102:尖頭栽培人
+ 8311103:尖頭栽培人
+ 8311104:大針刺栽培人
+ 831110 大針刺栽培人
+ 8311106:大針刺栽培人
+ 8311119:仙人掌栽培人
+ 8311120:仙人掌栽培人
+ 8311121:仙人掌栽培人
+ 8311122:鬼針刺栽培人
+ 8311123:鬼針刺栽培人
+ 8311124:鬼針刺栽培人
+ 8311201:香菇栽培人
+ 8311202:香菇栽培人
+ 8311203:香菇栽培人
+ 8311204:毒氣邦邦栽培人
+ 8311301:毒香菇栽培人
+ 8311302:毒香菇栽培人
+ 8311303:毒香菇栽培人
+ 8312101:細針栽培人
+ 8312102:細針栽培人
+ 8312103:細針栽培人
+ 8312104:熱帶細針栽培人
+ 831210 熱帶細針栽培人
+ 8312106:熱帶細針栽培人
+ 8312107:鱗針栽培人
+ 8312108:鱗針栽培人
+ 8312109:鱗針栽培人
+ 8312110:巨大頭針栽培人
+ 8312111:巨大頭針栽培人
+ 8312112:巨大頭針栽培人
+ 8312201:枯針栽培人
+ 8312202:枯針栽培人
+ 8312203:枯針栽培人
+ 8312204:大頭針栽培人
+ 831220 大頭針栽培人
+ 8312206:大頭針栽培人
+ 8312207:巨型針栽培人
+ 8312208:巨型針栽培人
+ 8312209:巨型針栽培人
+ 8312301:燒針栽培人
+ 8312302:燒針栽培人
+ 8312303:燒針栽培人
+ 8312304:火針栽培人
+ 831230 火針栽培人
+ 8312306:火針栽培人
+ 8312307:悚針栽培人
+ 8312308:悚針栽培人
+ 8312309:悚針栽培人
+ 8313101:針刺栽培人
+ 8313102:針刺栽培人
+ 8313103:針刺栽培人
+ 8313201:大頭針刺栽培人
+ 8313202:大頭針刺栽培人
+ 8313203:大頭針刺栽培人
+ 8313301:金刺栽培人
+ 8313302:金刺栽培人
+ 8313303:金刺栽培人
+ 8314101:鬼尖頭栽培人
+ 8314102:鬼尖頭栽培人
+ 8314103:鬼尖頭栽培人
+ 8314104:瀕死尖頭栽培人
+ 831410 瀕死尖頭栽培人
+ 8314106:瀕死尖頭栽培人
+ 8315101:毒尖頭栽培人
+ 8315102:毒尖頭栽培人
+ 8315103:毒尖頭栽培人
+ 8315104:猛毒尖頭栽培人
+ 831510 猛毒尖頭栽培人
+ 8315106:猛毒尖頭栽培人
+ 8316101:角尖頭栽培人
+ 8316102:角尖頭栽培人
+ 8316103:角尖頭栽培人
+ 8316104:獨角尖頭栽培人
+ 831610 獨角尖頭栽培人
+ 8316106:獨角尖頭栽培人
+ 8317101:洗腦尖頭栽培人
+ 8317102:洗腦尖頭栽培人
+ 8317103:洗腦尖頭栽培人
+ 8317104:洗腦尖頭栽培人
+ 831710 洗腦尖頭栽培人
+ 8317106:洗腦尖頭栽培人
+ 8317113:洗腦巨尖頭栽培人
+ 8317114:洗腦巨尖頭栽培人
+ 831711 洗腦巨尖頭栽培人
+ 8411101:格魯鼠
+ 8411102:格魯鼠
+ 8411103:格魯鼠
+ 8411104:蹦蹦袋鼠
+ 841110 蹦蹦袋鼠
+ 8411106:蹦蹦袋鼠
+ 8411107:衝衝袋鼠
+ 8411108:衝衝袋鼠
+ 8411109:衝衝袋鼠
+ 8411110:修行用袋鼠
+ 8411111:修行用袋鼠
+ 8411112:修行用袋鼠
+ 8412101:袋鼠
+ 8412102:袋鼠
+ 8412103:袋鼠
+ 8412104:巨型袋鼠
+ 841210 巨型袋鼠
+ 8412106:巨型袋鼠
+ 8412107:德里袋鼠
+ 8412108:德里袋鼠
+ 8412109:德里袋鼠
+ 8412110:雪原袋鼠
+ 8412111:雪原袋鼠
+ 8412112:雪原袋鼠
+ 8421101:桃白白X
+ 8421102:桃白白X
+ 8421103:桃白白X
+ 8422101:強化桃白白X
+ 8422102:強化桃白白X
+ 8422103:強化桃白白X
+ 8431101:伊格砲塔
+ 8431102:伊格砲塔
+ 8431103:伊格砲塔
+ 8441101:潘茲
+ 8441102:潘茲
+ 8441103:潘茲
+ 8441104:紅褲軍修理兵
+ 844110 紅褲軍修理兵
+ 8441106:紅褲軍修理兵
+ 8441107:海南倉庫管理人
+ 8441108:海南倉庫管理人
+ 8441109:海南倉庫管理人
+ 8441110:強制勞動兵
+ 8441113:執行人潘茲
+ 8441201:蘑菇幫團員
+ 8441202:蘑菇幫團員
+ 8441203:蘑菇幫團員
+ 8441204:蘑菇幫情報員
+ 844120 蘑菇幫情報員
+ 8441206:蘑菇幫情報員
+ 8441207:蘑菇幫行動隊員
+ 8441208:蘑菇幫行動隊員
+ 8441209:蘑菇幫行動隊員
+ 8441210:蘑菇幫偵探
+ 8441211:蘑菇幫偵探
+ 8441212:蘑菇幫偵探
+ 8441213:蘑菇幫情報員
+ 8441214:蘑菇幫情報員
+ 844121 蘑菇幫情報員
+ 8441216:蘑菇幫大老
+ 8441219:澳克幫
+ 8441222:蘑菇幫採收員
+ 8441301:蘑菇幫掠奪者
+ 8441302:蘑菇幫掠奪者
+ 8441303:蘑菇幫掠奪者
+ 8441304:蘑菇幫騎士團員
+ 844130 蘑菇幫騎士團員
+ 8441306:蘑菇幫騎士團員
+ 8441307:蘑菇幫脅迫者
+ 8441308:蘑菇幫脅迫者
+ 8441309:蘑菇幫脅迫者
+ 8441310:蘑菇幫獵蛇人
+ 8441311:蘑菇幫獵蛇人
+ 8441312:蘑菇幫獵蛇人
+ 8441313:蘑菇幫獵人
+ 8441314:蘑菇幫獵人
+ 844131 蘑菇幫獵人
+ 8441316:蘑菇幫臥底
+ 8441319:蘑菇幫雜工
+ 8441322:羅寧幫
+ 8441401:蘑菇幫破壞者
+ 8441402:蘑菇幫破壞者
+ 8441403:蘑菇幫破壞者
+ 8441404:蘑菇幫監視團長
+ 844140 蘑菇幫監視團長
+ 8441406:蘑菇幫監視團長
+ 8441407:蘑菇幫暗襲者
+ 8441410:麻糬大盜
+ 8442101:耶拿補給兵
+ 8442102:耶拿補給兵
+ 8442103:耶拿補給兵
+ 8442104:海南倉庫警衛
+ 844210 海南倉庫警衛
+ 8442106:海南倉庫警衛
+ 8442107:海南爆彈兵
+ 8442108:海南爆彈兵
+ 8442109:海南爆彈兵
+ 8442110:野生潘茲新兵
+ 8442111:野生潘茲新兵
+ 8442112:野生潘茲新兵
+ 8442113:戰鬥野生潘茲
+ 8442114:戰鬥野生潘茲
+ 844211 戰鬥野生潘茲
+ 8442116:頭頭潘茲
+ 8442117:頭頭潘茲
+ 8442118:頭頭潘茲
+ 8442119:海南工兵
+ 8442120:海南工兵
+ 8442121:海南工兵
+ 8442122:飼育專家
+ 8442123:飼育專家
+ 8442124:飼育專家
+ 844212 羅克幫
+ 8443101:聖誕
+ 8443104:聖誕
+ 8443107:聖誕
+ 8443110:聖誕
+ 8451101:凱羅多斯
+ 8471104:野豬掠奪隊
+ 847110 野豬掠奪隊
+ 8471106:野豬掠奪隊
+ 8471107:紅褲軍巡察隊長
+ 8471108:紅褲軍巡察隊長
+ 8471109:紅褲軍巡察隊長
+ 8471110:野豬修行戰士
+ 8471111:野豬修行戰士
+ 8471112:野豬修行戰士
+ 8471113:海克幫
+ 8471116:作物大盜隊長
+ 8471119:特利德掠奪隊
+ 8471122:姆奇姆奇盜賊團
+ 8471201:蘑菇幫行動大將
+ 8471202:蘑菇幫行動大將
+ 8471203:蘑菇幫行動大將
+ 8471204:龍江掠奪者
+ 847120 龍江掠奪者
+ 8471206:龍江掠奪者
+ 8471207:蘑菇幫組長
+ 8471208:蘑菇幫組長
+ 8471209:蘑菇幫組長
+ 8471210:蘑菇幫強奪者
+ 8471213:小王幫
+ 8471216:蘑菇幫血鬥隊長
+ 8471219:蘑菇幫狂戰士
+ 8471222:蘑菇幫浪人
+ 847122 煙薰幫
+ 8472101:野豬哨戒兵
+ 8472102:野豬哨戒兵
+ 8472103:野豬哨戒兵
+ 8472104:野豬游擊隊
+ 847210 野豬游擊隊
+ 8472106:野豬游擊隊
+ 8472107:道場破壞者伊勢多
+ 8472108:道場破壞者伊勢多
+ 8472109:道場破壞者伊勢多
+ 8472110:爆彈警衛兵
+ 8472111:爆彈警衛兵
+ 8472112:爆彈警衛兵
+ 8472113:落跑煽動者
+ 8472122:野豬掠奪隊長
+ 8472123:野豬掠奪隊長
+ 8472124:野豬掠奪隊長
+ 8511101:藤蔓栽培人
+ 8511102:藤蔓栽培人
+ 8511103:藤蔓栽培人
+ 8511104:巨型藤蔓栽培人
+ 851110 巨型藤蔓栽培人
+ 8511106:巨型藤蔓栽培人
+ 8511107:綠蜘蛛栽培人
+ 8511108:綠蜘蛛栽培人
+ 8511109:綠蜘蛛栽培人
+ 8511110:蜘蛛栽培人
+ 8511111:蜘蛛栽培人
+ 8511112:蜘蛛栽培人
+ 8511113:修行用蜘蛛栽培人
+ 8511114:修行用蜘蛛栽培人
+ 851111 修行用蜘蛛栽培人
+ 8512101:毒藤蔓栽培人
+ 8512102:毒藤蔓栽培人
+ 8512103:毒藤蔓栽培人
+ 8512104:猛毒藤蔓栽培人
+ 851210 猛毒藤蔓栽培人
+ 8512106:猛毒藤蔓栽培人
+ 8512107:猛毒蜘蛛栽培人
+ 8512108:猛毒蜘蛛栽培人
+ 8512109:猛毒蜘蛛栽培人
+ 8513101:蘆筍藤蔓栽培人
+ 8513102:蘆筍藤蔓栽培人
+ 8513103:蘆筍藤蔓栽培人
+ 8513104:斑點蘆筍藤蔓栽培人
+ 851310 斑點蘆筍藤蔓栽培人
+ 8513106:斑點蘆筍藤蔓栽培人
+ 8513107:毒氣藤蔓栽培人
+ 8513108:毒氣藤蔓栽培人
+ 8513109:毒氣藤蔓栽培人
+ 8513110:雪白蜘蛛栽培人
+ 8513111:雪白蜘蛛栽培人
+ 8513112:雪白蜘蛛栽培人
+ 8513113:冰凍蜘蛛栽培人
+ 8513114:冰凍蜘蛛栽培人
+ 851311 冰凍蜘蛛栽培人
+ 8514101:洗腦藤蔓栽培人
+ 8514102:洗腦藤蔓栽培人
+ 8514103:洗腦藤蔓栽培人
+ 8514104:洗腦藤蔓栽培人
+ 851410 洗腦藤蔓栽培人
+ 8514106:洗腦藤蔓栽培人
+ 8601101:多瓦
+ 8601102:多瓦
+ 8601103:多瓦
+ 8811101:洗腦機器
+ 8811102:洗腦機器
+ 8811103:洗腦機器
+ 8811104:洗腦機器
+ 881110 洗腦機器
+ 8811106:洗腦機器
+ 8811107:洗腦機器
+ 8811108:洗腦機器
+ 8811109:洗腦機器
+ 8811110:洗腦機器
+ 8811111:洗腦機器
+ 8811112:洗腦機器
+ 8811113:洗腦機器
+ 8811114:洗腦機器
+ 881111 洗腦機器
+ 8811116:洗腦機器
+ 8811117:洗腦機器
+ 8811118:洗腦機器
+ 8811119:米拉軍洗腦傳播機
+ 8811122:洗腦機器
+ 8811123:洗腦機器
+ 8811124:洗腦機器
+ 8821101:瓦達隊長
+ 8821102:瓦達隊長
+ 8821103:瓦達隊長
+ 8821201:瓦達隊長
+ 8821202:瓦達隊長
+ 8821203:瓦達隊長
+ 8911101:野狼
+ 8911102:野狼
+ 8911103:野狼
+ 8911104:戴爾偵查狼
+ 891110 戴爾偵查狼
+ 8911106:戴爾偵查狼
+ 8911107:毒狼
+ 8911108:毒狼
+ 8911109:毒狼
+ 8911110:曼索獵犬
+ 8911111:曼索獵犬
+ 8911112:曼索獵犬
+ 8911113:草原餓狼
+ 8911201:月狼
+ 8911202:月狼
+ 8911203:月狼
+ 8911204:凱里卡野狼
+ 891120 凱里卡野狼
+ 8911206:凱里卡野狼
+ 8911213:影子軍狼
+ 8911214:影子軍狼
+ 891121 影子軍狼
+ 8911216:森林王者
+ 8911217:森林王者
+ 8911218:森林王者
+ 8911219:洗腦米拉軍犬
+ 8911220:洗腦米拉軍犬
+ 8911221:洗腦米拉軍犬
+ 8911222:山嶽狼
+ 8911223:山嶽狼
+ 8911224:山嶽狼
+ 891122 紅褲軍狼
+ 8911226:紅褲軍狼
+ 8911227:紅褲軍狼
+ 8911228:RP探索狼
+ 8911229:RP探索狼
+ 8911230:RP探索狼
+ 8911231:精銳入侵狼
+ 8911234:山嶽狼
+ 8912101:餓狼
+ 8912102:餓狼
+ 8912103:餓狼
+ 8912104:惡狼
+ 891210 惡狼
+ 8912106:惡狼
+ 8912107:賽比奇狼
+ 8912108:賽比奇狼
+ 8912109:賽比奇狼
+ 8912110:野狼
+ 8912111:野狼
+ 8912112:野狼
+ 8912113:達克伍幫
+ 8912116:精銳入侵狼老大
+ 8912128:賽比奇軍用犬
+ 8912129:賽比奇軍用犬
+ 8912130:賽比奇軍用犬
+ 8912131:賽比奇王
+ 8912132:賽比奇王
+ 8912133:賽比奇王
+ 8912134:監護犬
+ 891213 監護犬
+ 8912136:監護犬
+ 8912201:狐狼
+ 8912202:狐狼
+ 8912203:狐狼
+ 8912204:孤狼
+ 891220 孤狼
+ 8912206:孤狼
+ 8912207:夜狼
+ 8912210:獵物狼
+ 8912213:暗黑狼
+ 8912219:野生狼犬
+ 8912220:野生狼犬
+ 8912221:野生狼犬
+ 8912222:瘋狂狐狼
+ 8912223:瘋狂狐狼
+ 8912224:瘋狂狐狼
+ 891222 獵狼
+ 8912226:獵狼
+ 8912227:獵狼
+ 8912228:基里上校的獵犬
+ 8912229:基里上校的獵犬
+ 8912230:基里上校的獵犬
+ 8912231:荒野卡歐
+ 8912232:荒野卡歐
+ 8912233:荒野卡歐
+ 8912234:瘋狂水狐狼
+ 891223 瘋狂水狐狼
+ 8912236:瘋狂水狐狼
+ 8912237:雙狼
+ 8912238:雙狼
+ 8912239:雙狼
+ 8912240:荒野卡歐
+ 8913101:野犬
+ 8913102:野犬
+ 8913103:野犬
+ 8913104:野班犬
+ 891310 野班犬
+ 8913106:野班犬
+ 8913107:野性斑犬
+ 8913108:野性斑犬
+ 8913109:野性斑犬
+ 8913110:赤巡狼
+ 8913111:赤巡狼
+ 8913112:赤巡狼
+ 8913113:雷基狼
+ 8913114:雷基狼
+ 891311 雷基狼
+ 8913116:奈特伍幫
+ 8913119:霍格斯狼
+ 8913122:毒氣風狼
+ 891312 強盜獵犬
+ 8913128:荒野惡狼
+ 8913201:野狼犬
+ 8913202:野狼犬
+ 8913203:野狼犬
+ 8913204:野汪汪
+ 891320 野汪汪
+ 8913206:野汪汪
+ 8913207:懷特伍幫
+ 8913210:貝果狼
+ 8913213:野汪汪
+ 9111101:花猴
+ 9111102:花猴
+ 9111103:花猴
+ 9111104:花花猴
+ 911110 花花猴
+ 9111106:花花猴
+ 9111107:大花猴
+ 9111108:大花猴
+ 9111109:大花猴
+ 9111110:戰鬥花猴
+ 9111111:戰鬥花猴
+ 9111112:戰鬥花猴
+ 9111113:布拉里黑猴
+ 9111114:布拉里黑猴
+ 911111 布拉里黑猴
+ 9111116:薩斯里猴
+ 9112101:小貝勒猴
+ 9112102:小貝勒猴
+ 9112103:小貝勒猴
+ 9112104:貝勒猴
+ 911210 貝勒猴
+ 9112106:貝勒猴
+ 9112107:德拉貝勒猴
+ 9112108:德拉貝勒猴
+ 9112109:德拉貝勒猴
+ 9112110:海岸惡魔
+ 9112111:海岸惡魔
+ 9112112:海岸惡魔
+ 9112113:飢餓猿猴
+ 9112114:飢餓猿猴
+ 911211 飢餓猿猴
+ 9112116:飢餓猿猴
+ 9112117:飢餓猿猴
+ 9112118:飢餓猿猴
+ 9112119:布拉里藍猴
+ 9112120:布拉里藍猴
+ 9112121:布拉里藍猴
+ 9112122:飢餓猿猴
+ 9112123:飢餓猿猴
+ 9112124:飢餓猿猴
+ 911212 野生猿猴
+ 9112128:布里花猴
+ 9112129:布里花猴
+ 9112130:布里花猴
+ 9112131:布里花猴
+ 9113101:里拉
+ 9113104:狂爆雷蒙
+ 9411101:蠻牛士兵
+ 9411102:蠻牛士兵
+ 9411103:蠻牛士兵
+ 9411104:蠻牛突擊隊
+ 941110 蠻牛突擊隊
+ 9411106:蠻牛突擊隊
+ 9411107:冠軍摩伍
+ 9411108:冠軍摩伍
+ 9411109:冠軍摩伍
+ 9411110:最終兵器警備兵
+ 9411111:最終兵器警備兵
+ 9411112:最終兵器警備兵
+ 9411113:波恩將軍親衛突擊隊
+ 9411114:波恩將軍親衛突擊隊
+ 941111 波恩將軍親衛突擊隊
+ 9411116:蠻牛採掘兵
+ 9411117:蠻牛採掘兵
+ 9411118:蠻牛採掘兵
+ 9411119:蠻牛勞役兵
+ 9411120:蠻牛勞役兵
+ 9411121:蠻牛勞役兵
+ 9411122:菲力考特
+ 9411123:菲力考特
+ 9411124:菲力考特
+ 941112 敗戰蠻牛兵
+ 9411201:蠻牛士兵敗戰兵
+ 9411202:蠻牛士兵敗戰兵
+ 9411203:蠻牛士兵敗戰兵
+ 9411204:蠻牛精銳部隊
+ 941120 蠻牛精銳部隊
+ 9411206:蠻牛精銳部隊
+ 9411207:蠻牛奴隸兵
+ 9411208:蠻牛奴隸兵
+ 9411209:蠻牛奴隸兵
+ 9411210:火牛佔領部隊
+ 9411211:火牛佔領部隊
+ 9411212:火牛佔領部隊
+ 9411213:蠻牛實驗兵
+ 9411214:蠻牛實驗兵
+ 941121 蠻牛實驗兵
+ 9411216:狂牛士兵
+ 9411217:狂牛士兵
+ 9411218:狂牛士兵
+ 9411219:中級紅褲軍俘虜
+ 9411301:蠻牛士兵親衛隊
+ 9411302:蠻牛士兵親衛隊
+ 9411303:蠻牛士兵親衛隊
+ 9411304:蠻牛水兵
+ 941130 蠻牛水兵
+ 9411306:蠻牛水兵
+ 9411307:蠻牛補給部隊
+ 9411308:蠻牛補給部隊
+ 9411309:蠻牛補給部隊
+ 9411310:蠻牛逃兵
+ 9411311:蠻牛逃兵
+ 9411312:蠻牛逃兵
+ 9411313:蠻牛勞動兵
+ 9411314:蠻牛勞動兵
+ 941131 蠻牛勞動兵
+ 9411316:傑克先生
+ 9411317:傑克先生
+ 9411318:傑克先生
+ 9411319:乾淨蠻牛水兵
+ 9411320:乾淨蠻牛水兵
+ 9411321:乾淨蠻牛水兵
+ 9411322:紅褲軍逃兵
+ 9411323:紅褲軍逃兵
+ 9411324:紅褲軍逃兵
+ 941132 火牛打擊隊
+ 9411326:火牛打擊隊
+ 9411327:火牛打擊隊
+ 9412101:蠻牛工兵隊
+ 9412102:蠻牛工兵隊
+ 9412103:蠻牛工兵隊
+ 9412104:獨眼蠻牛流星
+ 941210 獨眼蠻牛流星
+ 9412106:獨眼蠻牛流星
+ 9412107:捲毛手下
+ 9412108:捲毛手下
+ 9412109:捲毛手下
+ 9412113:蠻牛作戰將官
+ 9412114:蠻牛作戰將官
+ 941211 蠻牛作戰將官
+ 9412119:蠻牛
+ 9412120:蠻牛
+ 9412121:蠻牛
+ 9412201:蠻牛烈風隊
+ 9412202:蠻牛烈風隊
+ 9412203:蠻牛烈風隊
+ 9412204:蠻牛決死隊
+ 941220 蠻牛決死隊
+ 9412206:蠻牛決死隊
+ 9412207:紅褲軍秘書官
+ 9412208:紅褲軍秘書官
+ 9412209:紅褲軍秘書官
+ 9412210:蠻牛警備隊長
+ 9412211:蠻牛警備隊長
+ 9412212:蠻牛警備隊長
+ 9413101:火牛烈風隊
+ 9413102:火牛烈風隊
+ 9413103:火牛烈風隊
+ 9413104:火牛決死隊
+ 941310 火牛決死隊
+ 9413106:火牛決死隊
+ 9413107:現場總指揮官
+ 9413108:現場總指揮官
+ 9413109:現場總指揮官
+ 9413110:多布斯
+ 9413111:多布斯
+ 9413112:多布斯
+ 9413113:火牛步哨兵
+ 9413114:火牛步哨兵
+ 941311 火牛步哨兵
+ 9413116:地下基地護衛武士
+ 9413117:地下基地護衛武士
+ 9413118:地下基地護衛武士
+ 9413119:紅褲軍護衛武士
+ 9413120:紅褲軍護衛武士
+ 9413121:紅褲軍護衛武士
+ 9413122:地下基地護衛武士
+ 9413201:火牛警衛隊
+ 9413202:火牛警衛隊
+ 9413203:火牛警衛隊
+ 9413204:火牛特命部隊
+ 941320 火牛特命部隊
+ 9413206:火牛特命部隊
+ 9414101:波恩將軍
+ 9414102:波恩將軍
+ 9414103:波恩將軍
+ 9414104:茱萊
+ 941410 茱萊
+ 9414106:茱萊
+ 9414107:波恩將軍
+ 9414201:基里中毒波恩將軍
+ 9414202:基里中毒波恩將軍
+ 9414203:基里中毒波恩將軍
+ 9415104:阿貝克盜墓團長
+ 941510 阿貝克盜墓團長
+ 9415106:阿貝克盜墓團長
+ 9415107:紅褲軍殘黨領袖
+ 9415108:紅褲軍殘黨領袖
+ 9415109:紅褲軍殘黨領袖
+ 9415110:布魯克林將軍
+ 9415111:布魯克林將軍
+ 9415112:布魯克林將軍
+ 9415113:紅褲軍軍紀班長
+ 9415114:紅褲軍軍紀班長
+ 941511 紅褲軍軍紀班長
+ 9415201:機器人改造工兵
+ 9415202:機器人改造工兵
+ 9415203:機器人改造工兵
+ 9415401:洗腦布魯克林將軍
+ 9415402:洗腦布魯克林將軍
+ 9415403:洗腦布魯克林將軍
+ 9415404:洗腦上級俘虜
+ 9415407:副所長波波
+ 9415410:洗腦布魯克林將軍
+ 9416101:工兵隊
+ 9416102:工兵隊
+ 9416103:工兵隊
+ 9416104:火牛特殊工兵隊
+ 941610 火牛特殊工兵隊
+ 9416106:火牛特殊工兵隊
+ 9416107:火牛工兵隊
+ 9416108:火牛工兵隊
+ 9416109:火牛工兵隊
+ 9416110:火牛警備兵
+ 9416111:火牛警備兵
+ 9416112:火牛警備兵
+ 9416113:工兵隊
+ 9416114:工兵隊
+ 941611 工兵隊
+ 9417101:監督官
+ 9417102:監督官
+ 9417103:監督官
+ 9418101:現場總指揮官
+ 9418102:現場總指揮官
+ 9418103:現場總指揮官
+ 9418104:正統紅褲軍精銳部隊
+ 941810 正統紅褲軍精銳部隊
+ 9418106:正統紅褲軍精銳部隊
+ 9419101:波恩將軍縱火隊員
+ 9419102:波恩將軍縱火隊員
+ 9419103:波恩將軍縱火隊員
+ 9419104:紅褲軍特殊作業員
+ 9419107:波恩將軍縱火隊員
+ 9420101:工兵隊
+ 9420102:工兵隊
+ 9420103:工兵隊
+ 9420104:油礦蠻牛勞役兵
+ 942010 油礦蠻牛勞役兵
+ 9420106:油礦蠻牛勞役兵
+ 9420107:工兵隊
+ 9421101:蘑菇幫工兵
+ 9421104:蘑菇幫突擊隊長
+ 9421107:蘑菇幫暴徒
+ 9421110:蘑菇幫暴君
+ 9421113:蘑菇幫突擊隊長
+ 9611101:鉗栽培人
+ 9611102:鉗栽培人
+ 9611103:鉗栽培人
+ 9611104:寬鉗栽培人
+ 961110 寬鉗栽培人
+ 9611106:寬鉗栽培人
+ 9611107:巨鉗栽培人
+ 9611108:巨鉗栽培人
+ 9611109:巨鉗栽培人
+ 9611110:雙鉗栽培人
+ 9611111:雙鉗栽培人
+ 9611112:雙鉗栽培人
+ 961112 綠洲鉗栽培人
+ 9611126:綠洲鉗栽培人
+ 9611127:綠洲鉗栽培人
+ 9611128:沙漠鉗栽培人
+ 9611129:沙漠鉗栽培人
+ 9611130:沙漠鉗栽培人
+ 9611131:斷鉗栽培人
+ 9611132:斷鉗栽培人
+ 9611133:斷鉗栽培人
+ 9611134:怪物之子
+ 961113 怪物之子
+ 9611136:怪物之子
+ 9611137:鉗把栽培人
+ 9611138:鉗把栽培人
+ 9611139:鉗把栽培人
+ 9611140:水路鉗栽培人
+ 9611141:水路鉗栽培人
+ 9611142:水路鉗栽培人
+ 9612101:雪蟹栽培人
+ 9612102:雪蟹栽培人
+ 9612103:雪蟹栽培人
+ 9612104:大雪蟹栽培人
+ 961210 大雪蟹栽培人
+ 9612106:大雪蟹栽培人
+ 9612107:巨雪蟹栽培人
+ 9612108:巨雪蟹栽培人
+ 9612109:巨雪蟹栽培人
+ 9612110:鹽鉗栽培人
+ 9612111:鹽鉗栽培人
+ 9612112:鹽鉗栽培人
+ 9612113:真怪物
+ 9612114:真怪物
+ 961211 真怪物
+ 9612116:殼鉗栽培人
+ 9612117:殼鉗栽培人
+ 9612118:殼鉗栽培人
+ 9612119:鬧鉗栽培人
+ 9612120:鬧鉗栽培人
+ 9612121:鬧鉗栽培人
+ 9612122:凍鉗栽培人
+ 9612123:凍鉗栽培人
+ 9612124:凍鉗栽培人
+ 961212 寵物怪
+ 9612126:寵物怪
+ 9612127:寵物怪
+ 9612128:鬧鉗栽培人
+ 9612131:凍鉗栽培人
+ 9613101:沙蟹栽培人
+ 9613102:沙蟹栽培人
+ 9613103:沙蟹栽培人
+ 9613104:大沙蟹栽培人
+ 961310 大沙蟹栽培人
+ 9613106:大沙蟹栽培人
+ 9613107:氣沙蟹栽培人
+ 9613108:氣沙蟹栽培人
+ 9613109:氣沙蟹栽培人
+ 9613110:長腳鉗栽培人
+ 9613111:長腳鉗栽培人
+ 9613112:長腳鉗栽培人
+ 9613113:左鉗栽培人
+ 9613114:左鉗栽培人
+ 961311 左鉗栽培人
+ 9613116:海王鉗栽培人
+ 9613117:海王鉗栽培人
+ 9613118:海王鉗栽培人
+ 9613119:菇泉鉗栽培人
+ 9613120:菇泉鉗栽培人
+ 9613121:菇泉鉗栽培人
+ 9614101:有毒鉗栽培人
+ 9614104:薩毒栽培人
+ 9614201:真怪物
+ 9614202:真怪物
+ 9614203:真怪物
+ 9615101:洗腦鉗栽培人
+ 9615102:洗腦鉗栽培人
+ 9615103:洗腦鉗栽培人
+ 9615104:洗腦鉗栽培人
+ 961510 洗腦鉗栽培人
+ 9615106:洗腦鉗栽培人
+ 9615107:洗腦鋼鐵鉗栽培人
+ 9615108:洗腦鋼鐵鉗栽培人
+ 9615109:洗腦鋼鐵鉗栽培人
+ 9615110:洗腦鋼鐵鉗栽培人
+ 9615111:洗腦鋼鐵鉗栽培人
+ 9615112:洗腦鋼鐵鉗栽培人
+ 9615113:洗腦鉗栽培人
+ 9615114:洗腦鉗栽培人
+ 961511 洗腦鉗栽培人
+ 9811101:油岩
+ 9811102:油岩
+ 9811103:油岩
+ 9981101:　
+ 9981102:　
+ 9981103:　
+ 9991101:Test 1
+ 9991102:Test 1
+ 9991103:Test 1
+ 9991104:Test 7
+ 999110 Test 7
+ 9991106:Test 7
+ 9991107:0
+ 9991108:0
+ 9991109:0
+ 9994110:0
+ 9994111:0
+ 9995107:0
+ 9995108:0
+ 9995109:0
+ 9995112:0
+ 11111101:人造基藍副官
+ 11151101:被改造的火焰巨龍
+ 11211101:超惡魔
+ 11212101:兇惡魔
+ 11213101:極惡魔
+ 11253101:因基里中毒的乾癟魔人
+ 11261101:人造魔人副官
+ 11261104:因基里中毒的波動魔人
+ 11262101:複製貓尼爾
+ 11262104:鏡子貓貝爾
+ 11262107:鏡子貓貝爾
+ 11262110:複製貓尼爾
+ 11262113:複製貓尼爾
+ 11262116:鏡子貓貝爾
+ 11311101:岩漿抽取兵
+ 11311201:厄拉車運輸兵
+ 11311301:沙普護衛兵
+ 11311304:岩漿運輸兵
+ 11412101:椰子籽栽培人
+ 11412104:番木瓜籽豆栽培人
+ 11412207:莿西瓜栽培人
+ 11413201:亮晶籽栽培人
+ 11414101:鯖魚卵栽培人
+ 11414104:鯖魚卵栽培人
+ 11414201:半肉栽培人
+ 11414204:魚鳍籽栽培人
+ 11418101:哈密瓜栽培人
+ 11511101:有才的調皮醫務兵
+ 11511104:有才的的調皮間諜
+ 11514101:卑鄙紅褲軍
+ 11521101:趴搭蝙蝠魔海賊
+ 11521104:趴搭蝙蝠魔海賊
+ 11521107:監視兵壞蝙蝠魔海賊
+ 11521110:骯髒蝙蝠魔海賊
+ 11521113:學會變身術的魔海賊
+ 11521201:壞壞蝙蝠魔海賊
+ 11521204:幹部壞蝙蝠魔海賊
+ 11531101:颶風砲
+ 11561101:挖掘機克萊姆
+ 11631101:番木瓜長毛象
+ 11631104:幼番木瓜長毛象
+ 11631107:幼長毛象
+ 11631201:失去羊角的大角羊
+ 11631204:番木瓜籽長毛象
+ 11632101:瘋狂番木瓜長毛象
+ 11632104:番木瓜長毛象王
+ 11691101:迷你炸彈
+ 11691104:迷你炸彈
+ 11691107:迷你炸彈
+ 11691110:迷你炸彈
+ 11691113:迷你炸彈
+ 11712101:夜鶯總司令官
+ 11721101:惡臭的夜鶯魔海賊
+ 11721104:夜鶯魔海賊
+ 11721107:散漫夜鶯魔海賊
+ 11721110:夜鶯巡查兵魔海賊
+ 11721113:飼育場管理夜鶯魔海賊
+ 11721116:骯髒夜鶯魔海賊
+ 11721119:學會變身術的魔海賊
+ 11721201:幹部夜鶯魔海賊
+ 11721204:隊長夜鶯魔海賊
+ 11721207:夜鶯巡查隊長魔海賊
+ 11731101:普烏魯星人砲兵手
+ 11731201:普烏魯星人砲兵長
+ 11732101:厄拉車運輸管理所長
+ 11733101:普烏魯星人整備下士
+ 11734301:淘汰者的眼睛
+ 11742101:比特神龍
+ 11743101:巨大神龍
+ 11743104:粉紅拉龍
+ 11755101:命運之甕
+ 11757101:波波的金庫
+ 11757104:波波的金庫
+ 11757107:波波的金庫
+ 11757110:波波的金庫
+ 11757113:波波的金庫
+ 11757116:波波的金庫
+ 11761201:米特星人補給下士
+ 11762101:沙普
+ 11762701:沙普
+ 11781101:鋸齒蚱蜢人
+ 11782101:金屬蚱蜢人史洛格
+ 11783101:老實蚱蜢人普斯文
+ 11811101:閃電種子栽培人
+ 11811104:閃電種子栽培人
+ 11811107:閃電種子栽培人
+ 11813101:花斑豆蠅栽培人
+ 11813104:椰子豆蠅栽培人
+ 11814101:飛魚豆栽培人
+ 11814104:魚鳍嗡嗡栽培人
+ 11831101:普翁星人飲用水運輸兵
+ 11831104:巡查弗力札殘黨
+ 11831201:普翁星人副手
+ 11831301:普翁星人支援兵
+ 11831401:守門者柯洛庫洛
+ 11831601:普翁星人突擊兵
+ 11831604:弗力札殘黨掠奪兵
+ 11832101:新格星人砲兵手
+ 11832201:大型星茲姆
+ 11832204:夙卡爾
+ 11832207:逃不走的弗力札殘黨
+ 11832301:緊急派兵部隊下士官
+ 11832401:能量槽護衛兵
+ 11833101:米賽星人副手
+ 11833301:洗腦米赛鐵腕兵
+ 11833401:米賽星人補給兵
+ 11893101:黯刺胞
+ 12001601:岩漿能量槽運輸車輛
+ 12003101:那拉棉運輸車輛
+ 12082201:偽裝兵畢里碧
+ 12131101:老鼠士兵
+ 12132201:黑白空間
+ 12133201:白色空間
+ 12162101:恢復膠囊
+ 12162102:遠程裝置-B
+ 12162201:恢復膠囊
+ 12162202:遠程裝置-C
+ 12171101:遠程裝置-A
+ 12201101:奇怪的蛋
+ 12201104:剛孵出的賽魔特蛋
+ 12201201:怪象的蛋
+ 12201204:剛孵出的賽魔特蛋
+ 12203101:小賽爾
+ 12203104:小賽爾
+ 12203107:小賽爾
+ 12203110:小賽爾
+ 12203201:悲鳴賽爾
+ 12203204:悲鳴賽爾
+ 12203207:悲鳴賽爾
+ 12211101:奇怪的幼小怪物
+ 12211104:格鬥賽魔特
+ 12211107:格鬥賽魔特
+ 12211110:格鬥特化的賽魔特工兵
+ 12211113:格鬥特化的賽魔特工兵
+ 12211201:可疑的幼小怪物
+ 12211204:氣功賽模特
+ 12211207:氣功賽模特
+ 12211210:氣功特化的賽魔特工兵
+ 12211213:氣功特化的賽魔特工兵
+ 12211301:怪象的幼小怪物
+ 12212101:賽爾熔岩工人
+ 12212104:賽爾熔岩工人
+ 12212201:賽爾熔岩採集工
+ 12212204:賽爾熔岩採集工
+ 12241101:賽魔特培養膠囊
+ 12251101:CELL JUNIOR
+ 12261101:格鬥化賽魔特成蟲
+ 12261201:氣功化賽魔特成蟲
+ 12261301:多工化賽魔特成蟲
+ 12262101:賽魔特監察兵
+ 12262201:CELL PRIMERA FORA
+ 12262301:CELL PRIMERA FORMA GIGANTE
+ 12271101:CELL PERFECT GIGANTE
+
+ 12311101:靈敏的蜥蜴
+ 12311201:龍窟蜥蜴
+ 12312101:卑鄙的蜥蜴
+ 12313101:鬼火蜥蜴
+ 12313104:惡鬼蜥蜴
+ 12314101:醜陋角四腳蛇
+ 12351201:隊長細菌
+ 12351204:隊長細菌
+ 12351207:隊長細菌
+ 12481101:佩洛?
+ 12481201:佩洛?
+ 12501101:卡拉卡拉龍
+ 12501104:驕傲的拉龍
+ 12501201:趴趴龍
+ 12501204:可愛的拉龍
+ 12501207:圓滾滾龍
+ 12731103:神龍幼蟲
+ 12731104:鯰魚拉龍
+ 12731201:鯰魚黑白拉龍
+ 12741101:王者德拉科
+ 12811101:酸性光
+ 12811201:試煉之光
+ 12811401:火團
+ 12841101:治癒蛋
+ 12841104:咕嚕蛋
+ 12841107:機器蛋
+ 12841110:機器蛋
+ 12841113:機器蛋
+ 12841116:機器蛋
+ 12841119:機器蛋
+ 12841122:機器蛋
+ 12914201:弗力札虛擬近衛機器人
+ 12914301:弗力札虛擬監視機器人
+ 12914304:沙普禁衛兵
+ 12951101:啪啪魔海賊
+ 12951104:嘶嘶魔海賊
+ 12951201:啪啪魔海賊頭目
+ 12951204:嘰嘰魔海賊
+ 12952101:本
+ 12953101:悸動魔海賊
+ 12953104:熊熊魔海賊
+ 12953107:啪魔海賊
+ 12953201:撲撲魔海賊
+ 12953204:閃亮亮魔海賊
+ 12953301:頓
+ 13001101:貝勒傑夫飛蠅
+ 13001104:純正蒼蠅人
+ 13002101:伯茲茲
+ 13002104:馬草蠅人
+ 13011101:傻裡傻氣的妖精
+ 13011104:刺刺龍
+ 13211201:超巨型鯉魚王
+ 13211202:超巨型鯉魚王
+ 13211203:超巨型鯉魚王
+ 13211204:超巨型鯉魚王
+ 1321120 超巨型鯉魚王
+ 13211206:超巨型鯉魚王
+ 13211207:超巨型鯉魚王
+ 13212101:雅士嘉毒青蛙
+ 13213101:古代怪龍蛙
+ 13213104:榴槤毒青蛙
+ 13213201:汙染古代怪龍蛙
+ 13213202:至毒藍光
+ 13215101:熔岩莿蛤蟆
+ 13215104:熔岩莿青蛙
+ 13251101:嘉歐
+ 13251104:氣憤的嘉歐
+ 13251107:嘉烏
+ 13251110:氣憤的嘉烏
+ 13251113:氣憤的猛獸
+ 13251116:藍鬍子
+ 13252110:嘉歐嘉歐
+ 13252113:尖角猛獸
+ 13411301:飢餓基藍族
+ 13411302:飢餓基藍族
+ 13411303:飢餓基藍族
+ 13411304:飢餓基藍族
+ 1341130 飢餓基藍族
+ 13411306:飢餓基藍族
+ 13411307:飢餓基藍族
+ 13501101:歐薩甲蟲
+ 13502101:飛行甲蟲
+ 13503101:毒菇甲蟲
+ 13591101:弗力札虛擬突擊機器人
+ 13592101:弗力札虛擬戰鬥機器人
+ 13592104:壓縮-01
+ 13611101:火焰咕咕雞
+ 13612101:派里火雞
+ 13612201:野燒火雞
+ 13613101:黃金羽毛化石鳥
+ 13614101:氣憤的化石鳥
+ 13614104:化石鴕鳥
+ 13614107:壞心情的化石鳥
+ 13621201:凱特下士船士
+ 13622101:凱特巡察長
+ 13622104:岩漿監視下士官
+ 13652101:機械槍
+ 13652102:超級機械槍
+ 13652201:補給機
+ 13653101:那拉克射殺弓
+ 13811101:失去理智的草鷹
+ 13811104:氣憤的草鷹
+ 13811107:氣憤的草鷹
+ 13811201:恐怖的草鷹
+ 13811204:衰老的草鷹
+ 14032101:轟隆蜥蜴
+ 14032104:生氣的轟隆蜥蜴
+ 14032107:科坦撒烏路思
+ 14032110:古丹撒烏路思
+ 14051101:莿毛刺蝟
+ 14051104:兔齒刺蝟
+ 14051201:針毛刺蝟
+ 14051204:細菌刺蝟
+ 14073101:鐵拳克雷茲
+ 14093301:特林
+ 14094201:好家在族人
+ 14103401:迪斯皮
+ 14261101:卑鄙的奈斯特
+ 14261201:硫磺毒黃蜂
+ 14261204:傑特馬哈針蜂
+ 14311101:拳擊鼬
+ 14311102:黃色多比
+ 14311104:拳擊鼬
+ 14311201:鬼靈精黃鼠狼
+ 14311204:鋼鐵角黃鼠狼
+ 14311207:鋼鐵角黃鼠狼
+ 14311301:紅狐狸拳擊手
+ 14351201:武裝直升機普拉佩洛
+ 14511101:劍士棍
+ 14511201:劍士靴
+ 14512101:術士妖魔
+ 14515101:海賊豹
+ 14521101:豹魔海賊
+ 14521104:吊啷噹豹魔海賊
+ 14521107:海賊豹魔海賊
+ 14521110:豹工兵魔海賊
+ 14521113:骯髒豹模海賊
+ 14521116:豹跟班魔海賊
+ 14521201:豹人幹部魔海賊
+ 14521204:汙穢的豹魔海賊
+ 14582101:生化人戰略兵
+ 14652101:鐵爪薩麻羅
+ 14652104:巨型爪薩麻羅
+ 14653101:原型薩麻羅
+ 14653104:化石薩麻羅
+ 14811113:超級鼬
+ 14821101:長頸鹿人魔海賊
+ 14821104:吊啷噹長頸鹿魔海賊
+ 14821201:長頸鹿人幹部魔海賊
+ 14821204:長頸鹿隊長魔海賊
+ 14881101:女神幼龍
+ 14881104:害羞的紫拉龍
+ 14882101:鋸齒幼龍
+ 14883101:鐵甲角幼龍
+ 14883104:神龍志願軍團
+ 14883107:狂野的柯爾蘭多
+ 14883108:噩夢的柯蘭多
+ 14884101:害羞的拉龍
+ 14911101:椰子果科王嘉
+ 14913101:通通沙比
+ 14913104:草原可怖鼠
+ 15351101:卡卡戰鬥兵
+ 15652101:招風耳兔
+ 15653101:軟軟耳兔
+ 15671101:假男性喜愛主義者
+ 15691101:紅樹林栽培人
+ 15691104:猢猻樹栽培人
+ 15692101:豆椰子栽培人
+ 15692104:番木瓜籽豆栽培人
+ 15692107:小屁椰子孩栽培人
+ 15692110:小小屁椰子孩栽培人
+ 15692113:大椰子栽培人
+ 15702101:天天菇
+ 15702104:天天菇
+ 15711101:MOMIA GIGANTE ULTRA
+ 15713101:魔王壞蛋
+ 15731101:那拉克氣功術師
+ 15731104:那拉克氣功術師
+ 15732101:崔勒托
+ 15732501:基里中毒的西塔勒
+ 15732601:變成那拉克的那美克戰士
+ 15761101:護衛裝甲栽培人
+ 15762101:眼球裝甲栽培人
+ 15764104:機械培植人
+ 15782101:那拉克巨戰士
+ 15782104:那拉克間諜魯特
+ 15791101:那拉克屠戮者
+ 15791201:凱伊札
+ 15791301:那拉克殺手
+ 15791304:充滿毒氣的那拉克戰士
+ 15791307:那拉克暗殺組員
+ 15792101:邪惡隱身勇士
+ 15792104:奇露
+ 15792107:充滿沙意的那拉克魔戰士
+ 15792110:那拉克防禦支援兵
+ 15793101:那拉克偽裝戰士
+ 15812301:瘋狂海蛇栽培人
+ 15813301:吐舌毒蛇栽培人
+ 15841101:那拉克影子戰士
+ 15871101:那拉克水晶採集者
+ 15872101:那拉克瞭望台
+ 15872104:波路管理者凱伊馬
+ 15872107:那拉克警備隊員
+ 15872201:夏奔
+ 15872204:那拉克噴嘴守護兵
+ 15872207:那拉克發掘團員
+ 15873101:那拉克懲處者
+ 15873104:那拉克兔子戰士
+ 15873201:巴拉萊卡
+ 15874101:那拉克粉碎者
+ 15874104:突擊隊長馬奇
+ 15881201:那拉克農務管理者
+ 15882101:烏克
+ 15882104:那拉克斬首官
+ 15882201:那拉克橋墩破壞者
+ 15882204:邪惡武鬥勇士
+ 15882207:防禦副隊長沙基
+ 15891101:那拉克機械技術員
+ 15891104:俘虜監視兵
+ 15891107:那拉克突擊戰鬥兵
+ 15891110:俘虜監視兵
+ 15891201:那拉克黑暗者
+ 15891204:俘虜運輸兵
+ 15891207:那拉克突擊支援兵
+ 15891210:俘虜運輸兵
+ 15891301:那拉克咒縛術師
+ 15891304:那拉克基里研究者
+ 15891307:那拉克防禦戰鬥兵
+ 15891310:邪惡駐兵加甘
+ 15891313:那拉克基里研究者
+ 15891401:那拉克壓制術士
+ 15891404:那拉克壓制術士
+ 15891501:那拉克狙擊術士
+ 15891601:蠱惑魔神龍的那拉克
+ 15891701:俘虜監視兵
+ 15892101:那拉克陰術士
+ 15892201:那拉克影子術士
+ 15892301:那拉克化學術士
+ 15892304:那拉克招喚團員
+ 15901101:呼拉
+ 15901104:那拉克防禦組員
+ 15902101:那拉克魔導術師
+ 15911101:那拉克羽翼偵查者
+ 15911201:那拉克羽翼搜查者
+ 15931101:混亂那拉克
+ 15931104:那拉棉搬運兵
+ 15931107:淘汰者的眼睛
+ 15931110:那拉克突擊隊員
+ 15931201:那拉克捕獲者
+ 15931204:那拉克監視者
+ 15931207:那拉棉監視官
+ 15931301:那美克強制勞動兵
+ 15931304:那拉棉管理兵
+ 15931401:混亂那拉克
+ 15961101:拉比多
+ 15961104:那拉克格鬥術師
+ 15991201:出身卑微小氣章魚
+ 15991204:厭煩的機器章魚
+ 15991207:頑強的機器章魚
+ 15991210:頑強的機器章魚
+ 15992101:青綠章魚
+ 15992104:青綠眼章魚
+ 15992107:青綠綠章魚
+ 15992110:青綠綠綠章魚
+ 15992113:圓滾章魚
+ 15992116:養殖中的青綠章魚
+ 15992201:淤泥攤章魚
+ 15992204:淤泥泥章魚
+ 15992207:養殖中的淤泥灘章魚
+ 15992301:王冠章魚
+ 15992304:笑咪咪章魚
+ 15992307:王冠小氣章魚
+ 15993101:亮晶章魚
+ 15993104:小家子氣的機器章魚
+ 15993107:小家子氣的機器章魚
+ 16011101:暴走破壞機器人
+ 16011301:迷路機器人
+ 16012101:魔親衛隊白式
+ 16012104:癱軟破壞機器人
+ 16015101:海賊監視機器人
+ 16015104:海賊監視機器人
+ 16015107:海賊監視機器人
+ 16211201:超大螻蛄
+ 16212201:高級鐵頭金龜
+ 16412101:紅褲軍強奪兵
+ 16412104:執著的兩光下士
+ 16416101:海象海賊
+ 16421101:汙穢的海象魔海賊
+ 16421104:畸形跟班魔海賊
+ 16421107:破爛海象魔海賊
+ 16421110:學會變身術的魔海賊
+ 16421201:畸形
+ 16454101:粉紅妖精
+ 16454102:粉紅妖精
+ 16454103:粉紅妖精
+ 16454104:粉紅妖精
+ 16454201:粉藍妖精
+ 16454202:粉藍妖精
+ 16454203:粉藍妖精
+ 16611101:惱人的貝爾人
+ 16611501:紅褲軍走狗
+ 16611504:骯髒的貝爾人
+ 16613201:屈辱紅褲軍
+ 16613401:白熊強制勞動兵
+ 16621101:尾巴熊魔海賊
+ 16621104:大鐮刀熊魔海賊
+ 16621201:幹部熊魔海賊
+ 16621204:氣憤的熊魔海賊
+ 16631201:養殖風哥
+ 16631301:幼兒風哥
+ 16631401:兇暴風哥
+ 16632101:奇露的風哥
+ 16632104:噴嘴守護羚龍
+ 16632301:風哥
+ 16632302:噩夢風哥
+ 16641101:鯰魚海賊
+ 16641104:細菌隊長的跟班
+ 16642101:海賊卡辛
+ 16642104:細菌隊長的副官
+ 16642107:細菌隊長的副官
+ 16642110:細菌隊長的研究院
+ 16651201:養殖卡莫蘭
+ 16651301:凶暴卡莫藍
+ 16652101:營區守衛卡莫藍
+ 16652201:黑白凱薩
+ 16652202:噩夢凱薩
+ 16691101:類弗力札戰鬥兵
+ 16691201:沙普親衛兵
+ 16691204:炸彈王諾貝
+ 16781101:卡帕斯德拉科
+ 16781104:卡帕斯德拉古斯
+ 16811201:岩漿栽培人
+ 16813101:化石栽培人
+ 16817101:莫里兔栽培人
+ 16818101:巨大貝貝人
+ 16819101:魚鳍栽培人
+ 17111201:雷金星人掩護兵
+ 17111401:洗腦雷金支援兵
+ 17111404:洗腦米拉軍監視兵
+ 17111407:洗腦米拉軍噴嘴守衛兵
+ 17112101:凱特星人飲水管理兵
+ 17112301:弗力札真格鬥兵
+ 17112304:洞窟守衛兵
+ 17112401:洗腦米拉軍管理兵
+ 17112404:緊急派兵戰鬥兵
+ 17112501:洗腦托斯特基里供給兵
+ 17113201:托斯特星人幫浦管理兵
+ 17113401:監獄兵塔勒噹
+ 17114201:洗腦凱特爆破兵
+ 17114301:洗腦凱特支援兵
+ 17117101:洗腦雷金審問兵
+ 17117104:米拉埋伏兵
+ 17117107:緊急派兵義務兵
+ 17117110:洗腦米拉軍噴嘴守衛隊
+ 17117113:炸彈管理兵
+ 17131101:岩漿研究兵
+ 17131201:岩漿研究輔助兵
+ 17131301:岩漿研究所長
+ 17211101:膽小比拉夫
+ 17212101:番木瓜森巴里歐
+ 17213101:探險家里歐
+ 17231101:火箭
+ 17311101:栽培人
+ 17311201:青苔岩石栽培人
+ 17311204:綠色破壞栽培人
+ 17311207:綠色破碎栽培人
+ 17311301:石頭青苔栽培人
+ 17311401:泥沼耙子栽培人
+ 17311404:海耙子栽培人
+ 17312101:影栽培人
+ 17313101:惡栽培人
+ 17361101:栽培幼神龍
+ 17361201:栽培神龍
+ 17361202:格林遊俠
+ 17411101:企鵝王蚊子
+ 17411104:企鵝戰士
+ 17412101:叢林企鵝
+ 17412104:企鵝戰士
+ 17421101:企鵝魔海賊
+ 17421104:破爛企鵝魔海賊
+ 17421107:企鵝工兵魔海賊
+ 17421110:企鵝警備隊魔海賊
+ 17421113:敏感的企鵝魔海賊
+ 17421116:飼育場管理企鵝魔海賊
+ 17421119:骯髒史貝乙魔海賊
+ 17422101:軍團長企鵝魔海賊
+ 17422104:魔海賊克拉凱伊克
+ 17511101:龍窟蜥蜴
+ 17511104:追擊龍窟蜥蜴
+ 17511201:追擊龍窟潛龍
+ 17512101:粉紅版毒四腳蛇
+ 17512201:失翼潛龍
+ 17513101:帆船蜥蜴
+ 17514101:凶暴的波浪鱷魚
+ 17514104:危險的波浪鱷魚
+ 17514201:洶湧鱷魚
+ 17514204:波浪鱷魚
+ 17515101:岩鹽龍
+ 17515104:奇怪的海鱷魚
+ 17515107:陸地鱷魚
+ 17515201:海鱷魚
+ 17515204:凶暴的海鱷魚
+ 17515207:兇猛的海鱷魚
+ 17515301:鹹海鱷魚
+ 17515304:紫海鱷魚
+ 17515307:老海鱷魚
+ 17551101:劍齒虎
+ 17551104:流浪的劍齒虎
+ 17551201:威益
+ 17561101:幼劍齒虎
+ 17561104:可愛的劍齒虎
+ 17583101:受傷的拉龍
+ 17583201:拉頓
+ 17583204:受傷的黑拉龍
+ 17771201:米拉軍治療機器人
+ 17773201:米拉軍補給機器人
+ 17791101:螺角殼
+ 17811101:突變的莿河馬
+ 17811104:突變的莿河馬
+ 17812101:榴槤莿河馬
+ 17812104:榴槤莿河馬
+ 17813101:熱河馬
+ 17813201:海膽河馬
+ 17841101:沙漠鯊
+ 17841104:沙漠鯊
+ 17841107:沙漠鯊
+ 17842101:納柯鯊
+ 17842104:納柯角鯊
+ 17843101:角魚鳍鯊
+ 17843104:角鯊
+ 17843107:尖鼻角鯊
+ 17844101:海賊約書亞
+ 17844104:密林約書亞
+ 17844201:海賊幹部約書亞
+ 17844301:黑海號船廠布朗
+ 17844302:船長泰勒
+ 18111101:大鬼靈精
+ 18111104:青綠臭味團塊
+ 18112101:搗蛋鬼靈精
+ 18112104:大搗蛋鬼靈精
+ 18112107:黃臭味團塊
+ 18112201:拿著睡衣的鬼亡靈
+ 18113101:火花亡靈
+ 18113104:邪惡鬼靈精
+ 18113107:極惡鬼靈精
+ 18113110:紅臭味團塊
+ 18113113:憤怒的火焰亡靈王
+ 18113116:憤怒的火焰亡靈王
+ 18113201:怨恨鬼亡靈
+ 18114201:毒鬼亡靈
+ 18131101:弗力札軍運輸兵
+ 18131104:岩漿管理兵
+ 18152101:汙染翼龍
+ 18181101:三角恐龍
+ 18181104:迷路的三角恐龍
+ 18191101:幼三角恐龍
+ 18191104:小屁三角恐龍
+ 18212101:黑眼托斯
+ 18213301:佛卡托斯
+ 18213302:討人厭的佛卡托斯
+ 18311128:空空栽培人
+ 18313101:針刺栽培人
+ 18314101:變質的尖尖栽培人
+ 18318101:叢林仙人掌栽培人
+ 18411101:瘋狂番木瓜袋鼠
+ 18411104:袋鼠鬥士
+ 18412101:番木瓜袋鼠
+ 18422101:沙漠之花
+ 18441101:海南強制勞動兵
+ 18451101:阿烏里斯卡勒
+ 18451104:阿武里斯可勒嘉
+ 18471101:卑鄙的波爾人
+ 18481101:野山豬魔海賊
+ 18481104:野山豬魔海賊
+ 18481107:海賊野山豬魔海賊
+ 18481110:獨眼野山豬魔海賊
+ 18481201:野山豬幹部魔海賊
+ 18481204:海賊幹部野山豬魔海賊
+ 18511101:啪啪蜘蛛栽培人
+ 18821101:控制裝置
+ 18911101:狂暴的波西克斯奇
+ 18911104:伶俐的亨勒姆特
+ 18911107:叢林豺狼
+ 18911201:那拉克訓練狼
+ 18911204:那拉克暗黑野狼
+ 18911207:巨大海豺狼
+ 18911210:深海豺狼
+ 18912101:銀鬃毛豺狼
+ 18912201:那拉克監視狼
+ 18912301:瘋狂鬃毛土狼
+ 18912304:白鬃毛邪神豺狼
+ 18912307:長鬃毛邪神豺狼
+ 18912310:目露紅光
+ 18913101:目露紅光的隊長
+ 18916101:鬃毛土狼
+ 18916104:獅土狼
+ 18916107:大班豺狼
+ 18917101:幽靈碰
+ 18917104:幽靈豺狼
+ 1891710 幼幽靈豺狼
+ 18917106:剛出生的幽靈豺狼
+ 18917201:腐爛豺狼
+ 18917204:豺狼魔海賊
+ 1891720 闇影之狼
+ 19111101:番木瓜猴
+ 19111104:番木瓜籽猴
+ 19112101:芒果猴
+ 19112102:噩夢大將軍
+ 19112104:狐猴大將軍
+ 19113101:椰子果猴
+ 19416101:一發爆頭
+ 19431101:火焰頭魔海賊
+ 19431201:骯髒火焰頭魔海賊
+ 19431204:警備隊長嘉羅
+ 19431207:憤怒的藍魔海賊
+ 19611101:啪啪蟹栽培人
+ 19613101:飼養實驗地栽培人
+ 19614201:啪啪達基栽培人
+ 19616101:紅酸蘋果栽培人
+ 19841101:晃來晃去的魔海賊
+ 19841104:晃晃魔海賊
+ 19841107:髒兮兮的魔海賊
+ 19841110:未成熟的魔海賊
+ 19841113:工兵魔海賊
+ 19841116:失去理性的魔海賊
+ 19841201:骯髒的魔海賊
+ 19841204:快成熟的魔海賊
+ 19841207:頹廢魔海賊
+ 19841210:船員魔海賊
+ 19841213:船員魔海賊
+ 19841216:瘋掉的魔海賊
+ 19841219:魔海賊崇拜者
+ 19841222:頹廢魔海賊
+ 19841301:成熟的魔海賊
+ 19841304:石魔海賊
+ 19841307:甲板長魔海賊
+ 19841310:甲板長魔海賊
+ 19843101:散漫隊長魔海賊
+ 19843104:搖擺的魔海賊
+ 19843107:搖晃的魔海賊
+ 19843110:骯髒的幹部魔海賊
+ 19843201:奇怪精神的魔海賊
+ 19843204:臭臭的魔海賊
+ 19843301:吸取亡靈力量的魔海賊
+ 19843304:咒術師魔海賊
+ 19843307:細菌隊長的跟班魔海賊
+ 21251101:帥哥管理兵
+ 21252101:基里碎片處理隊
+ 21304201:清淨水晶栽培人
+ 21701101:德碘卡礦管理將校
+ 21712101:電算室長雷斯特
+ 21753301:道具箱
+ 21756101:坦塔的物品
+ 21756201:巧克雷的物品
+ 21756204:波可先生的物品
+ 21758301:道具箱
+ 21759301:維克的膠囊盒
+ 21759401:梭斯的膠囊盒
+ 21759501:普拉伊的膠囊盒
+ 21762101:布鍋金
+ 21762201:中毒的布鍋金
+ 21762204:中毒的布鍋金
+ 21762301:中毒的布鍋金
+ 21762304:中毒的布鍋金
+ 21763101:泡恰普
+ 21821301:強力洗腦電鋸兵
+ 21832101:希克星人補給兵
+ 21832401:普翁星人戰鬥教官
+ 21843401:普翁星人格鬥家
+ 21843404:火氣戰士
+ 21854101:普拉伊
+ 21951101:巧克雷小鬼
+ 21952101:巧克雷大人
+ 21952102:巧克雷
+ 21952103:巧克雷
+ 21953101:白色巧克雷大人
+ 21953102:白巧克雷
+ 22161101:技能禁用膠囊
+ 22162101:攻擊力增加膠囊
+ 22162201:爆擊率增加膠囊
+ 22611201:建築鑽孔機器人
+ 22612101:古鐵波可波可
+ 22612104:新品波可波可
+ 22651101:皺巴巴暗黑仙豆
+ 22651104:軟趴趴暗黑仙豆
+ 22651107:四神無主暗黑仙豆
+ 22651110:束手無策暗黑仙豆
+ 22812101:泡恰普的召喚物
+ 22834101:銳利監視之眼
+ 22834301:監視現場機器
+ 23593101:製作中FR機器人
+ 23621201:倉庫警備兵
+ 23623101:凱特星人巡察官
+ 24853101:神龍志願軍團
+ 24881101:有機農基里種子
+ 24911101:野蠻監視兵
+ 24911304:秘書室歩哨兵
+ 25631101:有機農基里栽培人
+ 25661101:混種軍犬班
+ 25691201:暗黑仙豆農場勞動者
+ 25701101:那拉克退休長老
+ 25702101:哈蒙特
+ 25721101:那美克冤魂
+ 25734101:比布拉
+ 25781101:翁德
+ 25791101:魔將卡美藍
+ 25791104:魔將卡美藍
+ 25791301:魔將卡美藍
+ 25791401:魔將卡美藍
+ 25791501:魔將卡美藍
+ 25793101:邪惡內心的自我
+ 25801201:那拉克隱身達人
+ 25802101:魯巴寇德
+ 25803101:那拉克友軍
+ 25851101:那拉克斧頭達人
+ 25852101:黑暗水路警衛兵
+ 25853101:黑暗水路高級警衛兵
+ 25861101:那拉克格鬥達人
+ 25862101:馬拉特魯
+ 25862201:坦塔
+ 25862301:打擊坦塔
+ 25862401:氣功坦塔
+ 25871101:水質監視官
+ 25871104:那拉克氣功大師
+ 25872101:黑暗水路心靈治癒師
+ 25891101:黑暗水路召喚術士
+ 25891204:那拉克召喚大師
+ 25901101:暗黑仙豆品質管理者
+ 25902101:維克
+ 25911101:魔將卡美藍的心腹
+ 26011201:德碘卡礦汙染機器人
+ 26011204:生鏽基里基里
+ 26012101:建設熔接機器人
+ 26012104:新基里基里
+ 26631301:事先召喚之魔神龍
+ 26631304:剛召喚之魔神龍
+ 26632201:姆克
+ 26632301:比布拉的風哥
+ 26633101:波可先生
+ 26633201:波可先生
+ 26651201:過去召喚之魔神龍
+ 26651204:最近召喚之魔神龍
+ 26652301:特雷門
+ 26711101:野蠻突擊兵
+ 26752101:警備比拉夫機器
+ 26818101:巨大貝貝人
+ 27111201:野蠻戰鬥兵
+ 27113201:資料管理兵
+ 27113204:護衛隊戰士
+ 27113301:護衛隊鬥士
+ 27113501:強力洗腦突擊隊
+ 27114101:強力洗腦衛生兵
+ 27115101:雷金雙砲手
+ 27116101:石拳巴特
+ 27116104:鐵拳魔克力
+ 27116201:梭斯
+ 27117101:強力洗腦機動打擊隊
+ 27141101:帥哥電算兵
+ 27142101:基里裝置工程師
+ 27251101:德碘卡礦派駐研究員
+ 27515101:乾淨水路鱷魚
+ 27583201:拉頓
+ 27651201:芬斯
+ 27653101:基里基里巡察機器人
+ 27653201:潘思
+ 27711101:秘書室歩哨兵
+ 28141101:火爆鬥士
+ 28431101:伊格砲塔
+ 28432101:巧可雷伊拉
+ 28852201:受過訓練的軍犬
+ 29981101:基里提煉所
+ @addmob 29981102:HOMBRE INVISIBLE
+ 29981104:能量補充裝置
+ 2998110 能量補充裝置
+ 29981106:能量補充裝置
+ 31243101:洗腦強化警備兵
+ 31261101:洗腦特殊警備兵
+ 31283101:米拉軍訓練教官
+ 31415201:洗腦自爆豆種栽培人
+ 31581701:達爾
+ @addmob 31654201:BUTTERS MALO
+ 31682501:泰格
+ 31753401:時間的結晶體
+ 31753404:時間的結晶體
+ 31753407:時間的結晶體
+ 31753410:時間的結晶體
+ 31753413:時間的結晶體
+ 31753416:時間的結晶體
+ 31753419:時間的結晶體
+ 31815101:飛行爆彈栽培人
+ 31815104:飛行彈頭栽培人
+ 31851401:洗腦普翁切割兵
+ 31852201:洗腦攻擊支援兵
+ 31853501:托格
+ 31853601:托格
+ 32642101:DODORIA GIGANTE
+ 32811101:多多利氣功體
+ 32912101:監視之眼
+ 32914101:治癒之眼
+ 33131201:freezer 1
+ 33132101:freezer 2 cola
+ 33133101:FREEZER 2
+ 33134101: FREEZER PERFECT
+ 33211101:洗腦蛙
+ 33212101:洗腦蛙
+ 33213101:洗腦蛙
+ 33281101:JEICE
+ 33421201:基鈕蛙
+ 33421301:基鈕蛙
+ 33421401:gynwu gigante sentado rana
+ 33431101:RANA GIGANTE
+ @addmob 33531901:gynwu goku
+ 33622101:雷金騎士
+ 33651101:雷射對空加農砲
+ @addmob 34542101:zarbon gigante
+ @addmob 34561101:zarbon bruto
+ 34611101:生化人8000mk2
+ 34612101:生化人8000
+ 34613101:米拉軍管理兵
+ 34652101:寵物薩麻羅
+ 35813301:入侵時間栽培人
+ 36691201:洗腦支援兵
+ 36811201:洗腦自爆童栽培人
+ 36911101:洗腦吉多拉
+ 37111401:雷金攻擊兵
+ 37111404:雷金攻擊兵
+ 37111407:雷金偵查隊
+ 37111410:雷金偵查隊
+ 37111413:雷金清潔工
+ 37112401:托斯特急救隊
+ 37112501:托斯特急救隊菁英
+ 37113201:凱特戰士
+ 37113204:凱特戰士
+ 37113207:凱特星鬥士
+ 37113210:凱特星鬥士
+ 37113213:凱特軍官
+ 37113301:凱特軍官
+ 37114101:凱特醫務官
+ 37114104:凱特支援兵
+ 37114107:米拉軍醫務兵
+ 37114201:米拉軍管理監察官
+ 37114301:凱特電擊隊
+ 37114304:凱特電擊隊菁英
+ 3711430 凱特電擊隊菁英
+ 37114306:凱特電擊隊菁英
+ 37114401:凱特破壞兵
+ 37114501:增幅裝置管理兵
+ 37115101:米拉軍雙槍手
+ 37115104:熱血槍騎士
+ 37115107:熱血槍騎士
+ 37122101:洗腦利克姆
+ 37122201:利克姆
+ 37171301:恢復支援兵
+ 37171304:恢復支援長
+ 37771101:米拉軍偵察機器人
+ 37771104:米拉軍保安機器人Mk2
+ 37771107:米拉軍保安機器人Mk3
+ 37772101:米拉軍監視機器人
+ 37773101:米拉軍特殊保安機器人
+ 38131101:米拉軍強化兵
+ 38131301:米拉軍猛毒強化兵
+ 38811101:洗腦機器
+    :能量增幅裝置
+ 38812104:能量增幅裝置
+ 38812107:能量增幅裝置
+ 38812110:能量增幅裝置
+ 38812113:能量增幅裝置
+ 39415401:洗腦紅褲軍指揮官
+ 41591201:山賊熊
+ 41671101:波丹
+ 42171101:辛巴
+ 42171104:辛巴
+ 42171107:辛巴
+ 42501101:德隆
+ 42501104:德隆
+ 43521101:孫悟空
+ 43521201:孫悟空
+ 44681201:龜仙人
+ 45681101:孫悟空
+ 46661101:比克大魔王
+ 46661104:比克大魔王
+ 47102101:石頭
+ 48151101:翼龍的朋友
+ 58131301
+ @addmob 48151104:翼龍
+ 48151201:翼龍
+ 48201101:丹巴利
+ 48201104:丹巴利
+ 48201107:丹巴利
+ 48201200:丹巴利
+ 48201401:丹巴利
+ 48211101:飢餓的幻龍
+ 48441101:山賊
+ 48471101:野豬山賊
+ 48911101:狼
+ 48912101:山賊狼
+ 48913101:飢餓野狼頭目
+ 51311101:弗力札軍野戰隊戰鬥兵
+ 51311301:弗力札軍情報隊偵察兵
+ 51732101:情報隊長傑奈雷伊
+ 51762601:野戰隊長特倫斯布
+ 51822401:弗力札軍游擊隊工程兵
+ 52914201:警報機器人奧勒堤x
+ 52914301:警報機器人奧勒堤
+ 52914304:警報機器人奧勒堤s
+ 52914401:警報機器人奧勒堤
+ 52914404:警報機器人奧勒堤s
+ 52914501:警報機器人奧勒堤x
+ 53592101:弗力札軍野戰隊戰鬥機器人
+ 53593101:弗力札軍游擊隊戰鬥機器人
+ 53593104:弗力札軍游擊隊戰鬥機器人
+ 53661101:巡守機器人西克立
+ 53661104:巡守機器人西克立
+ 53661107:巡守機器人西克立s
+ 53661110:巡守機器人西克立s
+ 53661301:弗力札軍情報隊 一般士兵
+ 53661304:弗力札軍野戰隊通信兵
+ 55661101:弗力札軍游擊隊偵察兵
+ 55661104:弗力札軍游擊隊偵察兵
+ 55663101:弗力札軍情報隊格鬥兵
+ 56691101:弗力札軍情報隊通信兵
+ 56691301:弗力札軍野戰隊游擊兵
+ 56691304:弗力札軍野戰隊游擊兵
+ 57131101:弗力札軍游擊隊醫療班
+ 57711101:弗力札軍情報隊巡守兵
+ 57711301:弗力札軍游擊隊格鬥兵
+ 58131101:游擊隊長藍斯密思
+@addmob 58131301:弗力札軍野戰隊襲擊兵
+@addmob 48471101
+
+~Special
+
+@setspeed 10-1000
+@additem 92009 - Goku backpack
+@additem 92001 - Turtle backpack
+@additem 92002 - TMQ backpack
+@additem 92003 - Quest Dino Egg
+@additem 92004 - Quest Milk Can
+@additem 92005 - Quest Gift Box
+@additem 92006 - Quest Green Bag
+@additem 92007 - Quest Ghost backpack
+@additem 92008 - Quest Meat pack
+@additem 92010 - Quest Puppy Dog
+@additem 92011 - Quest Aged Namek
+@additem 92012 - Quest Can bag
+@additem 92025 - Quest Danger Symbol
+@additem 92030 - Quest Real Turtle
+@additem 92033 - Quest Mushroom
+@additem 92009 goku bag
+
+Dogis dojo:
+@additem 90002
+@additem 90001 Dogi Ninja Murasaki
+@additem 90002 Dogi Yamcha (Solo Human)
+@additem 90003 Dogi Kami (Solo Namek)
+@additem 90004 Dogi NekoMajin (Solo Majin)
+@additem 90005 Dogi Goku (Turtle Emblem)
+@additem 90006 Dogi No.16
+@additem 90009 Dogi Saibaman
+@additem 90010 Dogi General Blue
+@additem 91001 Dogi Guild Dojo1
+@additem 91002 Dogi Guild Dojo2
+@additem 91003 Dogi Guild Dojo3
+@additem 91004 Dogi Guild Dojo4
+@additem 91005 Dogi Guild Dojo5
+@additem 91006 Dogi Dojo Champ
+@additem 90001
+additem 95001 tori mask
+@additem 11170093 krilin
+@additem 11170006 scouter permanent
+@additem 11160002
+90012
+
+@god
+
+Random Item:
+
+@additem 1010
+@call Player's name
+@all to call all players to the location
+
+MOBS DE EVENTO:
+@addmob 34542101:zarbon gigante
+@addmob 34561101:zarbon bruto
+@addmob 33421401:gynyu gigante sentado rana
+@addmob 33431101:RANA GIGANTE
+@addmob 33531901:gynyu goku
+@addmob 33131201:freezer 1 Form
+@addmob 33132101:freezer 2 Form
+@addmob 33133101:FREEZER 3 Form
+@addmob 33134101: FREEZER PERFECT
+@addmob 32642101:DODORIA GIGANTE
+@addmob 33281101:JEICE
+@addmob 29981102:HOMBRE INVISIBLE
+@addmob 15711101:MOMIA GIGANTE ULTRA
+@addmob 12251101:CELL JUNIOR
+@addmob 12262201:CELL PRIMERA FORMA 
+@addmob 12262301:CELL PRIMERA FORMA GIGANTE
+@addmob 12271101:CELL X PERFECT GIGANTE
+@addmob 53661304:guerrero defreezer
+@addmob 55661101:guerrera de freezer
+@addmob 42171101:timbal
+@addmob 42501101:drum
+@addmob 48201101:tambourine
+@addmob 43521101:goku kid
+@addmob 43521201:goku kid camiseta blanca
+@addmob 44681201:duende tortuga
+@addmob 45681101:goku ozaru
+@addmob 46661101:picolo malo
+@addmob 37171304:ayudante picolo
+@addmob 37122101:reecom gigante
+@addmob 1612101 bardok
+@addmob 7011101 - Radish
+@addmob 1581101 -Vegeta
+@addmob 5711101 -Nappa
+@addmob 5681201 - Gohan Scimmione
+@addmob 5682101 vegeta gorila
+@addmob 5684101 napa gorila gigante
+@addmob 15685101 - Ozaru White
+
+@addmob 5691106 Mira 
+
+@addmob 15991210 - Krakken
+
+@addmob 12271101 - Cell X
+u80 white
+@additem 160620 
+Pedra U75 Advanced Armor @createloot 160618 900
+Pedra U75 Advanced  Weapon @createloot 160418 900
+Pedra U75 Advanced Withe @createloot 160619 900
+@additem 101617 100
+@additem 160618
+
+Pedra U75 Advanced Withe @createloot 11170093 900
+@createloot 11120220 100 dogiball
+Celestial Cube @createloot 65 900
+
+@createloot 11150002 50 skill temporal
+@additem 11130002
+
+@loot 11170137
+
+@loot id 11170057
+
+@cleardrops
+
+@additem 65 saiyan nave
+
+@additem 90 fuel 1 dia
+@createloot 65 1
+
+
+
+
+@addmob 18912307 - Evil Long Mane Wolf
+@addmob 16781104 - kapasdragos
+@addmob 15764201 - Armored Gigantic Saibaman
+@addmob 18113113 angry flame kings soul
+@addmob 5681201 - Gohan Scimmione
+@addmob 5682101 vegeta gorila
+@addmob 5684101 napa gorila gigante
+@addmob 15685101 - Ozaru White
+@addmob 45681101:goku ozaru
+@addmob 17844302 :muten roshi
+@addmob 12133201 :goku
+@addmob 33531901 gynu goku
+@addmob 43521101:goku kid
+@addmob 43521201:goku kid camiseta blanca
+
+@loottarget 19916 1
+@createloot 11200019 50
+@createloot 11200047 50
+
+@additem 11170157 
+
+solo puedo dar esto
+Pedra U75 Advanced Armor @createloot 160618 900
+Pedra U75 Advanced  Weapon @createloot 160418 900
+Pedra U75 Advanced Withe @createloot 160619 900
+
+Celestial Cube @createloot 101617 900
+
+Mascara Bleach @createloot 11170157 900
+
+Wagu Coin @createloot 19916 900
+
+Dogi Coin @createloot 160817 900 
+
+Silver Box @createloot 11120093 900
+
+DogiBalls @createloot 11140329 900
+
+@createloot @createloot 11170093 50

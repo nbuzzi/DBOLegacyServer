@@ -35,3 +35,8 @@ MaxConnection = 400
 LoadTableFormat = 1
 ; 0 = XML, 1 = Binary(rdf), 2 = Secured Binary(edf)
 Path = resource/server_data/table/rdf
+
+[GAMECONFIG]
+; Dojo wars are disabled by default (if key omitted or true).
+; Set DisableDojoWar = false to allow dojo wars.
+;DisableDojoWar = true

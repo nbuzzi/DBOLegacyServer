@@ -1,0 +1,4992 @@
+@addmob 281106 jeice
+@addmob 33134101 freezer33131201
+@addmob 33531901 Goku ginyu
+@addmob 37122101 Brainwashed Recoome
+@addmob 37122201 Recoome
+@addmob 3691101 Guldo
+@addmob 3691102 Guldo
+@addmob 3691103 Guldo
+@addmob 1541101 Burter
+@addmob 1541102 Burter
+@addmob 1541103 Burter
+@addmob 3531901 Captain Ginyu
+@addmob 3531902 Captain Ginyu
+@addmob 3531903 Captain Ginyu
+@addmob 38812101 E Type Energy Amplification
+@addmob 38812104 S Type Energy Amplification
+@addmob 38812107 C Type Energy Amplification
+@addmob 38812110 B Type Energy Amplification
+@addmob 38812113 H Type Energy Amplification
+@addmob 3521101 Kid Goku
+@addmob 3531801 Goku
+@addmob 3531802 Goku
+@addmob 5682206 Ozaru Vegeta
+@addmob 5683101 Ozaru Raditz
+@addmob 5684101 Ozaru Nappa
+@addmob 5691101 Mira
+@addmob 5691102 Mira
+@addmob 5691103 Mira
+@addmob 5691104 Mira
+@addmob 5691105 Mira
+@addmob 5691106 Mira
+@addmob 5711107 Nappa
+@addmob 44681201 Master Roshi
+@addmob 44982101 Krillin
+@addmob 44681201 Roshi
+@addmob 4801201 Immortal Turtle Hermit
+@addmob 4801202 Immortal Turtle Hermit
+@addmob 4801203 Immortal Turtle Hermit
+@addmob 5511101 Magic Cube
+@addmob 5511201 Magic Cube
+@addmob 5512101 Magic Cube
+@addmob 5512201 Magic Cube
+@addmob 5513101 Magic Cube
+@addmob 5514101 Magic Cube
+@addmob 5515101 Magic Cube
+@addmob 5515104 Magic Cube
+@addmob 5515107 Magic Cube
+@addmob 5515110 Magic Cube
+@addmob 5515113 Magic Cube
+@addmob 5515116 Magic Cube
+@addmob 5681201 Son Gohan (Great Ape)
+@addmob 5681202 Son Gohan (Great Ape)
+@addmob 5681203 Son Gohan (Great Ape)
+@addmob 5681204 Son Gohan (Great Ape)
+@addmob 5681205 Son Gohan (Great Ape)
+@addmob 5681206 Son Gohan (Great Ape)
+@addmob 5681207 Brainwashed Giant Great Ape
+@addmob 5681208 Brainwashed Giant Great Ape
+@addmob 5681209 Brainwashed Giant Great Ape
+@addmob 5681210 Brainwashed Giant Great Ape
+@addmob 5681211 Brainwashed Giant Great Ape
+@addmob 5681212 Brainwashed Giant Great Ape
+@addmob 5681213 Brainwashed Giant Great Ape
+@addmob 5681216 Brainwashed Giant Super Great Ape
+@addmob 5702104 Sky Mushroom
+@addmob 5702107 Sky Mushroom
+@addmob 5702108 Sky Mushroom
+@addmob 5702109 Sky Mushroom
+@addmob 1612101 Masked Man
+@addmob 1612102 Masked Man
+@addmob 1612103 Masked Man
+@addmob 1612104 Masked Man
+@addmob 1612105 Masked Man
+@addmob 1612106 Masked Man
+@addmob 1612107 Masked Man
+@addmob 1612108 Masked Man
+@addmob 1612109 Masked Man
+@addmob 1612110 Masked Man
+@addmob 1612111 Masked Man
+@addmob 1612112 Masked Man
+@addmob 1612113 Masked Man
+@addmob 1612114 Masked Man
+@addmob 1612115 Masked Man
+@addmob 15685101 - Mira ape
+
+
+
+
+5:3101101:Freeze Generator
+5:3101102:Freeze Generator
+5:3101103:Freeze Generator
+5:3101104:Freeze Generator
+5:3101105:Freeze Generator
+5:3101106:Freeze Generator
+5:31243101:Brainwashed Advanced Guard
+5:31261101:Brainwashed Special Guard
+5:31283101:Mira's Training Drill Sergeant
+5:3131101:Frieza
+5:3131102:Frieza
+5:3131103:Frieza
+5:3132101:Frieza
+5:3132102:Frieza
+5:3132103:Frieza
+5:31415201:Brainwashed Explosive Bean Saibaman
+5:31581701:Vegeta
+5:31654201:Taek
+5:31682501:Teek
+5:31753401:Time Crystal
+5:31753404:Time Crystal
+5:31753407:Time Crystal
+5:31753410:Time Crystal
+5:31753413:Time Crystal
+5:31753416:Time Crystal
+5:31753419:Time Crystal
+5:31815101:Flying Bomb
+5:31815104:Flying Warhead
+5:31851401:Brainwashed Buonean Cutter
+5:31852201:Brainwashed Attack Assistant
+5:31853501:Toku
+5:31853601:Toku
+5:3211101:Dragon Frog
+5:3211102:Dragon Frog
+5:3211103:Dragon Frog
+5:3211104:Cattle Dragon Frog
+5:3211105:Cattle Dragon Frog
+5:3211106:Cattle Dragon Frog
+5:3211107:Huge Dragon Frog
+5:3211108:Huge Dragon Frog
+5:3211109:Huge Dragon Frog
+5:3211110:King Dragon Frog
+5:3211111:King Dragon Frog
+5:3211112:King Dragon Frog
+5:3211113:Strange Dragon Frog
+5:3211114:Strange Dragon Frog
+5:3211115:Strange Dragon Frog
+5:3211116:Long Tongue Dragon Frog
+5:3211117:Long Tongue Dragon Frog
+5:3211118:Long Tongue Dragon Frog
+5:3211119:Dragon Frog
+5:3211120:Dragon Frog
+5:3211121:Dragon Frog
+5:3211122:Strong Dragon Frog
+5:3211123:Strong Dragon Frog
+5:3211124:Strong Dragon Frog
+5:3211125:Dolphin Frog
+5:3211126:Dolphin Frog
+5:3211127:Dolphin Frog
+5:3211128:RP Special Frog
+5:3211129:RP Special Frog
+5:3211130:RP Special Frog
+5:3211131:Fortress Toxic Frog
+5:3211132:Fortress Toxic Frog
+5:3211133:Fortress Toxic Frog
+5:3211134:Rock Frog
+5:3211135:Rock Frog
+5:3211136:Rock Frog
+5:3211137:Water Frog
+5:3211138:Water Frog
+5:3211139:Water Frog
+5:3211140:Fat Dragon Frog
+5:3211141:Fat Dragon Frog
+5:3211142:Fat Dragon Frog
+5:3211143:Pet Frog
+5:3211144:Pet Frog
+5:3211145:Pet Frog
+5:3211146:Biological Mutant Frog
+5:3211149:Brainwashed Frog
+5:3211152:King Frog
+5:3212101:Scorched Frog
+5:3212102:Scorched Frog
+5:3212103:Scorched Frog
+5:3212104:Shiny Scorched Frog
+5:3212105:Shiny Scorched Frog
+5:3212106:Shiny Scorched Frog
+5:3212107:Charcoal Frog
+5:3212108:Charcoal Frog
+5:3212109:Charcoal Frog
+5:3212110:Black Frog
+5:3212111:Black Frog
+5:3212112:Black Frog
+5:3212113:Fire Scorched Frog
+5:3212114:Fire Scorched Frog
+5:3212115:Fire Scorched Frog
+5:3212116:Magma Scorched Frog
+5:3212117:Magma Scorched Frog
+5:3212118:Magma Scorched Frog
+5:3212119:Monstrous Scorched Frog
+5:3212120:Monstrous Scorched Frog
+5:3212121:Monstrous Scorched Frog
+5:3212122:Scorched Toxic Frog
+5:3212123:Scorched Toxic Frog
+5:3212124:Scorched Toxic Frog
+5:3212125:Huge Magma Scorched Frog
+5:3212126:Huge Magma Scorched Frog
+5:3212127:Huge Magma Scorched Frog
+5:3212128:Huge Scorched Toxic Frog
+5:3212129:Huge Scorched Toxic Frog
+5:3212130:Huge Scorched Toxic Frog
+5:3212131:Monster Follower
+5:3212132:Monster Follower
+5:3212133:Monster Follower
+5:3212134:Coke Frog
+5:3212135:Coke Frog
+5:3212136:Coke Frog
+5:3212137:Super Coke Frog
+5:3212138:Super Coke Frog
+5:3212139:Super Coke Frog
+5:3212140:Magma Frog
+5:3212141:Magma Frog
+5:3212142:Magma Frog
+5:3212143:Lava Frog
+5:3212144:Lava Frog
+5:3212145:Lava Frog
+5:3212146:Brainwashed Frog
+5:3213101:Toxic Frog
+5:3213102:Toxic Frog
+5:3213103:Toxic Frog
+5:3213104:King Toxic Frog
+5:3213105:King Toxic Frog
+5:3213106:King Toxic Frog
+5:3213107:Mutant Sea Monster
+5:3213110:Oil Frog
+5:3213111:Oil Frog
+5:3213112:Oil Frog
+5:3213113:Brainwashed Frog
+5:32642101:Brainwashed Dodoria
+5:3281101:Jeice
+5:3281102:Jeice
+5:3281103:Jeice
+5:3281104:Jeice
+5:3281105:Jeice
+5:3281106:Jeice
+5:32811101:Dodoria's Energy Essence
+5:32912101:Surveillance Eye
+5:32914101:Healing Eye
+5:3311101:Odd Giran
+5:3311102:Odd Giran
+5:3311103:Odd Giran
+5:3311201:Giran Lara
+5:3311202:Giran Lara
+5:3311203:Giran Lara
+5:3311204:Kira Giran
+5:3311205:Kira Giran
+5:3311206:Kira Giran
+5:3311207:Giran Kidan
+5:3311208:Giran Kidan
+5:3311209:Giran Kidan
+5:3312101:Grangie
+5:3312102:Grangie
+5:3312103:Grangie
+5:3312201:Graham Giran
+5:3312202:Graham Giran
+5:3312203:Graham Giran
+5:3312204:Trangie
+5:3312205:Trangie
+5:3312206:Trangie
+5:3312207:Terra Giran
+5:3312208:Terra Giran
+5:3312209:Terra Giran
+5:33131201:Frieza
+5:33132101:Frieza (Second Form)
+5:33133101:Frieza (Second Form)
+5:33134101:Frieza (Final Form)
+5:33211101:Brainwashed Frog
+5:33212101:Brainwashed Frog
+5:33213101:Brainwashed Frog
+5:33281101:Jeice
+5:33421201:Ginyu Frog
+5:33421301:Ginyu Frog
+5:33421401:Ginyu Frog
+5:33431101:Giant Ginyu Frog
+5:33531901:Ginyu Goku
+5:33622101:Resin Raider
+5:33651101:Laser Cannon
+5:3411201:Young Giran
+5:3411202:Young Giran
+5:3411203:Young Giran
+5:3411204:Giran Practitioner
+5:3411205:Giran Practitioner
+5:3411206:Giran Practitioner
+5:3411207:Giran Descendant
+5:3411208:Giran Descendant
+5:3411209:Giran Descendant
+5:3411210:Giran Group Soldier
+5:3411211:Giran Group Soldier
+5:3411212:Giran Group Soldier
+5:3411215:Giran Descendant
+5:3421101:Captain Ginyu
+5:3421102:Captain Ginyu
+5:3421103:Captain Ginyu
+5:3431101:Captain Ginyu
+5:3431102:Captain Ginyu
+5:3431103:Captain Ginyu
+5:3431104:Brainwashed Ginyu Frog
+5:3431105:Brainwashed Ginyu Frog
+5:3431106:Brainwashed Ginyu Frog
+5:3431107:Mega Ginyu Frog
+5:3431108:Mega Ginyu Frog
+5:3431109:Mega Ginyu Frog
+5:34542101:Brainwashed Zarbon
+5:34561101:Brainwashed Transformed Zarbon 
+5:34611101:Android 8000 MK2
+5:34612101:Android 8000
+5:34613101:Mira Soldier
+5:34652101:Bred Samaro
+5:3501101:Beetle
+5:3501102:Beetle
+5:3501103:Beetle
+5:3501104:Sand Beetle
+5:3501107:Scary Beetle
+5:3501108:Scary Beetle
+5:3501109:Scary Beetle
+5:3501110:Gundam Beetle
+5:3501111:Gundam Beetle
+5:3501112:Gundam Beetle
+5:3501113:Sawtooth Beetle
+5:3501114:Sawtooth Beetle
+5:3501115:Sawtooth Beetle
+5:3501116:Crewe Beetle
+5:3501117:Crewe Beetle
+5:3501118:Crewe Beetle
+5:3501119:Investigation Beetle
+5:3501120:Investigation Beetle
+5:3501121:Investigation Beetle
+5:3501125:Solitary Beetle
+5:3501126:Solitary Beetle
+5:3501127:Solitary Beetle
+5:3501128:Stag Beetle
+5:3501129:Stag Beetle
+5:3501130:Stag Beetle
+5:3501131:Amoeba
+5:3501132:Amoeba
+5:3501133:Amoeba
+5:3501134:Scar Beetle
+5:3501135:Scar Beetle
+5:3501136:Scar Beetle
+5:3501137:Litterbug
+5:3501138:Litterbug
+5:3501139:Litterbug
+5:3501140:Observe Beetle
+5:3501141:Observe Beetle
+5:3501142:Observe Beetle
+5:3501143:Sampling Beetle
+5:3501144:Sampling Beetle
+5:3501145:Sampling Beetle
+5:3501146:Iron Beetle
+5:3501149:Zanda Beetle
+5:3501152:Beetle
+5:3502101:Rustle Beetle
+5:3502102:Rustle Beetle
+5:3502103:Rustle Beetle
+5:3502104:Yegu Beetle
+5:3502107:Flying Beetle
+5:3502108:Flying Beetle
+5:3502109:Flying Beetle
+5:3502110:Kimji Lerius
+5:3502111:Kimji Lerius
+5:3502112:Kimji Lerius
+5:3502113:Iron Claw Beetle
+5:3502114:Iron Claw Beetle
+5:3502115:Iron Claw Beetle
+5:3502116:Toxic Beetle
+5:3502117:Toxic Beetle
+5:3502118:Toxic Beetle
+5:3502119:Mushroom Stag Beetle
+5:3502120:Mushroom Stag Beetle
+5:3502121:Mushroom Stag Beetle
+5:3502122:Brainwashed Beetle
+5:3502123:Brainwashed Beetle
+5:3502124:Brainwashed Beetle
+5:3502125:Super Stag Beetle
+5:3502126:Super Stag Beetle
+5:3502127:Super Stag Beetle
+5:3502128:Dynamic Beetle
+5:3502129:Dynamic Beetle
+5:3502130:Dynamic Beetle
+5:3502131:Dynamic Beetle
+5:3502132:Dynamic Beetle
+5:3502133:Dynamic Beetle
+5:3502134:Dynamic Beetle Larvae
+5:3502135:Dynamic Beetle Larvae
+5:3502136:Dynamic Beetle Larvae
+5:3502137:Dynamic Beetle Larvae
+5:3502138:Dynamic Beetle Larvae
+5:3502139:Dynamic Beetle Larvae
+5:3503101:Mushroom Kaktugi
+5:3503102:Mushroom Kaktugi
+5:3503103:Mushroom Kaktugi
+5:3503104:Cabri Bettle
+5:3503107:Toadstool Beetle
+5:3503108:Toadstool Beetle
+5:3503109:Toadstool Beetle
+5:3503110:Edgy Beetle
+5:3503111:Edgy Beetle
+5:3503112:Edgy Beetle
+5:3503113:Ceramic Beetle
+5:3503114:Ceramic Beetle
+5:3503115:Ceramic Beetle
+5:3503116:Toxic Mushroom Kaktugi
+5:3503117:Toxic Mushroom Kaktugi
+5:3503118:Toxic Mushroom Kaktugi
+5:3503119:Toadstool Stag Beetle
+5:3503120:Toadstool Stag Beetle
+5:3503121:Toadstool Stag Beetle
+5:3503122:Rice Beetle
+5:3503123:Rice Beetle
+5:3503124:Rice Beetle
+5:3503125:Pollution Beetle
+5:3503126:Pollution Beetle
+5:3503127:Pollution Beetle
+5:3503128:Experimental Deformation Beetle
+5:3503129:Experimental Deformation Beetle
+5:3503130:Experimental Deformation Beetle
+5:3503131:Murderous Charge Beetle
+5:3503134:Poisonous Toadstool Beetle
+5:3503137:Pure Majin Guard
+5:3503140:Iron Beetle
+5:3504101:Mecha Beetle
+5:3504102:Mecha Beetle
+5:3504103:Mecha Beetle
+5:3504104:Semi-Finished Mecha Beetle
+5:3504105:Semi-Finished Mecha Beetle
+5:3504106:Semi-Finished Mecha Beetle
+5:3504107:Mega Beetle
+5:3521101:Kid Goku
+5:3531801:Goku
+5:3531802:Goku
+5:3531803:Goku
+5:3531901:Captain Ginyu
+5:3531902:Captain Ginyu
+5:3531903:Captain Ginyu
+5:3571101:Giant Mushroom Stump
+5:3571102:Giant Mushroom Stump
+5:3571103:Giant Mushroom Stump
+5:35813301:Time Invader Saibaman
+5:3591101:Hovering Robot
+5:3591102:Hovering Robot
+5:3591103:Hovering Robot
+5:3591104:Hovering Robot
+5:3591105:Hovering Robot
+5:3591106:Hovering Robot
+5:3591107:Oil Field Supervising Robot
+5:3591108:Oil Field Supervising Robot
+5:3591109:Oil Field Supervising Robot
+5:3591110:European Robot
+5:3591113:Job Commanding Robot
+5:3591116:Guardian Robot
+5:3592101:Balbario Machine
+5:3592104:FR Landing Command Robot
+5:3592107:Repaired Battle Robot
+5:3593101:FR Mushrooms Surveillance Robot
+5:3593104:FR Robot Manufacturer 
+5:3603101:Uncle Howie
+5:3603102:Uncle Howie
+5:3603103:Uncle Howie
+5:3604101:Renee
+5:3604102:Renee
+5:3604103:Renee
+5:3604104:Duoke's Afterimage
+5:3604105:Duoke's Afterimage
+5:3604106:Duoke's Afterimage
+5:3611101:Mother Cuckoo Chicken
+5:3611102:Mother Cuckoo Chicken
+5:3611103:Mother Cuckoo Chicken
+5:3611104:Go Cuckoo Chicken
+5:3611105:Go Cuckoo Chicken
+5:3611106:Go Cuckoo Chicken
+5:3611119:Chief Cuckoo Chicken
+5:3611120:Chief Cuckoo Chicken
+5:3611121:Chief Cuckoo Chicken
+5:3611122:Growling Cuckoo Chicken
+5:3611123:Growling Cuckoo Chicken
+5:3611124:Growling Cuckoo Chicken
+5:3611125:Flame Cuckoo Chicken
+5:3611201:Solitary Cuckoo Chicken
+5:3611202:Solitary Cuckoo Chicken
+5:3611203:Solitary Cuckoo Chicken
+5:3611204:Giant Cuckoo Chicken
+5:3611205:Giant Cuckoo Chicken
+5:3611206:Giant Cuckoo Chicken
+5:3611207:Prince Cuckoo Chicken
+5:3611208:Prince Cuckoo Chicken
+5:3611209:Prince Cuckoo Chicken
+5:3612101:Coke Turkey
+5:3612102:Coke Turkey
+5:3612103:Coke Turkey
+5:3612104:Wild Turkey
+5:3612105:Wild Turkey
+5:3612106:Wild Turkey
+5:3612107:Coke Turkey
+5:3612108:Coke Turkey
+5:3612109:Coke Turkey
+5:3612110:Mr. Chicken
+5:3612113:Perry Turkey
+5:3612201:Kingbune Turkey
+5:3612202:Kingbune Turkey
+5:3612203:Kingbune Turkey
+5:3612204:Toughbune Turkey
+5:3612205:Toughbune Turkey
+5:3612206:Toughbune Turkey
+5:3613101:Camel Bird
+5:3613102:Camel Bird
+5:3613103:Camel Bird
+5:3613104:Giant Camel Bird
+5:3613105:Giant Camel Bird
+5:3613106:Giant Camel Bird
+5:3613107:Desert Camel Bird
+5:3613108:Desert Camel Bird
+5:3613109:Desert Camel Bird
+5:3613110:Gooes Cuckoo Chicken
+5:3613201:Wild Race Bird
+5:3613202:Wild Race Bird
+5:3613203:Wild Race Bird
+5:3613204:Gray Bird
+5:3613205:Gray Bird
+5:3613206:Gray Bird
+5:3613207:Wild Road Runner
+5:3613208:Wild Road Runner
+5:3613209:Wild Road Runner
+5:3613210:Total Cuckoo Chicken
+5:3613301:Violent Camel Bird
+5:3613302:Violent Camel Bird
+5:3613303:Violent Camel Bird
+5:3613304:Titan Cuckoo Chicken
+5:3621101:Kettle Waste Tranporter
+5:3621104:Gunrider
+5:3621107:Kettlean Experiment Supervising Soldier
+5:3621110:Gooris Gas Facility Supervisor 
+5:3621111:Gooris Gas Facility Supervisor 
+5:3621112:Gooris Gas Facility Supervisor 
+5:3622101:Fool Shooter 
+5:3622102:Fool Shooter
+5:3622103:Fool Shooter
+5:3622104:Apprentice Patroller 
+5:3622105:Apprentice Patroller 
+5:3622106:Apprentice Patroller 
+5:3622107:Kettlean Experiment Supervising Soldier
+5:3622110:Motivated Gunrider
+5:3622113:Legene Rider
+5:3623104:Fortress Watchman Shooter
+5:3623105:Fortress Watchman Shooter
+5:3623106:Fortress Watchman Shooter
+5:3623107:Kettlean Experiment Supervising Soldier
+5:3623108:Frieza's Picked Sniper
+5:3623111:Kettlean Patrolling Officer
+5:3631101:Cloned Dr. Gero
+5:3631102:Cloned Dr. Gero
+5:3631103:Cloned Dr. Gero
+5:3651107:Laser Ground cannon
+5:3651108:Laser Ground cannon
+5:3651109:Laser Ground cannon
+5:3651110:Laser Ground cannon
+5:3651111:Laser Ground cannon
+5:3651112:Laser Ground cannon
+5:3651113:Laser Air Artillery
+5:3651119:Laser Cannon
+5:3651120:Laser Cannon
+5:3651121:Laser Anti-Aircraft Cannon
+5:3651122:Mira's Invading-Purposed Cannon
+5:3652201:Gas Safety Gun
+5:3661101:Hover Laser
+5:3661102:Hover Laser
+5:3661103:Hover Laser
+5:3661104:Hover Laser
+5:3661105:Hover Laser
+5:3661106:Hover Laser
+5:36691201:Brainwashed Assistant
+5:36811201:Young Brainwashed Explosive Saibaman
+5:3691101:Guldo
+5:3691102:Guldo
+5:3691103:Guldo
+5:36911101:Brainwashed Cui
+5:3711101:Bingri
+5:3711102:Bingri
+5:3711103:Bingri
+5:37111401:Reginean Attacker
+5:37111404:Reginean Attacker
+5:37111407:Reginean Stalker
+5:37111410:Reginean Stalker
+5:37111413:Reginean Scavenger
+5:37112401:Tosterian Emergency Unit
+5:37112501:Tosterian Emergency Unit Elite
+5:37113201:Kettlean Fighter
+5:37113204:Kettlean Fighter
+5:37113207:Kettlean Battler
+5:37113210:Kettlean Battler
+5:37113213:Kettlean Warlord
+5:37113301:Kettlean Warlord
+5:37114101:Kettlean Medic
+5:37114104:Kettlean Assistant
+5:37114107:Mira's Medic
+5:37114201:Mira's Supervisor
+5:37114301:Kettlean Blitz Unit
+5:37114304:Kettlean Blitz Unit Elite
+5:37114305:Kettlean Blitz Unit Elite
+5:37114306:Kettlean Blitz Unit Elite
+5:37114401:Kettlean Destroyer
+5:37114501:Amplification Equipment Manager
+5:37115101:Mira's Double-Gun Shooter
+5:37115104:Enthusiastic Gun Rider
+5:37115107:Enthusiastic Gun Rider
+5:3712101:Furry Bingri
+5:3712102:Furry Bingri
+5:3712103:Furry Bingri
+5:37122101:Brainwashed Recoome
+5:37122201:Recoome
+5:3713101:White-Eye Bingri
+5:3713102:White-Eye Bingri
+5:3713103:White-Eye Bingri
+5:37171301:Recovery Assistant
+5:37171304:Senior Medic
+5:3751101:Ox King
+5:3751102:Ox King
+5:3751103:Ox King
+5:37771101:Mira's Scouting Robot
+5:37771104:Mira's Security Robot Mk2
+5:37771107:Mira's Security Robot Mk3
+5:37772101:Mira's Surveillance Robot
+5:37773101:Mira's Elite Security Robot Mk3
+5:3811101:Hagel
+5:3811102:Hagel
+5:3811103:Hagel
+5:3811104:Perfect Hagel
+5:3811105:Perfect Hagel
+5:3811106:Perfect Hagel
+5:3812101:Fire Hagel
+5:3812102:Fire Hagel
+5:3812103:Fire Hagel
+5:3812104:Inferno Hagel
+5:3812105:Inferno Hagel
+5:3812106:Inferno Hagel
+5:38131101:Mira's Reinforcement Soldier
+5:38131301:Mira's Venom Soldier
+5:38811101:Brainwashing Machine
+5:38812101:E Type Energy Amplification
+5:38812104:S Type Energy Amplification
+5:38812107:C Type Energy Amplification
+5:38812110:B Type Energy Amplification
+5:38812113:H Type Energy Amplification
+5:39415401:Brainwashed Red Pants Commander
+5:4:Android Type
+5:4021401:Kammu
+5:4021402:Kammu
+5:4021403:Kammu
+5:4031101:Fastaurs
+5:4031102:Fastaurs
+5:4031103:Fastaurs
+5:4031104:Turbo Fastaurs
+5:4031105:Turbo Fastaurs
+5:4031106:Turbo Fastaurs
+5:4031107:Zet Fastaurs
+5:4031108:Zet Fastaurs
+5:4031109:Zet Fastaurs
+5:4031110:Folloraus
+5:4031111:Folloraus
+5:4031112:Folloraus
+5:4031113:Hudadak Saurs
+5:4031114:Hudadak Saurs
+5:4031115:Hudadak Saurs
+5:4031116:Brainwashed Fastaurs
+5:4031117:Brainwashed Fastaurs
+5:4031118:Brainwashed Fastaurs
+5:4031119:Brainwashed Fastaurs
+5:4031120:Brainwashed Fastaurs
+5:4031121:Brainwashed Fastaurs
+5:4031128:Stone Raptor
+5:4031129:Stone Raptor
+5:4031130:Stone Raptor
+5:4031131:Brainwashed Evilaurs
+5:4031134:Cavesaurs
+5:4031135:Cavesaurs
+5:4031136:Cavesaurs
+5:4031137:Young Hudadak Saurs
+5:4032101:Small Bell Raptor
+5:4032102:Small Bell Raptor
+5:4032103:Small Bell Raptor
+5:4032110:Ancient Fastaurs
+5:4032111:Ancient Fastaurs
+5:4032112:Ancient Fastaurs
+5:4032113:Poko Raptor
+5:4032114:Poko Raptor
+5:4032115:Poko Raptor
+5:4032116:Berserk Raptor
+5:4032117:Berserk Raptor
+5:4032118:Berserk Raptor
+5:4032119:Stone Berserk Raptor
+5:4032120:Stone Berserk Raptor
+5:4032121:Stone Berserk Raptor
+5:4032122:Sand Raptor
+5:4032123:Sand Raptor
+5:4032124:Sand Raptor
+5:4032125:Big Hallsaurs
+5:4032126:Big Hallsaurs
+5:4032127:Big Hallsaurs
+5:4032128:Kangaroo Hunter
+5:4032129:Kangaroo Hunter
+5:4032130:Kangaroo Hunter
+5:4032131:Stoopedsaurs
+5:4032132:Stoopedsaurs
+5:4032133:Stoopedsaurs
+5:4032146:Half-Dried Raptor
+5:4032147:Half-Dried Raptor
+5:4032148:Half-Dried Raptor
+5:4033107:Big Footsaurs
+5:4033108:Big Footsaurs
+5:4033109:Big Footsaurs
+5:4073101:Ascetic Fighter
+5:4073102:Ascetic Fighter
+5:4073103:Ascetic Fighter
+5:4101101:General White Jr.
+5:4101102:General White Jr.
+5:4101103:General White Jr.
+5:4131101:Delinquent Martial Artist
+5:4131102:Delinquent Martial Artist
+5:4131103:Delinquent Martial Artist
+5:4131104:Delinquent Ascetic 
+5:4131105:Delinquent Ascetic 
+5:4131106:Delinquent Ascetic 
+5:4132101:Delinquent Spiritualist
+5:4132102:Delinquent Spiritualist
+5:4132103:Delinquent Spiritualist
+5:4132104:Delinquent Ascetic 
+5:4132105:Delinquent Ascetic 
+5:4132106:Delinquent Ascetic 
+5:41591201:Bear Bandit
+5:41621101:Hungry Bighorn
+5:41671101:Bomb
+5:42171101:Symbol
+5:42171104:Symbol
+5:42171107:Symbol
+5:42401101:Rizard
+5:42501101:Drum
+5:42501104:Drum
+5:4261101:Needle Bee
+5:4261102:Needle Bee
+5:4261103:Needle Bee
+5:4261104:Boong Needle Bee
+5:4261105:Boong Needle Bee
+5:4261106:Boong Needle Bee
+5:4261107:Honey Needle Bee
+5:4261108:Honey Needle Bee
+5:4261109:Honey Needle Bee
+5:4261110:Tech Needle Bee
+5:4261111:Tech Needle Bee
+5:4261112:Tech Needle Bee
+5:4261113:Ground Wasp
+5:4261114:Ground Wasp
+5:4261115:Ground Wasp
+5:4261116:Garden Needle Bee
+5:4261117:Garden Needle Bee
+5:4261118:Garden Needle Bee
+5:4261119:Watcher Needle Bee
+5:4261120:Watcher Needle Bee
+5:4261121:Watcher Needle Bee
+5:4261122:Needle Bee
+5:4261123:Needle Bee
+5:4261124:Needle Bee
+5:4261204:Zet Mach Needle Bee
+5:4261205:Zet Mach Needle Bee
+5:4261206:Zet Mach Needle Bee
+5:4261207:Poisonous Needle Bee
+5:4261208:Poisonous Needle Bee
+5:4261209:Poisonous Needle Bee
+5:4261210:Brainwashed Giant Needle Bee
+5:4261211:Brainwashed Giant Needle Bee
+5:4261212:Brainwashed Giant Needle Bee
+5:4262101:Poisonous Needle Bee
+5:4262102:Poisonous Needle Bee
+5:4262103:Poisonous Needle Bee
+5:4262104:Boong Poisonous Needle Bee
+5:4262105:Boong Poisonous Needle Bee
+5:4262106:Boong Poisonous Needle Bee
+5:4262107:Cyber Needle Bee
+5:4262108:Cyber Needle Bee
+5:4262109:Cyber Needle Bee
+5:4262110:Lance Moqui
+5:4262111:Lance Moqui
+5:4262112:Lance Moqui
+5:4262113:Bloody Needle Queen Bee
+5:4262114:Bloody Needle Queen Bee
+5:4262115:Bloody Needle Queen Bee
+5:4262116:Garden Poisonous Needle Bee
+5:4262117:Garden Poisonous Needle Bee
+5:4262118:Garden Poisonous Needle Bee
+5:4262119:Chasing Needle Bee
+5:4262120:Chasing Needle Bee
+5:4262121:Chasing Needle Bee
+5:4262122:Hot Tempered Needle Bee
+5:4262123:Hot Tempered Needle Bee
+5:4262124:Hot Tempered Needle Bee
+5:4262125:Mach Needle Bee
+5:4262128:Bombing Needle Bee
+5:4262131:Bubble Hiccup Bee
+5:4262134:Hot Tempered Needle Bee
+5:4262204:[?]	
+5:4262205:[?]	
+5:4262206:Zarbon 
+5:4262301:Poisonous Bloody Needle Bee
+5:4262302:Poisonous Bloody Needle Bee
+5:4262303:Poisonous Bloody Needle Bee
+5:4263101:Sting Poisonous Needle Bee
+5:4263102:Sting Poisonous Needle Bee
+5:4263103:Sting Poisonous Needle Bee
+5:4263104:Spring Needle Bee
+5:4263105:Spring Needle Bee
+5:4263106:Spring Needle Bee
+5:4263107:Angler Poisonous Needle Bee
+5:4263108:Angler Poisonous Needle Bee
+5:4263109:Angler Poisonous Needle Bee
+5:4263110:Needle Bee
+5:4263111:Needle Bee
+5:4263112:Needle Bee
+5:4263113:Poisonous Needle Bee
+5:4263114:Poisonous Needle Bee
+5:4263115:Poisonous Needle Bee
+5:4263116:Stubborn Bee  
+5:4264101:Mecha Hornet
+5:4264102:Mecha Hornet
+5:4264103:Mecha Hornet
+5:4264104:Unfinished Mecha Hornet
+5:4264105:Unfinished Mecha Hornet
+5:4264106:Unfinished Mecha Hornet
+5:4311101:Weasel
+5:4311102:Weasel
+5:4311103:Weasel
+5:4311104:Large Weasel
+5:4311105:Large Weasel
+5:4311106:Large Weasel
+5:4311107:Dirty Weasel
+5:4311108:Dirty Weasel
+5:4311109:Dirty Weasel
+5:4311110:Trainee Weasel
+5:4311111:Trainee Weasel
+5:4311112:Trainee Weasel
+5:4311113:Dirty Weasel
+5:4311201:White Weasel
+5:4311202:White Weasel
+5:4311203:White Weasel
+5:4311204:Polar Weasel
+5:4311205:Polar Weasel
+5:4311206:Polar Weasel
+5:4311301:Yellow Tailed Weasel
+5:4311302:Yellow Tailed Weasel
+5:4311303:Yellow Tailed Weasel
+5:4311304:Bad Weasel
+5:4311305:Bad Weasel
+5:4311306:Bad Weasel
+5:4311307:Mugus Fox
+5:43261101:Fresh Fish
+5:43261201:Rotten Fish
+5:43521101:Kid Goku
+5:43521201:Kid Goku
+5:44681201:Master Roshi
+5:44982101:Krillin
+5:4511101:Jaguar Soldier
+5:4511102:Jaguar Soldier
+5:4511103:Jaguar Soldier
+5:4511104:Jaguar Hot-wing Troopie
+5:4511105:Jaguar Hot-wing Troopie
+5:4511106:Jaguar Hot-wing Troopie
+5:4511110:Yahoi West Champion
+5:4511111:Yahoi West Champion
+5:4511112:Yahoi West Champion
+5:4511113:Jaguar Guerrilla Unit 
+5:4511114:Jaguar Guerrilla Unit 
+5:4511115:Jaguar Guerrilla Unit 
+5:4511116:Mad-Punch Drill Sergeant
+5:4511117:Mad-Punch Drill Sergeant
+5:4511118:Mad-Punch Drill Sergeant
+5:4511119:Jaguar Sergeant
+5:4511120:Jaguar Sergeant
+5:4511121:Jaguar Sergeant
+5:4511122:Sergeant Backhand 
+5:4511123:Sergeant Backhand 
+5:4511124:Sergeant Backhand 
+5:4511125:Zude Subordinate
+5:4511126:Zude Subordinate
+5:4511127:Zude Subordinate
+5:4511128:Red Pants Army Royal Guard
+5:4511129:Red Pants Army Royal Guard
+5:4511130:Red Pants Army Royal Guard
+5:4511131:General Brooklyne Guard
+5:4511132:General Brooklyne Guard
+5:4511133:General Brooklyne Guard
+5:4511134:Puma Plunderer
+5:4511135:Puma Plunderer
+5:4511136:Puma Plunderer
+5:4511137:Poisoned Red Pants Soldier
+5:4512101:Puma Scouter
+5:4512102:Puma Scouter
+5:4512103:Puma Scouter
+5:4512104:Puma Hot-Wing Troopie
+5:4512105:Puma Hot-Wing Troopie
+5:4512106:Puma Hot-Wing Troopie
+5:4512107:Thunder Fist
+5:4512108:Thunder Fist
+5:4512109:Thunder Fist
+5:4512110:Puma Elite Troop
+5:4512111:Puma Elite Troop
+5:4512112:Puma Elite Troop
+5:4512113:Megaton Fist
+5:4512114:Megaton Fist
+5:4512115:Megaton Fist
+5:4512116:Puma Plunderer[Not-Use]
+5:4512117:Puma Plunderer[Not-Use]
+5:4512118:Puma Plunderer[Not-Use]
+5:4512119:Plunderer 1
+5:4512120:Plunderer 1
+5:4512121:Plunderer 1
+5:4512122:Plunderer 2
+5:4512123:Plunderer 2
+5:4512124:Plunderer 2
+5:4512125:Red Pants Assassin
+5:4512126:Red Pants Assassin
+5:4512127:Red Pants Assassin
+5:4512128:Waste Transporter
+5:4512129:Waste Transporter
+5:4512130:Waste Transporter
+5:4512131:Middle-Level RP Prisoner
+5:4512134:Red Pants Bombing Soldier
+5:4512137:Poisoned Red Pants Soldier
+5:4513101:Tiger Raider
+5:4513102:Tiger Raider
+5:4513103:Tiger Raider
+5:4513104:Tiger Suicide Corps
+5:4513105:Tiger Suicide Corps
+5:4513106:Tiger Suicide Corps
+5:4513107:Tiger Guerrilla Unit  
+5:4513108:Tiger Guerrilla Unit  
+5:4513109:Tiger Guerrilla Unit  
+5:4513110:Trabolta
+5:4513111:Trabolta
+5:4513112:Trabolta
+5:4513113:Tiger Plunderer
+5:4513114:Tiger Plunderer
+5:4513115:Tiger Plunderer
+5:4513116:Tiger Deserter
+5:4513117:Tiger Deserter
+5:4513118:Tiger Deserter
+5:4513119:Tiger Advance Party
+5:4513120:Tiger Advance Party
+5:4513121:Tiger Advance Party
+5:4513122:Jaguar Operation Troop
+5:4513123:Jaguar Operation Troop
+5:4513124:Jaguar Operation Troop
+5:4513125:Trabolta Junior
+5:4513126:Trabolta Junior
+5:4513127:Trabolta Junior
+5:4513128:3rd Trabolta
+5:4513129:3rd Trabolta
+5:4513130:3rd Trabolta
+5:4513131:Captain Trabolta
+5:4513132:Captain Trabolta
+5:4513133:Captain Trabolta
+5:4513134:Major Bartow's Right Hand
+5:4513135:Major Bartow's Right Hand
+5:4513136:Major Bartow's Right Hand
+5:4513137:Budokai Fighter
+5:4513138:Budokai Fighter
+5:4513139:Budokai Fighter
+5:4513140:Great Bruce
+5:4513141:Great Bruce
+5:4513142:Great Bruce
+5:4513143:Deserter Rudin
+5:4513144:Deserter Rudin
+5:4513145:Deserter Rudin
+5:4513146:Budokai Fighter
+5:4513147:Budokai Fighter
+5:4513148:Budokai Fighter
+5:4513149:Mine Cleaner
+5:4513150:Mine Cleaner
+5:4513151:Mine Cleaner
+5:4514101:SFC Steven Jaguar 
+5:4514102:SFC Steven Jaguar 
+5:4514103:SFC Steven Jaguar 
+5:4531101:Jamming Robot
+5:4531102:Jamming Robot
+5:4531103:Jamming Robot
+5:4531104:Jamming Robot
+5:4531105:Jamming Robot
+5:4531106:Jamming Robot
+5:4531107:Jamming Robot
+5:4531108:Jamming Robot
+5:4531109:Jamming Robot
+5:4531110:Mira's Motor Helicopter 
+5:4541101:Zarbon
+5:4541102:Zarbon
+5:4541103:Zarbon
+5:4541201:Zarbon
+5:4541202:Zarbon
+5:4541203:Zarbon
+5:4542101:Zarbon
+5:4542102:Zarbon
+5:4542103:Zarbon
+5:4542104:Brainwashed Zarbon
+5:4542105:Brainwashed Zarbon
+5:4542106:Brainwashed Zarbon
+5:4551101:Android 9
+5:4551102:Android 9
+5:4551103:Android 9
+5:4561101:Zarbon
+5:4561102:Zarbon
+5:4561103:Zarbon
+5:4561104:Strong Brainwashed Zarbon
+5:4561105:Strong Brainwashed Zarbon
+5:4561106:Strong Brainwashed Zarbon
+5:45681101:Goku (Great Ape)
+5:4581101:Camp Wickander
+5:4584101:Android 19000 SP
+5:4584102:Android 19000 SP
+5:4584103:Android 19000 SP
+5:4584104:Android 19000 SP
+5:4584105:Android 19000 SP
+5:4584106:Android 19000 SP
+5:4611101:Android 8000
+5:4611104:Android 8000
+5:4611107:Android 8000 MK2
+5:4611110:Inferior Android 8000
+5:4611111:Inferior Android 8000
+5:4611112:Inferior Android 8000
+5:4611113:Android 8000 Platoon leader
+5:4611114:Android 8000 Platoon leader
+5:4611115:Android 8000 Platoon leader
+5:4611116:Android Bodyguard
+5:4611117:Android Bodyguard
+5:4611118:Android Bodyguard
+5:4611119:Foreman Android
+5:4611120:Foreman Android
+5:4611121:Foreman Android
+5:4611122:Android Soldier
+5:4611201:Android 8000 MK2
+5:4611202:Android 8000 MK2
+5:4611203:Android 8000 MK2
+5:4611204:Android 8000 MK2
+5:4611205:Android 8000 MK2
+5:4611206:Android 8000 MK2
+5:4611207:Android 8000 MK2
+5:4611208:Android 8000 MK2
+5:4611209:Android 8000 MK2
+5:4611210:Android 8000 MK2
+5:4611211:Android 8000 MK2
+5:4611212:Android 8000 MK2
+5:4611213:Android 8000 MK2
+5:4611214:Android 8000 MK2
+5:4611215:Android 8000 MK2
+5:4611216:Android 8000 MK2
+5:4611217:Android 8000 MK2
+5:4611218:Android 8000 MK2
+5:4611219:Biochemical Supply Soldiers
+5:4611220:Biochemical Supply Soldiers
+5:4611221:Biochemical Supply Soldiers
+5:4611222:Middle Management Officer
+5:4611225:Middle Collector Soldier
+5:4611228:Mira's Military Captain
+5:4611229:Mira's Military Captain
+5:4611230:Mira's Military Captain
+5:4611231:Mira's Military Captain
+5:4611232:Mira's Military Captain
+5:4611233:Mira's Military Captain
+5:4611234:Intruder Eliminating Android
+5:4611235:Intruder Eliminating Android
+5:4611236:Intruder Eliminating Android
+5:4611237:Soldier Recruiting Android
+5:4612101:Android 8000
+5:4612102:Android 8000
+5:4612103:Android 8000
+5:4612104:Android 8000
+5:4612105:Android 8000
+5:4612106:Android 8000
+5:4612107:Android 8000
+5:4612108:Android 8000
+5:4612109:Android 8000
+5:4612110:Android 8000
+5:4612111:Android 8000
+5:4612112:Android 8000
+5:4612113:Android 8000
+5:4612114:Android 8000
+5:4612115:Android 8000
+5:4612116:Android 8000
+5:4612117:Android 8000
+5:4612118:Android 8000
+5:4612119:Head Exploration Android
+5:4612120:Head Exploration Android
+5:4612121:Head Exploration Android
+5:4612122:Prison Managing Android
+5:4612125:Palace Guarding Android
+5:4612134:Biochemical Sub Captain
+5:4612135:Biochemical Sub Captain
+5:4612136:Biochemical Sub Captain
+5:4612137:Android Corporal
+5:4612138:Android Corporal
+5:4612139:Android Corporal
+5:4612140:Android Commander
+5:4612141:Android Commander
+5:4612142:Android Commander
+5:4612143:Android 8000 MX
+5:4612144:Android 8000 MX
+5:4612145:Android 8000 MX
+5:4612146:Air Defense Android
+5:4613101:High Level Prisoner Guard
+5:4613104:Camp Corporal Guard
+5:4613107:Mira's Army Supervising Soldier 
+5:4613108:Mira's Army Supervising Soldier 
+5:4613109:Mira's Army Supervising Soldier 
+5:4621101:Android 16
+5:4621102:Android 16
+5:4621103:Android 16
+5:4621104:Android 16
+5:4621105:Android 16
+5:4621106:Android 16
+5:4651101:Samaro
+5:4651102:Samaro
+5:4651103:Samaro
+5:4651104:Big Samaro
+5:4651105:Big Samaro
+5:4651106:Big Samaro
+5:4651107:Chain Samaro
+5:4651108:Chain Samaro
+5:4651109:Chain Samaro
+5:4651110:Guardian Samaro 
+5:4651111:Guardian Samaro 
+5:4651112:Guardian Samaro 
+5:4652101:Saw Samaro
+5:4652102:Saw Samaro
+5:4652103:Saw Samaro
+5:4652104:Big Saw Samaro
+5:4652105:Big Saw Samaro
+5:4652106:Big Saw Samaro
+5:4652107:Deer Horn Mantis 
+5:4652108:Deer Horn Mantis 
+5:4652109:Deer Horn Mantis 
+5:4652110:Sickle Samaro
+5:4652111:Sickle Samaro
+5:4652112:Sickle Samaro
+5:4652113:Cobalt Samaro
+5:4652114:Cobalt Samaro
+5:4652115:Cobalt Samaro
+5:4652116:Bred Samaro 
+5:4652117:Bred Samaro 
+5:4652118:Bred Samaro 
+5:4652122:Kun Samaro
+5:4652301:Poisonous Saw Samaro
+5:4652302:Poisonous Saw Samaro
+5:4652303:Poisonous Saw Samaro
+5:4652304:Kiri Addicted Mantis
+5:4653101:Origin Samaro
+5:4653102:Origin Samaro
+5:4653103:Origin Samaro
+5:4653104:Fossil Samaro
+5:4653105:Fossil Samaro
+5:4653106:Fossil Samaro
+5:4653107:Porunga Samaro
+5:4653108:Porunga Samaro
+5:4653109:Porunga Samaro
+5:4653110:Samaro Under-Experiment
+5:4653111:Samaro Under-Experiment
+5:4653112:Samaro Under-Experiment
+5:4653113:Samaro Sampling
+5:4653114:Samaro Sampling
+5:4653115:Samaro Sampling
+5:4653116:Watchman Samaro
+5:4653117:Watchman Samaro
+5:4653118:Watchman Samaro
+5:4653119:Deer Horn Mantis [Not-use]
+5:4653120:Deer Horn Mantis [Not-use]
+5:4653121:Deer Horn Mantis [Not-use]
+5:4653122:Green Samaro
+5:4653123:Green Samaro
+5:4653124:Green Samaro
+5:4653125:Korine Samaro
+5:4653126:Korine Samaro
+5:4653127:Korine Samaro
+5:4654101:Mecha Samaro
+5:4654102:Mecha Samaro
+5:4654103:Mecha Samaro
+5:4654104:Slasher
+5:4654105:Slasher
+5:4654106:Slasher
+5:4654107:Unfinished Mecha Samaro
+5:4654108:Unfinished Mecha Samaro
+5:4654109:Unfinished Mecha Samaro
+5:46661101:Devil King Piccolo
+5:46661104:Devil King Piccolo
+5:47102101:Rock
+5:4711101:Kaboong
+5:4711102:Kaboong
+5:4711103:Kaboong
+5:4711104:King Kaboong
+5:4711105:King Kaboong
+5:4711106:King Kaboong
+5:4711107:Queen Kaboong
+5:4711108:Queen Kaboong
+5:4711109:Queen Kaboong
+5:4711110:Cell Kaboong
+5:4711111:Cell Kaboong
+5:4711112:Cell Kaboong
+5:4711113:Leading Kaboong [Not-use]
+5:4711114:Leading Kaboong [Not-use]
+5:4711115:Leading Kaboong [Not-use]
+5:4711116:Super Big Kaboong
+5:4711117:Super Big Kaboong
+5:4711118:Super Big Kaboong
+5:4711119:Violent King Kaboong
+5:4711120:Violent King Kaboong
+5:4711121:Violent King Kaboong
+5:4711122:Boong Blood Mania
+5:4711123:Boong Blood Mania
+5:4711124:Boong Blood Mania
+5:4711125:Brainwashed Giant Kaboong
+5:4711126:Brainwashed Giant Kaboong
+5:4711127:Brainwashed Giant Kaboong
+5:4711128:Porunga Kaboong
+5:4711129:Porunga Kaboong
+5:4711130:Porunga Kaboong
+5:4711131:Kaboong from Test 
+5:4711132:Kaboong from Test 
+5:4711133:Kaboong from Test 
+5:4711134:Grind Kaboong
+5:4711137:Waterway Kaboong
+5:4712101:Thin Thing Kaboong
+5:4712102:Thin Thing Kaboong
+5:4712103:Thin Thing Kaboong
+5:4712104:Small-Minded Kaboong
+5:4712105:Small-Minded Kaboong
+5:4712106:Small-Minded Kaboong
+5:4712107:Sticky Kaboong
+5:4712108:Sticky Kaboong
+5:4712109:Sticky Kaboong
+5:4712110:Big Kaboong
+5:4712111:Big Kaboong
+5:4712112:Big Kaboong
+5:4712113:Supervising Kaboong
+5:4712114:Supervising Kaboong
+5:4712115:Supervising Kaboong
+5:4712116:Poisonous Blood Kaboong
+5:4712117:Poisonous Blood Kaboong
+5:4712118:Poisonous Blood Kaboong
+5:4712119:Leading Kaboong
+5:4712120:Leading Kaboong
+5:4712121:Leading Kaboong
+5:4713101:Red Kaboong
+5:4713102:Red Kaboong
+5:4713103:Red Kaboong
+5:4713104:Bloody Kaboong
+5:4713105:Bloody Kaboong
+5:4713106:Bloody Kaboong
+5:4713107:Dune Kaboong
+5:4713108:Dune Kaboong
+5:4713109:Dune Kaboong
+5:4713110:Boong Flying Kaboong
+5:4713111:Boong Flying Kaboong
+5:4713112:Boong Flying Kaboong
+5:4713113:Slash Kaboong
+5:4713114:Slash Kaboong
+5:4713115:Slash Kaboong
+5:4713116:Blood Kaboong Master
+5:4713117:Blood Kaboong Master
+5:4713118:Blood Kaboong Master
+5:4713119:Boong Blood King
+5:4713120:Boong Blood King
+5:4713121:Boong Blood King
+5:4713122:Poison Kaboong
+5:4713123:Poison Kaboong
+5:4713124:Poison Kaboong
+5:4713125:Poison Kaboong
+5:4713126:Poison Kaboong
+5:4713127:Poison Kaboong
+5:4713128:Fireblood Kaboong
+5:4801101:Teacher Pheasant
+5:4801102:Teacher Pheasant
+5:4801103:Teacher Pheasant
+5:4801201:Immortal Turtle Hermit
+5:4801202:Immortal Turtle Hermit
+5:4801203:Immortal Turtle Hermit
+5:4811101:Colonel Kiri
+5:4811102:Colonel Kiri
+5:4811103:Colonel Kiri
+5:4811104:Defeated Kiri Officer
+5:4811105:Defeated Kiri Officer
+5:4811106:Defeated Kiri Officer
+5:4811107:Budokai Fighter
+5:4811108:Budokai Fighter
+5:4811109:Budokai Fighter
+5:4811110:Giraffe Army Leader
+5:4811111:Giraffe Army Leader
+5:4811112:Giraffe Army Leader
+5:4812101:Kiri Survivor
+5:4812102:Kiri Survivor
+5:4812103:Kiri Survivor
+5:4812104:Kiri Deserter
+5:4812105:Kiri Deserter
+5:4812106:Kiri Deserter
+5:4812107:Kiri Last Battle Team
+5:4812108:Kiri Last Battle Team
+5:4812109:Kiri Last Battle Team
+5:4812110:Giraffe Soldier
+5:4812111:Giraffe Soldier
+5:4812112:Giraffe Soldier
+5:4812113:Special Force Giraffe
+5:4812114:Special Force Giraffe
+5:4812115:Special Force Giraffe
+5:4812201:Kiri Royal Guard
+5:4812202:Kiri Royal Guard
+5:4812203:Kiri Royal Guard
+5:4812204:Kiri Royal Guard SFC
+5:4812205:Kiri Royal Guard SFC
+5:4812206:Kiri Royal Guard SFC
+5:4812207:Kiri Hot-Wind Troop
+5:4812208:Kiri Hot-Wind Troop
+5:4812209:Kiri Hot-Wind Troop
+5:4812210:Gooris Kiri Supervisor
+5:4812211:Gooris Kiri Supervisor
+5:4812212:Gooris Kiri Supervisor
+5:4813104:Defeated Giraffe Soldier
+5:4813105:Defeated Giraffe Soldier
+5:4813106:Defeated Giraffe Soldier
+5:4813107:Kiri Worker
+5:4813108:Kiri Worker
+5:4813109:Kiri Worker
+5:4813110:Kiri Worker
+5:4813111:Kiri Worker
+5:4813112:Kiri Worker
+5:4813116:Mou Champ
+5:4813117:Mou Champ
+5:4813118:Mou Champ
+5:4813204:Kiri Bandit
+5:4813205:Kiri Bandit
+5:4813206:Kiri Bandit
+5:4813207:Kiri Bandit Leader
+5:4813208:Kiri Bandit Leader
+5:4813209:Kiri Bandit Leader
+5:4813210:Middle-Level RP Prisoner
+5:4813213:Classic Kiri Scouter
+5:4813214:Classic Kiri Scouter
+5:4813215:Classic Kiri Scouter
+5:4813301:Wandering Deserter
+5:4813302:Wandering Deserter
+5:4813303:Wandering Deserter
+5:48151101:Pulnarodon's Friend
+5:48151104:Pulnarodon
+5:48151201:Pulnarodon
+5:48201101:Tambourine 
+5:48201104:Tambourine 
+5:48201107:Tambourine 
+5:48201200:Tambourine 
+5:48201401:Tambourine 
+5:48211101:Starved Pulnasaurs
+5:4831101:Margret's Bodyguard
+5:48441101:Bandit
+5:48471101:Boar Bandit
+5:4851101:Bebe Devilman
+5:4851102:Bebe Devilman
+5:4851103:Bebe Devilman
+5:4852101:Hard Bebe Devilman
+5:4852102:Hard Bebe Devilman
+5:4852103:Hard Bebe Devilman
+5:4853101:Angel Bebe Devilman
+5:4853102:Angel Bebe Devilman
+5:4853103:Angel Bebe Devilman
+5:4881107:Tamtam Child Dragon
+5:4881108:Tamtam Child Dragon
+5:4881109:Tamtam Child Dragon
+5:4881110:Child Dragon
+5:4881111:Child Dragon
+5:4881112:Child Dragon
+5:4881113:Poko Child Dragon
+5:4881114:Poko Child Dragon
+5:4881115:Poko Child Dragon
+5:4881116:Ace Child Dragon
+5:4881117:Ace Child Dragon
+5:4881118:Ace Child Dragon
+5:4881119:Evil Dragon of Trials
+5:4881120:Evil Dragon of Trials
+5:4881121:Evil Dragon of Trials
+5:4881122:Minimum Dragon
+5:4881123:Minimum Dragon
+5:4881124:Minimum Dragon
+5:4881125:Ancient Drake
+5:4881126:Ancient Drake
+5:4881127:Ancient Drake
+5:4881128:Valley Dragon
+5:4882110:Divine Water Guard Dragon
+5:4882111:Divine Water Guard Dragon
+5:4882112:Divine Water Guard Dragon
+5:4882113:Guardian Dragon Hatchling 
+5:4882114:Guardian Dragon Hatchling 
+5:4882115:Guardian Dragon Hatchling 
+5:4882116:Ancient Child Dragon
+5:4883101:Divine Water Guard Dragon
+5:4883102:Divine Water Guard Dragon
+5:4883103:Divine Water Guard Dragon
+5:4883104:Divine Water Guard Dragon for Training
+5:4883105:Divine Water Guard Dragon for Training
+5:4883106:Divine Water Guard Dragon for Training
+5:4883107:Ancient Magic Dragon
+5:48911101:Wolf
+5:48911201:Starved Wolf
+5:48911204:Starved Wolf
+5:48912101:Wolf of Bandit
+5:48912104:Hungry Wolf
+5:48912201:Wolf of Bandit
+5:48913101:Hungry Wolf Leader
+5:48913201:Hungry Cur
+5:4911101:Kowanga
+5:4911102:Kowanga
+5:4911103:Kowanga
+5:4911104:Big Kowanga
+5:4911105:Big Kowanga
+5:4911106:Big Kowanga
+5:4911107:King Kowanga
+5:4911108:King Kowanga
+5:4911109:King Kowanga
+5:4911110:Kowanga
+5:4911111:Kowanga
+5:4911112:Kowanga
+5:4911113:Forest Kowanga
+5:4912101:Demon Squirrel
+5:4912102:Demon Squirrel
+5:4912103:Demon Squirrel
+5:4912104:Big Demon Squirrel
+5:4912105:Big Demon Squirrel
+5:4912106:Big Demon Squirrel
+5:4912107:Large Squirrel
+5:4912108:Large Squirrel
+5:4912109:Large Squirrel
+5:4912110:Angry Demon Squirrel
+5:4912111:Angry Demon Squirrel
+5:4912112:Angry Demon Squirrel
+5:4912113:Mighty Demon Squirrel
+5:4912114:Mighty Demon Squirrel
+5:4912115:Mighty Demon Squirrel
+5:4913101:Sasabi
+5:4913102:Sasabi
+5:4913103:Sasabi
+5:4913104:Purple Squirrel
+5:4913105:Purple Squirrel
+5:4913106:Purple Squirrel
+5:4913107:Royal Squirrel
+5:4913108:Royal Squirrel
+5:4913109:Royal Squirrel
+5:4913110:Dera Sasabi
+5:4913111:Dera Sasabi
+5:4913112:Dera Sasabi
+5:4913113:Dark Sasabi
+5:4913114:Dark Sasabi
+5:4913115:Dark Sasabi
+5:4913116:Max Sasabi
+5:4913117:Max Sasabi
+5:4913118:Max Sasabi
+5:5:Robot Type
+5:5011101:Korin
+5:5011102:Korin
+5:5011103:Korin
+5:5011201:Korin's Hallucination
+5:5011202:Korin's Hallucination
+5:5011203:Korin's Hallucination
+5:51311101:Frieza's Field Battle Soldier
+5:51311301:Frieza's Intel Scout
+5:51732101:Captain Nanami
+5:51762601:Captain Terrence
+5:51822401:Frieza's Guerrilla Sapper
+5:5211101:Fan Saibaman
+5:5211102:Fan Saibaman
+5:5211103:Fan Saibaman
+5:5211110:Wind Saibaman
+5:5211111:Wind Saibaman
+5:5211112:Wind Saibaman
+5:5211113:Chloroplast Saibaman
+5:5211114:Chloroplast Saibaman
+5:5211115:Chloroplast Saibaman
+5:5211201:Dark Fan Saibaman
+5:5211202:Dark Fan Saibaman
+5:5211203:Dark Fan Saibaman
+5:5211204:Poisonous Dark Fan Saibaman
+5:5212101:Big Fan Saibaman
+5:5212102:Big Fan Saibaman
+5:5212103:Big Fan Saibaman
+5:5212104:Giant Fan Saibaman
+5:5212105:Giant Fan Saibaman
+5:5212106:Giant Fan Saibaman
+5:5212107:Head-Wind Saibaman
+5:5212108:Head-Wind Saibaman
+5:5212109:Head-Wind Saibaman
+5:5212110:Frost-Wind Saibaman
+5:5212111:Frost-Wind Saibaman
+5:5212112:Frost-Wind Saibaman
+5:5212113:Ruins Fan Saibaman
+5:5212114:Ruins Fan Saibaman
+5:5212115:Ruins Fan Saibaman
+5:5213101:King Fan Saibaman
+5:5213102:King Fan Saibaman
+5:5213103:King Fan Saibaman
+5:5213104:Water Fan Saibaman
+5:5213105:Water Fan Saibaman
+5:5213106:Water Fan Saibaman
+5:5213107:Whirlwind Saibaman
+5:5213108:Whirlwind Saibaman
+5:5213109:Whirlwind Saibaman
+5:5213110:Sting-Fan Saibaman
+5:5213111:Sting-Fan Saibaman
+5:5213112:Sting-Fan Saibaman
+5:5213113:Sharp-Fan Saibaman
+5:5213114:Sharp-Fan Saibaman
+5:5213115:Sharp-Fan Saibaman
+5:5213116:Needle-Fan Saibaman
+5:5213117:Needle-Fan Saibaman
+5:5213118:Needle-Fan Saibaman
+5:5214101:Brainwashed Fan Saibaman
+5:5214102:Brainwashed Fan Saibaman
+5:5214103:Brainwashed Fan Saibaman
+5:5214104:Brainwashed Fan Saibaman
+5:5214105:Brainwashed Fan Saibaman
+5:5214106:Brainwashed Fan Saibaman
+5:5214107:Brainwashed Fan Saibaman
+5:5214108:Brainwashed Fan Saibaman
+5:5214109:Brainwashed Fan Saibaman
+5:52914201:Guard Robot Alerty X
+5:52914301:Guard Robot Alerty
+5:52914304:Guard Robot Alerty S
+5:52914401:Guard Robot Alerty
+5:52914404:Guard Robot Alerty S
+5:52914501:Guard Robot Alerty X
+5:5311101:Laser Curtain Controller 
+5:5311102:Laser Curtain Controller
+5:5311103:Laser Curtain Controller
+5:5311104:Laser Curtain Controller
+5:5311105:Laser Curtain Controller
+5:5311106:Laser Curtain Controller
+5:53592101:Frieza's Field Robot
+5:53593101:Frieza's Guerrilla Robot
+5:53593104:Frieza's Guerrilla Robot
+5:53661101:Patrol Robot Securit
+5:53661104:Patrol Robot Securit
+5:53661107:Patrol Robot Securit S
+5:53661110:Patrol Robot Securit S
+5:53661301:Frieza's Intel Supply Soldier
+5:53661304:Frieza's Field Batter Signalman
+5:5401101:Mud Majin for Training
+5:5401102:Mud Majin for Training
+5:5401103:Mud Majin for Training
+5:5402101:Mud Majin for Training
+5:5402102:Mud Majin for Training
+5:5402103:Mud Majin for Training
+5:5403101:Mud Majin for Training
+5:5403102:Mud Majin for Training
+5:5403103:Mud Majin for Training
+5:5411101:Mysterious EM Wave Starter
+5:5411102:Mysterious EM Wave Starter
+5:5411103:Mysterious EM Wave Starter
+5:5511101:Magic Cube
+5:5511201:Magic Cube
+5:5512101:Magic Cube
+5:5512201:Magic Cube
+5:5513101:Magic Cube
+5:5514101:Magic Cube
+5:5515101:Magic Cube
+5:5515104:Magic Cube
+5:5515107:Magic Cube
+5:5515110:Magic Cube
+5:5515113:Magic Cube
+5:5515116:Magic Cube
+5:55661101:Frieza's Guerrilla Scout
+5:55661104:Frieza's Guerrilla Scout
+5:55663101:Frieza's Intel Battler
+5:5611101:Helmet Soldier
+5:5611102:Helmet Soldier
+5:5611103:Helmet Soldier
+5:5611104:Helmet Dog
+5:5611105:Helmet Dog
+5:5611106:Helmet Dog
+5:5611107:Helmet Training Sergeant
+5:5611108:Helmet Training Sergeant
+5:5611109:Helmet Training Sergeant
+5:5611110:SFC Angry Helmet
+5:5611111:SFC Angry Helmet
+5:5611112:SFC Angry Helmet
+5:5611113:Bull Bull Harvest Supervisor
+5:5611114:Bull Bull Harvest Supervisor
+5:5611115:Bull Bull Harvest Supervisor
+5:5611116:Bow Soldier
+5:5611117:Bow Soldier
+5:5611118:Bow Soldier
+5:5611119:Bow Raider
+5:5611120:Bow Raider
+5:5611121:Bow Raider
+5:5611122:Bow Captain
+5:5611123:Bow Captain
+5:5611124:Bow Captain
+5:5611125:All-Mine Plunderer Leader
+5:5611126:All-Mine Plunderer Leader
+5:5611127:All-Mine Plunderer Leader
+5:5611128:Helmet Plunderer
+5:5611129:Helmet Plunderer
+5:5611130:Helmet Plunderer
+5:5611131:Wild Helmet Fighter
+5:5611132:Wild Helmet Fighter
+5:5611133:Wild Helmet Fighter
+5:5611134:Death Helmet Supply Unit
+5:5611135:Death Helmet Supply Unit
+5:5611136:Death Helmet Supply Unit
+5:5611137:Death Helmet Blood Force
+5:5611138:Death Helmet Blood Force
+5:5611139:Death Helmet Blood Force
+5:5611140:Death Helmet Advance Party
+5:5611141:Death Helmet Advance Party
+5:5611142:Death Helmet Advance Party
+5:5611143:Guerrilla Leader Mug
+5:5611144:Guerrilla Leader Mug
+5:5611145:Guerrilla Leader Mug
+5:5611146:Colonel Due's Subordinate
+5:5611147:Colonel Due's Subordinate
+5:5611148:Colonel Due's Subordinate
+5:5611152:Deserter Zimoto
+5:5611153:Deserter Zimoto
+5:5611154:Deserter Zimoto
+5:5611155:Guardian Soldier
+5:5611156:Guardian Soldier
+5:5611157:Guardian Soldier
+5:5611158:Helmet Breeder
+5:5611159:Helmet Breeder
+5:5611160:Helmet Breeder
+5:5611161:Red Mung Patrol 
+5:5611162:Red Mung Patrol
+5:5611163:Red Mung Patrol
+5:5611164:Red Mung Senior 
+5:5611165:Red Mung Senior 
+5:5611166:Red Mung Senior 
+5:5611167:Red Armband Maintenance Soldier
+5:5611168:Red Armband Maintenance Soldier
+5:5611169:Red Armband Maintenance Soldier
+5:5611170:Red Armband Officer
+5:5611171:Red Armband Officer
+5:5611172:Red Armband Officer
+5:5611173:Helmet Senior Patrol 
+5:5611174:Helmet Senior Patrol 
+5:5611175:Helmet Senior Patrol 
+5:5611176:Mung Squad Leader 
+5:5611177:Mung Squad Leader 
+5:5611178:Mung Squad Leader 
+5:5611179:Waterway Chief Inspector
+5:5611180:Waterway Chief Inspector
+5:5611181:Waterway Chief Inspector
+5:5611182:Death Helmet Patrol
+5:5611183:Death Helmet Patrol
+5:5611184:Death Helmet Patrol
+5:5611185:Angry Helmet Sapper
+5:5611188:Red Pants Despatch
+5:5611201:Traitor Ura
+5:5611202:Traitor Ura
+5:5611203:Traitor Ura
+5:5611204:Extraction Creature Investigator 
+5:5611205:Extraction Creature Investigator 
+5:5611206:Extraction Creature Investigator 
+5:5612101:Helmet Raider
+5:5612102:Helmet Raider
+5:5612103:Helmet Raider
+5:5612104:Helmet Bare-hand Fighter
+5:5612105:Helmet Bare-hand Fighter
+5:5612106:Helmet Bare-hand Fighter
+5:5612107:Helmet Sapper
+5:5612108:Helmet Sapper
+5:5612109:Helmet Sapper
+5:5612110:Bow Advance Party
+5:5612111:Bow Advance Party
+5:5612112:Bow Advance Party
+5:5612113:Bow Elite Unit
+5:5612114:Bow Elite Unit
+5:5612115:Bow Elite Unit
+5:5612116:Advanced Helmet Plunderer
+5:5612117:Advanced Helmet Plunderer
+5:5612118:Advanced Helmet Plunderer
+5:5612119:Shaking Dark Soldier
+5:5612120:Shaking Dark Soldier
+5:5612121:Shaking Dark Soldier
+5:5612122:Kung MP Chief
+5:5612123:Kung MP Chief
+5:5612124:Kung MP Chief
+5:5612125:Helmet Assault Unit
+5:5612126:Helmet Assault Unit
+5:5612127:Helmet Assault Unit
+5:5612128:Guard Sergeant 
+5:5612129:Guard Sergeant 
+5:5612130:Guard Sergeant 
+5:5612131:Red Pants Deserter
+5:5612132:Red Pants Deserter
+5:5612133:Red Pants Deserter
+5:5612134:Mung Guerrilla Unit  
+5:5612135:Mung Guerrilla Unit  
+5:5612136:Mung Guerrilla Unit  
+5:5612137:Low-Level RP Prisoner
+5:5612140:Helmet Assistant Soldier
+5:5612141:Helmet Assistant Soldier
+5:5612142:Helmet Assistant Soldier
+5:5612143:Helmet Defense Unit
+5:5612144:Helmet Defense Unit
+5:5612145:Helmet Defense Unit
+5:5612146:Red Mung Private
+5:5612147:Red Mung Private
+5:5612148:Red Mung Private
+5:5612149:Lower Patrol Dog
+5:5612150:Lower Patrol Dog
+5:5612151:Mung Low-Level Patrol
+5:5612152:Mung Low-Level Private
+5:5612153:Mung Low-Level Private
+5:5612154:Mung Low-Level Private
+5:5612155:Mung Starting-Level Private
+5:5612156:Mung Starting-Level Private
+5:5612157:Mung Starting-Level Private
+5:5612158:Red Starting-Level Patrol
+5:5612159:Red Starting-Level Patrol
+5:5612160:Red Starting-Level Patrol
+5:5612161:Waterway Sentry Squad Leader
+5:5612162:Waterway Sentry Squad Leader
+5:5612163:Waterway Sentry Squad Leader
+5:5612164:Waterway Worker Squad Leader
+5:5612165:Waterway Worker Squad Leader
+5:5612166:Waterway Worker Squad Leader
+5:5612167:Red Pants Deserter
+5:5612201:Billboard Destroyer
+5:5612202:Billboard Destroyer
+5:5612203:Billboard Destroyer
+5:5612204:Red Pants Military Trainee
+5:5612205:Red Pants Military Trainee
+5:5612206:Red Pants Military Trainee
+5:5612207:Death Helmet Deserter
+5:5612208:Death Helmet Deserter
+5:5612209:Death Helmet Deserter
+5:5612210:Dread Plunderer
+5:5612301:Billboard Destroyer Leader
+5:5612302:Billboard Destroyer Leader
+5:5612303:Billboard Destroyer Leader
+5:5612304:Factory Repair Worker
+5:5612307:Helmet Military Engineer
+5:5612308:Helmet Military Engineer
+5:5612309:Helmet Military Engineer
+5:5612310:Helmet Engineering Worker
+5:5612311:Helmet Engineering Worker
+5:5612312:Helmet Engineering Worker
+5:5612313:Suu, the Guard
+5:5612401:Bribed Bow
+5:5612402:Bribed Bow
+5:5612403:Bribed Bow
+5:5613101:Helmet Guerrilla Unit
+5:5613102:Helmet Guerrilla Unit
+5:5613103:Helmet Guerrilla Unit
+5:5613104:Helmet Bunker Unit Soldier
+5:5613105:Helmet Bunker Unit Soldier
+5:5613106:Helmet Bunker Unit Soldier
+5:5613107:Helmet Scouter
+5:5613108:Helmet Scouter
+5:5613109:Helmet Scouter
+5:5613110:Helmet New Private 
+5:5613111:Helmet New Private 
+5:5613112:Helmet New Private 
+5:5613113:Frightening Dark Sergeant 
+5:5613114:Frightening Dark Sergeant 
+5:5613115:Frightening Dark Sergeant 
+5:5613116:Honor Guard 
+5:5613117:Honor Guard 
+5:5613118:Honor Guard 
+5:5613119:Deserter Supervisor 
+5:5613120:Deserter Supervisor
+5:5613121:Deserter Supervisor
+5:5613122:Angry Helmet Sentry
+5:5613123:Angry Helmet Sentry
+5:5613124:Angry Helmet Sentry
+5:5613125:Remaining Helmets Sentry 
+5:5613126:Remaining Helmets Sentry
+5:5613127:Remaining Helmets Sentry
+5:5613128:Helmet Patrol 
+5:5613129:Helmet Patrol 
+5:5613130:Helmet Patrol 
+5:5613131:Red Mung Company Commander
+5:5613132:Red Mung Company Commander
+5:5613133:Red Mung Company Commander
+5:5613134:Helmet Lightening War Unit
+5:5613135:Helmet Lightening War Unit
+5:5613136:Helmet Lightening War Unit
+5:5613137:Helmet Watchman
+5:5613138:Helmet Watchman
+5:5613139:Helmet Watchman
+5:5613140:Advanced Hippo Supervisor
+5:5613141:Advanced Hippo Supervisor
+5:5613142:Advanced Hippo Supervisor
+5:5613143:Angry Helmet Supply Unit Soldier
+5:5613146:Angry Helmet Guard
+5:5613149:Angry Helmet Sentry
+5:5614101:Underground Base Supervising Officer
+5:5614102:Underground Base Supervising Officer
+5:5614103:Underground Base Supervising Officer
+5:5615101:Mushroom Gang Scout
+5:5615104:Mushroom Gang Warrior
+5:5615107:Mushroom Gang Imposter
+5:5615110:Mushroom Gang Raider
+5:5615113:Mushroom Gang Bully
+5:5651101:Big-Eared Rabbit
+5:5651102:Big-Eared Rabbit
+5:5651103:Big-Eared Rabbit
+5:5651104:Strange-Eared Rabbit
+5:5651105:Strange-Eared Rabbit
+5:5651106:Strange-Eared Rabbit
+5:5651107:Teeth Big-Eared Rabbit
+5:5651108:Teeth Big-Eared Rabbit
+5:5651109:Teeth Big-Eared Rabbit
+5:5651110:King Big-Eared Rabbit
+5:5651111:King Big-Eared Rabbit
+5:5651112:King Big-Eared Rabbit
+5:5651113:Crazy Snow-Field Rabbit
+5:5651114:Crazy Snow-Field Rabbit
+5:5651115:Crazy Snow-Field Rabbit
+5:5652101:Devilish Rabbit
+5:5652102:Young Big-Eared Rabbit
+5:5652103:Young Big-Eared Rabbit
+5:5652104:Strong Big-Eared Rabbit
+5:5652105:Strong Big-Eared Rabbit
+5:5652106:Strong Big-Eared Rabbit
+5:5652107:Teeth Young Big-Eared Rabbit
+5:5652108:Teeth Young Big-Eared Rabbit
+5:5652109:Teeth Young Big-Eared Rabbit
+5:5652110:Tiger-Eared Rabbit
+5:5652111:Tiger-Eared Rabbit
+5:5652112:Tiger-Eared Rabbit
+5:5652113:King Young Big-Eared Rabbit
+5:5652114:King Young Big-Eared Rabbit
+5:5652115:King Young Big-Eared Rabbit
+5:5653101:Devil Big-Eared Rabbit
+5:5653102:Devil Big-Eared Rabbit
+5:5653103:Devil Big-Eared Rabbit
+5:5653104:Large-Eared Rabbit Boss
+5:5653105:Large-Eared Rabbit Boss
+5:5653106:Large-Eared Rabbit Boss
+5:5653107:Donkey-Eared Rabbit
+5:5653108:Donkey-Eared Rabbit
+5:5653109:Donkey-Eared Rabbit
+5:5653110:Black-Eared Rabbit
+5:5653111:Black-Eared Rabbit
+5:5653112:Black-Eared Rabbit
+5:5653113:Teeth Devil-Eared Rabbit
+5:5653114:Teeth Devil-Eared Rabbit
+5:5653115:Teeth Devil-Eared Rabbit
+5:5653116:King Devil-Eared Rabbit
+5:5653117:King Devil-Eared Rabbit
+5:5653118:King Devil-Eared Rabbit
+5:5654101:Mighty Big-Eared Rabbit
+5:5654104:Small Mighty Big-Eared Rabbit
+5:5654107:Small Mighty Big-Eared Rabbit
+5:5654110:Small Mighty Big-Eared Rabbit
+5:5654113:Small Mighty Big-Eared Rabbit
+5:5661201:Kankan
+5:5661202:Kankan
+5:5661203:Kankan
+5:5662101:Osamu
+5:5662102:Osamu
+5:5662103:Osamu
+5:56691101:Frieza's Intel Signalman
+5:56691301:Frieza's Field Battle Guerrilla
+5:56691304:Frieza's Field Battle Guerrilla
+5:5671101:Kimi
+5:5671102:Kimi
+5:5671103:Kimi
+5:5671104:Momoko
+5:5671105:Momoko
+5:5671106:Momoko
+5:5681201:Son Gohan (Great Ape)
+5:5681202:Son Gohan (Great Ape)
+5:5681203:Son Gohan (Great Ape)
+5:5681204:Son Gohan (Great Ape)
+5:5681205:Son Gohan (Great Ape)
+5:5681206:Son Gohan (Great Ape)
+5:5681207:Brainwashed Giant Great Ape
+5:5681208:Brainwashed Giant Great Ape
+5:5681209:Brainwashed Giant Great Ape
+5:5681210:Brainwashed Giant Great Ape
+5:5681211:Brainwashed Giant Great Ape
+5:5681212:Brainwashed Giant Great Ape
+5:5681213:Brainwashed Giant Great Ape
+5:5681216:Brainwashed Giant Super Great Ape
+5:5682101:Ozaru Vegeta
+5:5682102:Ozaru Vegeta
+5:5682103:Ozaru Vegeta
+5:5682104:Ozaru Vegeta
+5:5682105:Ozaru Vegeta
+5:5682106:Ozaru Vegeta
+5:5682107:Ozaru Vegeta
+5:5682201:Ozaru Vegeta
+5:5682202:Ozaru Vegeta
+5:5682203:Ozaru Vegeta
+5:5682204:Ozaru Vegeta
+5:5682205:Ozaru Vegeta
+5:5682206:Ozaru Vegeta
+5:5683101:Ozaru Raditz
+5:5684101:Ozaru Nappa
+5:5691101:Mira
+5:5691102:Mira
+5:5691103:Mira
+5:5691104:Mira
+5:5691105:Mira
+5:5691106:Mira
+5:5701101:Giant Mushroom Tree
+5:5701102:Giant Mushroom Tree
+5:5701103:Giant Mushroom Tree
+5:5702101:Little Mushroom Jellyfish
+5:5702102:Little Mushroom Jellyfish
+5:5702103:Little Mushroom Jellyfish
+5:5702104:Sky Mushroom
+5:5702107:Sky Mushroom
+5:5702108:Sky Mushroom
+5:5702109:Sky Mushroom
+5:5711101:Nappa
+5:5711102:Nappa
+5:5711103:Nappa
+5:5711104:Nappa
+5:5711105:Nappa
+5:5711106:Nappa
+5:5711107:Nappa
+5:57131101:Frieza's Guerrilla Medic
+5:5722101:Field Artillery
+5:5722102:Field Artillery
+5:5722103:Field Artillery
+5:5722104:Being made Field Artillery
+5:5722105:Being made Field Artillery
+5:5722106:Being made Field Artillery
+5:5722107:Improved Artillery
+5:5722108:Improved Artillery
+5:5722109:Improved Artillery
+5:5731201:Jean
+5:5731202:Jean
+5:5731203:Jean
+5:5731501:Warrior Carrara
+5:5731502:Warrior Carrara
+5:5731503:Warrior Carrara
+5:5732101:Saimbe
+5:5741101:Giant Insect Nest
+5:5741102:Giant Insect Nest
+5:5741103:Giant Insect Nest
+5:5741104:Giant Insect Nest
+5:5761107:Armored Saibaman
+5:5761108:Armored Saibaman
+5:5761109:Armored Saibaman
+5:5761110:High Performance Saibaman
+5:5761111:High Performance Saibaman
+5:5761112:High Performance Saibaman
+5:5761113:Umbrella Saibaman
+5:5761114:Umbrella Saibaman
+5:5761115:Umbrella Saibaman
+5:5761116:Peaceful Saibaman
+5:5761117:Peaceful Saibaman
+5:5761118:Peaceful Saibaman
+5:5762101:Moss Saibaman
+5:5762102:Moss Saibaman
+5:5762103:Moss Saibaman
+5:5762104:Armored Eye Saibaman
+5:5762105:Armored Eye Saibaman
+5:5762106:Armored Eye Saibaman
+5:5762107:Wooker Saibaman
+5:5763101:Putt-Putt Saibaman
+5:5763104:Deputy Saibaman
+5:5763107:Deputy Saibaman
+5:5764101:Air Defense Saibaman
+5:5764102:Air Defense Saibaman
+5:5764103:Air Defense Saibaman
+5:5765101:Giant Umbrella Saibaman
+5:57711101:Frieza's Intel Patrol
+5:57711301:Frieza's Guerrilla Battler
+5:5774201:Dark Namekian
+5:5774202:Dark Namekian
+5:5774203:Dark Namekian
+5:5781201:Evil Alter Ego
+5:5781202:Evil Alter Ego
+5:5781203:Evil Alter Ego
+5:5781204:Narak Invader General 
+5:5791101:Narak Thief
+5:5791102:Narak Thief
+5:5791103:Narak Thief
+5:5791104:Narak Devil Practitioner
+5:5791105:Narak Devil Practitioner
+5:5791106:Narak Devil Practitioner
+5:5791107:Narak Warrior
+5:5791110:Black Warrior
+5:5791113:Narak Invasion Team
+5:5811101:Creepy Saibaman
+5:5811102:Creepy Saibaman
+5:5811103:Creepy Saibaman
+5:5811104:Big Creepy Saibaman
+5:5811105:Big Creepy Saibaman
+5:5811106:Big Creepy Saibaman
+5:5811107:Big Creepy Saibaman
+5:5811108:Big Creepy Saibaman
+5:5811109:Big Creepy Saibaman
+5:5811110:Giant Creepy Saibaman
+5:5811111:Giant Creepy Saibaman
+5:5811112:Giant Creepy Saibaman
+5:5811125:Creepy Snake Saibaman
+5:5811126:Creepy Snake Saibaman
+5:5811127:Creepy Snake Saibaman
+5:5811128:Marked Saibaman
+5:5811129:Marked Saibaman
+5:5811130:Marked Saibaman
+5:5811131:Creepy Water Saibaman
+5:5811132:Creepy Water Saibaman
+5:5811133:Creepy Water Saibaman
+5:5811134:Giant Creepy Snake Saibaman
+5:5811135:Giant Creepy Snake Saibaman
+5:5811136:Giant Creepy Snake Saibaman
+5:5811201:Lettuce Saibaman
+5:5811202:Lettuce Saibaman
+5:5811203:Lettuce Saibaman
+5:5811204:Smoky Saibaman
+5:5811205:Smoky Saibaman
+5:5811206:Smoky Saibaman
+5:5811207:Giant Creepy Snake Saibaman
+5:5811208:Giant Creepy Snake Saibaman
+5:5811209:Giant Creepy Snake Saibaman
+5:5811210:Spotted Saibaman
+5:5811211:Spotted Saibaman
+5:5811212:Spotted Saibaman
+5:5811213:Burrow Saibaman
+5:5811214:Burrow Saibaman
+5:5811215:Burrow Saibaman
+5:5811216:Strange Vine Saibaman
+5:5812101:Curling Saibaman
+5:5812102:Curling Saibaman
+5:5812103:Curling Saibaman
+5:5812104:King Saibaman
+5:5812105:King Saibaman
+5:5812106:King Saibaman
+5:5812107:Sea Saibaman
+5:5812108:Sea Saibaman
+5:5812109:Sea Saibaman
+5:5812110:East Bristol Saibaman
+5:5812113:Poisonous Saibaman
+5:5812201:Large Curly Saibaman
+5:5812202:Large Saibaman
+5:5812203:Large Saibaman
+5:5812204:White Snake Saibaman
+5:5812205:White Snake Saibaman
+5:5812206:White Snake Saibaman
+5:5812207:Python Saibaman
+5:5812208:Python Saibaman
+5:5812209:Python Saibaman
+5:5812210:Arctic Saibaman
+5:5812211:Arctic Saibaman
+5:5812212:Arctic Saibaman
+5:5812216:Red Beak Saibaman
+5:5812301:Gray Saibaman
+5:5812302:Gray Saibaman
+5:5812303:Gray Saibaman
+5:5812304:King Gray Saibaman
+5:5812305:King Gray Saibaman
+5:5812306:King Gray Saibaman
+5:5812307:Ancient Starfish Saibaman
+5:5812308:Ancient Starfish Saibaman
+5:5812309:Ancient Starfish Saibaman
+5:5812310:Black Beak Saibaman
+5:5812313:Contaminated Saibaman
+5:5813101:Slippery Saibaman
+5:5813102:Slippery Saibaman
+5:5813103:Slippery Saibaman
+5:5813104:Peristaltic Saibaman
+5:5813105:Peristaltic Saibaman
+5:5813106:Peristaltic Saibaman
+5:5813107:Bizarre Saibaman
+5:58131101:Captain Smith
+5:58131301:Frieza's Battle Assault Team
+5:5813201:Sticky Saibaman
+5:5813202:Sticky Saibaman
+5:5813203:Sticky Saibaman
+5:5813204:Kinder Saibaman
+5:5813205:Kinder Saibaman
+5:5813206:Kinder Saibaman
+5:5813207:Darting Wiggling Saibaman
+5:5813208:Darting Wiggling Saibaman
+5:5813209:Darting Wiggling Saibaman
+5:5813301:Glossy Wiggling Saibaman
+5:5813302:Glossy Wiggling Saibaman
+5:5813303:Glossy Wiggling Saibaman
+5:5813304:Smooth Wiggling Saibaman
+5:5813305:Smooth Wiggling Saibaman
+5:5813306:Smooth Wiggling Saibaman
+5:5813307:Soft Wiggling Saibaman
+5:5813308:Soft Wiggling Saibaman
+5:5813309:Soft Wiggling Saibaman
+5:5813310:Time Breaker Saibaman
+5:5813311:Time Breaker Saibaman
+5:5813312:Time Breaker Saibaman
+5:5817101:Brainwashed Wiggling Saibaman
+5:5817102:Brainwashed Wiggling Saibaman
+5:5817103:Brainwashed Wiggling Saibaman
+5:5817104:Brainwashed Wiggling Saibaman
+5:5817105:Brainwashed Wiggling Saibaman
+5:5817106:Brainwashed Wiggling Saibaman
+5:5817107:Brainwashed Wiggling Saibaman
+5:5817108:Brainwashed Wiggling Saibaman
+5:5817109:Brainwashed Wiggling Saibaman
+5:5817110:Brainwashed Wiggling Saibaman
+5:5817111:Brainwashed Wiggling Saibaman
+5:5817112:Brainwashed Wiggling Saibaman
+5:5817113:Brainwashed Wiggling Saibaman
+5:5817114:Brainwashed Wiggling Saibaman
+5:5817115:Brainwashed Wiggling Saibaman
+5:5817116:Brainwashed Wiggling Saibaman
+5:5817117:Brainwashed Wiggling Saibaman
+5:5817118:Brainwashed Wiggling Saibaman
+5:5817119:Brainwashed Wiggling Saibaman
+5:5817122:Brainwashed Wiggling Saibaman
+5:5871101:Narak Soldier
+5:5871102:Narak Soldier
+5:5871103:Narak Soldier
+5:5871104:Narak Royal Guard
+5:5871107:Narak Invader
+5:5872101:Narak Assassin Chief
+5:5872102:Narak Assassin Chief
+5:5872103:Narak Assassin Chief
+5:5872104:Warrior of Chaos
+5:5872107:Narak Garden Guard
+5:5872110:Narak Special Force
+5:5873101:Narak Assassin
+5:5873102:Narak Assassin
+5:5873103:Narak Assassin
+5:5873104:Narak Shadow Knight Trainee
+5:5873105:Narak Shadow Knight Trainee
+5:5873106:Narak Shadow Knight Trainee
+5:5873107:Narak Recluse
+5:5873110:Dark Devil Warrior
+5:5881101:Della
+5:5882101:Narak Defense Warrior
+5:5891101:Narak Fire Shaman 
+5:5892101:Narak Ground Shaman
+5:5931101:Evil Ego
+5:5931102:Evil Ego
+5:5931103:Evil Ego
+5:5931104:Narak Dark Hermit
+5:5931107:Narak Dark Berserker 
+5:5942201:Shuneshune
+5:5943101:Harutz
+5:5943102:Harutz
+5:5943103:Harutz
+5:5943104:Harutz
+5:5943105:Harutz
+5:5943106:Harutz
+5:5943107:Harutz Mini
+5:5943108:Harutz Mini
+5:5943109:Harutz Mini
+5:5943110:Harutz Mini
+5:5943111:Harutz Mini
+5:5943112:Harutz Mini
+5:5943113:Harutz Minimini
+5:5943114:Harutz Minimini
+5:5943115:Harutz Minimini
+5:5943116:Harutz Minimini
+5:5943117:Harutz Minimini
+5:5943118:Harutz Minimini
+5:5951101:Mai Stone Statue
+5:5951102:Mai Stone Statue
+5:5951103:Mai Stone Statue
+5:5951104:Mai Stone Statue
+5:5951105:Mai Stone Statue
+5:5951106:Mai Stone Statue
+5:5951107:Archie
+5:5951108:Archie
+5:5951109:Archie
+5:5951110:Archie
+5:5951111:Archie
+5:5951112:Archie
+5:6:Shenron Type
+5:6011101:OK Robot
+5:6011102:OK Robot
+5:6011103:OK Robot
+5:6011104:Nuisance Robot
+5:6011105:Nuisance Robot
+5:6011106:Nuisance Robot
+5:6011107:OK Patrol Robot
+5:6011108:OK Patrol Robot
+5:6011109:OK Patrol Robot
+5:6011110:Breeding Robot
+5:6011111:Breeding Robot
+5:6011112:Breeding Robot
+5:6011113:Pellet Robot
+5:6011114:Pellet Robot
+5:6011115:Pellet Robot
+5:6011116:Violent Robot A
+5:6011117:Violent Robot A
+5:6011118:Violent Robot A
+5:6011119:Violent Robot D
+5:6011120:Violent Robot D
+5:6011121:Violent Robot D
+5:6011122:Peria
+5:6011123:Peria
+5:6011124:Peria
+5:6011125:Defense Unit Paul
+5:6011126:Defense Unit Paul
+5:6011127:Defense Unit Paul
+5:6011128:Defense Unit Pippi
+5:6011129:Defense Unit Pippi
+5:6011130:Defense Unit Pippi
+5:6011131:Defense Unit Puff
+5:6011132:Defense Unit Puff
+5:6011133:Defense Unit Puff
+5:6011134:Battle Robot
+5:6011137:Defense Unit Kaka
+5:6011138:Defense Unit Kaka
+5:6011139:Defense Unit Kaka
+5:6011140:Spring Water Manager Robot
+5:6011141:Spring Water Manager Robot
+5:6011142:Spring Water Manager Robot
+5:6011143:Field Scout Robot
+5:6011144:Field Scout Robot
+5:6011145:Field Scout Robot
+5:6011201:Troubled Robot
+5:6011202:Troubled Robot
+5:6011203:Troubled Robot
+5:6011204:Wandering Robot
+5:6011205:Wandering Robot
+5:6011206:Wandering Robot
+5:6011207:Strange EM Wave Robot
+5:6011208:Strange EM Wave Robot
+5:6011209:Strange EM Wave Robot
+5:6011210:Old-Style Supervising Robot
+5:6011211:Old-Style Supervising Robot
+5:6011212:Old-Style Supervising Robot
+5:6011213:Damaged Supervising Robot
+5:6011214:Damaged Supervising Robot
+5:6011215:Damaged Supervising Robot
+5:6011216:Wandering Supervising Robot
+5:6011217:Wandering Supervising Robot
+5:6011218:Wandering Supervising Robot
+5:6011219:Ghost Guarding Robot
+5:6011220:Ghost Guarding Robot
+5:6011221:Ghost Guarding Robot
+5:6011222:Super Supervising Robot
+5:6011223:Super Supervising Robot
+5:6011224:Super Supervising Robot
+5:6011225:Cleaning Robot
+5:6011226:Cleaning Robot
+5:6011227:Cleaning Robot
+5:6011228:Weapon Dealer Robot
+5:6011229:Weapon Dealer Robot
+5:6011230:Weapon Dealer Robot
+5:6011231:Bold Management Robot
+5:6011232:Bold Management Robot
+5:6011233:Bold Management Robot
+5:6011234:Violent Robot B
+5:6011235:Violent Robot B
+5:6011236:Violent Robot B
+5:6011237:Wild Experimental Robot
+5:6011238:Wild Experimental Robot
+5:6011239:Wild Experimental Robot
+5:6011240:Robot Officer
+5:6011241:Robot Officer
+5:6011242:Robot Officer
+5:6011243:Robot Dealer
+5:6011244:Robot Dealer
+5:6011245:Robot Dealer
+5:6011246:Robot Guard 
+5:6011247:Robot Guard 
+5:6011248:Robot Guard 
+5:681313220:Small Treasure Chest
+5:681313230:Huge Treasure Chest
+5:6011249:Paladin Robot Guard 
+5:6011250:Paladin Robot Guard 
+5:6011251:Paladin Robot Guard 
+5:6011252:Repaired Battle Robot
+5:6011255:Mine Repair Robot
+5:6011256:Mine Repair Robot
+5:6011257:Mine Repair Robot
+5:6011258:Sea Scout Robot
+5:6011259:Sea Scout Robot
+5:6011260:Sea Scout Robot
+5:6011261:Field Repair Robot
+5:6011262:Field Repair Robot
+5:6011263:Field Repair Robot
+5:6011264:Ricci Lee
+5:6011265:Ricci Lee
+5:6011266:Ricci Lee
+5:6011267:Castle Management Robot
+5:6011301:Broken Vagabond Robot
+5:6011302:Broken Vagabond Robot
+5:6011303:Broken Vagabond Robot
+5:6011304:Transport Vehicle Robot
+5:6011305:Transport Vehicle Robot
+5:6011306:Transport Vehicle Robot
+5:6011307:Insect Breeding Robot
+5:6011308:Insect Breeding Robot
+5:6011309:Insect Breeding Robot
+5:6011310:Poisoning Robot
+5:6011311:Poisoning Robot
+5:6011312:Poisoning Robot
+5:6011313:Investigation Robot
+5:6012101:Automated Robot
+5:6012102:Automated Robot
+5:6012103:Automated Robot
+5:6012104:Stubborn Robot
+5:6012105:Stubborn Robot
+5:6012106:Stubborn Robot
+5:6012107:Automated Robot Patrol
+5:6012108:Automated Robot Patrol
+5:6012109:Automated Robot Patrol
+5:6012110:Guard Robot Alpha
+5:6012111:Guard Robot Alpha
+5:6012112:Guard Robot Alpha
+5:6012113:Violent Robot C
+5:6012114:Violent Robot C
+5:6012115:Violent Robot C
+5:6012116:Mushroom Robot
+5:6012117:Mushroom Robot
+5:6012118:Mushroom Robot
+5:6012119:Mushroom Transport Robot
+5:6012120:Mushroom Transport Robot
+5:6012121:Mushroom Transport Robot
+5:6012122:Guard Robot Beta
+5:6012123:Guard Robot Beta
+5:6012124:Guard Robot Beta
+5:6012125:Noisy Robot
+5:6012126:Noisy Robot
+5:6012127:Noisy Robot
+5:6012128:Kiri Management Robot
+5:6012131:Assault-Type Robot
+5:6012137:Standby Guard Robot
+5:6012138:Standby Guard Robot
+5:6012139:Standby Guard Robot
+5:6012140:Maintenance Robot
+5:6012141:Maintenance Robot
+5:6012142:Maintenance Robot
+5:6012143:New Kiri Robot
+5:6012201:Auto Theft Robot
+5:6012202:Auto Theft Robot
+5:6012203:Auto Theft Robot
+5:6012204:Rusty Automated Robot
+5:6012205:Rusty Automated Robot
+5:6012206:Rusty Automated Robot
+5:6012210:Automated Thief Robot
+5:6012211:Automated Thief Robot
+5:6012212:Automated Thief Robot
+5:6012213:Runaway Supervision Robot
+5:6012214:Runaway Supervision Robot
+5:6012215:Runaway Supervision Robot
+5:6012216:Abandoned Guard Robot
+5:6012222:Fuel Surveillance Robot
+5:6012223:Fuel Surveillance Robot
+5:6012224:Fuel Surveillance Robot
+5:6012225:Confused Guard Robot
+5:6012226:Confused Guard Robot
+5:6012227:Confused Guard Robot
+5:6012228:Patrol Guard Robot
+5:6012229:Patrol Guard Robot
+5:6012230:Patrol Guard Robot
+5:6012231:Kiri-Robot
+5:6012232:Kiri-Robot
+5:6012233:Kiri-Robot
+5:6012234:Broken Shooting Robot
+5:6012235:Broken Shooting Robot
+5:6012236:Broken Shooting Robot
+5:6012237:Dirty Smelly Kiri Robot
+5:6012238:Dirty Smelly Kiri Robot
+5:6012239:Dirty Smelly Kiri Robot
+5:6012240:Dirty Smelly Kiri Robot
+5:6013101:Monkey Robot
+5:6013102:Monkey Robot
+5:6013103:Monkey Robot
+5:6013104:Ghost Robot
+5:6013105:Ghost Robot
+5:6013106:Ghost Robot
+5:6013107:MX-06J
+5:6013108:MX-06J
+5:6013109:MX-06J
+5:6013110:R-Type Oil Licker Robot
+5:6013111:R-Type Oil Licker Robot
+5:6013112:R-Type Oil Licker Robot
+5:6013113:Overseer Robot
+5:6013114:Overseer Robot
+5:6013115:Overseer Robot
+5:6013116:Police Robot
+5:6013117:Police Robot
+5:6013118:Police Robot
+5:6013119:Magnetic Field Robot King
+5:6013120:Magnetic Field Robot King
+5:6013121:Magnetic Field Robot King
+5:6013122:Dispatched Robot A
+5:6013123:Dispatched Robot A
+5:6013124:Dispatched Robot A
+5:6013201:Troubled Robot King
+5:6013202:Troubled Robot King
+5:6013203:Troubled Robot King
+5:6013204:P-Type Suction Robot
+5:6013205:P-Type Suction Robot
+5:6013206:P-Type Suction Robot
+5:6013207:MX-06S
+5:6013208:MX-06S
+5:6013209:MX-06S
+5:6013210:Weapon Smuggling Robot
+5:6013211:Weapon Smuggling Robot
+5:6013212:Weapon Smuggling Robot
+5:6013213:O-Type Oil Shock Robot
+5:6013214:O-Type Oil Shock Robot
+5:6013215:O-Type Oil Shock Robot
+5:6013216:Guardian Robot
+5:6013217:Guardian Robot
+5:6013218:Guardian Robot
+5:6013301:MX-06F
+5:6013302:MX-06F
+5:6013303:MX-06F
+5:6013304:Abandoned Battle Robot
+5:6013307:Mushroom Plunderer Robot
+5:6014101:Laser Guard
+5:6014102:Laser Guard
+5:6014103:Laser Guard
+5:6014104:Super Laser Guard
+5:6014105:Super Laser Guard
+5:6014106:Super Laser Guard
+5:6014107:Laser Guard
+5:6014108:Laser Guard
+5:6014109:Laser Guard
+5:6014110:Super Laser Guard
+5:6014111:Super Laser Guard
+5:6014112:Super Laser Guard
+5:6014113:Lost Laser Guard
+5:6014114:Lost Laser Guard
+5:6014115:Lost Laser Guard
+5:6014116:Inspector Robot
+5:6014117:Inspector Robot
+5:6014118:Inspector Robot
+5:6014119:Renovated Laser Guard
+5:6014120:Renovated Laser Guard
+5:6014121:Renovated Laser Guard
+5:6014122:Prison Laser Guard
+5:6014125:Laser Guard
+5:6014126:Laser Guard
+5:6014127:Laser Guard
+5:6014128:Super Laser Guard
+5:6014129:Super Laser Guard
+5:6014130:Super Laser Guard
+5:6014131:Renovated Laser Guard
+5:6211101:Mole Cricket 
+5:6211102:Mole Cricket 
+5:6211103:Mole Cricket 
+5:6211104:Lonely Mole Cricket 
+5:6211105:Lonely Mole Cricket
+5:6211106:Lonely Mole Cricket
+5:6211107:Wagu Mole Cricket
+5:6211110:Mailed Mole Cricket
+5:6211111:Mailed Mole Cricket
+5:6211112:Mailed Mole Cricket
+5:6211113:Drum Mole Cricket
+5:6211114:Drum Mole Cricket
+5:6211115:Drum Mole Cricket
+5:6211116:Yoy Mole Cricket
+5:6211117:Yoy Mole Cricket
+5:6211118:Yoy Mole Cricket
+5:6211119:Armored Mole Cricket
+5:6211120:Armored Mole Cricket
+5:6211121:Armored Mole Cricket
+5:6211122:Bulldozer Mole Cricket
+5:6211123:Bulldozer Mole Cricket
+5:6211124:Bulldozer Mole Cricket
+5:6211125:Great Mole Cricket
+5:6211126:Great Mole Cricket
+5:6211127:Great Mole Cricket
+5:6211128:Champ Mole Cricket
+5:6211129:Champ Mole Cricket
+5:6211130:Champ Mole Cricket
+5:6211131:Metal Mole Cricket
+5:6211132:Metal Mole Cricket
+5:6211133:Metal Mole Cricket
+5:6211134:Mole Cricket Ranger
+5:6211135:Mole Cricket Ranger
+5:6211136:Mole Cricket Ranger
+5:6211137:Wandering Mole Cricket
+5:6211138:Wandering Mole Cricket
+5:6211139:Wandering Mole Cricket
+5:6211140:Fierce Bristol Mole Cricket
+5:6211143:Bristol Mole Cricket
+5:6211146:Maen Mole Cricket
+5:6211201:Tyrant Mole Cricket
+5:6211204:King Mole Cricket
+5:6211205:King Mole Cricket
+5:6211206:King Mole Cricket
+5:6211207:Unfinished Mecha Mole Cricket
+5:6211208:Unfinished Mecha Mole Cricket
+5:6211209:Unfinished Mecha Mole Cricket
+5:6211210:Uncompleted Mecha Mole Cricket
+5:6211211:Uncompleted Mecha Mole Cricket
+5:6211212:Uncompleted Mecha Mole Cricket
+5:6211213:Renovated Mecha Mole Cricket
+5:6211214:Renovated Mecha Mole Cricket
+5:6211215:Renovated Mecha Mole Cricket
+5:6211216:Chaos Mole Cricket
+5:6211217:Chaos Mole Cricket
+5:6211218:Chaos Mole Cricket
+5:6211219:Grip Bristol Mole Cricket
+5:6211222:Heavy Kung Bug
+5:6212101:Big Horn Mole Cricket
+5:6212102:Big Horn Mole Cricket
+5:6212103:Big Horn Mole Cricket
+5:6212104:Weird Mole Cricket
+5:6212107:Emperor Mole Cricket
+5:6212108:Emperor Mole Cricket
+5:6212109:Emperor Mole Cricket
+5:6212110:Drameulan 
+5:6212111:Drameulan 
+5:6212112:Drameulan 
+5:6212113:Steam Mole Cricket
+5:6212114:Steam Mole Cricket
+5:6212115:Steam Mole Cricket
+5:6212116:Star Mole Cricket
+5:6212117:Star Mole Cricket
+5:6212118:Star Mole Cricket
+5:6212119:Waterway Mole Cricket
+5:6212120:Waterway Mole Cricket
+5:6212121:Waterway Mole Cricket
+5:6212122:Lost Drameulan
+5:6212123:Lost Drameulan
+5:6212124:Lost Drameulan
+5:6212125:Crater Mole Cricket 
+5:6212126:Crater Mole Cricket 
+5:6212127:Crater Mole Cricket 
+5:6212128:Plated Mole Cricket
+5:6212129:Plated Mole Cricket
+5:6212130:Plated Mole Cricket
+5:6212131:Tank Mole Cricket
+5:6212132:Tank Mole Cricket
+5:6212133:Tank Mole Cricket
+5:6212134:Monster Insect
+5:6212135:Monster Insect
+5:6212136:Monster Insect
+5:6212137:Sampling Mole Cricket
+5:6212138:Sampling Mole Cricket
+5:6212139:Sampling Mole Cricket
+5:6212140:Renovated Mole Cricket
+5:6212141:Renovated Mole Cricket
+5:6212142:Renovated Mole Cricket
+5:6212143:Renovated Mole Cricket
+5:6212144:Renovated Mole Cricket
+5:6212145:Renovated Mole Cricket
+5:6212146:Dark Iron-Armored Mole Cricket
+5:6212147:Dark Iron-Armored Mole Cricket
+5:6212148:Dark Iron-Armored Mole Cricket
+5:6212149:Cast Iron Mole Cricket
+5:6212150:Cast Iron Mole Cricket
+5:6212151:Cast Iron Mole Cricket
+5:6212152:Galburi Mole Cricket
+5:6212155:Mushroom Mole Cricket
+5:6212158:Gulp Mole Cricket
+5:6212159:East Bristol Mole Cricket
+5:6212204:Hercules Beetle
+5:6212205:Hercules Beetle
+5:6212206:Hercules Beetle
+5:6212207:Guard Mold Cricket
+5:6212208:Guard Mold Cricket
+5:6212209:Guard Mold Cricket
+5:6212210:Excited Mold Cricket
+5:6212211:Excited Mold Cricket
+5:6212212:Excited Mold Cricket
+5:6213101:Ground Kang Kang
+5:6213104:Bristol Monster King
+5:6213107:Bristol Monster King
+5:6213204:Undead Mole Cricket
+5:6213205:Undead Mole Cricket
+5:6213206:Undead Mole Cricket
+5:6411101:Colonel Due
+5:6411102:Colonel Due
+5:6411103:Colonel Due
+5:6411104:RP Laundry Unit
+5:6411105:RP Laundry Unit
+5:6411106:RP Laundry Unit
+5:6411107:Airborne Troop Wallus
+5:6411108:Airborne Troop Wallus
+5:6411109:Airborne Troop Wallus
+5:6411110:Infantry Wallus
+5:6411111:Infantry Wallus
+5:6411112:Infantry Wallus
+5:6412101:Deserter Wallus
+5:6412102:Deserter Wallus
+5:6412103:Deserter Wallus
+5:6412104:Angry Deserter Wallus
+5:6412105:Angry Deserter Wallus
+5:6412106:Angry Deserter Wallus 
+5:6412107:Navy Wallus Remnant
+5:6412108:Navy Wallus Remnant
+5:6412109:Navy Wallus Remnant
+5:6412110:Navy Wallus Remnant
+5:6412111:Navy Wallus Remnant
+5:6412112:Navy Wallus Remnant
+5:6412113:Advanced Party Wallus 
+5:6412114:Advanced Party Wallus 
+5:6412115:Advanced Party Wallus
+5:6412116:Chemical Processing Soldier
+5:6412117:Chemical Processing Soldier
+5:6412118:Chemical Processing Soldier
+5:6412119:Red Pants Hijacking Soldier
+5:6412120:Red Pants Hijacking Soldier
+5:6412121:Red Pants Hijacking Soldier
+5:6412122:Wallus Sentry
+5:6412123:Wallus Sentry
+5:6412124:Wallus Sentry
+5:6412125:Army Wallus Sentry Remnant
+5:6412126:Army Wallus Sentry Remnant
+5:6412127:Army Wallus Sentry Remnant
+5:6412131:Wallus Cleaning Duty Soldier
+5:6412132:Wallus Cleaning Duty Soldier
+5:6412133:Wallus Cleaning Duty Soldier
+5:6412134:Wallus Soldier for Experiment
+5:6412135:Wallus Soldier for Experiment
+5:6412136:Wallus Soldier for Experiment
+5:6412201:Royal Guard Wallus
+5:6412202:Royal Guard Wallus
+5:6412203:Royal Guard Wallus
+5:6412204:Angry Royal Guard Wallus
+5:6412205:Angry Royal Guard Wallus
+5:6412206:Angry Royal Guard Wallus
+5:6412207:Armageddon Unit Wallus
+5:6412208:Armageddon Unit Wallus
+5:6412209:Armageddon Unit Wallus
+5:6412210:Wallus Pirate
+5:6412211:Wallus Pirate
+5:6412212:Wallus Pirate
+5:6412213:Budokai Fighter
+5:6412214:Budokai Fighter
+5:6412215:Budokai Fighter
+5:6412216:Middle-Level RP Prisoner
+5:6412219:Derk Plunderer Chief 
+5:6412220:Derk Plunderer Chief 
+5:6412221:Derk Plunderer Chief 
+5:6412401:Red Pants Fishing Champion 
+5:6412402:Red Pants Fishing Champion 
+5:6412403:Red Pants Fishing Champion 
+5:6413101:Adieu Assassin
+5:6413102:Adieu Assassin
+5:6413103:Adieu Assassin
+5:6413107:Gooris Buffalo Watchman
+5:6413108:Gooris Buffalo Watchman
+5:6413109:Gooris Buffalo Watchman
+5:6414201:Wallus Pirate Captain
+5:6415101:Hook the Sentry
+5:6415102:Hook the Sentry
+5:6415103:Hook the Sentry
+5:6415104:Duk the Sentry
+5:6415105:Duk the Sentry
+5:6415106:Duk the Sentry
+5:6415107:Special Force
+5:6415108:Special Force
+5:6415109:Special Force
+5:6415110:Wallus Invader 
+5:6415111:Wallus Invader
+5:6415112:Wallus Invader
+5:6415113:Red Pants Gun Trainee
+5:6415114:Red Pants Gun Trainee
+5:6415115:Red Pants Gun Trainee
+5:6415116:Wallus Guerrilla Unit
+5:6415117:Wallus Guerrilla Unit
+5:6415118:Wallus Guerrilla Unit
+5:6415119:Wallus Rifle Unit
+5:6415120:Wallus Rifle Unit
+5:6415121:Wallus Rifle Unit
+5:6415122:Fortress Sniper Wallus
+5:6415123:Fortress Sniper Wallus
+5:6415124:Fortress Sniper Wallus
+5:6415125:Cuspid Rifleman
+5:6415126:Cuspid Rifleman
+5:6415127:Cuspid Rifleman
+5:6415128:Sniper Wallus
+5:6415129:Sniper Wallus
+5:6415130:Sniper Wallus
+5:6415131:Rifleman for Experiment
+5:6415132:Rifleman for Experiment
+5:6415133:Rifleman for Experiment
+5:6415134:Special Force Wallus
+5:6415135:WSpecial Force Wallus
+5:6415136:WSpecial Force Wallus
+5:6415137:Guriguri First Rifleman
+5:6415140:Underground Base Defender
+5:6415141:Underground Base Defender
+5:6415142:Underground Base Defender
+5:6582101:Pilaf Stone Statue
+5:6582102:Pilaf Stone Statue
+5:6582103:Pilaf Stone Statue
+5:6582104:Pilaf Stone Statue
+5:6582105:Pilaf Stone Statue
+5:6582106:Pilaf Stone Statue
+5:6582107:Archie
+5:6582108:Archie
+5:6582109:Archie
+5:6582110:Archie
+5:6582111:Archie
+5:6582112:Archie
+5:6611101:Bear Soldier
+5:6611102:Bear Soldier
+5:6611103:Bear Soldier
+5:6611104:Aggravated Bear Soldier
+5:6611105:Aggravated Bear Soldier
+5:6611106:Aggravated Bear Soldier
+5:6611107:Bear Guerrilla Unit
+5:6611108:Bear Guerrilla Unit
+5:6611109:Bear Guerrilla Unit
+5:6611110:Teddy Supply Unit
+5:6611111:Teddy Supply Unit
+5:6611112:Teddy Supply Unit
+5:6611113:Bear Instructor
+5:6611114:Bear Instructor
+5:6611115:Bear Instructor
+5:6611116:Bird Thief Bear
+5:6611117:Bird Thief Bear
+5:6611118:Bird Thief Bear
+5:6611119:Teddy Supervising Officer
+5:6611120:Teddy Supervising Officer
+5:6611121:Teddy Supervising Officer
+5:6611122:Big Bear Sentry
+5:6611123:Big Bear Sentry
+5:6611124:Big Bear Sentry
+5:6611201:Defeated Bear Soldier
+5:6611202:Defeated Bear Soldier
+5:6611203:Defeated Bear Soldier
+5:6611204:Bear Soldier Guerrilla
+5:6611205:Bear Soldier Guerrilla
+5:6611206:Bear Soldier Guerrilla
+5:6611207:Gila J
+5:6611208:Gila J
+5:6611209:Gila J
+5:6611210:Bear Slave Soldier
+5:6611211:Bear Slave Soldier
+5:6611212:Bear Slave Soldier
+5:6611213:Campbell
+5:6611214:Campbell
+5:6611215:Campbell
+5:6611216:Teddy Timbering Unit
+5:6611217:Teddy Timbering Unit
+5:6611218:Teddy Timbering Unit
+5:6611219:New Action Actor
+5:6611220:New Action Actor
+5:6611221:New Action Actor
+5:6611222:Bear Sentry
+5:6611223:Bear Sentry
+5:6611224:Bear Sentry
+5:6611228:Helmet Supply Manager
+5:6611229:Helmet Supply Manager
+5:6611230:Helmet Supply Manager
+5:6611231:Helmet Supply Supervisor
+5:6611232:Helmet Supply Supervisor
+5:6611233:Helmet Supply Supervisor
+5:6611301:Billboard Scribbling Gang
+5:6611302:Billboard Scribbling Gang
+5:6611303:Billboard Scribbling Gang
+5:6611401:Billboard Scribbling Leader
+5:6611402:Billboard Scribbling Leader
+5:6611403:Billboard Scribbling Leader
+5:6611501:Wandering Worker
+5:6611502:Wandering Worker
+5:6611503:Wandering Worker
+5:6612101:Panda Royal Guard
+5:6612102:Panda Royal Guard
+5:6612103:Panda Royal Guard
+5:6612104:General Flower
+5:6612105:General Flower
+5:6612106:General Flower
+5:6612107:Panda Armageddon Unit
+5:6612108:Panda Armageddon Unit
+5:6612109:Panda Armageddon Unit
+5:6612110:Remained Army of Panda
+5:6612111:Remained Army of Panda
+5:6612112:Remained Army of Panda
+5:6612113:Panda Grave Robber 
+5:6612114:Panda Grave Robber 
+5:6612115:Panda Grave Robber 
+5:6612116:Panda Special Force
+5:6612117:Panda Special Force
+5:6612118:Panda Special Force
+5:6612119:General Shenmaong
+5:6612120:General Shenmaong
+5:6612121:General Shenmaong
+5:6612122:Panda Thief 
+5:6612123:Panda Thief 
+5:6612124:Panda Thief 
+5:6612125:Hungry Cleaning Soldier
+5:6612126:Hungry Cleaning Soldier
+5:6612127:Hungry Cleaning Soldier
+5:6612128:Chief of Signal Unit
+5:6612129:Chief of Signal Unit
+5:6612130:Chief of Signal Unit
+5:6612201:Panda Hot-Wind Unit
+5:6612202:Panda Hot-Wind Unit
+5:6612203:Panda Hot-Wind Unit
+5:6612204:Panda Plunderer
+5:6612205:Panda Plunderer
+5:6612206:Panda Plunderer
+5:6612207:Panda Shock Trooper
+5:6612208:Panda Shock Trooper
+5:6612209:Panda Shock Trooper
+5:6612210:Panda Deserter
+5:6612211:Panda Deserter
+5:6612212:Panda Deserter
+5:6612213:Panda Wolf Tamer 
+5:6612214:Panda Wolf Tamer 
+5:6612215:Panda Wolf Tamer 
+5:6612216:Panda Avian Tamer
+5:6612217:Panda Avian Tamer
+5:6612218:Panda Avian Tamer
+5:6612219:Smell's Bodyguard 
+5:6612220:Smell's Bodyguard
+5:6612221:Smell's Bodyguard
+5:6612222:General's Royal Guard
+5:6612223:General's Royal Guard
+5:6612224:General's Royal Guard
+5:6612225:General Stripe
+5:6612226:General Stripe
+5:6612227:General Stripe
+5:6612228:General Polka
+5:6612229:General Polka
+5:6612230:General Polka
+5:6612231:Field Artillery Transporter
+5:6612232:Field Artillery Transporter
+5:6612233:Field Artillery Transporter
+5:6612237:Panda Invader Team Leader
+5:6612238:Panda Invader Team Leader
+5:6612239:Panda Invader Team Leader
+5:6612240:Panda Wolf Special Force
+5:6612241:Panda Wolf Special Force
+5:6612242:Panda Wolf Special Force
+5:6613101:North Pole Raider
+5:6613102:North Pole Raider
+5:6613103:North Pole Raider
+5:6613104:Sergeant North Pole Raider
+5:6613105:Sergeant North Pole Raider
+5:6613106:Sergeant North Pole Raider
+5:6613107:North Pole Commander
+5:6613108:North Pole Commander
+5:6613109:North Pole Commander
+5:6613201:North Pole Soldier
+5:6613202:North Pole Soldier
+5:6613203:North Pole Soldier
+5:6613204:Sergeant North Pole Soldier
+5:6613205:Sergeant North Pole Soldier
+5:6613206:Sergeant North Pole Soldier
+5:6613207:Bear Worker
+5:6613208:Bear Worker
+5:6613209:Bear Worker
+5:6613210:North Pole Soldier Sample
+5:6613211:North Pole Soldier Sample
+5:6613212:North Pole Soldier Sample
+5:6613213:Deserted Red Pants Prisoner
+5:6613216:Classic Teddy Strike Force
+5:6613217:Classic Teddy Strike Force
+5:6613218:Classic Teddy Strike Force
+5:6613219:Sergeant White Bear
+5:6613220:Sergeant White Bear
+5:6613221:Sergeant White Bear
+5:6613301:North Pole Junior Soldier
+5:6613302:North Pole Junior Soldier
+5:6613303:North Pole Junior Soldier
+5:6613304:North Pole Senior Soldier
+5:6613305:North Pole Senior Soldier
+5:6613306:North Pole Senior Soldier
+5:6613307:White Bearman
+5:6613308:White Bearman
+5:6613309:White Bearman
+5:6613310:North Pole Deserter
+5:6613311:North Pole Deserter
+5:6613312:North Pole Deserter
+5:6613313:Defeated North Pole Remnant
+5:6613314:Defeated North Pole Remnant
+5:6613315:Defeated North Pole Remnant
+5:6613316:White Bear
+5:6613317:White Bear
+5:6613318:White Bear
+5:6613319:North Pole Worker
+5:6613320:North Pole Worker
+5:6613321:North Pole Worker
+5:6613322:Sweeping Bossman
+5:6613323:Sweeping Bossman
+5:6613324:Sweeping Bossman
+5:6613401:Forced Worker
+5:6614104:Mr. Panda
+5:6614105:Mr. Panda
+5:6614106:Mr. Panda
+5:6614107:Panda Thief Leader
+5:6616101:Supply Soldier Lynn
+5:6616102:Supply Soldier Lynn
+5:6616103:Supply Soldier Lynn
+5:6616104:Bazookaman
+5:6616105:Bazookaman
+5:6616106:Bazookaman
+5:6616107:Bazookaman
+5:6616108:Bazookaman
+5:6616109:Bazookaman
+5:6616110:Guriguri Bazookaman
+5:6617101:Mushroom Gang Fighter
+5:6617104:Mushroom Gang Bully
+5:6617107:Mushroom Gang Worker
+5:6631201:Devil Dragon
+5:6631202:Devil Dragon
+5:6631203:Devil Dragon
+5:6631204:Creature of Evil
+5:6631205:Creature of Evil
+5:6631206:Creature of Evil
+5:6631207:Narak Devil Dragon
+5:6651201:Devil Dragon Leader
+5:6651202:Devil Dragon Leader
+5:6651203:Devil Dragon Leader
+5:6651204:Evil Creature Leader
+5:6651205:Evil Creature Leader
+5:6651206:Evil Creature Leader
+5:6651207:Training-Purpose Devil Dragon
+5:6651208:Training-Purpose Devil Dragon
+5:6651209:Training-Purpose Devil Dragon
+5:6651210:Narak Devil Dragon
+5:6671101:Giant Insect-Eating Plant
+5:6671102:Giant Insect-Eating Plant
+5:6671103:Giant Insect-Eating Plant
+5:6681101:Berserk Buu
+5:6681102:Berserk Buu
+5:6681103:Berserk Buu
+5:6681104:Berserk Buu #3
+5:6681105:Berserk Buu #3
+5:6681106:Berserk Buu #3
+5:6681107:Berserk Buu #2
+5:6681108:Berserk Buu #2
+5:6681109:Berserk Buu #2
+5:6681110:Berserk Buu #1
+5:6681111:Berserk Buu #1
+5:6681112:Berserk Buu #1
+5:6681113:Berserk Buu #4
+5:6681114:Berserk Buu #4
+5:6681115:Berserk Buu #4
+5:6681201:Evil of Inside
+5:6681202:Evil of Inside
+5:6681203:Evil of Inside
+5:6681301:Berserk Buu #4
+5:6681302:Berserk Buu #4
+5:6681303:Berserk Buu #4
+5:6692101:Harutz
+5:6692102:Harutz
+5:6692103:Harutz
+5:6692104:Harutz
+5:6692105:Harutz
+5:6692106:Harutz
+5:6751101:Remodeled Pilaf Machine
+5:6751102:Remodeled Pilaf Machine
+5:6751103:Remodeled Pilaf Machine
+5:6751104:Furious Fixing Machine
+5:6751107:Remodeled Pilaf Machine
+5:6751201:Weapon Master Robot
+5:6751202:Weapon Master Robot
+5:6751203:Weapon Master Robot
+5:6751204:Dispatched Supervising Robot
+5:6752101:Broken Remodeled Pilaf Machine
+5:6752102:Broken Remodeled Pilaf Machine
+5:6752103:Broken Remodeled Pilaf Machine
+5:6752104:Guardian Pilaf Machine
+5:6752107:Guardian Pilaf Machine
+5:6781101:Traiak
+5:6781104:Osoro Flying Dinosaur
+5:6811101:Child Saibaman
+5:6811102:Child Saibaman
+5:6811103:Child Saibaman
+5:6811104:Ax Child Saibaman
+5:6811105:Ax Child Saibaman
+5:6811106:Ax Child Saibaman
+5:6811119:Small Juicy Saibaman
+5:6811120:Small Juicy Saibaman
+5:6811121:Small Juicy Saibaman
+5:6811122:Giant Child Saibaman
+5:6811123:Giant Child Saibaman
+5:6811124:Giant Child Saibaman
+5:6811125:Sweet Scent Saibaman
+5:6811126:Sweet Scent Saibaman
+5:6811127:Sweet Scent Saibaman
+5:6811128:Original Saibaman
+5:6811129:Original Saibaman
+5:6811130:Original Saibaman
+5:6811131:Just-Born Saibaman
+5:6811132:Just-Born Saibaman
+5:6811133:Just-Born Saibaman
+5:6811134:Infant Saibaman
+5:6811135:Infant Saibaman
+5:6811136:Infant Saibaman
+5:6811137:Toddling Saibaman
+5:6811138:Toddling Saibaman
+5:6811139:Toddling Saibaman
+5:6811140:Herb Scent Saibaman
+5:6811141:Herb Scent Saibaman
+5:6811142:Herb Scent Saibaman
+5:6811143:Insect-Eating Saibaman
+5:6811144:Insect-Eating Saibaman
+5:6811145:Insect-Eating Saibaman
+5:6811146:Gas Special Force Saibaman
+5:6811149:Mini Saibaman
+5:6811152:Mini Special Force Saibaman
+5:6811155:Mini Saibaman
+5:6811201:Huge Child Saibaman
+5:6811202:Huge Child Saibaman
+5:6811203:Huge Child Saibaman
+5:6811204:Shadow Child Saibaman
+5:6811205:Shadow Child Saibaman
+5:6811206:Shadow Child Saibaman
+5:6811207:Advanced Original Saibaman
+5:6811208:Advanced Original Saibaman
+5:6811209:Advanced Original Saibaman
+5:6811210:Shady Child Saibaman
+5:6811211:Shady Child Saibaman
+5:6811212:Shady Child Saibaman
+5:6811213:Brainwashed Explosion Saibaman
+5:6811301:Emperor Child Saibaman
+5:6811302:Emperor Child Saibaman
+5:6811303:Emperor Child Saibaman
+5:6811304:Snow Child Saibaman
+5:6811305:Snow Child Saibaman
+5:6811306:Snow Child Saibaman
+5:6811307:Ice Child Saibaman
+5:6811308:Ice Child Saibaman
+5:6811309:Ice Child Saibaman
+5:6811310:Doping Child Saibaman
+5:6811311:Doping Child Saibaman
+5:6811312:Doping Child Saibaman
+5:6811313:Poisonous Child Saibaman
+5:6811314:Poisonous Child Saibaman
+5:6811315:Poisonous Child Saibaman
+5:6811316:Huge Child Saibaman
+5:6811317:Huge Child Saibaman
+5:6811318:Huge Child Saibaman
+5:6811319:Emperor Saibaman
+5:6811320:Emperor Saibaman
+5:6811321:Emperor Saibaman
+5:6811322:Salt Crystal Saibaman
+5:6811323:Salt Crystal Saibaman
+5:6811324:Salt Crystal Saibaman
+5:6811325:Bread Saibaman
+5:6811328:Huge Child Saibaman
+5:6812101:Tiger Saibaman
+5:6812102:Tiger Saibaman
+5:6812103:Tiger Saibaman
+5:6813104:Vally Rock Saibaman
+5:6813107:Tangtang Ball Saibaman
+5:6813108:Tangtang Ball Saibaman
+5:6813109:Tangtang Ball Saibaman
+5:6813110:Tantan Ball Saibaman
+5:6813111:Tantan Ball Saibaman
+5:6813112:Tantan Ball Saibaman
+5:6813113:Tangtang Rock Saibaman
+5:6813114:Tangtang Rock Saibaman
+5:6813115:Tangtang Rock Saibaman
+5:6813116:Tangtang Crag Saibaman
+5:6813117:Tangtang Crag Saibaman
+5:6813118:Tangtang Crag Saibaman
+5:6816110:Dark Child Saibaman
+5:6816111:Dark Child Saibaman
+5:6816112:Dark Child Saibaman
+5:6818101:Brainwashed Child Saibaman
+5:6818102:Brainwashed Child Saibaman
+5:6818103:Brainwashed Child Saibaman
+5:6818104:Brainwashed Child Saibaman
+5:6818105:Brainwashed Child Saibaman
+5:6818106:Brainwashed Child Saibaman
+5:6818107:Brainwashed Child Saibaman
+5:6818108:Brainwashed Child Saibaman
+5:6818109:Brainwashed Child Saibaman
+5:6818110:Brainwashed Huge Child Saibaman
+5:6818111:Brainwashed Huge Child Saibaman
+5:6818112:Brainwashed Huge Child Saibaman
+5:6818113:Brainwashed Child Saibaman
+5:6818114:Brainwashed Child Saibaman
+5:6818115:Brainwashed Child Saibaman
+5:6818116:Brainwashed Child Saibaman
+5:6818117:Brainwashed Child Saibaman
+5:6818118:Brainwashed Child Saibaman
+5:6818119:Brainwashed Child Saibaman
+5:6818120:Brainwashed Child Saibaman
+5:6818121:Brainwashed Child Saibaman
+5:6881101:Queen Saktugi 
+5:6881104:Queen Saktugi 
+5:6911101:Brainwashed Cui
+5:6911102:Brainwashed Cui
+5:6911103:Brainwashed Cui
+5:6911104:Brainwashed Cui
+5:6911105:Brainwashed Cui
+5:6911106:Brainwashed Cui
+5:7:Devil Type
+5:7011101:Raditz
+5:7011102:Raditz
+5:7011103:Raditz
+5:7011104:Raditz
+5:7011105:Raditz
+5:7011106:Raditz
+5:7011107:Raditz
+5:7011108:Raditz
+5:7011109:Raditz
+5:7011110:Raditz
+5:7111101:Reginean
+5:7111102:Reginean
+5:7111103:Reginean
+5:7111104:Special Reginean
+5:7111105:Special Reginean
+5:7111106:Special Reginean
+5:7111107:Suspicious Alien
+5:7111108:Suspicious Alien
+5:7111109:Suspicious Alien
+5:7111110:Reginean Occupation Force
+5:7111111:Reginean Occupation Force
+5:7111112:Reginean Occupation Force
+5:7111113:Frieza's Army Signalman
+5:7111114:Frieza's Army Signalman
+5:7111115:Frieza's Army Signalman
+5:7111116:Reginean Bomber
+5:7111117:Reginean Bomber
+5:7111118:Reginean Bomber
+5:7111119:Field Clinic Guard
+5:7111122:Reginean Defense Unit
+5:7111123:Reginean Defense Unit
+5:7111124:Reginean Defense Unit
+5:7111125:Reginean Supply Unit
+5:7111126:Reginean Supply Unit
+5:7111127:Reginean Supply Unit
+5:7111128:Reginean Intelligence Corps
+5:7111129:Reginean Intelligence Corps
+5:7111130:Reginean Intelligence Corps
+5:7111131:Barbarian Raider
+5:7111132:Barbarian Raider
+5:7111133:Barbarian Raider
+5:7111134:Stolen Property Manager
+5:7111137:Instructor soldier
+5:7111140:Graham Minister
+5:7111201:Elite Reginean
+5:7111202:Elite Reginean
+5:7111203:Elite Reginean
+5:7111204:Special Elite Reginean
+5:7111205:Special Elite Reginean
+5:7111206:Special Elite Reginean
+5:7111207:Surveillance Soldier
+5:7111208:Surveillance Soldier
+5:7111209:Surveillance Soldier
+5:7111210:Reginean Veteran
+5:7111211:Reginean Veteran
+5:7111212:Reginean Veteran
+5:7111213:Captain Sailadeba
+5:7111214:Captain Sailadeba
+5:7111215:Captain Sailadeba
+5:7111216:Reginean Invading Unit
+5:7111219:Reginean Garbage Watchman
+5:7111222:Barbarian Infantryman
+5:7111223:Barbarian Infantryman
+5:7111224:Barbarian Infantryman
+5:7111225:Barbarian Watchman
+5:7111226:Barbarian Watchman
+5:7111227:Barbarian Watchman
+5:7111228:Retired Old Soldier
+5:7111231:Barbario Infantryman
+5:7111301:Reginean Scout
+5:7111302:Reginean Scout
+5:7111303:Reginean Scout
+5:7111304:Reginean Special Scout
+5:7111305:Reginean Special Scout
+5:7111306:Reginean Special Scout
+5:7111310:Brainwashed Kiri Collector
+5:7111311:Brainwashed Kiri Collector
+5:7111312:Brainwashed Kiri Collector
+5:7111313:Field Clinic Manager
+5:7111319:Kankan Watchman
+5:7111322:Wandering Frieza's Invader
+5:7111325:Reginean Gunman
+5:7111401:Reginean Soldier
+5:7111402:Reginean Soldier
+5:7111403:Reginean Soldier
+5:7111404:Reginean Soldier Elite
+5:7111405:Reginean Soldier Elite
+5:7111406:Reginean Soldier Elite
+5:7111407:Reginean Soldier
+5:7111408:Reginean Soldier
+5:7111409:Reginean Soldier
+5:7111410:Reginean Soldier Elite
+5:7111411:Reginean Soldier Elite
+5:7111412:Reginean Soldier Elite
+5:7111413:Reginean Soldier
+5:7111414:Reginean Soldier
+5:7111415:Reginean Soldier
+5:7111416:Reginean Soldier
+5:7111417:Reginean Soldier
+5:7111418:Reginean Soldier
+5:7111419:Reginean Soldier Elite
+5:7111420:Reginean Soldier Elite
+5:7111421:Reginean Soldier Elite
+5:7111422:Reginean Soldier Elite
+5:7111423:Reginean Soldier Elite
+5:7111424:Reginean Soldier Elite
+5:7111425:Reginean Wild Beast Tamer
+5:7111426:Reginean Wild Beast Tamer
+5:7111427:Reginean Wild Beast Tamer
+5:7111428:Reginean Wild Beast Tamer
+5:7111429:Reginean Wild Beast Tamer
+5:7111430:Reginean Wild Beast Tamer
+5:7111431:Reginean Wild Beast Tamer Elite
+5:7111432:Reginean Wild Beast Tamer Elite
+5:7111433:Reginean Wild Beast Tamer Elite
+5:7111434:Reginean Wild Beast Tamer Elite
+5:7111435:Reginean Wild Beast Tamer Elite
+5:7111436:Reginean Wild Beast Tamer Elite
+5:7111437:Reginean Soldier
+5:7111438:Reginean Soldier
+5:7111439:Reginean Soldier
+5:7111440:Reginean Soldier
+5:7111441:Reginean Soldier
+5:7111442:Reginean Soldier
+5:7111443:Reginean Soldier Elite
+5:7111444:Reginean Soldier Elite
+5:7111445:Reginean Soldier Elite
+5:7111446:Reginean Soldier Elite
+5:7111447:Reginean Soldier Elite
+5:7111448:Reginean Soldier Elite
+5:7111449:Brainwashed Reginean Inteligence Corps
+5:7111450:Brainwashed Reginean Inteligence Corps
+5:7111451:Brainwashed Reginean Inteligence Corps
+5:7111452:Brainwashed Reginean Watchman
+5:7111455:Brainwashed Reginean Soldier
+5:7111456:Brainwashed Reginean Soldier
+5:7111457:Brainwashed Reginean Soldier
+5:7111458:Brainwashed Reginean Troopie
+5:7111459:Brainwashed Reginean Troopie
+5:7111460:Brainwashed Reginean Troopie
+5:7111461:Brainwashed Reginean Occupation Force
+5:7111462:Brainwashed Reginean Occupation Force
+5:7111463:Brainwashed Reginean Occupation Force
+5:7111464:Reginean Soldier
+5:7111465:Reginean Soldier
+5:7111466:Reginean Soldier
+5:7111467:Reginean Soldier Elite
+5:7111468:Reginean Soldier Elite
+5:7111469:Reginean Soldier Elite
+5:7111470:Reginean Soldier
+5:7111471:Reginean Soldier
+5:7111472:Reginean Soldier
+5:7111473:Reginean Soldier Elite
+5:7111474:Reginean Soldier Elite
+5:7111475:Reginean Soldier Elite
+5:7111476:Reginean Wild Beast Tamer
+5:7111477:Reginean Wild Beast Tamer
+5:7111478:Reginean Wild Beast Tamer
+5:7111479:Reginean Wild Beast Tamer Elite
+5:7111480:Reginean Wild Beast Tamer Elite
+5:7111481:Reginean Wild Beast Tamer Elite
+5:7111482:Reginean Stalker
+5:7111483:Reginean Stalker
+5:7111484:Reginean Stalker
+5:7111485:Reginean Scavenger
+5:7111486:Reginean Scavenger
+5:7111487:Reginean Scavenger
+5:7111488:Brainwashed Reginean Transportation Unit
+5:7111491:Reginean Wild Beast Tamer
+5:7112101:Tosterian
+5:7112102:Tosterian
+5:7112103:Tosterian
+5:7112104:Awakened Tosterian
+5:7112105:Awakened Tosterian
+5:7112106:Awakened Tosterian
+5:7112107:Varda Commander
+5:7112108:Varda Commander
+5:7112109:Varda Commander
+5:7112110:Tosterian Scouter
+5:7112111:Tosterian Scouter
+5:7112112:Tosterian Scouter
+5:7112113:Brainwashed Bodyguard
+5:7112114:Brainwashed Bodyguard
+5:7112115:Brainwashed Bodyguard
+5:7112116:Tosterian Occupation Force
+5:7112117:Tosterian Occupation Force
+5:7112118:Tosterian Occupation Force
+5:7112119:Tosterian Bomber
+5:7112120:Tosterian Bomber
+5:7112121:Tosterian Bomber
+5:7112122:Injured Tosterian
+5:7112125:Renovated Tosterian Attendant
+5:7112131:Crazy Micsailean
+5:7112140:Computer Operator
+5:7112141:Computer Operator
+5:7112142:Computer Operator
+5:7112143:Tosterian Search Team
+5:7112144:Tosterian Search Team
+5:7112145:Tosterian Search Team
+5:7112146:Tosterian Inspection Team
+5:7112147:Tosterian Inspection Team
+5:7112148:Tosterian Inspection Team
+5:7112149:Tosterian Exploring Unit
+5:7112150:Tosterian Exploring Unit
+5:7112151:Tosterian Exploring Unit
+5:7112152:Picky Team Leader
+5:7112155:Threatening Burglar  
+5:7112158:Graham's Subordinate
+5:7112201:Elite Tosterian
+5:7112202:Elite Tosterian
+5:7112203:Elite Tosterian
+5:7112204:Awakened Elite Tosterian
+5:7112205:Awakened Elite Tosterian
+5:7112206:Awakened Elite Tosterian
+5:7112207:Burglar Unit
+5:7112208:Burglar Unit
+5:7112209:Burglar Unit
+5:7112210:Tosterian Veteran 
+5:7112211:Tosterian Veteran 
+5:7112212:Tosterian Veteran 
+5:7112213:Angry Buonean
+5:7112216:Tosterian Pedy 
+5:7112219:Awakened Tosterian
+5:7112222:Tosterian New Infantryman
+5:7112223:Tosterian New Infantryman
+5:7112224:Tosterian New Infantryman
+5:7112225:Dandy Manager
+5:7112226:Dandy Manager
+5:7112227:Dandy Manager
+5:7112228:Violent Burglar
+5:7112231:Tosterian Rifleman
+5:7112234:Crazy Micsailean
+5:7112301:Tosterian Scout
+5:7112302:Tosterian Scout
+5:7112303:Tosterian Scout
+5:7112304:Awakened Tosterian Scout
+5:7112305:Awakened Tosterian Scout
+5:7112306:Awakened Tosterian Scout
+5:7112307:Demolishing Sinklean
+5:7112310:Tosterian Trash Transporter
+5:7112313:Diseased Tosterian
+5:7112316:Wildish Tosterian
+5:7112319:Treated Buonean
+5:7112325:Tosterian Bomb Remover
+5:7112326:Tosterian Bomb Remover
+5:7112327:Tosterian Bomb Remover
+5:7112328:Tosterian Acting Drill Sergeant
+5:7112329:Tosterian Acting Drill Sergeant
+5:7112330:Tosterian Acting Drill Sergeant
+5:7112331:Quicky Infantryman
+5:7112334:Walgadak Tosterian
+5:7112401:Tosterian Engineer Corps
+5:7112402:Tosterian Engineer Corps
+5:7112403:Tosterian Engineer Corps
+5:7112410:Nuke Land Soldier
+5:7112413:Tosterian Engineer Corps
+5:7112414:Tosterian Engineer Corps
+5:7112415:Tosterian Engineer Corps
+5:7112416:Tosterian Engineer Corps Elite
+5:7112417:Tosterian Engineer Corps Elite
+5:7112418:Tosterian Engineer Corps Elite
+5:7112419:Tosterian Engineer Corps Elite
+5:7112420:Tosterian Engineer Corps Elite
+5:7112421:Tosterian Engineer Corps Elite
+5:7112422:Tosterian Engineer Corps
+5:7112423:Tosterian Engineer Corps
+5:7112424:Tosterian Engineer Corps
+5:7112425:Tosterian Engineer Corps
+5:7112426:Tosterian Engineer Corps
+5:7112427:Tosterian Engineer Corps
+5:7112428:Tosterian Engineer Corps Elite
+5:7112429:Tosterian Engineer Corps Elite
+5:7112430:Tosterian Engineer Corps Elite
+5:7112431:Tosterian Engineer Corps Elite
+5:7112432:Tosterian Engineer Corps Elite
+5:7112433:Tosterian Engineer Corps Elite
+5:7112434:Tosterian Medic
+5:7112435:Tosterian Medic
+5:7112436:Tosterian Medic
+5:7112437:Tosterian Medic
+5:7112438:Tosterian Medic
+5:7112439:Tosterian Medic
+5:7112440:Tosterian Elite Medic
+5:7112441:Tosterian Elite Medic
+5:7112442:Tosterian Elite Medic
+5:7112443:Tosterian Elite Medic
+5:7112444:Tosterian Elite Medic
+5:7112445:Tosterian Elite Medic
+5:7112446:Tosterian Medic
+5:7112447:Tosterian Medic
+5:7112448:Tosterian Medic
+5:7112449:Tosterian Medic
+5:7112450:Tosterian Medic
+5:7112451:Tosterian Medic
+5:7112452:Tosterian Elite Medic
+5:7112453:Tosterian Elite Medic
+5:7112454:Tosterian Elite Medic
+5:7112455:Tosterian Elite Medic
+5:7112456:Tosterian Elite Medic
+5:7112457:Tosterian Elite Medic
+5:7112458:Tosterian Medic
+5:7112459:Tosterian Medic
+5:7112460:Tosterian Medic
+5:7112461:Tosterian Medic
+5:7112462:Tosterian Medic
+5:7112463:Tosterian Medic
+5:7112464:Tosterian Elite Medic
+5:7112465:Tosterian Elite Medic
+5:7112466:Tosterian Elite Medic
+5:7112467:Tosterian Elite Medic
+5:7112468:Tosterian Elite Medic
+5:7112469:Tosterian Elite Medic
+5:7112470:Tosterian Medic
+5:7112471:Tosterian Medic
+5:7112472:Tosterian Medic
+5:7112473:Tosterian Medic
+5:7112474:Tosterian Medic
+5:7112475:Tosterian Medic
+5:7112476:Tosterian Elite Medic
+5:7112477:Tosterian Elite Medic
+5:7112478:Tosterian Elite Medic
+5:7112479:Tosterian Elite Medic
+5:7112480:Tosterian Elite Medic
+5:7112481:Tosterian Elite Medic
+5:7112482:Tosterian Medic
+5:7112483:Tosterian Elite Medic
+5:7112484:Tosterian Elite Medic
+5:7112485:Tosterian Medic
+5:7112488:Tosterian Elite Medic
+5:7112489:Tosterian Elite Medic
+5:7112491:Tosterian Medic
+5:7112494:Devil Monitering Raider
+5:7112501:Brainwashed Chief Inspector
+5:7112502:Brainwashed Chief Inspector
+5:7112503:Brainwashed Chief Inspector
+5:7112504:Brainwashed Kiri Manager
+5:7112507:Devil Strike Force Assistant
+5:7112510:Tosterian Kiri Extractor
+5:7113101:Kettlean
+5:7113102:Kettlean
+5:7113103:Kettlean
+5:7113104:Chief Burglar
+5:7113105:Chief Burglar
+5:7113106:Chief Burglar
+5:7113107:Mira Private
+5:7113108:Mira Private
+5:7113109:Mira Private
+5:7113110:Kettlean Occupation Force
+5:7113111:Kettlean Occupation Force
+5:7113112:Kettlean Occupation Force
+5:7113113:Kettlean Bomber
+5:7113114:Kettlean Bomber
+5:7113115:Kettlean Bomber
+5:7113116:Insect Breeding Android [Old Type]
+5:7113117:Insect Breeding Android [Old Type]
+5:7113118:Insect Breeding Android [Old Type]
+5:7113119:Vice Manager Krecka
+5:7113122:Kettlean Collecting Unit
+5:7113125:Kettlean Research Assistant
+5:7113128:Graham's Subordinate
+5:7113204:Brainwashed Soldier
+5:7113205:Brainwashed Soldier
+5:7113206:Brainwashed Soldier
+5:7113207:Kettlean Battler
+5:7113208:Kettlean Battler
+5:7113209:Kettlean Battler
+5:7113210:Kettlean Warlord
+5:7113211:Kettlean Warlord
+5:7113212:Kettlean Warlord
+5:7113213:Fiery Warrior
+5:7113214:Fiery Warrior
+5:7113215:Fiery Warrior
+5:7113216:Data Management Soldier
+5:7113217:Data Management Soldier
+5:7113218:Data Management Soldier
+5:7113219:Guard Unit Warrior
+5:7113220:Guard Unit Warrior
+5:7113221:Guard Unit Warrior
+5:7113243:Brainwashed Assassin
+5:7113244:Brainwashed Assassin
+5:7113245:Brainwashed Assassin
+5:7113246:Arthritis Fighter
+5:7113247:Arthritis Fighter
+5:7113248:Arthritis Fighter
+5:7113249:Frieza's Army Secret Police
+5:7113252:Kettlean Battler
+5:7113301:Elite Kettlean
+5:7113302:Elite Kettlean
+5:7113303:Elite Kettlean
+5:7113304:Maintenance-Charging Android
+5:7113305:Maintenance-Charging Android
+5:7113306:Maintenance-Charging Android
+5:7113310:Kettlean Ultrawave Manager
+5:7113316:Bulggeun Berserker 
+5:7113317:Bulggeun Berserker
+5:7113318:Bulggeun Berserker
+5:7113319:Sentry of Assistant 
+5:7113320:Sentry of Assistant
+5:7113321:Sentry of Assistant
+5:7113322:Guard Unit Berserker
+5:7113323:Guard Unit Berserker
+5:7113324:Guard Unit Berserker
+5:7113325:Detheka Mine Manager
+5:7113401:Kettlean Scout
+5:7113402:Kettlean Scout
+5:7113403:Kettlean Scout
+5:7113404:White-faced Man
+5:7113405:White-faced Man
+5:7113406:White-faced Man
+5:7113407:Chief Investigator Tei
+5:7113408:Chief Investigator Tei
+5:7113409:Chief Investigator Tei
+5:7113410:Doctor Pastri 
+5:7113413:Kettlean Resource Officer
+5:7113416:Kettlean Resource Officer
+5:7113501:Chief Investigator Tei
+5:7113502:Chief Investigator Tei
+5:7113503:Chief Investigator Tei
+5:7113504:Himbulggeun Worker
+5:7114101:Brainwashed Kettlean Occupation Force
+5:7114102:Brainwashed Kettlean Occupation Force
+5:7114103:Brainwashed Kettlean Occupation Force
+5:7114104:Brainwashed Kettlean Guard Unit
+5:7114105:Brainwashed Kettlean Guard Unit
+5:7114106:Brainwashed Kettlean Guard Unit
+5:7114107:Brainwashed Soldier
+5:7114108:Brainwashed Soldier
+5:7114109:Brainwashed Soldier
+5:7114158:Brainwashed White-faced Man
+5:7114159:Brainwashed White-faced Man
+5:7114160:Brainwashed White-faced Man
+5:7114161:Brainwashed Inspector
+5:7114162:Brainwashed Inspector
+5:7114163:Brainwashed Inspector
+5:7114164:Brainwashed Searching Unit
+5:7114165:Brainwashed Searching Unit
+5:7114166:Brainwashed Searching Unit
+5:7114167:Brainwashed Kettlean Blitz Unit
+5:7114168:Brainwashed Kettlean Blitz Unit
+5:7114169:Brainwashed Kettlean Blitz Unit
+5:7114170:Kiri Transporter Guard
+5:7114182:Brainwashed Kettlean Security
+5:7114183:Brainwashed Kettlean Security
+5:7114184:Brainwashed Kettlean Security
+5:7114185:Kettlean Mobile Strike Force
+5:7114186:Kettlean Mobile Strike Force
+5:7114187:Kettlean Mobile Strike Force
+5:7114188:Kettlean Assistant 
+5:7114191:Mira's Army Medic
+5:7114194:Mira's Army Medic
+5:7114197:Left Hand of Graham
+5:7114201:Brainwashed Soldier
+5:7114202:Brainwashed Soldier
+5:7114203:Brainwashed Soldier
+5:7114204:Brainwashed Inspector
+5:7114205:Brainwashed Inspector
+5:7114206:Brainwashed Inspector
+5:7114207:Official Residence Guard
+5:7114210:Vice Manager Guard
+5:7114222:Brainwashed Kettlean Instructor
+5:7114223:Brainwashed Kettlean Instructor
+5:7114224:Brainwashed Kettlean Instructor
+5:7114225:Brainwashed Kettlean Senior Soldier
+5:7114226:Brainwashed Kettlean Senior Soldier
+5:7114227:Brainwashed Kettlean Senior Soldier
+5:7114228:Kettlean Strike Force Leader
+5:7114229:Kettlean Strike Force Leader
+5:7114230:Kettlean Strike Force Leader
+5:7114231:Robot Insect Manager
+5:7114232:Robot Insect Manager
+5:7114233:Robot Insect Manager
+5:7114234:Mira's Army Supervising Officer
+5:7114235:Mira's Army Supervising Officer
+5:7114236:Mira's Army Supervising Officer
+5:7114237:Devil Supervising Detachment
+5:7114240:Kettlean Strike Force Leader
+5:7114301:Kettlean Blitz Unit
+5:7114302:Kettlean Blitz Unit
+5:7114303:Kettlean Blitz Unit
+5:7114304:Kettlean Blitz Unit
+5:7114305:Kettlean Blitz Unit
+5:7114306:Kettlean Blitz Unit
+5:7114307:Kettlean Blitz Unit Elite
+5:7114308:Kettlean Blitz Unit Elite
+5:7114309:Kettlean Blitz Unit Elite
+5:7114310:Kettlean Blitz Unit Elite
+5:7114311:Kettlean Blitz Unit Elite
+5:7114312:Kettlean Blitz Unit Elite
+5:7114313:Kettlean Blitz Unit
+5:7114314:Kettlean Blitz Unit
+5:7114315:Kettlean Blitz Unit
+5:7114316:Kettlean Blitz Unit
+5:7114317:Kettlean Blitz Unit
+5:7114318:Kettlean Blitz Unit
+5:7114319:Kettlean Blitz Unit Elite
+5:7114320:Kettlean Blitz Unit Elite
+5:7114321:Kettlean Blitz Unit Elite
+5:7114322:Kettlean Blitz Unit Elite
+5:7114323:Kettlean Blitz Unit Elite
+5:7114324:Kettlean Blitz Unit Elite
+5:7114325:Kettlean Blitz Unit
+5:7114326:Kettlean Blitz Unit
+5:7114327:Kettlean Blitz Unit
+5:7114328:Kettlean Blitz Unit
+5:7114329:Kettlean Blitz Unit
+5:7114330:Kettlean Blitz Unit
+5:7114331:Kettlean Blitz Unit Elite
+5:7114332:Kettlean Blitz Unit Elite
+5:7114333:Kettlean Blitz Unit Elite
+5:7114334:Kettlean Blitz Unit Elite
+5:7114335:Kettlean Blitz Unit Elite
+5:7114336:Kettlean Blitz Unit Elite
+5:7114337:Kettlean Blitz Unit
+5:7114338:Kettlean Blitz Unit
+5:7114339:Kettlean Blitz Unit
+5:7114340:Kettlean Blitz Unit Elite
+5:7114341:Kettlean Blitz Unit Elite
+5:7114342:Kettlean Blitz Unit Elite
+5:7114343:Nuke Land Stationed Soldier
+5:7114347:Mira's Army Information Colletor
+5:7114352:Brainwashed Kettlean Guerrilla Unit
+5:7114353:Brainwashed Kettlean Guerrilla Unit
+5:7114354:Brainwashed Kettlean Guerrilla Unit
+5:7114355:Kettlean Labor Supervisor
+5:7114358:Brainwashed Kettlean Watchman
+5:7114359:Brainwashed Kettlean Watchman
+5:7114360:Brainwashed Kettlean Watchman
+5:7114361:Brainwashed Kettlean Army
+5:7114362:Brainwashed Kettlean Army
+5:7114363:Brainwashed Kettlean Army
+5:7114364:Kettlean Blitz Unit
+5:7114365:Kettlean Blitz Unit
+5:7114366:Kettlean Blitz Unit
+5:7114367:Kettlean Blitz Unit Elite
+5:7114368:Kettlean Blitz Unit Elite
+5:7114369:Kettlean Blitz Unit Elite
+5:7114401:Marlon Slave Manager
+5:7114402:Marlon Slave Manager
+5:7114403:Marlon Slave Manager
+5:7114404:Devil Raider
+5:7114407:Low-Level Prison Chief
+5:7114410:High-Level Prisoner Supervisor
+5:7114413:Pure Majin Guard
+5:7114417:Nuke Land Guard
+5:7115101:Hot-Blooded Gun Rider
+5:7115102:Hot-Blooded Gun Rider
+5:7115103:Hot-Blooded Gun Rider
+5:7115104:Right Hand of Graham
+5:7116107:Mira's Army Strike Unit
+5:7116108:Mira's Army Strike Unit
+5:7116109:Mira's Army Strike Unit
+5:7116110:Mira's Army Strike Unit
+5:7116111:Mira's Strike Unit
+5:7116112:Mira's Strike Unit
+5:7116113:Mira's Strike Unit
+5:7116114:Mira's Strike Unit
+5:7116115:Mira's Strike Unit
+5:7116116:Mira's Strike Unit
+5:7116117:Mira's Strike Unit
+5:7116118:Mira's Strike Unit
+5:7116119:Mira's Advanced Unit
+5:7116120:Mira's Advanced Unit
+5:7116121:Mira's Advanced Unit
+5:7116122:Stone Fist Burt
+5:7116123:Stone Fist Burt
+5:7116124:Stone Fist Burt
+5:7116125:Iron-Fist Muggly
+5:7116126:Iron-Fist Muggly
+5:7116127:Iron-Fist Muggly
+5:7116128:Merciless Plunderer Chief
+5:7116131:Chief Programmer Laster
+5:7116132:Chief Programmer Laster
+5:7116133:Chief Programmer Laster
+5:7116134:Suppy Chief Babar
+5:7116137:Technician Croisan
+5:7116140:Kettlean Teleporter Manager
+5:7117101:Brainwashed Reginean Mobile Unit
+5:7117104:Low-Level Prisoner Supervisor
+5:7117107:Brainwashed Reginean Advance Party
+5:7117108:Brainwashed Reginean Advance Party
+5:7117109:Brainwashed Reginean Advance Party
+5:7117110:Brainwashed Reginean Trainee
+5:7117111:Brainwashed Reginean Trainee
+5:7117112:Brainwashed Reginean Trainee
+5:7117113:Brainwashed Reginean Private
+5:7117114:Brainwashed Reginean Private
+5:7117115:Brainwashed Reginean Private
+5:7117116:Brainwashed Defense Unit
+5:7117117:Brainwashed Defense Unit
+5:7117118:Brainwashed Defense Unit
+5:7117119:Brainwashed Collector
+5:7117122:Devil Striking Battler
+5:7117125:Nuke Land Sentry
+5:7117128:Detheka Mine Watchman
+5:7117131:Supply Patrol
+5:7121101:Recoome
+5:7121102:Recoome
+5:7121103:Recoome
+5:7122101:Recoome
+5:7122102:Recoome
+5:7122103:Recoome
+5:7122104:Brainwashed Recoome
+5:7122105:Brainwashed Recoome
+5:7122106:Brainwashed Recoome
+5:7122201:Recoome
+5:7151110:Merciless Chief Admin [Old-Type]
+5:7211101:Rio
+5:7211102:Rio
+5:7211103:Rio
+5:7211104:Rio Nova
+5:7211105:Rio Nova
+5:7211106:Rio Nova
+5:7211107:Rio Bravo
+5:7211108:Rio Bravo
+5:7211109:Rio Bravo
+5:7211110:Big Rio
+5:7211111:Big Rio
+5:7211112:Big Rio
+5:7211113:Rio
+5:7211114:Rio
+5:7211115:Rio
+5:7211116:Hello Rio
+5:7211117:Hello Rio
+5:7211118:Hello Rio
+5:7211119:Thirsty Rio
+5:7211120:Thirsty Rio
+5:7211121:Thirsty Rio
+5:7211122:Cleaning Rio
+5:7211123:Cleaning Rio
+5:7211124:Cleaning Rio
+5:7212101:Samba Rio
+5:7212102:Samba Rio
+5:7212103:Samba Rio
+5:7212104:Samba Rio Amigo
+5:7212105:Samba Rio Amigo
+5:7212106:Samba Rio Amigo
+5:7212107:Samba Rio Domingo
+5:7212108:Samba Rio Domingo
+5:7212109:Samba Rio Domingo
+5:7212110:Samba Rio Don Juan
+5:7212111:Samba Rio Don Juan
+5:7212112:Samba Rio Don Juan
+5:7212113:Samba Rio of Passion
+5:7212114:Samba Rio of Passion
+5:7212115:Samba Rio of Passion
+5:7212116:Samba Rio Casanova
+5:7212117:Samba Rio Casanova
+5:7212118:Samba Rio Casanova
+5:7213101:Desert Rio
+5:7213102:Desert Rio
+5:7213103:Desert Rio
+5:7213104:Dry Desert Rio
+5:7213105:Dry Desert Rio
+5:7213106:Dry Desert Rio
+5:7213107:Super Dry Desert Rio
+5:7213108:Super Dry Desert Rio
+5:7213109:Super Dry Desert Rio
+5:7213110:Poison Rio
+5:7213111:Poison Rio
+5:7213112:Poison Rio
+5:7213113:Poison Rio
+5:7213114:Poison Rio
+5:7213115:Poison Rio
+5:7221101:Hard Stone
+5:7221102:Hard Stone
+5:7221103:Hard Stone
+5:7251101:Dispatched Engineer
+5:7251102:Dispatched Engineer
+5:7251103:Dispatched Engineer
+5:7251104:Dispatched Engineer
+5:7251105:Dispatched Engineer
+5:7251106:Dispatched Engineer
+5:7251107:Kiri Experiment Researcher 
+5:7251108:Kiri Experiment Researcher 
+5:7251109:Kiri Experiment Researcher 
+5:7251110:Bribed Scientist
+5:7251111:Bribed Scientist
+5:7251112:Bribed Scientist
+5:7251113:Research Technician 
+5:7251114:Research Technician 
+5:7251115:Research Technician 
+5:7251119:Creature Renovation Manager
+5:7251120:Creature Renovation Manager
+5:7251121:Creature Renovation Manager
+5:7251122:Robot Technician
+5:7251123:Robot Technician
+5:7251124:Robot Technician
+5:7251125:Brainwashed Experiment Technician
+5:7251126:Brainwashed Experiment Technician
+5:7251127:Brainwashed Experiment Technician
+5:7251128:Doctor Jolling
+5:7251131:Gooris Gas Researcher
+5:7251132:Gooris Gas Researcher
+5:7251133:Gooris Gas Researcher
+5:7251134:Gooris Construction Inspector
+5:7251135:Gooris Construction Inspector
+5:7251136:Gooris Construction Inspector
+5:7251137:Doctor Jolling
+5:7251140:Kiri Experiment Researcher
+5:7253101:Shu Stone Statue
+5:7253102:Shu Stone Statue
+5:7253103:Shu Stone Statue
+5:7253104:Shu Stone Statue
+5:7253105:Shu Stone Statue
+5:7253106:Shu Stone Statue
+5:7253107:Archie
+5:7253108:Archie
+5:7253109:Archie
+5:7253110:Archie
+5:7253111:Archie
+5:7253112:Archie
+5:7311101:Saibaman
+5:7311102:Saibaman
+5:7311103:Saibaman
+5:7311104:Saibaman
+5:7311107:Poisonous Saibaman
+5:7311110:Special Force Saibaman
+5:7312101:Shadow Saibaman
+5:7312102:Shadow Saibaman
+5:7312103:Shadow Saibaman
+5:7313101:Evil Saibaman
+5:7313102:Evil Saibaman
+5:7313103:Evil Saibaman
+5:7313104:Brainwashed Saibaman
+5:7313105:Brainwashed Saibaman
+5:7313106:Brainwashed Saibaman
+5:7313107:Brainwashed Saibaman
+5:7313108:Brainwashed Saibaman
+5:7313109:Brainwashed Saibaman
+5:7313110:Brainwashed Saibaman
+5:7313111:Brainwashed Saibaman
+5:7313112:Brainwashed Saibaman
+5:7313113:Brainwashed Saibaman
+5:7313114:Brainwashed Saibaman
+5:7313115:Brainwashed Saibaman
+5:7313116:Brainwashed Saibaman
+5:7313117:Brainwashed Saibaman
+5:7313118:Brainwashed Saibaman
+5:7313119:Brainwashed Saibaman
+5:7313120:Brainwashed Saibaman
+5:7313121:Brainwashed Saibaman
+5:7314101:Organic Saibaman
+5:7314102:Organic Saibaman
+5:7314103:Organic Saibaman
+5:7411101:Svaile
+5:7411102:Svaile
+5:7411103:Svaile
+5:7411104:York Svaile
+5:7411105:York Svaile
+5:7411106:York Svaile
+5:7411107:Tant Svaile
+5:7411108:Tant Svaile
+5:7411109:Tant Svaile
+5:7411110:Giant Svaile
+5:7411111:Giant Svaile
+5:7411112:Giant Svaile
+5:7411113:Panky Pung
+5:7411114:Panky Pung
+5:7411115:Panky Pung
+5:7411116:Blue Svaile
+5:7412101:Bristol Svaile
+5:7412102:Bristol Svaile
+5:7412103:Bristol Svaile
+5:7412104:Emperor Svaile
+5:7412105:Emperor Svaile
+5:7412106:Emperor Svaile
+5:7412107:Coty Svaile
+5:7412108:Coty Svaile
+5:7412109:Coty Svaile
+5:7412110:Wonder Svaile
+5:7412111:Wonder Svaile
+5:7412112:Wonder Svaile
+5:7412113:Black Svaile
+5:7431101:Punch Machine
+5:7441101:Blood Machine Bee
+5:7451101:Grandpa Gohan
+5:7451102:Grandpa Gohan
+5:7451103:Grandpa Gohan
+5:7451104:Martial Artist Examiner
+5:7451105:Martial Artist Examiner
+5:7451106:Martial Artist Examiner
+5:7451107:Grandpa Gohan
+5:7451108:Grandpa Gohan
+5:7451109:Grandpa Gohan
+5:7485101:Julia
+5:7485102:Julia
+5:7485103:Julia
+5:7485104:Julia
+5:7485105:Julia
+5:7485106:Julia
+5:7511110:Gesstongue
+5:7511111:Gesstongue
+5:7511112:Gesstongue
+5:7511116:Dotdarisaurs
+5:7511117:Dotdarisaurs
+5:7511118:Dotdarisaurs
+5:7511119:Osorosaurs
+5:7512101:Noganarisaurs
+5:7513101:Mulgarisaurs
+5:7513102:Mulgarisaurs
+5:7513103:Mulgarisaurs
+5:7513110:Tyrant Mulgarisaurs
+5:7513111:Tyrant Mulgarisaurs
+5:7513112:Tyrant Mulgarisaurs
+5:7513113:Yatsi
+5:7513114:Yatsi
+5:7513115:Yatsi
+5:7513116:Mulgarisaurs
+5:7513117:Mulgarisaurs
+5:7513118:Mulgarisaurs
+5:7513119:Mulgarisaurs
+5:7513120:Mulgarisaurs
+5:7513121:Mulgarisaurs
+5:7513122:Purungarisaurs
+5:7513123:Purungarisaurs
+5:7513124:Purungarisaurs
+5:7513125:Mulgarisaurs
+5:7513126:Mulgarisaurs
+5:7513127:Mulgarisaurs
+5:7513128:Mulgarisaurs
+5:7513129:Mulgarisaurs
+5:7513130:Mulgarisaurs
+5:7513131:Mulgarisaurs
+5:7513132:Mulgarisaurs
+5:7513133:Mulgarisaurs
+5:7711101:Dr. Smell
+5:7711102:Dr. Smell
+5:7711103:Dr. Smell
+5:7711201:Brainwashed Dr. Smell
+5:7711202:Brainwashed Dr. Smell
+5:7711203:Brainwashed Dr. Smell
+5:7711204:Brainwashed High-Level Prisoner
+5:7711207:Robot Renovation Team Leader
+5:7711208:Robot Renovation Team Leader
+5:7711209:Robot Renovation Team Leader
+5:7711210:Pure Majin Guard
+5:7711213:Queen Saktugi Researcher
+5:7771101:Patrol Robot Chief
+5:7771102:Patrol Robot Chief
+5:7771103:Patrol Robot Chief
+5:7771104:Mira Police Robot
+5:7771105:Mira Police Robot
+5:7771106:Mira Police Robot
+5:7771107:Insect Robot
+5:7771108:Insect Robot
+5:7771109:Insect Robot
+5:7771110:Veteran guard
+5:7771111:Veteran guard
+5:7771112:Veteran guard
+5:7771113:M - Boss Robot
+5:7771116:Mira Military Robot
+5:7771119:Mira's Army Patrol Robot
+5:7772101:Guardian Robot
+5:7772102:Guardian Robot
+5:7772103:Guardian Robot
+5:7772104:Laser Defense Veteran
+5:7772105:Laser Defense Veteran
+5:7772106:Laser Defense Veteran
+5:7772107:Insect Breeding Robot
+5:7772108:Insect Breeding Robot
+5:7772109:Insect Breeding Robot
+5:7772110:Biological extraction Robot
+5:7772111:Biological extraction Robot
+5:7772112:Biological extraction Robot
+5:7772113:Reconstruction Robot
+5:7772116:M - Dark Robot
+5:7772119:Lower Labor Management Robot
+5:7772122:Mira's Army Surveillance Robot
+5:7773101:Marlon Robot
+5:7773102:Marlon Robot
+5:7773103:Marlon Robot
+5:7773104:Mira's Army Fighter
+5:7773107:M - Combat Robot
+5:7773110:Labor Management Robot
+5:7773113:Supply inspection Robot
+5:7773116:Pure Majin Guard
+5:7811101:Thorn Hippo
+5:7811102:Thorn Hippo
+5:7811103:Thorn Hippo
+5:7811104:Large Thorn Hippo
+5:7811105:Large Thorn Hippo
+5:7811106:Large Thorn Hippo
+5:7811107:Strange sound Hippo
+5:7811108:Strange sound Hippo
+5:7811109:Strange sound Hippo
+5:7811110:Hippo
+5:7811111:Hippo
+5:7811112:Hippo
+5:7811113:Overeating Hippo
+5:7811114:Overeating Hippo
+5:7811115:Overeating Hippo
+5:7811116:Decaying Hippo
+5:7811117:Decaying Hippo
+5:7811118:Decaying Hippo
+5:7811119:Red Pants Army Hippo
+5:7811120:Red Pants Army Hippo
+5:7811121:Red Pants Army Hippo
+5:7811122:Dolphin Hippo
+5:7812101:Fat Hippo
+5:7812102:Fat Hippo
+5:7812103:Fat Hippo
+5:7812104:Big Fat Hippo
+5:7812105:Big Fat Hippo
+5:7812106:Big Fat Hippo
+5:7812107:Bomb Hippo
+5:7812108:Bomb Hippo
+5:7812109:Bomb Hippo
+5:7812110:Red Pants Fat Hippo
+5:7812111:Red Pants Fat Hippo
+5:7812112:Red Pants Fat Hippo
+5:7813101:Armored Hippo
+5:7813102:Armored Hippo
+5:7813103:Armored Hippo
+5:7813104:King Hippo
+5:7813105:King Hippo
+5:7813106:King Hippo
+5:7813107:Sea Hippo
+5:7813108:Sea Hippo
+5:7813109:Sea Hippo
+5:7813110:King Fat Hippo
+5:7813111:King Fat Hippo
+5:7813112:King Fat Hippo
+5:7813113:Red Pants Army Hippo
+5:7813114:Red Pants Army Hippo
+5:7813115:Red Pants Army Hippo
+5:7813201:Iron Armor Hippo
+5:7813202:Iron Armor Hippo
+5:7813203:Iron Armor Hippo
+5:7813204:Mrs. Von's Pet
+5:7813205:Mrs. Von's Pet
+5:7813206:Mrs. Von's Pet
+5:7813207:Transportation Hippo
+5:7813208:Transportation Hippo
+5:7813209:Transportation Hippo
+5:7813210:Thorns water Hippo
+5:7901101:Strange Obstacle
+5:7901102:Strange Obstacle
+5:7901103:Strange Obstacle
+5:7901104:Radio Jammer
+5:7901105:Radio Jammer
+5:7901106:Radio Jammer
+5:8:Zombie Type
+5:8111101:Little Evil
+5:8111102:Little Evil
+5:8111103:Little Evil
+5:8111104:Evil
+5:8111105:Evil
+5:8111106:Evil
+5:8111107:Big Evil
+5:8111108:Big Evil
+5:8111109:Big Evil
+5:8111110:[?]	
+5:8111111:[?]	
+5:8111112:[?]	
+5:8111113:Dim Evil
+5:8111114:Dim Evil
+5:8111115:Dim Evil
+5:8111116:Evil Bully Ghost 
+5:8111117:Evil Bully Ghost 
+5:8111118:Evil Bully Ghost 
+5:8111119:Evil Cloud
+5:8111120:Evil Cloud
+5:8111121:Evil Cloud
+5:8111122:Ghost box
+5:8111123:Ghost box
+5:8111124:Ghost box
+5:8111125:Gas Entity
+5:8111126:Gas Entity
+5:8111127:Gas Entity
+5:8112101:Evil Trick or Treat 
+5:8112102:Evil Trick or Treat 
+5:8112103:Evil Trick or Treat 
+5:8112104:Big Evil Trick or Treat 
+5:8112105:Big Evil Trick or Treat 
+5:8112106:Big Evil Trick or Treat 
+5:8112107:Evil Flames 
+5:8112108:Evil Flames 
+5:8112109:Evil Flames 
+5:8112110:Evil Spirit
+5:8112111:Evil Spirit
+5:8112112:Evil Spirit
+5:8112113:Big Evil Spirit
+5:8112114:Big Evil Spirit
+5:8112115:Big Evil Spirit
+5:8112116:Chaotic Soul
+5:8112117:Chaotic Soul
+5:8112118:Chaotic Soul
+5:8112119:Wicked Soul
+5:8112120:Wicked Soul
+5:8112121:Wicked Soul
+5:8112122:Kabimong for Training
+5:8112123:Kabimong for Training
+5:8112124:Kabimong for Training
+5:8112125:Smiling Spirit
+5:8112126:Smiling Spirit
+5:8112127:Smiling Spirit
+5:8112128:Sparkling Spirit
+5:8112129:Sparkling Spirit
+5:8112130:Sparkling Spirit
+5:8112131:Spooky Ghost
+5:8112132:Spooky Ghost
+5:8112133:Chilly Ghost
+5:8112134:Gooris Gas Victim Ghost
+5:8112135:Gooris Gas Victim Ghost
+5:8112136:Gooris Gas Victim Ghost
+5:8112137:Gas Podong Guard Ghost
+5:8112138:Naughty Kaebimong
+5:8112139:Naughty Kaebimong
+5:8112140:Naughty Kaebimong
+5:8112141:Naughty Kaebimong
+5:8112142:Naughty Kaebimong
+5:8113101:Evil Kaebimong
+5:8113102:Evil Kaebimong
+5:8113103:Evil Kaebimong
+5:8113104:Super Evil Kaebimong
+5:8113105:Super Evil Kaebimong
+5:8113106:Super Evil Kaebimong
+5:8113107:Protector Ghost
+5:8113108:Protector Ghost
+5:8113109:Protector Ghost
+5:8113110:Well Ghost
+5:8113111:Well Ghost
+5:8113112:Well Ghost
+5:8113113:Ghost of Closed Mine
+5:8113114:Ghost of Closed Mine
+5:8113115:Ghost of Closed Mine
+5:8113116:OMG Ghost
+5:8113117:OMG Ghost
+5:8113118:OMG Ghost
+5:8113119:Gooris Extoplasm
+5:8113120:Gooris Extoplasm
+5:8113121:Gooris Extoplasm
+5:8114101:Spirit of King Tocco
+5:8114102:Spirit of King Tocco
+5:8114103:Spirit of King Tocco
+5:8151101:Pulnarodon
+5:8151102:Pulnarodon
+5:8151103:Pulnarodon
+5:8151104:Violent Pulnarodon
+5:8151107:Pulnarodon
+5:8152101:Wild Flying Pulnarodon
+5:8211101:Pulnasaurs
+5:8211102:Pulnasaurs
+5:8211103:Pulnasaurs
+5:8211104:Pulnasaurs
+5:8211105:Pulnasaurs
+5:8211106:Pulnasaurs
+5:8211107:Pulnasaurs
+5:8211108:Pulnasaurs
+5:8211109:Pulnasaurs
+5:8211110:Pulnasaurs
+5:8211111:Pulnasaurs
+5:8211112:Pulnasaurs
+5:8211113:Pulnasaurs
+5:8211114:Pulnasaurs
+5:8211115:Pulnasaurs
+5:8211116:Pulnasaurs
+5:8211117:Pulnasaurs
+5:8211118:Pulnasaurs
+5:8211119:Combat Pulnasaurs
+5:8211122:Gurigurisaurs
+5:8211201:Brainwashed Pulnasaurs
+5:8211202:Brainwashed Pulnasaurs
+5:8211203:Brainwashed Pulnasaurs
+5:8211204:Brainwashed Pulnasaurs
+5:8211205:Brainwashed Pulnasaurs
+5:8211206:Brainwashed Pulnasaurs
+5:8211207:Brainwashed Pulnasaurs
+5:8211208:Brainwashed Pulnasaurs
+5:8211209:Brainwashed Pulnasaurs
+5:8212101:Darksaurs
+5:8212102:Darksaurs
+5:8212103:Darksaurs
+5:8212104:Darksaurs
+5:8212105:Darksaurs
+5:8212106:Darksaurs
+5:8212107:Little Saurs
+5:8212108:Little Saurs
+5:8212109:Little Saurs
+5:8212110:Darksaurs
+5:8212111:Darksaurs
+5:8212112:Darksaurs
+5:8213101:Redsaurs
+5:8213102:Redsaurs
+5:8213103:Redsaurs
+5:8213104:Redsaurs
+5:8213105:Redsaurs
+5:8213106:Redsaurs
+5:8213107:Tyrantaurs
+5:8213108:Tyrantaurs
+5:8213109:Tyrantaurs
+5:8213110:Redsaurs
+5:8213111:Redsaurs
+5:8213112:Redsaurs
+5:8213113:Red Berserkaurs
+5:8213116:Tyrant Gurigurisaurs
+5:8311101:Sharp Saibaman
+5:8311102:Sharp Saibaman
+5:8311103:Sharp Saibaman
+5:8311104:Big Sharp Saibaman
+5:8311105:Big Sharp Saibaman
+5:8311106:Big Sharp Saibaman
+5:8311119:Cactus Saibaman
+5:8311120:Cactus Saibaman
+5:8311121:Cactus Saibaman
+5:8311122:Kebi Sharp Saibaman
+5:8311123:Kebi Sharp Saibaman
+5:8311124:Kebi Sharp Saibaman
+5:8311201:Mushroom Saibaman
+5:8311202:Mushroom Saibaman
+5:8311203:Mushroom Saibaman
+5:8311204:Toxic Farting Saibaman
+5:8311301:Toxic Mushroom Saibaman
+5:8311302:Toxic Mushroom Saibaman
+5:8311303:Toxic Mushroom Saibaman
+5:8312101:Needle Saibaman
+5:8312102:Needle Saibaman
+5:8312103:Needle Saibaman
+5:8312104:Tropical Needle Saibaman
+5:8312105:Tropical Needle Saibaman
+5:8312106:Tropical Needle Saibaman
+5:8312107:Scale Needle Saibaman
+5:8312108:Scale Needle Saibaman
+5:8312109:Scale Needle Saibaman
+5:8312110:Snub-Nose Needle Saibaman
+5:8312111:Snub-Nose Needle Saibaman
+5:8312112:Snub-Nose Needle Saibaman
+5:8312201:Withered Needle Saibaman
+5:8312202:Withered Needle Saibaman
+5:8312203:Withered Needle Saibaman
+5:8312204:Nose Needle Saibaman
+5:8312205:Nose Needle Saibaman
+5:8312206:Nose Needle Saibaman
+5:8312207:Great Needle Saibaman
+5:8312208:Great Needle Saibaman
+5:8312209:Great Needle Saibaman
+5:8312301:Hot Needle Saibaman
+5:8312302:Hot Needle Saibaman
+5:8312303:Hot Needle Saibaman
+5:8312304:Sting-Needle Saibaman
+5:8312305:Sting-Needle Saibaman
+5:8312306:Sting-Needle Saibaman
+5:8312307:Scary-Needle Saibaman
+5:8312308:Scary-Needle Saibaman
+5:8312309:Scary-Needle Saibaman
+5:8313101:Thorn Saibaman
+5:8313102:Thorn Saibaman
+5:8313103:Thorn Saibaman
+5:8313201:Splited-Thorn Saibaman
+5:8313202:Splited-Thorn Saibaman
+5:8313203:Splited-Thorn Saibaman
+5:8313301:Gold-Thorn Saibaman
+5:8313302:Gold-Thorn Saibaman
+5:8313303:Gold-Thorn Saibaman
+5:8314101:Weird Sharp Saibaman
+5:8314102:Weird Sharp Saibaman
+5:8314103:Weird Sharp Saibaman
+5:8314104:Half-Dead Sharp Saibaman
+5:8314105:Half-Dead Sharp Saibaman
+5:8314106:Half-Dead Sharp Saibaman
+5:8315101:Poisonous Sharp Saibaman
+5:8315102:Poisonous Sharp Saibaman
+5:8315103:Poisonous Sharp Saibaman
+5:8315104:Venomous Sharp Saibaman
+5:8315105:Venomous Sharp Saibaman
+5:8315106:Venomous Sharp Saibaman
+5:8316101:Horn Sharp Saibaman
+5:8316102:Horn Sharp Saibaman
+5:8316103:Horn Sharp Saibaman
+5:8316104:Unicorn Sharp Saibaman
+5:8316105:Unicorn Sharp Saibaman
+5:8316106:Unicorn Sharp Saibaman
+5:8317101:Brainwashed Sharp Saibaman
+5:8317102:Brainwashed Sharp Saibaman
+5:8317103:Brainwashed Sharp Saibaman
+5:8317104:Brainwashed Sharp Saibaman
+5:8317105:Brainwashed Sharp Saibaman
+5:8317106:Brainwashed Sharp Saibaman
+5:8317113:Brainwashed Big Sharp Saibaman
+5:8317114:Brainwashed Big Sharp Saibaman
+5:8317115:Brainwashed Big Sharp Saibaman
+5:8411101:Tongaroo
+5:8411102:Tongaroo
+5:8411103:Tongaroo
+5:8411104:Byong Tongaroo
+5:8411105:Byong Tongaroo
+5:8411106:Byong Tongaroo
+5:8411107:Chongchongaroo
+5:8411108:Chongchongaroo
+5:8411109:Chongchongaroo
+5:8411110:Tongaroo for Training
+5:8411111:Tongaroo for Training
+5:8411112:Tongaroo for Training
+5:8412101:Kalgaroo
+5:8412102:Kalgaroo
+5:8412103:Kalgaroo
+5:8412104:Big Kalgaroo
+5:8412105:Big Kalgaroo
+5:8412106:Big Kalgaroo
+5:8412107:Drill Tongaroo
+5:8412108:Drill Tongaroo
+5:8412109:Drill Tongaroo
+5:8412110:Snow-Field Kalgaroo
+5:8412111:Snow-Field Kalgaroo
+5:8412112:Snow-Field Kalgaroo
+5:8421101:Tao Pai Pai X
+5:8421102:Tao Pai Pai X
+5:8421103:Tao Pai Pai X
+5:8422101:Advanced Tao Pai Pai X
+5:8422102:Advanced Tao Pai Pai X
+5:8422103:Advanced Tao Pai Pai X
+5:8431101:Burning Burning Turret
+5:8431102:Burning Burning Turret
+5:8431103:Burning Burning Turret
+5:8441101:Pancho
+5:8441102:Pancho
+5:8441103:Pancho
+5:8441104:Red Pants Repairman
+5:8441105:Red Pants Repairman
+5:8441106:Red Pants Repairman
+5:8441107:Hyenan Garage Manager
+5:8441108:Hyenan Garage Manager
+5:8441109:Hyenan Garage Manager
+5:8441110:Forced Worker
+5:8441113:Assistant Pancho
+5:8441201:Mushroom Gang Member
+5:8441202:Mushroom Gang Member
+5:8441203:Mushroom Gang Member
+5:8441204:Mushroom Gang Collector
+5:8441205:Mushroom Gang Collector
+5:8441206:Mushroom Gang Collector
+5:8441207:Mushroom Gang Action Corps
+5:8441208:Mushroom Gang Action Corps
+5:8441209:Mushroom Gang Action Corps
+5:8441210:Mushroom Gang Spy
+5:8441211:Mushroom Gang Spy
+5:8441212:Mushroom Gang Spy
+5:8441213:Mushroom Gang Collector
+5:8441214:Mushroom Gang Collector
+5:8441215:Mushroom Gang Collector
+5:8441216:Mushroom Gang Problem Solver
+5:8441219:Gang of Outclan
+5:8441222:Mushroom Gang Gatherer
+5:8441301:Mushroom Gang Plunderer
+5:8441302:Mushroom Gang Plunderer
+5:8441303:Mushroom Gang Plunderer
+5:8441304:Mushroom Gang Watchman
+5:8441305:Mushroom Gang Watchman
+5:8441306:Mushroom Gang Watchman
+5:8441307:Mushroom Gang Blackmailer
+5:8441308:Mushroom Gang Blackmailer
+5:8441309:Mushroom Gang Blackmailer
+5:8441310:Mushroom Gang Snake Hunter
+5:8441311:Mushroom Gang Snake Hunter
+5:8441312:Mushroom Gang Snake Hunter
+5:8441313:Mushroom Gang Capturer
+5:8441314:Mushroom Gang Capturer
+5:8441315:Mushroom Gang Capturer
+5:8441316:Mushroom Gang Sneaker
+5:8441319:Mushroom Gang Worker
+5:8441322:Gang of Ronin
+5:8441401:Mushroom Gang Destroyer
+5:8441402:Mushroom Gang Destroyer
+5:8441403:Mushroom Gang Destroyer
+5:8441404:Mushroom Gang Watchman Chief
+5:8441405:Mushroom Gang Watchman Chief
+5:8441406:Mushroom Gang Watchman Chief
+5:8441407:Mushroom Gang Assassin
+5:8441410:Mochi Thief
+5:8442101:Yena Supply Soldier
+5:8442102:Yena Supply Soldier
+5:8442103:Yena Supply Soldier
+5:8442104:Hyenan Garage Guard
+5:8442105:Hyenan Garage Guard
+5:8442106:Hyenan Garage Guard
+5:8442107:Hyenan Bomber
+5:8442108:Hyenan Bomber
+5:8442109:Hyenan Bomber
+5:8442110:Wild Pancho Recruit
+5:8442111:Wild Pancho Recruit
+5:8442112:Wild Pancho Recruit
+5:8442113:Wild Pancho Fighter
+5:8442114:Wild Pancho Fighter
+5:8442115:Wild Pancho Fighter
+5:8442116:Boss Pancho
+5:8442117:Boss Pancho
+5:8442118:Boss Pancho
+5:8442119:Hyenan Engineer
+5:8442120:Hyenan Engineer
+5:8442121:Hyenan Engineer
+5:8442122:Breeding Expert
+5:8442123:Breeding Expert
+5:8442124:Breeding Expert
+5:8442125:Gang of Rocle
+5:8443101:Sinta
+5:8443104:Sinta
+5:8443107:Sinta
+5:8443110:Sinta
+5:8451101:Kerotopes
+5:8471104:Wild Boar Plunder
+5:8471105:Wild Boar Plunder
+5:8471106:Wild Boar Plunder
+5:8471107:Red Pants Army Patrol Captain
+5:8471108:Red Pants Army Patrol Captain
+5:8471109:Red Pants Army Patrol Captain
+5:8471110:Spiritual Boar Warrior
+5:8471111:Spiritual Boar Warrior
+5:8471112:Spiritual Boar Warrior
+5:8471113:Evil Boar
+5:8471116:Crop Thief Captain
+5:8471119:Teli-De Plunder
+5:8471122:Mujji Thief
+5:8471201:Mushroom Gang General
+5:8471202:Mushroom Gang General
+5:8471203:Mushroom Gang General
+5:8471204:Dragon River Predator
+5:8471205:Dragon River Predator
+5:8471206:Dragon River Predator
+5:8471207:Mushroom Gang Leader
+5:8471208:Mushroom Gang Leader
+5:8471209:Mushroom Gang Leader
+5:8471210:Mushroom Gang Grabber
+5:8471213:Gang of Smallking
+5:8471216:Mushroom Gang Captain
+5:8471219:Mushroom Gang Berserker
+5:8471222:Mushroom Gang Samurai
+5:8471225:Gang of Smallking
+5:8472101:Sentry Soldier Boar
+5:8472102:Sentry Soldier Boar
+5:8472103:Sentry Soldier Boar
+5:8472104:Wild Boar Guerrilla
+5:8472105:Wild Boar Guerrilla
+5:8472106:Wild Boar Guerrilla
+5:8472107:Dojo Destroyer
+5:8472108:Dojo Destroyer
+5:8472109:Dojo Destroyer
+5:8472110:Bomb Guard Soldier
+5:8472111:Bomb Guard Soldier
+5:8472112:Bomb Guard Soldier
+5:8472113:Breakout Instigator
+5:8472122:Wild Boar Plunder Captain
+5:8472123:Wild Boar Plunder Captain
+5:8472124:Wild Boar Plunder Captain
+5:8511101:Vine Saibaman
+5:8511102:Vine Saibaman
+5:8511103:Vine Saibaman
+5:8511104:Giant Vine Saibaman
+5:8511105:Giant Vine Saibaman
+5:8511106:Giant Vine Saibaman
+5:8511107:Green Spider Saibaman
+5:8511108:Green Spider Saibaman
+5:8511109:Green Spider Saibaman
+5:8511110:Spider Saibaman
+5:8511111:Spider Saibaman
+5:8511112:Spider Saibaman
+5:8511113:Practitioner Saibaman
+5:8511114:Practitioner Saibaman
+5:8511115:Practitioner Saibaman
+5:8512101:Poisonous Vine Saibaman
+5:8512102:Poisonous Vine Saibaman
+5:8512103:Poisonous Vine Saibaman
+5:8512104:Venom Vine Saibaman
+5:8512105:Venom Vine Saibaman
+5:8512106:Venom Vine Saibaman
+5:8512107:Venom Spider Saibaman
+5:8512108:Venom Spider Saibaman
+5:8512109:Venom Spider Saibaman
+5:8513101:Asparagus Vine Saibaman
+5:8513102:Asparagus Vine Saibaman
+5:8513103:Asparagus Vine Saibaman
+5:8513104:Giant Asparagus Vine Saibaman
+5:8513105:Giant Asparagus Vine Saibaman
+5:8513106:Giant Asparagus Vine Saibaman
+5:8513107:Gas Vine Saibaman
+5:8513108:Gas Vine Saibaman
+5:8513109:Gas Vine Saibaman
+5:8513110:White Spider Saibaman
+5:8513111:White Spider Saibaman
+5:8513112:White Spider Saibaman
+5:8513113:Frozen Spider Saibaman
+5:8513114:Frozen Spider Saibaman
+5:8513115:Frozen Spider Saibaman
+5:8514101:Brainwashed vine Saibaman
+5:8514102:Brainwashed vine Saibaman
+5:8514103:Brainwashed vine Saibaman
+5:8514104:Brainwashed vine Saibaman
+5:8514105:Brainwashed vine Saibaman
+5:8514106:Brainwashed vine Saibaman
+5:8601101:Towa
+5:8601102:Towa
+5:8601103:Towa
+5:8811101:Brainwashing Machine
+5:8811102:Brainwashing Machine
+5:8811103:Brainwashing Machine
+5:8811104:Brainwashing Machine
+5:8811105:Brainwashing Machine
+5:8811106:Brainwashing Machine
+5:8811107:Brainwashing Machine
+5:8811108:Brainwashing Machine
+5:8811109:Brainwashing Machine
+5:8811110:Brainwashing Machine
+5:8811111:Brainwashing Machine
+5:8811112:Brainwashing Machine
+5:8811113:Brainwashing Machine
+5:8811114:Brainwashing Machine
+5:8811115:Brainwashing Machine
+5:8811116:Brainwashing Machine
+5:8811117:Brainwashing Machine
+5:8811118:Brainwashing Machine
+5:8811119:Mira's Army Brainwash Machine
+5:8811122:Brainwashing Machine
+5:8811123:Brainwashing Machine
+5:8811124:Brainwashing Machine
+5:8821101:Captain Wada
+5:8821102:Captain Wada
+5:8821103:Captain Wada
+5:8821201:Captain Wada
+5:8821202:Captain Wada
+5:8821203:Captain Wada
+5:8911101:Wild Wolf
+5:8911102:Wild Wolf
+5:8911103:Wild Wolf
+5:8911104:Investigating Wolf
+5:8911105:Investigating Wolf
+5:8911106:Investigating Wolf
+5:8911107:Poisonous Wolf
+5:8911108:Poisonous Wolf
+5:8911109:Poisonous Wolf
+5:8911110:Manso Hound
+5:8911111:Manso Hound
+5:8911112:Manso Hound
+5:8911113:Prairie Wolf
+5:8911201:Moon Wolf
+5:8911202:Moon Wolf
+5:8911203:Moon Wolf
+5:8911204:Korin Wolf
+5:8911205:Korin Wolf
+5:8911206:Korin Wolf
+5:8911213:Shadow Army Wolf
+5:8911214:Shadow Army Wolf
+5:8911215:Shadow Army Wolf
+5:8911216:Forest King
+5:8911217:Forest King
+5:8911218:Forest King
+5:8911219:Brainwashed Mira Wolf
+5:8911220:Brainwashed Mira Wolf
+5:8911221:Brainwashed Mira Wolf
+5:8911222:Mountain wolf
+5:8911223:Mountain wolf
+5:8911224:Mountain wolf
+5:8911225:Red Pants Wolf
+5:8911226:Red Pants Wolf
+5:8911227:Red Pants Wolf
+5:8911228:RP explore Wolf
+5:8911229:RP explore Wolf
+5:8911230:RP explore Wolf
+5:8911231:Elite Invasion Wolf
+5:8911234:Mountain wolf
+5:8912101:Hungry Wolf
+5:8912102:Hungry Wolf
+5:8912103:Hungry Wolf
+5:8912104:Howling Wolf
+5:8912105:Howling Wolf
+5:8912106:Howling Wolf
+5:8912107:Savage Wolf
+5:8912108:Savage Wolf
+5:8912109:Savage Wolf
+5:8912110:Wild Wolf
+5:8912111:Wild Wolf
+5:8912112:Wild Wolf
+5:8912113:Dark gang Wolf
+5:8912116:Elite Wolf Leader
+5:8912128:Savage Dog
+5:8912129:Savage Dog
+5:8912130:Savage Dog
+5:8912131:Master Savage
+5:8912132:Master Savage
+5:8912133:Master Savage
+5:8912134:Guardian Wolf
+5:8912135:Guardian Wolf
+5:8912136:Guardian Wolf
+5:8912201:Jackal
+5:8912202:Jackal
+5:8912203:Jackal
+5:8912204:Lone Wolf
+5:8912205:Lone Wolf
+5:8912206:Lone Wolf
+5:8912207:Night Wolf
+5:8912210:Hunting Wolf
+5:8912213:Dark Wolf
+5:8912219:Wild Hound
+5:8912220:Wild Hound
+5:8912221:Wild Hound
+5:8912222:Mad Jackal
+5:8912223:Mad Jackal
+5:8912224:Mad Jackal
+5:8912225:Predator Wolf
+5:8912226:Predator Wolf
+5:8912227:Predator Wolf
+5:8912228:Colonel Kiri's Hound
+5:8912229:Colonel Kiri's Hound
+5:8912230:Colonel Kiri's Hound
+5:8912231:Wilderness Gao
+5:8912232:Wilderness Gao
+5:8912233:Wilderness Gao
+5:8912234:Crazy Water Jackal
+5:8912235:Crazy Water Jackal
+5:8912236:Crazy Water Jackal
+5:8912237:Duet Wolf
+5:8912238:Duet Wolf
+5:8912239:Duet Wolf
+5:8912240:Wilderness Gao
+5:8913101:Dingo
+5:8913102:Dingo
+5:8913103:Dingo
+5:8913104:Wild Squad Wolf
+5:8913105:Wild Squad Wolf
+5:8913106:Wild Squad Wolf
+5:8913107:Wild Spotted Wolf
+5:8913108:Wild Spotted Wolf
+5:8913109:Wild Spotted Wolf
+5:8913110:Red patrol Wolf
+5:8913111:Red patrol Wolf
+5:8913112:Red patrol Wolf
+5:8913113:Lazy Wolf
+5:8913114:Lazy Wolf
+5:8913115:Lazy Wolf
+5:8913116:Gang of Nightowl
+5:8913119:Hogarth Wolf
+5:8913122:Poison Gas Wolf
+5:8913125:Looting Wolf
+5:8913128:Wild Wolf
+5:8913201:Wolf Dog
+5:8913202:Wolf Dog
+5:8913203:Wolf Dog
+5:8913204:Wild Howler
+5:8913205:Wild Howler
+5:8913206:Wild Howler
+5:8913207:White Gang Wolf
+5:8913210:Bagels Wolf
+5:8913213:Wild Howler
+5:9:Saibaman Type
+5:9111101:Flower Monkey
+5:9111102:Flower Monkey
+5:9111103:Flower Monkey
+5:9111104:Flower Power Monkey
+5:9111105:Flower Power Monkey
+5:9111106:Flower Power Monkey
+5:9111107:Big Flower Monkey
+5:9111108:Flower Monkey
+5:9111109:Flower Monkey
+5:9111110:War Monkey
+5:9111111:War Monkey
+5:9111112:War Monkey
+5:9111113:Bula-Li Black Monkey
+5:9111114:Bula-Li Black Monkey
+5:9111115:Bula-Li Black Monkey
+5:9111116:Sasi-Li Monkey
+5:9112101:Little Baylor Monkey 
+5:9112102:Little Baylor Monkey
+5:9112103:Little Baylor Monkey
+5:9112104:Baylor Monkey
+5:9112105:Baylor Monkey
+5:9112106:Baylor Monkey
+5:9112107:Della Baylor Monkey
+5:9112108:Della Baylor Monkey
+5:9112109:Della Baylor Monkey
+5:9112110:Coast Devil
+5:9112111:Coast Devil
+5:9112112:Coast Devil
+5:9112113:Hungry Monkey
+5:9112114:Hungry Monkey
+5:9112115:Hungry Monkey
+5:9112116:Hungry Monkey
+5:9112117:Hungry Monkey
+5:9112118:Hungry Monkey
+5:9112119:Bula-Li Blue Monkey
+5:9112120:Bula-Li Blue Monkey
+5:9112121:Bula-Li Blue Monkey
+5:9112122:Hungry Monkey
+5:9112123:Hungry Monkey
+5:9112124:Hungry Monkey
+5:9112125:Wild Monkey
+5:9112128:Bristol Flower Monkey
+5:9112129:Bristol Flower Monkey
+5:9112130:Bristol Flower Monkey
+5:9112131:Bristol Flower Monkey
+5:9113101:Lira
+5:9113104:Violent Orangi
+5:9411101:Buffalo Soldier
+5:9411102:Buffalo Soldier
+5:9411103:Buffalo Soldier
+5:9411104:Buffalo Troop
+5:9411105:Buffalo Troop
+5:9411106:Buffalo Troop
+5:9411107:Mou Champ
+5:9411108:Mou Champ
+5:9411109:Mou Champ
+5:9411110:Ultimate weapon Guard
+5:9411111:Ultimate weapon Guard
+5:9411112:Ultimate weapon Guard
+5:9411113:General Bone's Royal Raider
+5:9411114:General Bone's Royal Raider
+5:9411115:General Bone's Royal Raider
+5:9411116:Buffalo Miner 
+5:9411117:Buffalo Miner 
+5:9411118:Buffalo Miner 
+5:9411119:Buffalo Worker
+5:9411120:Buffalo Worker
+5:9411121:Buffalo Worker
+5:9411122:Pillecuttle 
+5:9411123:Pillecuttle
+5:9411124:Pillecuttle
+5:9411125:Defeated Bull Soldier
+5:9411201:Defeated Buffalo Soldier
+5:9411202:Defeated Buffalo Soldier
+5:9411203:Defeated Buffalo Soldier
+5:9411204:Buffalo Elite Unit
+5:9411205:Buffalo Elite Unit
+5:9411206:Buffalo Elite Unit
+5:9411207:Buffalo Slave Soldier
+5:9411208:Buffalo Slave Soldier
+5:9411209:Buffalo Slave Soldier
+5:9411210:Occupation Force Bull
+5:9411211:Occupation Force Bull
+5:9411212:Occupation Force Bull
+5:9411213:Buffalo Experimental Sample
+5:9411214:Buffalo Experimental Sample
+5:9411215:Buffalo Experimental Sample
+5:9411216:Mad Ox Soldier
+5:9411217:Mad Ox Soldier
+5:9411218:Mad Ox Soldier
+5:9411219:Middle-Level Red Pants Soldier
+5:9411301:Buffalo Soldier Royal Guard
+5:9411302:Buffalo Soldier Royal Guard
+5:9411303:Buffalo Soldier Royal Guard
+5:9411304:Buffalo Seaman
+5:9411305:Buffalo Seaman
+5:9411306:Buffalo Seaman
+5:9411307:Buffalo Supply Unit
+5:9411308:Buffalo Supply Unit
+5:9411309:Buffalo Supply Unit
+5:9411310:Buffalo Deserter
+5:9411311:Buffalo Deserter
+5:9411312:Buffalo Deserter
+5:9411313:Buffalo Worker
+5:9411314:Buffalo Worker
+5:9411315:Buffalo Worker
+5:9411316:Mr. Jackie
+5:9411317:Mr. Jackie
+5:9411318:Mr. Jackie
+5:9411319:Clean Buffalo Seaman
+5:9411320:Clean Buffalo Seaman
+5:9411321:Clean Buffalo Seaman
+5:9411322:Red Pants Deserter
+5:9411323:Red Pants Deserter
+5:9411324:Red Pants Deserter
+5:9411325:Bull Squad
+5:9411326:Bull Squad
+5:9411327:Bull Squad
+5:9412101:Mad Ox Engineer Corps
+5:9412102:Mad Ox Engineer Corps
+5:9412103:Mad Ox Engineer Corps
+5:9412104:Evening Star's Mad Ox
+5:9412105:Evening Star's Mad Ox
+5:9412106:Evening Star's Mad Ox
+5:9412107:Vassal of Shenmaong
+5:9412108:Vassal of Shenmaong
+5:9412109:Vassal of Shenmaong
+5:9412113:Buffalo Operation Officer
+5:9412114:Buffalo Operation Officer
+5:9412115:Buffalo Operation Officer
+5:9412119:Mad Ox
+5:9412120:Mad Ox
+5:9412121:Mad Ox
+5:9412201:Mad Ox Hot-Wind Troop
+5:9412202:Mad Ox Hot-Wind Troop
+5:9412203:Mad Ox Hot-Wind Troop
+5:9412204:Mad Ox Suicide Corps
+5:9412205:Mad Ox Suicide Corps
+5:9412206:Mad Ox Suicide Corps
+5:9412207:Red Pants Secretary 
+5:9412208:Red Pants Secretary 
+5:9412209:Red Pants Secretary 
+5:9412210:Mad Ox Chief Guard
+5:9412211:Mad Ox Chief Guard
+5:9412212:Mad Ox Chief Guard
+5:9413101:Hot-Wind Troops Bull
+5:9413102:Hot-Wind Troops Bull
+5:9413103:Hot-Wind Troops Bull
+5:9413104:Suicide Corps Bull
+5:9413105:Suicide Corps Bull
+5:9413106:Suicide Corps Bull
+5:9413107:Field Supervisor 
+5:9413108:Field Supervisor 
+5:9413109:Field Supervisor 
+5:9413110:Doublles
+5:9413111:Doublles
+5:9413112:Doublles
+5:9413113:Bull Sentry
+5:9413114:Bull Sentry
+5:9413115:Bull Sentry
+5:9413116:Underground Base Guarding Warrior
+5:9413117:Underground Base Guarding Warrior
+5:9413118:Underground Base Guarding Warrior
+5:9413119:Red Pants Guarding Warrior
+5:9413120:Red Pants Guarding Warrior
+5:9413121:Red Pants Guarding Warrior
+5:9413122:Underground Base Guarding Warrior
+5:9413201:Guard Unit Bull
+5:9413202:Guard Unit Bull
+5:9413203:Guard Unit Bull
+5:9413204:Special Operation Unit Bull
+5:9413205:Special Operation Unit Bull
+5:9413206:Special Operation Unit Bull
+5:9414101:General Bone
+5:9414102:General Bone
+5:9414103:General Bone
+5:9414104:Julia
+5:9414105:Julia
+5:9414106:Julia
+5:9414107:General Bone
+5:9414201:Kiri Poisoned General Bone
+5:9414202:Kiri Poisoned General Bone
+5:9414203:Kiri Poisoned General Bone
+5:9415104:Tomb Robber Leader Abek
+5:9415105:Tomb Robber Leader Abek
+5:9415106:Tomb Robber Leader Abek
+5:9415107:Red Pants Army Leader
+5:9415108:Red Pants Army Leader
+5:9415109:Red Pants Army Leader
+5:9415110:General Brooklyne
+5:9415111:General Brooklyne
+5:9415112:General Brooklyne
+5:9415113:Red Pants Military Discipline Officer
+5:9415114:Red Pants Military Discipline Officer
+5:9415115:Red Pants Military Discipline Officer
+5:9415201:Robot Renovating Worker
+5:9415202:Robot Renovating Worker
+5:9415203:Robot Renovating Worker
+5:9415401:Brainwashed General Brooklyne
+5:9415402:Brainwashed General Brooklyne
+5:9415403:Brainwashed General Brooklyne
+5:9415404:Brainwashed High-Level Prisoner
+5:9415407:Deputy Popo
+5:9415410:Brainwashed General Brooklyne
+5:9416101:Engineer Corps
+5:9416102:Engineer Corps
+5:9416103:Engineer Corps
+5:9416104:Special Engineer Corps Bull
+5:9416105:Special Engineer Corps Bull
+5:9416106:Special Engineer Corps Bull
+5:9416107:Engineer Corps Bull
+5:9416108:Engineer Corps Bull
+5:9416109:Engineer Corps Bull
+5:9416110:Bull Guard
+5:9416111:Bull Guard
+5:9416112:Bull Guard
+5:9416113:Engineer Corps
+5:9416114:Engineer Corps
+5:9416115:Engineer Corps
+5:9417101:Supervisor Bull
+5:9417102:Supervisor Bull
+5:9417103:Supervisor Bull
+5:9418101:Field Supervisor
+5:9418102:Field Supervisor
+5:9418103:Field Supervisor
+5:9418104:Classic Red Pants Elite Unit
+5:9418105:Classic Red Pants Elite Unit
+5:9418106:Classic Red Pants Elite Unit
+5:9419101:General Bone's Arson Unit
+5:9419102:General Bone's Arson Unit
+5:9419103:General Bone's Arson Unit
+5:9419104:RP Special Operation Officer
+5:9419107:General Bone's Arson Unit
+5:9420101:Engineer Corps
+5:9420102:Engineer Corps
+5:9420103:Engineer Corps
+5:9420104:Gooris Buffalo Worker
+5:9420105:Gooris Buffalo Worker
+5:9420106:Gooris Buffalo Worker
+5:9420107:Engineer Corps
+5:9421101:Mushroom Gang Strong Man
+5:9421104:Mushroom Gang Raider Leader
+5:9421107:Mushroom Gang Wild Fellow
+5:9421110:Mushroom Gang Tyrant
+5:9421113:Mushroom Gang Raider Leader
+5:9611101:Clamp Saibaman
+5:9611102:Clamp Saibaman
+5:9611103:Clamp Saibaman
+5:9611104:Big Clamp Saibaman
+5:9611105:Big Clamp Saibaman
+5:9611106:Big Clamp Saibaman
+5:9611107:King Clamp Saibaman
+5:9611108:King Clamp Saibaman
+5:9611109:King Clamp Saibaman
+5:9611110:Clamp Saibaman
+5:9611111:Clamp Saibaman
+5:9611112:Clamp Saibaman
+5:9611125:Oasis Clamp Saibaman
+5:9611126:Oasis Clamp Saibaman
+5:9611127:Oasis Clamp Saibaman
+5:9611128:Desert Clamp Saibaman
+5:9611129:Desert Clamp Saibaman
+5:9611130:Desert Clamp Saibaman
+5:9611131:Snip Clamp Saibaman
+5:9611132:Snip Clamp Saibaman
+5:9611133:Snip Clamp Saibaman
+5:9611134:Son of "The Monster"
+5:9611135:Son of "The Monster"
+5:9611136:Son of "The Monster"
+5:9611137:Clamp-Picker Saibaman
+5:9611138:Clamp-Picker Saibaman
+5:9611139:Clamp-Picker Saibaman
+5:9611140:Waterway Clamp Saibaman
+5:9611141:Waterway Clamp Saibaman
+5:9611142:Waterway Clamp Saibaman
+5:9612101:Glossy Saibaman
+5:9612102:Glossy Saibaman
+5:9612103:Glossy Saibaman
+5:9612104:King Glossy Saibaman
+5:9612105:King Glossy Saibaman
+5:9612106:King Glossy Saibaman
+5:9612107:Giga Glossy Saibaman
+5:9612108:Giga Glossy Saibaman
+5:9612109:Giga Glossy Saibaman
+5:9612110:Salty Clamp Saibaman
+5:9612111:Salty Clamp Saibaman
+5:9612112:Salty Clamp Saibaman
+5:9612113:Real Monster
+5:9612114:Real Monster
+5:9612115:Real Monster
+5:9612116:Shell Clamp Saibaman
+5:9612117:Shell Clamp Saibaman
+5:9612118:Shell Clamp Saibaman
+5:9612119:Wanderer Clamp Saibaman
+5:9612120:Wanderer Clamp Saibaman
+5:9612121:Wanderer Clamp Saibaman
+5:9612122:Frozen Clamp Saibaman
+5:9612123:Frozen Clamp Saibaman
+5:9612124:Frozen Clamp Saibaman
+5:9612125:Bred Monster
+5:9612126:Bred Monster
+5:9612127:Bred Monster
+5:9612128:Wanderer Clamp Saibaman
+5:9612131:Frozen Clamp Saibaman
+5:9613101:Sand Crab Saibaman
+5:9613102:Sand Crab Saibaman
+5:9613103:Sand Crab Saibaman
+5:9613104:King Sand Crab Saibaman
+5:9613105:King Sand Crab Saibaman
+5:9613106:King Sand Crab Saibaman
+5:9613107:Giga Sand Crab Saibaman
+5:9613108:Giga Sand Crab Saibaman
+5:9613109:Giga Sand Crab Saibaman
+5:9613110:Long-Leg Saibaman
+5:9613111:Long-Leg Saibaman
+5:9613112:Long-Leg Saibaman
+5:9613113:Left-Clamp Saibaman
+5:9613114:Left-Clamp Saibaman
+5:9613115:Left-Clamp Saibaman
+5:9613116:Oceanking Clamp Saibaman
+5:9613117:Oceanking Clamp Saibaman
+5:9613118:Oceanking Clamp Saibaman
+5:9613119:Mushroom Lake Clamp Saibaman
+5:9613120:Mushroom Lake Clamp Saibaman
+5:9613121:Mushroom Lake Clamp Saibaman
+5:9614101:Poisoned Clamp Saibaman
+5:9614104:King Snip Saibaman
+5:9614201:Real Monster
+5:9614202:Real Monster
+5:9614203:Real Monster
+5:9615101:Brainwashed Clamp Saibaman
+5:9615102:Brainwashed Clamp Saibaman
+5:9615103:Brainwashed Clamp Saibaman
+5:9615104:Brainwashed Clamp Saibaman
+5:9615105:Brainwashed Clamp Saibaman
+5:9615106:Brainwashed Clamp Saibaman
+5:9615107:Brainwashed Steel-Clamp Saibaman
+5:9615108:Brainwashed Steel-Clamp Saibaman
+5:9615109:Brainwashed Steel-Clamp Saibaman
+5:9615110:Brainwashed Plated-Clamp Saibaman
+5:9615111:Brainwashed Plated-Clamp Saibaman
+5:9615112:Brainwashed Plated-Clamp Saibaman
+5:9615113:Brainwashed Clamp Saibaman
+5:9615114:Brainwashed Clamp Saibaman
+5:9615115:Brainwashed Clamp Saibaman
+5:9811101:Oil Rock
+5:9811102:Oil Rock
+5:9811103:Oil Rock
+5:9981101:0	
+5:9981102:0	
+5:9981103:0	
+5:9991101:Test 1
+5:9991102:Test 1
+5:9991103:Test 1
+5:9991104:Test 7
+5:9991105:Test 7
+5:9991106:Test 7
+5:9991107:General Red
+5:9991108:General Red
+5:9991109:General Red
+5:9994110:EP Absorbing Stat
+5:9994111:LP Absorbing Stat
+5:9995107:Test 4
+5:9995108:Test 4
+5:9995109:Test 4
+5:9995112:Mega Dodon-Ray Stat Mob
+5:68131393:Broly
+5:68131391:Super Saiyan Broly
+5:68131392:Ozaru Broly
+5:68131390:Vampa Beetle
+5:68131394: 3 Star Dragon
+5:68131395: 4 Star Dragon
+5:68131396: 1 Star Dragon
+5:68131397: Evil Dragon
+5:68131398: Ice Dragon
+5:68131399: Fire Dragon

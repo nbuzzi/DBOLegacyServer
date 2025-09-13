@@ -217,15 +217,28 @@ bool CCustomDropEvent::LoadConfigInternal(const char* path)
 				// trim
 				while (*tok == ' ' || *tok == '\t')
 					++tok;
-				// token format itemId@rate OR itemId (default 100)
+				// token format itemId@ratexcount OR itemId@rate OR itemId (default rate=100, count=1)
 				unsigned int itemId = 0;
 				float rate = 100.f;
+				BYTE count = 1;
 				char* at = strchr(tok, '@');
 				if (at)
 				{
 					*at = '\0';
 					itemId = (unsigned int)strtoul(tok, nullptr, 10);
-					rate = (float)atof(at + 1);
+					char* rx = at + 1;
+					char* x = strchr(rx, 'x');
+					if (x)
+					{
+						*x = '\0';
+						rate = (float)atof(rx);
+						count = (BYTE)strtoul(x + 1, nullptr, 10);
+						if (count == 0) count = 1;
+					}
+					else
+					{
+						rate = (float)atof(rx);
+					}
 				}
 				else
 				{
@@ -233,7 +246,7 @@ bool CCustomDropEvent::LoadConfigInternal(const char* path)
 				}
 				if (itemId != 0)
 				{
-					DropEntry e{ itemId, rate };
+					DropEntry e; e.itemTblidx = itemId; e.rate = rate; e.count = count;
 					entries.push_back(e);
 				}
 				tok = strtok(nullptr, ",\n\r");
@@ -420,7 +433,11 @@ void CCustomDropEvent::Update(CMonster* pMob, CCharacter* pPlayer)
 				continue;
 			if (d.rate >= 100.f || Dbo_CheckProbabilityF(d.rate))
 			{
-				CreateSingleDrop(pMob, pPlayer, d.itemTblidx);
+				BYTE cnt = d.count ? d.count : 1;
+				if (cnt > 1)
+					CreateStackedDrop(pMob, pPlayer, d.itemTblidx, cnt);
+				else
+					CreateSingleDrop(pMob, pPlayer, d.itemTblidx);
 			}
 		}
 	}

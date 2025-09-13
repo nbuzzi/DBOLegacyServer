@@ -125,3 +125,13 @@ Tools/**/*.sln.iml
 Tools/**/*.dll
 Tools/**/*.exe
 Tools/**/*.pdb
+
+# Allowlisted text catalogs for the editor (keep other .txt ignored)
+!Tools/CustomDropEventEditor/Mobs.txt
+!Tools/CustomDropEventEditor/mobs.txt
+!Tools/CustomDropEventEditor/MobList.txt
+!Tools/CustomDropEventEditor/moblist.txt
+!Tools/CustomDropEventEditor/Items.txt
+!Tools/CustomDropEventEditor/items.txt
+!Tools/CustomDropEventEditor/ItemList.txt
+!Tools/CustomDropEventEditor/itemlist.txt

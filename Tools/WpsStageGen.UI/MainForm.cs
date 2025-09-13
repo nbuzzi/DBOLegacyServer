@@ -10,8 +10,8 @@ namespace WpsStageGen.UI
 {
     public class MainForm : Form
     {
-    TextBox txtWpsPath = new TextBox { Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right };
-    TextBox txtGenPath = new TextBox { Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right };
+        TextBox txtWpsPath = new TextBox { Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right };
+        TextBox txtGenPath = new TextBox { Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right };
         NumericUpDown numAdd = new NumericUpDown { Minimum = 1, Maximum = 1000, Value = 5 };
         NumericUpDown numBossEvery = new NumericUpDown { Minimum = 1, Maximum = 1000, Value = 5 };
         NumericUpDown numDropItem = new NumericUpDown { Minimum = 1, Maximum = int.MaxValue, Value = 7000014 };
@@ -19,22 +19,22 @@ namespace WpsStageGen.UI
         NumericUpDown numDropStep = new NumericUpDown { Minimum = 0, Maximum = 1000, Value = 1 };
         NumericUpDown numMobBase = new NumericUpDown { Minimum = 1, Maximum = 999999, Value = 9101 };
         NumericUpDown numBossGroup = new NumericUpDown { Minimum = 1, Maximum = 999999, Value = 9999 };
-    TextBox txtArgs = new TextBox { Multiline = true, ScrollBars = ScrollBars.Vertical, Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right, ReadOnly = true };
-    TextBox txtOutput = new TextBox { Multiline = true, ScrollBars = ScrollBars.Both, Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right, ReadOnly = true, WordWrap = false };
-    Button btnBrowseWps = new Button { Text = "Browse" };
-    Button btnBrowseGen = new Button { Text = "Browse" };
-    Button btnRun = new Button { Text = "Run" };
-    Button btnCopyArgs = new Button { Text = "Copy" };
-    Button btnReset = new Button { Text = "Reset" };
-    ComboBox cboBossEvery = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 120 };
-    ComboBox cboMobBase = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 120 };
-    ToolTip tt = new ToolTip();
-    Panel header = new Panel { Height = 64, Dock = DockStyle.Top };
-    Label lblTitle = new Label();
-    Label lblSub = new Label();
-    Panel status = new Panel { Height = 28, Dock = DockStyle.Bottom };
-    Label lblStatus = new Label { AutoSize = false, Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft };
-    ProgressBar prg = new ProgressBar { Dock = DockStyle.Right, Style = ProgressBarStyle.Marquee, MarqueeAnimationSpeed = 0, Width = 120, Visible = false };
+        TextBox txtArgs = new TextBox { Multiline = true, ScrollBars = ScrollBars.Vertical, Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right, ReadOnly = true };
+        TextBox txtOutput = new TextBox { Multiline = true, ScrollBars = ScrollBars.Both, Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right, ReadOnly = true, WordWrap = false };
+        Button btnBrowseWps = new Button { Text = "Browse" };
+        Button btnBrowseGen = new Button { Text = "Browse" };
+        Button btnRun = new Button { Text = "Run" };
+        Button btnCopyArgs = new Button { Text = "Copy" };
+        Button btnReset = new Button { Text = "Reset" };
+        ComboBox cboBossEvery = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 120 };
+        ComboBox cboMobBase = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 120 };
+        ToolTip tt = new ToolTip();
+        Panel header = new Panel { Height = 64, Dock = DockStyle.Top };
+        Label lblTitle = new Label();
+        Label lblSub = new Label();
+        Panel status = new Panel { Height = 28, Dock = DockStyle.Bottom };
+        Label lblStatus = new Label { AutoSize = false, Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft };
+        ProgressBar prg = new ProgressBar { Dock = DockStyle.Right, Style = ProgressBarStyle.Marquee, MarqueeAnimationSpeed = 0, Width = 120, Visible = false };
 
         public MainForm()
         {
