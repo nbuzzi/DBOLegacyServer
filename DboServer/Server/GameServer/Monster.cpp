@@ -49,6 +49,10 @@ void CMonster::Initialize()
 	m_fFaintBuffRange = INVALID_FLOAT;
 
 	m_dropItem_ProbabilityTblidx = INVALID_TBLIDX;
+
+	// custom drop override
+	m_customDropItemTblidx = INVALID_TBLIDX;
+	m_byCustomDropCount = 0;
 }
 
 void CMonster::Destroy()
@@ -792,7 +796,11 @@ void CMonster::CreateKillReward(bool bItemDrop)
 {
 	CPlayer* pkAttacker = DistributeExp(); //give exp to everyone. Return person who dealt most dmg
 	if (!pkAttacker || !pkAttacker->IsInitialized())
+	{
+		m_customDropItemTblidx = INVALID_TBLIDX;
+		m_byCustomDropCount = 0;
 		return;
+	}
 
 	if (bItemDrop && pkAttacker->IsPC())
 	{
@@ -815,7 +823,11 @@ void CMonster::CreateKillReward(bool bItemDrop)
 	if (GetCurWorld() && GetCurWorld()->GetTbldat()->bDynamic) //check if inside dynamic world
 	{
 		if (BIT_FLAG_TEST(SPAWN_FUNC_FLAG_RESPAWN, GetSpawnFuncFlag())) //check if has respawn
+		{
+			m_customDropItemTblidx = INVALID_TBLIDX;
+			m_byCustomDropCount = 0;
 			return;
+		}
 	}
 
 	if (bItemDrop || m_dropItem_ProbabilityTblidx != INVALID_TBLIDX)
@@ -829,6 +841,33 @@ void CMonster::CreateKillReward(bool bItemDrop)
 
 		if (m_dropItem_ProbabilityTblidx != INVALID_TBLIDX)
 			g_pItemManager->CreateItemDrop(m_dropItem_ProbabilityTblidx, s_vec_item);
+
+		// Custom forced drop from WPS (item + count)
+		if (m_customDropItemTblidx != INVALID_TBLIDX && m_byCustomDropCount > 0)
+		{
+			ERR_LOG(LOG_GENERAL, "[DropTrace] WPS CustomDrop mob=%u item=%u count=%u", GetTblidx(), m_customDropItemTblidx, m_byCustomDropCount);
+			sITEM_TBLDAT* pItemData = (sITEM_TBLDAT*)g_pTableContainer->GetItemTable()->FindData(m_customDropItemTblidx);
+			if (pItemData)
+			{
+				BYTE remaining = m_byCustomDropCount;
+				BYTE maxStack = pItemData->byMax_Stack;
+				BYTE dropsSpawned = 0;
+				if (maxStack < 1) maxStack = 1;
+				while (remaining > 0 && dropsSpawned < 10)
+				{
+					BYTE stack = remaining > maxStack ? maxStack : remaining;
+					CItemDrop* pDrop = g_pItemManager->CreateSingleDrop(100.f, m_customDropItemTblidx);
+					if (pDrop)
+					{
+						pDrop->SetNeedToIdentify(false);
+						pDrop->SetStackCount(stack);
+						s_vec_item.push_back(pDrop);
+					}
+					remaining -= stack;
+					++dropsSpawned;
+				}
+			}
+		}
 
 		if (bItemDrop)
 			g_pItemManager->CreateItemDrop(this, pkAttacker, s_vec_item);
@@ -935,6 +974,16 @@ void CMonster::CreateKillReward(bool bItemDrop)
 			}
 		}
 	}
+
+	// Reset custom drop so it cannot leak to future kills
+	m_customDropItemTblidx = INVALID_TBLIDX;
+	m_byCustomDropCount = 0;
+}
+
+void CMonster::SetCustomDrop(TBLIDX itemTblidx, BYTE byCount)
+{
+	m_customDropItemTblidx = itemTblidx;
+	m_byCustomDropCount = byCount;
 }
 
 

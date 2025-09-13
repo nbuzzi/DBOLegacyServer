@@ -75,6 +75,10 @@ private:
 	BYTE						m_byFaintBuffApplyType;
 	float						m_fFaintBuffRange;
 
+	// Custom per-mob drop override (item + count)
+	TBLIDX						m_customDropItemTblidx;
+	BYTE						m_byCustomDropCount;
+
 
 };
 

@@ -110,7 +110,17 @@ void	CServerPassiveSession::RecUserLeaveGame(CNtlPacket * pPacket)
 		if (pDojo)
 		{
 			if (pDojo->GetWarRequest() && pDojo->GetWarInProgress() == false && pDojo->GetDojoData()->challengeGuildId != INVALID_GUILDID)
-				pDojo->BeginWarPreparation();
+			{
+				CChatServer* appCfg = (CChatServer*)g_pApp;
+				if (appCfg && appCfg->m_config.bDisableDojoWar)
+				{
+					NTL_PRINT(PRINT_APP, "[Dojo] Auto-start on leave suppressed by DisableDojoWar config");
+				}
+				else
+				{
+					pDojo->BeginWarPreparation();
+				}
+			}
 		}
 
 		if (req->bIsKickOut || req->eCharLeavingType != CHARLEAVING_CHANNEL_CHANGE)
@@ -1701,6 +1711,14 @@ void CServerPassiveSession::RecvDojoScrambleReq(CNtlPacket * pPacket)
 	sGT_DOJO_SCRAMBLE_REQ * req = (sGT_DOJO_SCRAMBLE_REQ *)pPacket->GetPacketData();
 
 	CPlayer* pPlayer = g_pPlayerManager->FindPlayerWithCharID(req->charId);
+
+	CChatServer* appCfgTop = (CChatServer*)g_pApp;
+	if (appCfgTop && appCfgTop->m_config.bDisableDojoWar)
+	{
+		resulcode = COMMUNITY_FAIL;
+	}
+	else
+	{
 	
 	if (pPlayer == NULL || pPlayer->GetPcInitState() == false)
 		resulcode = GAME_FAIL;
@@ -1753,7 +1771,15 @@ void CServerPassiveSession::RecvDojoScrambleReq(CNtlPacket * pPacket)
 			else
 			{
 				//begin war Preparation
-				pDojo->BeginWarPreparation();
+				CChatServer* appCfg = (CChatServer*)g_pApp;
+				if (appCfg && appCfg->m_config.bDisableDojoWar)
+				{
+					NTL_PRINT(PRINT_APP, "[Dojo] BeginWarPreparation suppressed (owner offline) by DisableDojoWar config");
+				}
+				else
+				{
+					pDojo->BeginWarPreparation();
+				}
 			}
 		}
 	}

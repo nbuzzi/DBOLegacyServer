@@ -86,6 +86,10 @@ public:
 
 	float						m_fFaintBuffRange;
 
+	// Custom per-mob drop override (item + count) set via WPS
+	TBLIDX						m_customDropItemTblidx;
+	BYTE						m_byCustomDropCount;
+
 };
 
 

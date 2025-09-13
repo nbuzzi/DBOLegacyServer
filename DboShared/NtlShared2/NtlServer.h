@@ -4,7 +4,7 @@
 //
 //	Begin		:	2008-05-13
 //
-//	Copyright	:	¨Ï NTL-Inc Co., Ltd
+//	Copyright	:	ï¿½ï¿½ NTL-Inc Co., Ltd
 //
 //	Author		:	
 //
@@ -119,6 +119,8 @@ struct sCHAT_SERVERCONFIG
 
 	int				LoadTableFormat;
 	CNtlString		TablePath;
+
+	BOOL            bDisableDojoWar;
 };
 
 struct sCHAR_SERVERCONFIG

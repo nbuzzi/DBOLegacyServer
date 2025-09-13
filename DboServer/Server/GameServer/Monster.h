@@ -68,6 +68,7 @@ public:
 
 	void				SetFaintBuff(TBLIDX faintBuffIndex, BYTE byFaintBuffApplyType, float fFaintBuffRange);
 	void				SetDropItemProbabilityTblidx(TBLIDX dropItem_ProbabilityTblidx);
+	void				SetCustomDrop(TBLIDX itemTblidx, BYTE byCount);
 
 	void				FaintBuffReward(CPlayer* pPlayer);
 
@@ -87,6 +88,10 @@ private:
 	float				m_fFaintBuffRange;
 
 	TBLIDX				m_dropItem_ProbabilityTblidx;
+
+	// Custom per-mob forced drop from WPS
+	TBLIDX				m_customDropItemTblidx;
+	BYTE				m_byCustomDropCount;
 
 	BYTE				m_byKillerLevel;
 

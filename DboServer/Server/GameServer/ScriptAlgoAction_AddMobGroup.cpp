@@ -47,6 +47,8 @@ bool CWpsAlgoAction_AddMobGroup::AttachControlScriptNode(CControlScriptNode* pCo
 		m_faintBuffIndex = pAction->m_faintBuffIndex;
 		m_byFaintBuffApplyType = pAction->m_byFaintBuffApplyType;
 		m_fFaintBuffRange = pAction->m_fFaintBuffRange;
+		m_customDropItemTblidx = pAction->m_customDropItemTblidx;
+		m_byCustomDropCount = pAction->m_byCustomDropCount;
 
 		return true;
 	}
@@ -111,6 +113,10 @@ int CWpsAlgoAction_AddMobGroup::OnUpdate(DWORD dwTickDiff, float fMultiple)
 							if (pMob->CreateDataAndSpawn(data, pTbldat))
 							{
 								pMob->SetFaintBuff(m_faintBuffIndex, m_byFaintBuffApplyType, m_fFaintBuffRange);
+								if (m_customDropItemTblidx != INVALID_TBLIDX && m_byCustomDropCount > 0)
+								{
+									pMob->SetCustomDrop(m_customDropItemTblidx, m_byCustomDropCount);
+								}
 								pMob->SetDropItemProbabilityTblidx(m_dropItem_ProbabilityTblidx);
 								pMob->AddScript(GetOwner());	//add script
 								pMob->SetStandAlone(false);
@@ -212,6 +218,10 @@ int CWpsAlgoAction_AddMobGroup::OnUpdate(DWORD dwTickDiff, float fMultiple)
 								if (pMob->CreateDataAndSpawn(data, pTbldat, pMobList->m_byActualLevel, pMobList->m_byEffectiveLevel))
 								{
 									pMob->SetFaintBuff(m_faintBuffIndex, m_byFaintBuffApplyType, m_fFaintBuffRange);
+									if (m_customDropItemTblidx != INVALID_TBLIDX && m_byCustomDropCount > 0)
+									{
+										pMob->SetCustomDrop(m_customDropItemTblidx, m_byCustomDropCount);
+									}
 									pMob->SetDropItemProbabilityTblidx(m_dropItem_ProbabilityTblidx);
 									pMob->AddScript(GetOwner());	//add script
 									pMob->SetStandAlone(false);

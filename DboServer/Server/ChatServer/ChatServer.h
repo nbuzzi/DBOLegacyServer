@@ -153,6 +153,12 @@ public:
 			return NTL_ERR_SYS_CONFIG_FILE_READ_FAIL;
 		}
 
+		// GOVERNANCE
+		if (!file.Read("GAMECONFIG", "DisableDojoWar", m_config.bDisableDojoWar))
+		{
+		 	m_config.bDisableDojoWar = TRUE;
+		}
+
 		return NTL_SUCCESS;
 	}
 

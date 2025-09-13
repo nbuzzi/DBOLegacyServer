@@ -22,6 +22,7 @@ Database* db_log;
 CChatServer::CChatServer()
 {
 	m_pMasterServerSession = NULL;
+	m_config.bDisableDojoWar = TRUE;
 }
 
 CChatServer::~CChatServer()

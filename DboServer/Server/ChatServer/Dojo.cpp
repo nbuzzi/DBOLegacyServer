@@ -98,6 +98,15 @@ void CDojo::OnEvent_WarRequestTimer()
 	if (CanReceiveWarRequest() == false)
 		return;
 
+	CChatServer* appCfg = (CChatServer*)g_pApp;
+	if (appCfg && appCfg->m_config.bDisableDojoWar)
+	{
+		NTL_PRINT(PRINT_APP, "[Dojo] WarRequestTimer suppressed by DisableDojoWar config");
+		m_bHasWarRequest = false;
+		dojoData.challengeGuildId = INVALID_GUILDID;
+		return;
+	}
+
 	BeginWarPreparation();
 }
 
@@ -170,6 +179,16 @@ void CDojo::WarRequestReponse(bool& rbIsAccept, WORD& rwResultcode, bool& rbIsRe
 
 void CDojo::BeginWarPreparation()
 {
+	CChatServer* appCfg = (CChatServer*)g_pApp;
+	if (appCfg && appCfg->m_config.bDisableDojoWar)
+	{
+		NTL_PRINT(PRINT_APP, "[Dojo] BeginWarPreparation suppressed by DisableDojoWar config");
+		// reset pending request flags
+		m_bHasWarRequest = false;
+		dojoData.challengeGuildId = INVALID_GUILDID;
+		return;
+	}
+
 	m_lastDojoWar = std::time(NULL);
 	m_byRejectCount = 0;
 	m_bHasWarRequest = false;
