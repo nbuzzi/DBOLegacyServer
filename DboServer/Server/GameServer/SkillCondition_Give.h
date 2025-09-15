@@ -64,7 +64,16 @@ inline CSkillBot* CSkillCondition_Give::OnUpdate(DWORD dwTickTime)
 				wThreshold = cfg.wHealLpThresholdOverride;
 		}
 
-		if (m_pPartyMemberLowLP && m_pPartyMemberLowLP->ConsiderLPLow((float)wThreshold))
+		// If override is 0 => heal whenever missing any LP
+		if (GetHelperNpcManager()->GetConfig().wHealLpThresholdOverride == 0)
+		{
+			if (m_pPartyMemberLowLP && m_pPartyMemberLowLP->GetCurLP() < m_pPartyMemberLowLP->GetMaxLP())
+			{
+				ERR_LOG(LOG_BOTAI, "Give: healing target %u (missing LP mode)", m_pPartyMemberLowLP->GetID());
+				return pSkill;
+			}
+		}
+		else if (m_pPartyMemberLowLP && m_pPartyMemberLowLP->ConsiderLPLow((float)wThreshold))
 		{
 			ERR_LOG(LOG_BOTAI, "Give: healing target %u with threshold %u (curLP=%u)", m_pPartyMemberLowLP->GetID(), wThreshold, m_pPartyMemberLowLP->GetCurLP());
 			return pSkill;

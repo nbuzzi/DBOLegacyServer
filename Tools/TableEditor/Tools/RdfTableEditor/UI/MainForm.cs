@@ -4,6 +4,7 @@ using System.Text;
 using System.Windows.Forms;
 using RdfTableEditor.Model;
 using RdfTableEditor.Model.Schema;
+using Exporters = RdfTableEditor.Model.Exporters;
 
 namespace RdfTableEditor.UI
 {
@@ -150,21 +151,25 @@ namespace RdfTableEditor.UI
                 var schema = TableRegistry.FromFilename(_currentPath!);
                 // Ensure in-grid edits are materialized back into _doc for schema-driven tables
                 tableView1.SyncBackToDocument(schema);
-                if (schema != null)
+
+                var ext = Path.GetExtension(_currentPath!)?.ToLowerInvariant();
+                if (ext == ".edf")
                 {
-                    // Write to memory then (re-)encrypt if needed
+                    // Preserve EDF: write container + encryption matching server logic
+                    if (!Exporters.EdfExporter.TryWrite(fs, _doc, schema))
+                        throw new InvalidOperationException("Failed to write EDF format for this table.");
+                }
+                else if (schema != null)
+                {
+                    // Plain RDF binary for schema-backed tables
                     using var ms = new MemoryStream();
                     BinaryTableIO.Write(ms, schema, _doc);
                     var bytes = ms.ToArray();
-                    var fileNameOnly = Path.GetFileName(_currentPath);
-                    bool shouldEncrypt = fileNameOnly.StartsWith("o_table_", StringComparison.OrdinalIgnoreCase) || _lastWasDecrypted;
-                    if (shouldEncrypt && RdfCrypto.TryEncrypt(bytes, out var enc))
-                        fs.Write(enc, 0, enc.Length);
-                    else
-                        fs.Write(bytes, 0, bytes.Length);
+                    fs.Write(bytes, 0, bytes.Length);
                 }
                 else
                 {
+                    // Fallback legacy text format
                     RdfSerializer.Serialize(_doc, fs);
                 }
                 UpdateRowInfo();
@@ -205,6 +210,52 @@ namespace RdfTableEditor.UI
             Close();
         }
 
+        // Export handlers
+        private void OnExportXml(object? sender, EventArgs e)
+        {
+            if (_doc == null)
+            {
+                MessageBox.Show(this, "No table loaded.");
+                return;
+            }
+            if (exportXmlDialog.ShowDialog(this) != DialogResult.OK) return;
+            try
+            {
+                var schema = _currentPath != null ? TableRegistry.FromFilename(_currentPath) : null;
+                tableView1.SyncBackToDocument(schema);
+                using var fs = File.Create(exportXmlDialog.FileName);
+                Exporters.XmlExporter.Write(fs, _doc, schema);
+                toolStripStatusLabel1.Text = $"Exported XML: {Path.GetFileName(exportXmlDialog.FileName)}";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(this, ex.Message, "Export XML failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void OnExportEdf(object? sender, EventArgs e)
+        {
+            if (_doc == null)
+            {
+                MessageBox.Show(this, "No table loaded.");
+                return;
+            }
+            if (exportEdfDialog.ShowDialog(this) != DialogResult.OK) return;
+            try
+            {
+                var schema = _currentPath != null ? TableRegistry.FromFilename(_currentPath) : null;
+                tableView1.SyncBackToDocument(schema);
+                using var fs = File.Create(exportEdfDialog.FileName);
+                if (!Exporters.EdfExporter.TryWrite(fs, _doc, schema))
+                    throw new InvalidOperationException("EDF exporter is not available for this table.");
+                toolStripStatusLabel1.Text = $"Exported EDF: {Path.GetFileName(exportEdfDialog.FileName)}";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(this, ex.Message, "Export EDF failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
         private void ApplySearch()
         {
             var text = toolStripSearchBox.Text ?? string.Empty;
@@ -223,6 +274,25 @@ namespace RdfTableEditor.UI
             if (_doc == null) { toolStripRowInfo.Text = string.Empty; return; }
             var visible = tableView1.VisibleRowCount;
             toolStripRowInfo.Text = $"Rows: {visible} / {_doc.Rows.Count}";
+        }
+
+        // Edit actions
+        private void OnAddRow(object? sender, EventArgs e)
+        {
+            tableView1.AddRow();
+            UpdateRowInfo();
+        }
+
+        private void OnCloneRow(object? sender, EventArgs e)
+        {
+            tableView1.CloneSelectedRows();
+            UpdateRowInfo();
+        }
+
+        private void OnDeleteRow(object? sender, EventArgs e)
+        {
+            tableView1.ConfirmAndDeleteSelectedRows();
+            UpdateRowInfo();
         }
     }
 }

@@ -11,6 +11,8 @@ static class Program
         // To customize application configuration such as set high DPI settings or default font,
         // see https://aka.ms/applicationconfiguration.
         ApplicationConfiguration.Initialize();
+    // Ensure EDF exporter is registered before UI actions
+    Model.Exporters.EdfExportBootstrap.EnsureRegistered();
         Application.Run(new UI.MainForm());
     }    
 }

@@ -1,0 +1,7 @@
+{
+  "translation": {
+    "provider": "google",
+    "googleApiKey": "<PUT_YOUR_API_KEY_HERE>",
+    "googleEndpoint": "https://translation.googleapis.com/language/translate/v2"
+  }
+}

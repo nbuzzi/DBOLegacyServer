@@ -7,6 +7,7 @@
 #include "BotAiAction_Chase.h"
 #include "CPlayer.h"
 #include "NtlResultCode.h"
+#include "HelperNpcManager.h"
 
 
 CBotAiAction_SkillUse::CBotAiAction_SkillUse(CNpc* pBot)
@@ -139,9 +140,9 @@ int CBotAiAction_SkillUse::OnUpdate(DWORD dwTickDiff, float fMultiple)
 		return m_status;
 	}
 
-	// If we're moving or following, stop first and retry next tick.
-	// Casting from FOLLOWING/MOVING often returns GAME_SKILL_CANT_CAST_NOW (rc=605).
-	if (GetBot()->GetCharStateID() == CHARSTATE_FOLLOWING || GetBot()->GetMoveFlag() != NTL_MOVE_FLAG_INVALID)
+	// If we're moving, stop first and retry next tick. It's OK to cast while in FOLLOWING state as long as we're stationary.
+	// Casting while MOVING often returns GAME_SKILL_CANT_CAST_NOW (rc=605).
+	if (GetBot()->GetMoveFlag() != NTL_MOVE_FLAG_INVALID)
 	{
 		GetBot()->SendCharStateStanding(true);
 		m_status = COMPLETED; // let scheduler try again next second after state settles
@@ -178,11 +179,15 @@ int CBotAiAction_SkillUse::OnUpdate(DWORD dwTickDiff, float fMultiple)
 				// Use vector-based overload to avoid type mismatch
 				fDist = GetBot()->GetDistance(pLeader->GetCurLoc());
 			}
-			ERR_LOG(LOG_BOTAI, "HelperNPC: UseSkill failed rc=%u (skill=%u target=%u) worlds L=%u H=%u dist=%.1f state=%u moveFlag=%u", wTemp, pSkillCond->GetSkillTblidx(), hTarget, wLeaderWorld, wHelperWorld, fDist, GetBot()->GetCharStateID(), GetBot()->GetMoveFlag());
+			const bool verbose = GetHelperNpcManager()->GetConfig().bVerboseLogs;
+			if (verbose && wTemp != GAME_SKILL_CANT_CAST_NOW)
+			{
+				ERR_LOG(LOG_BOTAI, "HelperNPC: UseSkill failed rc=%u (skill=%u target=%u) worlds L=%u H=%u dist=%.1f state=%u moveFlag=%u", wTemp, pSkillCond->GetSkillTblidx(), hTarget, wLeaderWorld, wHelperWorld, fDist, GetBot()->GetCharStateID(), GetBot()->GetMoveFlag());
+			}
 		}
 
-		// Recovery: if "can't cast now" (commonly 605) or similar transient states, force-stand and let next tick retry
-		if (wTemp == GAME_SKILL_CANT_CAST_NOW)
+		// Recovery: if "can't cast now" (commonly 605), only force-stand when not moving; if moving, the follow logic will handle catch-up
+		if (wTemp == GAME_SKILL_CANT_CAST_NOW && GetBot()->GetMoveFlag() == NTL_MOVE_FLAG_INVALID)
 		{
 			GetBot()->SendCharStateStanding(true);
 		}

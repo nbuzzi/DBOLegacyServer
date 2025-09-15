@@ -52,8 +52,8 @@ inline CSkillBot* CSkillCondition_LP::OnUpdate(DWORD dwTickTime)
 					wThreshold = cfg.wHealLpThresholdOverride;
 
 				bool bLinkedLow = pLinked->ConsiderLPLow((float)wThreshold);
-				// If no override is set and linked is missing any LP, still allow attempting a heal
-				if (!bLinkedLow && cfg.wHealLpThresholdOverride == 0)
+				// If override is 0 => heal whenever missing any LP
+				if (cfg.wHealLpThresholdOverride == 0)
 					bLinkedLow = pLinked->GetCurLP() < pLinked->GetMaxLP();
 
 				if (bLinkedLow)
@@ -65,7 +65,13 @@ inline CSkillBot* CSkillCondition_LP::OnUpdate(DWORD dwTickTime)
 		}
 
 		// Fallback: self LP low
-		if (GetBot()->ConsiderLPLow(m_wUse_Skill_LP))
+		// If override is 0 => heal whenever self missing any LP
+		if (GetHelperNpcManager()->GetConfig().wHealLpThresholdOverride == 0)
+		{
+			if (GetBot()->GetCurLP() < GetBot()->GetMaxLP())
+				return pSkill;
+		}
+		else if (GetBot()->ConsiderLPLow(m_wUse_Skill_LP))
 		{
 			return pSkill;
 		}

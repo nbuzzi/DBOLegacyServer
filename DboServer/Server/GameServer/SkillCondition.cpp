@@ -4,6 +4,9 @@
 #include "SpellAreaChecker.h"
 #include "ObjectManager.h"
 #include "HelperNpcManager.h"
+// Added for PC party access when helper is a MOB/NPC
+#include "CPlayer.h"
+#include "Party.h"
 
 
 
@@ -472,16 +475,35 @@ void CSkillCondition::GetTarget_ApplyRange_Party(CCharacter *pAppointTarget, sSK
 	else
 	{
 		CNpcParty* pParty = GetBot()->GetNpcParty();
-		if (!pParty)
+		// Collect NPC party members if any
+		if (pParty)
 		{
-			rTargetList.AddTarget(GetBot()->GetID());
-			return;
+			for (CNpcParty::MEMBER_MAP::iterator it = pParty->Begin(); it != pParty->End(); it++)
+			{
+				mapCandidate.insert(std::make_pair(it->first, it->first));
+			}
 		}
 
-		
-		for (CNpcParty::MEMBER_MAP::iterator it = pParty->Begin(); it != pParty->End(); it++)
+		// Also include PCs from linked leader's party so helper can heal full player party
+		HOBJECT hLink = GetBot()->GetLinkPc();
+		if (hLink != INVALID_HOBJECT)
 		{
-			mapCandidate.insert(std::make_pair(it->first, it->first));
+			CPlayer* pLeader = g_pObjectManager->GetPC(hLink);
+			if (pLeader && pLeader->GetParty())
+			{
+				CParty* pPcParty = pLeader->GetParty();
+				for (BYTE i = 0; i < pPcParty->GetPartyMemberCount(); i++)
+				{
+					const sPARTY_MEMBER_INFO& mi = pPcParty->GetMemberInfo(i);
+					mapCandidate.insert(std::make_pair(mi.hHandle, mi.hHandle));
+				}
+			}
+		}
+
+		// If still no candidates, fallback to self so the skill has a legal target
+		if (mapCandidate.empty())
+		{
+			mapCandidate.insert(std::make_pair(GetBot()->GetID(), GetBot()->GetID()));
 		}
 	}
 
@@ -545,11 +567,14 @@ void CSkillCondition::GetTarget_ApplyRange_Party_LPLow(CCharacter *pAppointTarge
 
 	// Determine LP threshold, allowing helper override when linked to a PC
 	WORD wThreshold = m_wUse_Skill_LP;
+	bool bMissingLpMode = false; // when override==0 heal anyone missing LP
 	if (GetBot()->GetLinkPc() != INVALID_HOBJECT)
 	{
 		const sHELPER_NPC_CONFIG& cfg = GetHelperNpcManager()->GetConfig();
 		if (cfg.wHealLpThresholdOverride > 0)
 			wThreshold = cfg.wHealLpThresholdOverride;
+		else if (cfg.wHealLpThresholdOverride == 0)
+			bMissingLpMode = true;
 	}
 
 	// First, if an appointed target was provided/resolved (e.g., linked PC), consider it as a candidate
@@ -557,7 +582,8 @@ void CSkillCondition::GetTarget_ApplyRange_Party_LPLow(CCharacter *pAppointTarge
 	{
 		if (rSpellAreaChecker.IsObjectInApplyRange(pResolvedAppoint, NULL))
 		{
-			if (pResolvedAppoint->ConsiderLPLow((float)wThreshold))
+			if ((bMissingLpMode && pResolvedAppoint->GetCurLP() < pResolvedAppoint->GetMaxLP()) ||
+				(!bMissingLpMode && pResolvedAppoint->ConsiderLPLow((float)wThreshold)))
 			{
 				if (GetBot()->GetID() != pResolvedAppoint->GetID() || IsApplyNotMe() != true)
 				{
@@ -567,20 +593,21 @@ void CSkillCondition::GetTarget_ApplyRange_Party_LPLow(CCharacter *pAppointTarge
 		}
 	}
 
-	// Consider both mobs and npcs as valid bots for party LP-low selection
+	// Consider both mobs/npcs in the NPC party and PCs in the linked player's party for LP-low selection
 	if (GetBot()->GetObjType() == OBJTYPE_MOB || GetBot()->GetObjType() == OBJTYPE_NPC)
 	{
-		CNpcParty* pParty = GetBot()->GetNpcParty();
-		if (pParty)
+		// 1) NPC party members
+		if (CNpcParty* pParty = GetBot()->GetNpcParty())
 		{
 			for (CNpcParty::MEMBER_MAP::iterator it = pParty->Begin(); it != pParty->End(); it++)
 			{
 				CNpc* pObject = g_pObjectManager->GetNpc(it->first);
-					if (pObject)
+				if (pObject)
 				{
 					if (rSpellAreaChecker.IsObjectInApplyRange(pObject, NULL))
 					{
-							if (pObject->ConsiderLPLow((float)wThreshold))
+						if ((bMissingLpMode && pObject->GetCurLP() < pObject->GetMaxLP()) ||
+							(!bMissingLpMode && pObject->ConsiderLPLow((float)wThreshold)))
 						{
 							if (GetBot()->GetID() != pObject->GetID() || IsApplyNotMe() != true)
 							{
@@ -590,17 +617,48 @@ void CSkillCondition::GetTarget_ApplyRange_Party_LPLow(CCharacter *pAppointTarge
 					}
 				}
 			}
+		}
 
-			for (std::map<int, HOBJECT>::iterator it = mapCandidate.begin(); it != mapCandidate.end(); it++)
+		// 2) PC party members via linked PC
+		HOBJECT hLink = GetBot()->GetLinkPc();
+		if (hLink != INVALID_HOBJECT)
+		{
+			CPlayer* pLeader = g_pObjectManager->GetPC(hLink);
+			if (pLeader && pLeader->GetParty())
 			{
-				if (rTargetList.byTargetCount < byMaxTargetCount)
+				CParty* pPcParty = pLeader->GetParty();
+				for (BYTE i = 0; i < pPcParty->GetPartyMemberCount(); i++)
 				{
-					rTargetList.AddTarget(it->second);
+					const sPARTY_MEMBER_INFO& mi = pPcParty->GetMemberInfo(i);
+					CPlayer* pMember = g_pObjectManager->GetPC(mi.hHandle);
+					if (pMember && pMember->IsInitialized())
+					{
+						if (rSpellAreaChecker.IsObjectInApplyRange(pMember, NULL))
+						{
+							if ((bMissingLpMode && pMember->GetCurLP() < pMember->GetMaxLP()) ||
+								(!bMissingLpMode && pMember->ConsiderLPLow((float)wThreshold)))
+							{
+								if (GetBot()->GetID() != pMember->GetID() || IsApplyNotMe() != true)
+								{
+									mapCandidate.insert(std::make_pair(pMember->GetCurLP(), pMember->GetID()));
+								}
+							}
+						}
+					}
 				}
-				else
-					break;
 			}
 		}
+	}
+
+	// Add up to byMaxTargetCount candidates (lowest LP first)
+	for (std::map<int, HOBJECT>::iterator it = mapCandidate.begin(); it != mapCandidate.end(); it++)
+	{
+		if (rTargetList.byTargetCount < byMaxTargetCount)
+		{
+			rTargetList.AddTarget(it->second);
+		}
+		else
+			break;
 	}
 }
 

@@ -614,8 +614,8 @@ int	CGameServer::OnConfiguration(const char* lpszConfigFile)
 			(int)cfg.bEnabled, (int)cfg.bAllowUltimate, (int)cfg.bAllowBattleDungeon, cfg.byMinPartySizeToAvoidSpawn);
 		NTL_PRINT(PRINT_APP, "[HELPER_NPC] PrimaryNpcId=%u FallbackNpcId=%u UseMobAsHelper=%d MobId=%u",
 			cfg.primaryNpcTblidx, cfg.fallbackNpcTblidx, (int)cfg.bUseMobAsHelper, cfg.helperMobTblidx);
-		NTL_PRINT(PRINT_APP, "[HELPER_NPC] SpawnOffset=%.2f FollowLeader=%d AssistLeaderTarget=%d HealLpThresholdOverride=%u DamageMultiplier=%.2f MoveSpeedMultiplier=%.2f AttackSpeedPercent=%u EpRegenPercent=%u InvincibleHelper=%d BuffCount=%zu",
-			cfg.fSpawnOffset, (int)cfg.bFollowLeader, (int)cfg.bAssistLeaderTarget, cfg.wHealLpThresholdOverride, cfg.fDamageMultiplier, cfg.fMoveSpeedMultiplier, cfg.wAttackSpeedPercent, cfg.wEpRegenPercent, (int)cfg.bInvincibleHelper, cfg.vBuffSkills.size());
+		NTL_PRINT(PRINT_APP, "[HELPER_NPC] SpawnOffset=%.2f FollowLeader=%d AssistLeaderTarget=%d HealLpThresholdOverride=%u DamageMultiplier=%.2f HealPowerMultiplier=%.2f MoveSpeedMultiplier=%.2f AttackSpeedPercent=%u EpRegenPercent=%u InvincibleHelper=%d BuffCount=%zu",
+			cfg.fSpawnOffset, (int)cfg.bFollowLeader, (int)cfg.bAssistLeaderTarget, cfg.wHealLpThresholdOverride, cfg.fDamageMultiplier, cfg.fHealPowerMultiplier, cfg.fMoveSpeedMultiplier, cfg.wAttackSpeedPercent, cfg.wEpRegenPercent, (int)cfg.bInvincibleHelper, cfg.vBuffSkills.size());
 	}
 
 	return NTL_SUCCESS;
@@ -802,8 +802,8 @@ BOOL CGameServer::OnCommandInput(std::string& sCmd)
 			(int)cfg.bEnabled, (int)cfg.bAllowUltimate, (int)cfg.bAllowBattleDungeon, cfg.byMinPartySizeToAvoidSpawn);
 		printf("PrimaryNpcId=%u FallbackNpcId=%u UseMobAsHelper=%d MobId=%u\n",
 			cfg.primaryNpcTblidx, cfg.fallbackNpcTblidx, (int)cfg.bUseMobAsHelper, cfg.helperMobTblidx);
-		printf("SpawnOffset=%.2f FollowLeader=%d AssistLeaderTarget=%d HealLpThresholdOverride=%u DamageMultiplier=%.2f MoveSpeedMultiplier=%.2f AttackSpeedPercent=%u EpRegenPercent=%u InvincibleHelper=%d BuffCount=%zu\n",
-			cfg.fSpawnOffset, (int)cfg.bFollowLeader, (int)cfg.bAssistLeaderTarget, cfg.wHealLpThresholdOverride, cfg.fDamageMultiplier, cfg.fMoveSpeedMultiplier, cfg.wAttackSpeedPercent, cfg.wEpRegenPercent, (int)cfg.bInvincibleHelper, cfg.vBuffSkills.size());
+		printf("SpawnOffset=%.2f FollowLeader=%d AssistLeaderTarget=%d HealLpThresholdOverride=%u DamageMultiplier=%.2f HealPowerMultiplier=%.2f MoveSpeedMultiplier=%.2f AttackSpeedPercent=%u EpRegenPercent=%u InvincibleHelper=%d BuffCount=%zu\n",
+			cfg.fSpawnOffset, (int)cfg.bFollowLeader, (int)cfg.bAssistLeaderTarget, cfg.wHealLpThresholdOverride, cfg.fDamageMultiplier, cfg.fHealPowerMultiplier, cfg.fMoveSpeedMultiplier, cfg.wAttackSpeedPercent, cfg.wEpRegenPercent, (int)cfg.bInvincibleHelper, cfg.vBuffSkills.size());
 		if (!cfg.vBuffSkills.empty())
 		{
 			printf("BuffSkills: ");

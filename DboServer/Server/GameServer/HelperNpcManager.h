@@ -31,6 +31,16 @@ struct sHELPER_NPC_CONFIG
     WORD   wAttackSpeedPercent = 0;        // add attack speed percent (e.g., 20 = +20%)
     WORD   wEpRegenPercent = 0;            // add EP regen percent (e.g., 100 = +100%)
     bool   bInvincibleHelper = false;      // when true, mark helper as invincible
+    float  fHealPowerMultiplier = 1.0f;    // multiply helper's direct/over-time healing power
+    WORD   wHealPriorityMinMissingPercent = 8; // if HealLpThresholdOverride==0, require this % missing to prioritize heals (deadband)
+
+    // Proactive combat behavior
+    bool   bProactiveAutoAttack = false;   // when true, helper scans and engages nearby enemies when idle
+    WORD   wAttackScanRange = 20;          // meters; default modest range to avoid overpulling
+    DWORD  dwAttackScanCooldownMs = 2000;  // scan interval while idle (ms)
+
+    // Logging control
+    bool   bVerboseLogs = false;           // reduce noisy logs unless debugging
 
     // Optional: list of buff skills to add at spawn (comma-separated in INI)
     std::vector<TBLIDX> vBuffSkills;       // e.g., 420141,420142
@@ -68,6 +78,8 @@ public:
 
     // Returns configured damage multiplier if this NPC is a helper; otherwise 1.0f
     float GetDamageMultiplierForHelper(class CNpc* pNpc);
+    // Returns configured heal power multiplier if this NPC is a helper; otherwise 1.0f
+    float GetHealMultiplierForHelper(class CNpc* pNpc);
 
 private:
     CHelperNpcManager() = default;

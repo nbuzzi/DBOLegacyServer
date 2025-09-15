@@ -12,6 +12,12 @@ namespace RdfTableEditor.UI
         private ToolStripMenuItem saveToolStripMenuItem;
         private ToolStripMenuItem saveAsToolStripMenuItem;
         private ToolStripMenuItem exitToolStripMenuItem;
+    private ToolStripMenuItem exportXmlToolStripMenuItem;
+    private ToolStripMenuItem exportEdfToolStripMenuItem;
+        private ToolStripMenuItem editToolStripMenuItem;
+        private ToolStripMenuItem addRowToolStripMenuItem;
+        private ToolStripMenuItem cloneRowToolStripMenuItem;
+        private ToolStripMenuItem deleteRowToolStripMenuItem;
         private StatusStrip statusStrip1;
         private ToolStripStatusLabel toolStripStatusLabel1;
     private ToolStripStatusLabel toolStripRowInfo;
@@ -20,7 +26,12 @@ namespace RdfTableEditor.UI
     private ToolStripButton toolStripSaveBtn;
     private ToolStripButton toolStripSaveAsBtn;
     private ToolStripButton toolStripReloadBtn;
+    private ToolStripButton toolStripAddBtn;
+    private ToolStripButton toolStripCloneBtn;
+    private ToolStripButton toolStripDeleteBtn;
         private Views.TableView tableView1;
+    private SaveFileDialog exportXmlDialog;
+    private SaveFileDialog exportEdfDialog;
 
         private void InitializeComponent()
         {
@@ -48,7 +59,12 @@ namespace RdfTableEditor.UI
             // 
             // menuStrip1
             // 
-            menuStrip1.Items.AddRange(new ToolStripItem[] { fileToolStripMenuItem });
+            // Ensure Edit menu is instantiated before adding to the menu strip
+            editToolStripMenuItem = new ToolStripMenuItem();
+            addRowToolStripMenuItem = new ToolStripMenuItem();
+            cloneRowToolStripMenuItem = new ToolStripMenuItem();
+            deleteRowToolStripMenuItem = new ToolStripMenuItem();
+            menuStrip1.Items.AddRange(new ToolStripItem[] { fileToolStripMenuItem, editToolStripMenuItem });
             menuStrip1.Location = new System.Drawing.Point(0, 0);
             menuStrip1.Name = "menuStrip1";
             menuStrip1.Size = new System.Drawing.Size(1000, 24);
@@ -57,10 +73,67 @@ namespace RdfTableEditor.UI
             // 
             // fileToolStripMenuItem
             // 
-            fileToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { newToolStripMenuItem, openToolStripMenuItem, saveToolStripMenuItem, saveAsToolStripMenuItem, new ToolStripSeparator(), exitToolStripMenuItem });
+            exportXmlDialog = new SaveFileDialog { Filter = "XML Files (*.xml)|*.xml|All files (*.*)|*.*", DefaultExt = "xml" };
+            exportEdfDialog = new SaveFileDialog { Filter = "EDF Files (*.edf)|*.edf|All files (*.*)|*.*", DefaultExt = "edf" };
+            exportXmlToolStripMenuItem = new ToolStripMenuItem();
+            exportEdfToolStripMenuItem = new ToolStripMenuItem();
+            fileToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { newToolStripMenuItem, openToolStripMenuItem, saveToolStripMenuItem, saveAsToolStripMenuItem, new ToolStripSeparator(), exportXmlToolStripMenuItem, exportEdfToolStripMenuItem, new ToolStripSeparator(), exitToolStripMenuItem });
             fileToolStripMenuItem.Name = "fileToolStripMenuItem";
             fileToolStripMenuItem.Size = new System.Drawing.Size(37, 20);
             fileToolStripMenuItem.Text = "File";
+            // 
+            // exportXmlToolStripMenuItem
+            // 
+            exportXmlToolStripMenuItem.Name = "exportXmlToolStripMenuItem";
+            exportXmlToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            exportXmlToolStripMenuItem.Text = "Export XML…";
+            exportXmlToolStripMenuItem.Click += OnExportXml;
+            // 
+            // exportEdfToolStripMenuItem
+            // 
+            exportEdfToolStripMenuItem.Name = "exportEdfToolStripMenuItem";
+            exportEdfToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            exportEdfToolStripMenuItem.Text = "Export EDF…";
+            exportEdfToolStripMenuItem.Click += OnExportEdf;
+            // 
+            // editToolStripMenuItem
+            // 
+            editToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[]
+            {
+                addRowToolStripMenuItem,
+                cloneRowToolStripMenuItem,
+                deleteRowToolStripMenuItem
+            });
+            editToolStripMenuItem.Name = "editToolStripMenuItem";
+            editToolStripMenuItem.Size = new System.Drawing.Size(39, 20);
+            editToolStripMenuItem.Text = "Edit";
+            // 
+            // addRowToolStripMenuItem
+            // 
+            addRowToolStripMenuItem.Name = "addRowToolStripMenuItem";
+            addRowToolStripMenuItem.Size = new System.Drawing.Size(138, 22);
+            addRowToolStripMenuItem.Text = "Add Row";
+            addRowToolStripMenuItem.ShortcutKeys = Keys.Insert;
+            addRowToolStripMenuItem.ShowShortcutKeys = true;
+            addRowToolStripMenuItem.Click += OnAddRow;
+            // 
+            // cloneRowToolStripMenuItem
+            // 
+            cloneRowToolStripMenuItem.Name = "cloneRowToolStripMenuItem";
+            cloneRowToolStripMenuItem.Size = new System.Drawing.Size(138, 22);
+            cloneRowToolStripMenuItem.Text = "Clone Row";
+            cloneRowToolStripMenuItem.ShortcutKeys = Keys.Control | Keys.D;
+            cloneRowToolStripMenuItem.ShowShortcutKeys = true;
+            cloneRowToolStripMenuItem.Click += OnCloneRow;
+            // 
+            // deleteRowToolStripMenuItem
+            // 
+            deleteRowToolStripMenuItem.Name = "deleteRowToolStripMenuItem";
+            deleteRowToolStripMenuItem.Size = new System.Drawing.Size(138, 22);
+            deleteRowToolStripMenuItem.Text = "Delete Row";
+            deleteRowToolStripMenuItem.ShortcutKeys = Keys.Delete;
+            deleteRowToolStripMenuItem.ShowShortcutKeys = true;
+            deleteRowToolStripMenuItem.Click += OnDeleteRow;
             // 
             // newToolStripMenuItem
             // 
@@ -99,7 +172,7 @@ namespace RdfTableEditor.UI
             // 
             // statusStrip1
             // 
-            statusStrip1.Items.AddRange(new ToolStripItem[] { toolStripStatusLabel1, new ToolStripStatusLabel(" | "), toolStripRowInfo });
+            statusStrip1.Items.AddRange(new ToolStripItem[] { toolStripStatusLabel1, new ToolStripSpringLabel(), toolStripRowInfo });
             statusStrip1.Location = new System.Drawing.Point(0, 578);
             statusStrip1.Name = "statusStrip1";
             statusStrip1.Size = new System.Drawing.Size(1000, 22);
@@ -119,6 +192,10 @@ namespace RdfTableEditor.UI
             // topToolStrip
             topToolStrip.GripStyle = ToolStripGripStyle.Hidden;
             topToolStrip.ImageScalingSize = new System.Drawing.Size(16, 16);
+            // Pre-create edit buttons so AddRange receives non-null instances
+            toolStripAddBtn = new ToolStripButton();
+            toolStripCloneBtn = new ToolStripButton();
+            toolStripDeleteBtn = new ToolStripButton();
             topToolStrip.Items.AddRange(new ToolStripItem[]
             {
                 toolStripOpenBtn,
@@ -127,6 +204,10 @@ namespace RdfTableEditor.UI
                 new ToolStripSeparator(),
                 toolStripReloadBtn,
                 new ToolStripSeparator(),
+                toolStripAddBtn,
+                toolStripCloneBtn,
+                toolStripDeleteBtn,
+                new ToolStripSpringLabel(),
                 new ToolStripLabel("Search:"),
                 toolStripSearchBox
             });
@@ -148,10 +229,23 @@ namespace RdfTableEditor.UI
             // Reload button
             toolStripReloadBtn.Text = "Reload";
             toolStripReloadBtn.Click += (s,e)=> OnOpen(s,e);
+            // Add Row button (instance created above)
+            toolStripAddBtn.Text = "Add";
+            toolStripAddBtn.ToolTipText = "Add new row (Insert)";
+            toolStripAddBtn.Click += OnAddRow;
+            // Clone Row button (instance created above)
+            toolStripCloneBtn.Text = "Clone";
+            toolStripCloneBtn.ToolTipText = "Clone selected row(s) (Ctrl+D)";
+            toolStripCloneBtn.Click += OnCloneRow;
+            // Delete Row button (instance created above)
+            toolStripDeleteBtn.Text = "Delete";
+            toolStripDeleteBtn.ToolTipText = "Delete selected row(s) (Del)";
+            toolStripDeleteBtn.Click += OnDeleteRow;
             // Search box
             toolStripSearchBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             toolStripSearchBox.AutoSize = false;
-            toolStripSearchBox.Width = 240;
+            toolStripSearchBox.Width = 260;
+            toolStripSearchBox.ToolTipText = "Type to filter rows";
             toolStripSearchBox.TextChanged += OnSearchTextChanged;
             // 
             // tableView1

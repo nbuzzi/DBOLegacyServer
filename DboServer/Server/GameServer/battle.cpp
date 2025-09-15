@@ -4,6 +4,7 @@
 #include "Npc.h"
 #include "CPlayer.h"
 #include "FormulaTable.h"
+#include "HelperNpcManager.h"
 
 
 bool BattleIsCrit(CCharacterAtt* pAttackerAtt, CCharacterAtt* pTargetAtt, bool bIsPhysical)
@@ -326,6 +327,17 @@ void CalcSkillDamage(CCharacterObject* pCaster, CCharacterObject* victim, sSKILL
 
 	//printf("fDmg0 %f min_damage %f, max_damage %f fAttackerPower %f \n", fDmg0, min_damage, max_damage, fAttackerPower);
 	resultvalue = (fFinalDamage <= 1.f) ? 1.f : fFinalDamage;
+
+	// Helper-only: scale outgoing skill damage at the end to ensure visibility even if offence scaling is muted
+	if (pCaster->IsNPC() || pCaster->IsMonster())
+	{
+		CNpc* pNpc = static_cast<CNpc*>(pCaster);
+		float fMul = GetHelperNpcManager()->GetDamageMultiplierForHelper(pNpc);
+		if (fMul > 1.0f)
+		{
+			resultvalue *= fMul;
+		}
+	}
 
 
 	//---------------//
@@ -737,6 +749,17 @@ void CalcDirectHeal(CCharacterObject* pCaster, sSKILL_TBLDAT* skilltbl, BYTE byE
 	// Add Static Bonus
 	resultvalue += pCaster->GetCharAtt()->GetDirectHealPowerBonus();
 
+	// Helper-only: scale healing power if caster is our allied helper
+	if (pCaster->IsNPC() || pCaster->IsMonster())
+	{
+		CNpc* pNpc = static_cast<CNpc*>(pCaster);
+		float fMul = GetHelperNpcManager()->GetHealMultiplierForHelper(pNpc);
+		if (fMul > 1.0f)
+		{
+			resultvalue *= fMul;
+		}
+	}
+
 	//NTL_PRINT(PRINT_APP,"resultvalue %f, GetSubWeaponEnergyOffence %u, GetEnergyOffence %u, GetDirectHealPowerBonusInPercent %f, GetDirectHealPowerBonus %f \n", 
 	//	resultvalue, pCaster->GetCharAtt()->GetSubWeaponEnergyOffence(), pCaster->GetCharAtt()->GetEnergyOffence(), pCaster->GetCharAtt()->GetDirectHealPowerBonusInPercent(), pCaster->GetCharAtt()->GetDirectHealPowerBonus());
 }
@@ -759,6 +782,17 @@ void CalcHealOverTime(CCharacterObject* pCaster, sSKILL_TBLDAT* skilltbl, BYTE b
 
 	// Add Static Bonus
 	resultvalue += pCaster->GetCharAtt()->GetHotPowerBonus();
+
+	// Helper-only: scale HoT power if caster is our allied helper
+	if (pCaster->IsNPC() || pCaster->IsMonster())
+	{
+		CNpc* pNpc = static_cast<CNpc*>(pCaster);
+		float fMul = GetHelperNpcManager()->GetHealMultiplierForHelper(pNpc);
+		if (fMul > 1.0f)
+		{
+			resultvalue *= fMul;
+		}
+	}
 }
 
 
