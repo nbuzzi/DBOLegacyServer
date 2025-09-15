@@ -12,6 +12,7 @@
 #include "NtlDirection.h"
 #include "ItemManager.h"
 #include "ItemDrop.h"
+#include "HelperNpcManager.h"
 
 CTimeQuest::CTimeQuest(PARTYID partyid, sTIMEQUEST_TBLDAT* pTimeQuestTbldat, BYTE byDifficulty, BYTE byMode)
 {
@@ -55,6 +56,8 @@ CTimeQuest::~CTimeQuest()
 
 	if (m_pWorld)
 	{
+	// Clean helper tracking for this world to allow future spawns
+		// GetHelperNpcManager()->OnWorldDestroyed(m_pWorld);
 		CGameServer* app = (CGameServer*)g_pApp;
 
 		app->GetGameMain()->GetWorldManager()->DestroyWorld(m_pWorld);
@@ -191,6 +194,15 @@ bool CTimeQuest::TickProcess(DWORD dwTickDiff)
 		break;
 		case TIMEQUEST_GAME_STATE_STAGE_START:
 		{
+			// Ensure helper is spawned after players have arrived in the TMQ world (deduped per world)
+			//if (!m_mapPlayers.empty())
+			//{
+			//	CPlayer* pAny = m_mapPlayers.begin()->second;
+			//	if (pAny && pAny->IsInitialized())
+			//	{
+			//		GetHelperNpcManager()->SpawnHelperIfNeededForTmq(pAny, m_pWorld);
+			//	}
+			//}
 		}
 		break;
 		case TIMEQUEST_GAME_STATE_STAGE_FINISH:
@@ -382,6 +394,9 @@ bool CTimeQuest::Create(CPlayer* pPlayer)
 	{
 		AddMember(pPlayer);
 	}
+
+	// Spawn helper follower NPC for TMQ if configured and party is underfilled
+	//GetHelperNpcManager()->SpawnHelperIfNeededForTmq(pPlayer, m_pWorld);
 
 	return true;
 }

@@ -341,7 +341,17 @@ void CSkillCondition::GetTarget_ApplyRange_PCandNPC(CCharacter *pAppointTarget, 
 	CSpellAreaChecker rSpellAreaChecker;
 	rSpellAreaChecker.Create();
 
-	rSpellAreaChecker.PrepareForSelection(GetBot(), pAppointTarget, GetApplyRangeType(), GetApplyAreaSize1(), GetApplyAreaSize2());
+	{
+		float a1 = (float)GetApplyAreaSize1();
+		float a2 = (float)GetApplyAreaSize2();
+		// If not enemy-targeting, extend apply area by config bonus
+		if (m_pSkill && m_pSkill->GetOriginalTableData()->byApply_Target != DBO_SKILL_APPLY_TARGET_ENEMY)
+		{
+			a1 += GetHelperNpcManager()->GetConfig().fHealApplyAreaBonusMeters;
+			a2 += GetHelperNpcManager()->GetConfig().fHealApplyAreaBonusMeters;
+		}
+		rSpellAreaChecker.PrepareForSelection(GetBot(), pAppointTarget, GetApplyRangeType(), (int)a1, (int)a2);
+	}
 
 	if (GetBot())
 	{

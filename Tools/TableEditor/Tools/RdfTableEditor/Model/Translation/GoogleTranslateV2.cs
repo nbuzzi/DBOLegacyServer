@@ -28,9 +28,7 @@ namespace RdfTableEditor.Model.Translation
         {
             if (string.IsNullOrWhiteSpace(text)) return text;
             text = CleanText(text);
-            // Attempt to repair mojibake caused by UTF-16 endianness mismatch
-            var repaired = TryRepairEncoding(text);
-            var protectedText = ProtectPlaceholders(repaired, out var phMap);
+            var protectedText = ProtectPlaceholders(text, out var phMap);
             var uri = _endpoint + "?key=" + Uri.EscapeDataString(_apiKey);
 
             // Google v2 accepts multiple 'q' values; split long text into safe chunks (~4500 chars)
@@ -141,48 +139,6 @@ namespace RdfTableEditor.Model.Translation
                 i = breakAt;
             }
             return chunks;
-        }
-
-        private static string TryRepairEncoding(string s)
-        {
-            if (string.IsNullOrEmpty(s)) return s;
-            bool looksCjk = LooksLikeCjk(s);
-            if (looksCjk) return s;
-            var swapped = ByteSwapUtf16(s);
-            if (LooksLikeCjk(swapped)) return swapped;
-            return s;
-        }
-
-        private static string ByteSwapUtf16(string s)
-        {
-            var arr = s.ToCharArray();
-            for (int i = 0; i < arr.Length; i++)
-            {
-                ushort w = arr[i];
-                w = (ushort)(((w & 0x00FF) << 8) | ((w & 0xFF00) >> 8));
-                arr[i] = (char)w;
-            }
-            return new string(arr);
-        }
-
-        private static bool LooksLikeCjk(string s)
-        {
-            if (string.IsNullOrEmpty(s)) return false;
-            int cjk = 0;
-            int letters = 0;
-            foreach (var ch in s)
-            {
-                if (char.IsLetter(ch)) letters++;
-                // CJK Unified Ideographs
-                if ((ch >= '\u4E00' && ch <= '\u9FFF') ||
-                    (ch >= '\u3400' && ch <= '\u4DBF') ||
-                    (ch >= '\uF900' && ch <= '\uFAFF'))
-                {
-                    cjk++;
-                }
-            }
-            if (letters == 0) return cjk > 0;
-            return cjk >= Math.Max(2, letters / 3);
         }
 
         // Replace placeholders with stable markers so the translator doesn't alter them

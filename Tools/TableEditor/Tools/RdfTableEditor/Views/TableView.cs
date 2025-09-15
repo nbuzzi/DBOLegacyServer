@@ -27,6 +27,8 @@ namespace RdfTableEditor.Views
     private readonly CheckBox _headerCheckBox = new CheckBox();
     private bool _suppressHeaderCheckChanged;
     private readonly ToolTip _tip = new ToolTip();
+    private const string SearchIndexColumnName = "__SearchIndex";
+    private bool _suppressIndexRebuild = false;
 
         public TableView()
         {
@@ -161,6 +163,9 @@ namespace RdfTableEditor.Views
                     }
                 }
             }
+            // Add hidden search index column (materialized for reliable RowFilter)
+            if (!_table.Columns.Contains(SearchIndexColumnName))
+                _table.Columns.Add(SearchIndexColumnName, typeof(string));
 
             // Fill rows
             foreach (var r in _doc.Rows)
@@ -233,6 +238,9 @@ namespace RdfTableEditor.Views
                 _table.Rows.Add(row);
             }
 
+            // Build search index content before binding
+            RebuildSearchIndex();
+
             _grid.AutoGenerateColumns = true;
             _binding.DataSource = _table;
             _grid.DataSource = _binding;
@@ -242,6 +250,11 @@ namespace RdfTableEditor.Views
             {
                 col.AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
                 col.Width = 120;
+                if (string.Equals(col.DataPropertyName, SearchIndexColumnName, StringComparison.Ordinal))
+                {
+                    col.Visible = false; // hide index column
+                    continue;
+                }
                 if (_schema.Fields.FirstOrDefault(f => f.Name == col.DataPropertyName) is { } f)
                 {
                     if (f.Type == ScalarType.WStringFixed || f.Type == ScalarType.WStringVar)
@@ -370,20 +383,19 @@ namespace RdfTableEditor.Views
 
         public void ApplyQuickFilter(string text)
         {
-            if (_table != null)
+        if (_table != null)
             {
                 if (string.IsNullOrWhiteSpace(text))
                 {
-                    _binding.RemoveFilter();
+            _binding.RemoveFilter();
                 }
                 else
                 {
-                    // Build a simple contains filter across string-like columns
-                    var cols = _table.Columns.Cast<DataColumn>()
-                        .Where(c => c.DataType == typeof(string))
-                        .Select(c => $"Convert([{c.ColumnName}], 'System.String') LIKE '%{EscapeLike(text)}%'");
-                    var filter = string.Join(" OR ", cols);
-                    _binding.Filter = string.IsNullOrEmpty(filter) ? null : filter;
+            // Rebuild search index and filter on a single safe column to avoid quoting issues
+            RebuildSearchIndex();
+            string pattern = $"%{EscapeLike(text)}%";
+            var filter = $"Convert({QuoteIdentifier(SearchIndexColumnName)}, 'System.String') LIKE '{pattern}'";
+            _binding.Filter = filter;
                 }
             }
             else
@@ -395,11 +407,28 @@ namespace RdfTableEditor.Views
                 }
                 else
                 {
+                    var t = text;
+                    bool Match(RdfRow r)
+                    {
+                        // Check typed fields
+                        if ((r.BoneName?.IndexOf(t, StringComparison.OrdinalIgnoreCase) ?? -1) >= 0) return true;
+                        if ((r.EffectName?.IndexOf(t, StringComparison.OrdinalIgnoreCase) ?? -1) >= 0) return true;
+                        if ((r.EffectSound?.IndexOf(t, StringComparison.OrdinalIgnoreCase) ?? -1) >= 0) return true;
+                        if (r.Id.ToString().IndexOf(t, StringComparison.OrdinalIgnoreCase) >= 0) return true;
+                        if (r.TitleNameIndex.ToString().IndexOf(t, StringComparison.OrdinalIgnoreCase) >= 0) return true;
+                        if (r.ContentsType.ToString().IndexOf(t, StringComparison.OrdinalIgnoreCase) >= 0) return true;
+                        if (r.RepresentationType.ToString().IndexOf(t, StringComparison.OrdinalIgnoreCase) >= 0) return true;
+                        // Arrays via CSV proxies
+                        if ((r.SystemEffectTblidxCsv ?? string.Empty).IndexOf(t, StringComparison.OrdinalIgnoreCase) >= 0) return true;
+                        if ((r.SystemEffectTypeCsv ?? string.Empty).IndexOf(t, StringComparison.OrdinalIgnoreCase) >= 0) return true;
+                        if ((r.SystemEffectValueCsv ?? string.Empty).IndexOf(t, StringComparison.OrdinalIgnoreCase) >= 0) return true;
+                        // Legacy placeholders
+                        if ((r.Name ?? string.Empty).IndexOf(t, StringComparison.OrdinalIgnoreCase) >= 0) return true;
+                        if ((r.Value ?? string.Empty).IndexOf(t, StringComparison.OrdinalIgnoreCase) >= 0) return true;
+                        return false;
+                    }
                     var q = (_doc?.Rows ?? new System.Collections.Generic.List<RdfRow>())
-                        .Where(r => (r.BoneName?.IndexOf(text, StringComparison.OrdinalIgnoreCase) ?? -1) >= 0
-                                 || (r.EffectName?.IndexOf(text, StringComparison.OrdinalIgnoreCase) ?? -1) >= 0
-                                 || (r.EffectSound?.IndexOf(text, StringComparison.OrdinalIgnoreCase) ?? -1) >= 0
-                                 || r.Id.ToString().Contains(text))
+                        .Where(Match)
                         .ToList();
                     _binding.DataSource = new BindingList<RdfRow>(q);
                 }
@@ -416,7 +445,92 @@ namespace RdfTableEditor.Views
             }
         }
 
-        private static string EscapeLike(string s) => s.Replace("[", "[[").Replace("]", "]] ").Replace("%", "[%]").Replace("*", "[*]").Replace("'", "''");
+        private static string EscapeLike(string s)
+        {
+            if (string.IsNullOrEmpty(s)) return s;
+            // RowFilter escaping rules: escape % and * by wrapping with [], escape [ as [[] and ] as []]
+            const string OB = "[";           // open bracket
+            const string OBE = "[[]";       // escaped open bracket (literal '[')
+            const string CB = "]";           // close bracket
+            const string CBE = "[]]";       // escaped close bracket
+            const string PCTE = "[%]";      // escaped percent
+            const string STARE = "[*]";     // escaped star
+            return s
+                .Replace("'", "''")
+                .Replace(OB, OBE)
+                .Replace(CB, CBE)
+                .Replace("%", PCTE)
+                .Replace("*", STARE);
+        }
+
+        private static string QuoteIdentifier(string columnName)
+        {
+            if (string.IsNullOrEmpty(columnName)) return columnName;
+            // In RowFilter, identifiers are bracket-delimited. Escape any closing brackets in the name by doubling them.
+            var inner = columnName.Replace("]", "]]" );
+            return "[" + inner + "]";
+        }
+
+        private void RebuildSearchIndex()
+        {
+            if (_table == null) return;
+            if (!_table.Columns.Contains(SearchIndexColumnName)) return;
+            var cols = _table.Columns.Cast<DataColumn>().Where(c => !string.Equals(c.ColumnName, SearchIndexColumnName, StringComparison.Ordinal)).ToArray();
+            _suppressIndexRebuild = true;
+            try
+            {
+                foreach (DataRow r in _table.Rows)
+                {
+                    if (r.RowState == DataRowState.Deleted || r.RowState == DataRowState.Detached) continue;
+                    var built = BuildRowIndex(r, cols);
+                    var current = r[SearchIndexColumnName] as string;
+                    if (!string.Equals(current, built, StringComparison.Ordinal))
+                        r[SearchIndexColumnName] = built;
+                }
+            }
+            finally { _suppressIndexRebuild = false; }
+        }
+
+        private static string BuildRowIndex(DataRow r, DataColumn[] cols)
+        {
+            var parts = new System.Text.StringBuilder();
+            for (int i = 0; i < cols.Length; i++)
+            {
+                if (r.RowState == DataRowState.Deleted) break;
+                var v = r[cols[i]];
+                if (v != DBNull.Value && v != null)
+                {
+                    // Avoid any custom type conversions; treat strings as-is, others via InvariantCulture
+                    if (v is string sv)
+                        parts.Append(sv);
+                    else
+                        parts.Append(Convert.ToString(v, System.Globalization.CultureInfo.InvariantCulture));
+                }
+                parts.Append('\u001F'); // unit separator
+            }
+            return parts.ToString();
+        }
+
+        private void UpdateRowSearchIndex(DataRow row)
+        {
+            if (_table == null) return;
+            if (!_table.Columns.Contains(SearchIndexColumnName)) return;
+            if (row == null || row.RowState == DataRowState.Detached || row.RowState == DataRowState.Deleted) return;
+            var cols = _table.Columns.Cast<DataColumn>().Where(c => !string.Equals(c.ColumnName, SearchIndexColumnName, StringComparison.Ordinal)).ToArray();
+            _suppressIndexRebuild = true;
+            try
+            {
+                var built = BuildRowIndex(row, cols);
+                var current = row[SearchIndexColumnName] as string;
+                if (!string.Equals(current, built, StringComparison.Ordinal))
+                    row[SearchIndexColumnName] = built;
+            }
+            catch
+            {
+                // ignore transient edit states
+            }
+            finally { _suppressIndexRebuild = false; }
+        }
 
         private void Grid_KeyDown(object? sender, KeyEventArgs e)
         {
@@ -807,8 +921,11 @@ namespace RdfTableEditor.Views
                 try { _binding.EndEdit(); } catch { }
                 try
                 {
-                    var cm = (CurrencyManager?)this.BindingContext[_grid.DataSource!];
-                    cm?.EndCurrentEdit();
+                    if (_grid.DataSource != null && this.BindingContext != null)
+                    {
+                        var cm = this.BindingContext[_grid.DataSource] as CurrencyManager;
+                        cm?.EndCurrentEdit();
+                    }
                 }
                 catch { }
                 _grid.NotifyCurrentCellDirty(true);

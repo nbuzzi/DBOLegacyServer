@@ -15,6 +15,7 @@ namespace RdfTableEditor.UI
     private Model.RdfDocument? _doc;
     private string? _currentPath;
     private bool _lastWasDecrypted;
+    private bool _originalWasEncrypted;
     private readonly System.Windows.Forms.Timer _searchTimer = new System.Windows.Forms.Timer();
 
         public MainForm()
@@ -38,6 +39,7 @@ namespace RdfTableEditor.UI
                 // Try schema-based binary first
                 var schema = TableRegistry.FromFilename(_openDlg.FileName);
                 bool usedDecrypt = false;
+                _originalWasEncrypted = false;
                 if (schema != null)
                 {
                     try
@@ -73,16 +75,16 @@ namespace RdfTableEditor.UI
                                          || string.Equals(schema.Name, "TextAll", StringComparison.OrdinalIgnoreCase);
 
                         if (decCount > rawCount || (preferDec && docDec != null && decCount >= rawCount))
-                        { _doc = docDec; usedDecrypt = true; }
+                        { _doc = docDec; usedDecrypt = true; _originalWasEncrypted = docDec != null; }
                         else
-                        { _doc = docRaw ?? docDec; usedDecrypt = _doc == docDec && _doc != null; }
+                        { _doc = docRaw ?? docDec; usedDecrypt = _doc == docDec && _doc != null; _originalWasEncrypted = usedDecrypt; }
                         if (_doc == null)
                             throw new InvalidOperationException("Unable to parse this table (raw or decrypted).");
 
                         // If both produce 0 rows for a file we expect encrypted, keep decrypted and show a hint
                         if ((_doc.Rows.Count == 0) && preferDec && docDec != null)
                         {
-                            _doc = docDec; usedDecrypt = true;
+                            _doc = docDec; usedDecrypt = true; _originalWasEncrypted = true;
                             toolStripStatusLabel1.Text = "Parsed 0 rows; using decrypted bytes due to schema/file hint.";
                             // If schema suggests QuestText and still 0 rows, use the dedicated reader
                             if (string.Equals(schema.Name, "QuestText", StringComparison.OrdinalIgnoreCase))
@@ -165,7 +167,15 @@ namespace RdfTableEditor.UI
                     using var ms = new MemoryStream();
                     BinaryTableIO.Write(ms, schema, _doc);
                     var bytes = ms.ToArray();
-                    fs.Write(bytes, 0, bytes.Length);
+                    // If original file was encrypted, re-encrypt to keep exact format expectations
+                    if (_originalWasEncrypted && RdfCrypto.TryEncrypt(bytes, out var enc))
+                    {
+                        fs.Write(enc, 0, enc.Length);
+                    }
+                    else
+                    {
+                        fs.Write(bytes, 0, bytes.Length);
+                    }
                 }
                 else
                 {

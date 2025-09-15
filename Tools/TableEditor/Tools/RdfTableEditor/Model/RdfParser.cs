@@ -70,6 +70,7 @@ namespace RdfTableEditor.Model
             using var br = new BinaryReader(stream);
             // Read margin
             var margin = br.ReadByte();
+            doc.Margin = margin;
             if (margin != 1)
                 throw new InvalidDataException("Unexpected RDF margin");
 
@@ -161,7 +162,7 @@ namespace RdfTableEditor.Model
         {
             // Write CharTitle binary; if TableName unknown, default to CharTitle
             using var bw = new BinaryWriter(stream, System.Text.Encoding.UTF8, leaveOpen: true);
-            bw.Write((byte)1); // margin
+            bw.Write(doc.Margin ?? (byte)1); // margin (preserve if known)
             foreach (var r in doc.Rows)
                 WriteCharTitle(bw, r);
             bw.Flush();

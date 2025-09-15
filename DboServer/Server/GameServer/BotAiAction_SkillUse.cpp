@@ -123,7 +123,13 @@ int CBotAiAction_SkillUse::OnUpdate(DWORD dwTickDiff, float fMultiple)
 				if (GetBot()->GetTargetHandle() != hTarget)
 					GetBot()->SetTargetHandle(hTarget);
 			}
-			if (GetBot()->ConsiderRange(pSkillCond->GetSkill()->GetOriginalTableData()->fUse_Range_Max, 30.0f / 100.0f) == false)
+			float fUseRange = pSkillCond->GetSkill()->GetOriginalTableData()->fUse_Range_Max;
+			if (pSkillCond->GetSkill()->GetOriginalTableData()->byApply_Target != DBO_SKILL_APPLY_TARGET_ENEMY)
+			{
+				// extend heal/buff use range by config bonus
+				fUseRange += GetHelperNpcManager()->GetConfig().fHealUseRangeBonusMeters;
+			}
+			if (GetBot()->ConsiderRange(fUseRange, 30.0f / 100.0f) == false)
 			{
 				bChase = true;
 			}
@@ -132,7 +138,10 @@ int CBotAiAction_SkillUse::OnUpdate(DWORD dwTickDiff, float fMultiple)
 
 	if (bChase)
 	{
-		CBotAiAction_Chase* pChase = new CBotAiAction_Chase(GetBot(), CBotAiAction_Chase::ATTACKTYPE_SKILL, pSkillCond->GetSkill()->GetOriginalTableData()->fUse_Range_Max);
+		float fUseRange = pSkillCond->GetSkill()->GetOriginalTableData()->fUse_Range_Max;
+		if (pSkillCond->GetSkill()->GetOriginalTableData()->byApply_Target != DBO_SKILL_APPLY_TARGET_ENEMY)
+			fUseRange += GetHelperNpcManager()->GetConfig().fHealUseRangeBonusMeters;
+		CBotAiAction_Chase* pChase = new CBotAiAction_Chase(GetBot(), CBotAiAction_Chase::ATTACKTYPE_SKILL, fUseRange);
 		if (!AddSubControlQueue(pChase, true))
 		{
 			m_status = FAILED;

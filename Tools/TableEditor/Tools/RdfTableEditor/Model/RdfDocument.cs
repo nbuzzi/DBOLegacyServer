@@ -7,6 +7,15 @@ namespace RdfTableEditor.Model
     {
         public string TableName { get; set; } = string.Empty;
         public List<RdfRow> Rows { get; set; } = new List<RdfRow>();
+    // Some tables start with a margin/padding byte. Preserve the value we read so we can write it back unchanged.
+    public byte? Margin { get; set; }
+    // For Item table variants: some builds use 41 WCHARs for NameText, others 65.
+    // We detect and remember the value so we can write back identically.
+    public int? ItemNameTextChars { get; set; }
+    // Some retail dumps store NameText as WORD length + UTF-16 (variable). If detected, set this and ignore fixed count.
+    public bool ItemNameTextIsVar { get; set; }
+    // If ANSI fallback decoding was chosen for NameText during read, remember that to guide write normalization if needed.
+    public bool ItemNameTextAnsiFallback { get; set; }
     }
 
     public class RdfRow

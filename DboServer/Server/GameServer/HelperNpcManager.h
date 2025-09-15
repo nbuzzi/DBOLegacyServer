@@ -16,6 +16,7 @@ struct sHELPER_NPC_CONFIG
     bool   bEnabled = true;
     bool   bAllowUltimate = true;
     bool   bAllowBattleDungeon = true;
+    bool   bAllowTimeQuest = true;
     BYTE   byMinPartySizeToAvoidSpawn = 5; // spawn if party size < this
     TBLIDX primaryNpcTblidx = 4754102;     // bibra
     TBLIDX fallbackNpcTblidx = 4754101;    // bibra 2
@@ -42,14 +43,22 @@ struct sHELPER_NPC_CONFIG
     // Logging control
     bool   bVerboseLogs = false;           // reduce noisy logs unless debugging
 
+    // Healing reach tuning
+    float  fHealUseRangeBonusMeters = 0.0f;     // add to skill use range for non-enemy skills
+    float  fHealApplyAreaBonusMeters = 0.0f;    // add to apply area sizes for party/alliance targeting
+
     // Optional: list of buff skills to add at spawn (comma-separated in INI)
     std::vector<TBLIDX> vBuffSkills;       // e.g., 420141,420142
     BYTE   buffBasis = 5;                  // default TIME basis
     WORD   buffLP = 0;                     // ignored for TIME basis; used for LP/Give
     WORD   buffTime = 10;                  // seconds for TIME basis
+    // Optional alias map to support alternate "buff index" tokens resolving to SkillTable IDs
+    // Format example in INI: BuffIndexMap=1:420141, 2=420142
+    std::unordered_map<DWORD, TBLIDX> buffIndexAlias; // key: external buff index; value: SkillTable tblidx
 
     // Optional: force-add a specific skill to the helper at spawn, useful if the mob table lacks heals
     TBLIDX forcedSkillTblidx = INVALID_TBLIDX; // e.g., a heal/buff skill id
+    std::vector<TBLIDX> vForcedSkills;         // optional list (comma-separated in INI)
     BYTE   forcedSkillBasis = 4;                // default to Give (4). 3=LP,4=Give,5=Time,6=Ring,7=OnlyLP
     WORD   forcedSkillLP = 70;                  // LP threshold for LP/Give conditions (percent)
     WORD   forcedSkillTime = 5;                 // seconds for time-based condition
@@ -68,6 +77,9 @@ public:
     // Spawn helper on dungeon creation if needed. Call right after party is moved to the new world
     bool SpawnHelperIfNeededForDungeon(CPlayer* pLeader, CWorld* pWorld, bool bIsUltimateDungeon);
 
+    // Spawn helper in Time Machine Quest instances if allowed by config
+    bool SpawnHelperIfNeededForTmq(CPlayer* pLeader, CWorld* pWorld);
+
     // Cleanup hook: call when the dungeon/world is being destroyed
     void OnWorldDestroyed(CWorld* pWorld);
 
@@ -83,6 +95,8 @@ public:
 
 private:
     CHelperNpcManager() = default;
+    // Common spawn path after mode-specific allow checks pass
+    bool SpawnIfAllowed(CPlayer* pLeader, CWorld* pWorld);
 
 private:
     sHELPER_NPC_CONFIG m_config;

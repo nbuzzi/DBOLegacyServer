@@ -483,8 +483,8 @@ public static class TableRegistry
                     new Field("Tblidx", ScalarType.U32),
                     new Field("Validity_Able", ScalarType.Bool),
                     new Field("Name", ScalarType.U32),
-                    // C++ stores 64+1-32 WCHARs here per ItemTable.h
-                    new Field("NameText", ScalarType.WStringFixed, length: 64 + 1 - 32),
+                    // C++ uses 40+1 WCHARs for NameText in many DBO builds; use 41 to keep correct alignment
+                    new Field("NameText", ScalarType.WStringFixed, length: 40 + 1),
             new Field("Icon_Name", ScalarType.AnsiStringFixed, length: 32 + 1),
                     new Field("Model_Type", ScalarType.U8),
             new Field("Model", ScalarType.AnsiStringFixed, length: 32 + 1),

@@ -610,8 +610,8 @@ int	CGameServer::OnConfiguration(const char* lpszConfigFile)
 	GetHelperNpcManager()->LoadConfig(file);
 	{
 		const sHELPER_NPC_CONFIG& cfg = GetHelperNpcManager()->GetConfig();
-		NTL_PRINT(PRINT_APP, "[HELPER_NPC] Enable=%d AllowUltimate=%d AllowBattleDungeon=%d MinPartySizeToAvoid=%u",
-			(int)cfg.bEnabled, (int)cfg.bAllowUltimate, (int)cfg.bAllowBattleDungeon, cfg.byMinPartySizeToAvoidSpawn);
+		NTL_PRINT(PRINT_APP, "[HELPER_NPC] Enable=%d AllowUltimate=%d AllowBattleDungeon=%d AllowTimeQuest=%d MinPartySizeToAvoid=%u",
+			(int)cfg.bEnabled, (int)cfg.bAllowUltimate, (int)cfg.bAllowBattleDungeon, (int)cfg.bAllowTimeQuest, cfg.byMinPartySizeToAvoidSpawn);
 		NTL_PRINT(PRINT_APP, "[HELPER_NPC] PrimaryNpcId=%u FallbackNpcId=%u UseMobAsHelper=%d MobId=%u",
 			cfg.primaryNpcTblidx, cfg.fallbackNpcTblidx, (int)cfg.bUseMobAsHelper, cfg.helperMobTblidx);
 		NTL_PRINT(PRINT_APP, "[HELPER_NPC] SpawnOffset=%.2f FollowLeader=%d AssistLeaderTarget=%d HealLpThresholdOverride=%u DamageMultiplier=%.2f HealPowerMultiplier=%.2f MoveSpeedMultiplier=%.2f AttackSpeedPercent=%u EpRegenPercent=%u InvincibleHelper=%d BuffCount=%zu",
@@ -798,12 +798,12 @@ BOOL CGameServer::OnCommandInput(std::string& sCmd)
 	}
 	else if (args[0] == "dumphelper") {
 		const sHELPER_NPC_CONFIG& cfg = GetHelperNpcManager()->GetConfig();
-		printf("[HELPER_NPC] Enable=%d AllowUltimate=%d AllowBattleDungeon=%d MinPartySizeToAvoid=%u\n",
-			(int)cfg.bEnabled, (int)cfg.bAllowUltimate, (int)cfg.bAllowBattleDungeon, cfg.byMinPartySizeToAvoidSpawn);
+		printf("[HELPER_NPC] Enable=%d AllowUltimate=%d AllowBattleDungeon=%d AllowTimeQuest=%d MinPartySizeToAvoid=%u\n",
+			(int)cfg.bEnabled, (int)cfg.bAllowUltimate, (int)cfg.bAllowBattleDungeon, (int)cfg.bAllowTimeQuest, cfg.byMinPartySizeToAvoidSpawn);
 		printf("PrimaryNpcId=%u FallbackNpcId=%u UseMobAsHelper=%d MobId=%u\n",
 			cfg.primaryNpcTblidx, cfg.fallbackNpcTblidx, (int)cfg.bUseMobAsHelper, cfg.helperMobTblidx);
-		printf("SpawnOffset=%.2f FollowLeader=%d AssistLeaderTarget=%d HealLpThresholdOverride=%u DamageMultiplier=%.2f HealPowerMultiplier=%.2f MoveSpeedMultiplier=%.2f AttackSpeedPercent=%u EpRegenPercent=%u InvincibleHelper=%d BuffCount=%zu\n",
-			cfg.fSpawnOffset, (int)cfg.bFollowLeader, (int)cfg.bAssistLeaderTarget, cfg.wHealLpThresholdOverride, cfg.fDamageMultiplier, cfg.fHealPowerMultiplier, cfg.fMoveSpeedMultiplier, cfg.wAttackSpeedPercent, cfg.wEpRegenPercent, (int)cfg.bInvincibleHelper, cfg.vBuffSkills.size());
+		printf("SpawnOffset=%.2f FollowLeader=%d AssistLeaderTarget=%d HealLpThresholdOverride=%u DamageMultiplier=%.2f HealPowerMultiplier=%.2f MoveSpeedMultiplier=%.2f AttackSpeedPercent=%u EpRegenPercent=%u InvincibleHelper=%d BuffCount=%zu ForcedSkills=%zu\n",
+			cfg.fSpawnOffset, (int)cfg.bFollowLeader, (int)cfg.bAssistLeaderTarget, cfg.wHealLpThresholdOverride, cfg.fDamageMultiplier, cfg.fHealPowerMultiplier, cfg.fMoveSpeedMultiplier, cfg.wAttackSpeedPercent, cfg.wEpRegenPercent, (int)cfg.bInvincibleHelper, cfg.vBuffSkills.size(), cfg.vForcedSkills.size());
 		if (!cfg.vBuffSkills.empty())
 		{
 			printf("BuffSkills: ");
@@ -812,6 +812,15 @@ BOOL CGameServer::OnCommandInput(std::string& sCmd)
 				printf("%u%s", cfg.vBuffSkills[i], (i+1<cfg.vBuffSkills.size())?", ":"\n");
 			}
 			printf("BuffBasis=%u BuffLP=%u BuffTime=%u\n", cfg.buffBasis, cfg.buffLP, cfg.buffTime);
+		}
+		if (!cfg.vForcedSkills.empty())
+		{
+			printf("ForcedSkills: ");
+			for (size_t i=0; i<cfg.vForcedSkills.size(); ++i)
+			{
+				printf("%u%s", cfg.vForcedSkills[i], (i+1<cfg.vForcedSkills.size())?", ":"\n");
+			}
+			printf("ForcedBasis=%u ForcedLP=%u ForcedTime=%u\n", cfg.forcedSkillBasis, cfg.forcedSkillLP, cfg.forcedSkillTime);
 		}
 	}
 	else if (args[0] == "findskill" && args.size() == 2)
