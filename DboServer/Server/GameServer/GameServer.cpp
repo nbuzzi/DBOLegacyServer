@@ -41,6 +41,8 @@
 #include "StoneDropEvent.h"
 #include "Fairy Event.h"
 #include "CustomDropEvent.h"
+#include "HelperNpcManager.h"
+#include "SkillTable.h"
 // --- INICIO SOCKET COMANDOS ---
 #include <thread>
 #include <atomic>
@@ -51,13 +53,13 @@
 #include <sstream>
 #include <vector>
 
-std::atomic<bool> g_CommandSocketRunning{false};
+std::atomic<bool> g_CommandSocketRunning{ false };
 
 void CommandSocketThread(CGameServer* pServer)
 
 {
 	WSADATA wsaData;
-	if (WSAStartup(MAKEWORD(2,2), &wsaData) != 0) {
+	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
 		std::cerr << "WSAStartup failed" << std::endl;
 		return;
 	}
@@ -99,8 +101,8 @@ void CommandSocketThread(CGameServer* pServer)
 	while (g_CommandSocketRunning) {
 		SOCKET clientSock = accept(listenSock, nullptr, nullptr);
 		if (clientSock == INVALID_SOCKET) continue;
-		char buffer[256] = {0};
-		int bytes = recv(clientSock, buffer, sizeof(buffer)-1, 0);
+		char buffer[256] = { 0 };
+		int bytes = recv(clientSock, buffer, sizeof(buffer) - 1, 0);
 		if (bytes > 0) {
 			buffer[bytes] = '\0';
 			std::string cmd(buffer);
@@ -138,7 +140,7 @@ int CGameServer::OnInitApp()
 	NtlRandInit(m_tmCurrentTime);
 
 	m_nMaxSessionCount = m_config.nMaxConnection + 3;
-	
+
 	m_dwCurTickCount = 0;
 
 	NTL_PRINT(PRINT_APP, "Init Session Factory ");
@@ -171,15 +173,15 @@ int CGameServer::OnInitApp()
 	m_pActionPatternSystem = new CActionPatternSystem;
 	m_pActionPatternSystem->Create();
 
-	NTL_PRINT(PRINT_APP,"Init Trigger Manager");
+	NTL_PRINT(PRINT_APP, "Init Trigger Manager");
 	CTriggerManager* trigger_manager = new CTriggerManager;
 	trigger_manager->Init(m_config.bLoadTriggersEnc);
 
-	NTL_PRINT(PRINT_APP,"Init Trade Manager ");
+	NTL_PRINT(PRINT_APP, "Init Trade Manager ");
 	CTradeManager* trade_manager = new CTradeManager;
 	UNREFERENCED_PARAMETER(trade_manager);
 
-	NTL_PRINT(PRINT_APP,"Init Dungeon Manager ");
+	NTL_PRINT(PRINT_APP, "Init Dungeon Manager ");
 	CDungeonManager* dungeon_manager = new CDungeonManager;
 	UNREFERENCED_PARAMETER(dungeon_manager);
 
@@ -187,15 +189,15 @@ int CGameServer::OnInitApp()
 	CGuildManager* guild = new CGuildManager;
 	UNREFERENCED_PARAMETER(guild);
 
-	NTL_PRINT(PRINT_APP,"Init Party Manager ");
+	NTL_PRINT(PRINT_APP, "Init Party Manager ");
 	CPartyManager* party_manager = new CPartyManager;
 	UNREFERENCED_PARAMETER(party_manager);
 
-	NTL_PRINT(PRINT_APP,"Init Item Manager ");
+	NTL_PRINT(PRINT_APP, "Init Item Manager ");
 	CItemManager* item_manager = new CItemManager;
 	UNREFERENCED_PARAMETER(item_manager);
 
-	NTL_PRINT(PRINT_APP,"Init Free Battle Manager ");
+	NTL_PRINT(PRINT_APP, "Init Free Battle Manager ");
 	CFreeBattleManager* freebattle_manager = new CFreeBattleManager;
 	UNREFERENCED_PARAMETER(freebattle_manager);
 
@@ -357,14 +359,14 @@ void CGameServer::Run()
 		m_dwCurTickCount = dwNow;
 		m_tmCurrentTime = time(NULL);
 
-	//	DoUpdatePerformanceLog(dwNow); //requires too much time
+		//	DoUpdatePerformanceLog(dwNow); //requires too much time
 		DoReportLoad(dwNow);
 		QueryPerformanceCounter(&rLoadReport);
 
-		DoUpdateMemoryUseLog( dwNow);
+		DoUpdateMemoryUseLog(dwNow);
 		QueryPerformanceCounter(&rMemoryUsage);
 
-		if(GetMasterServerSession())		//master server is the last one we connect.. So only loop when we are connected to master server
+		if (GetMasterServerSession())		//master server is the last one we connect.. So only loop when we are connected to master server
 			m_pGameProcessor->Run(dwNow);
 
 		dwLastLoop = GetTickCount();
@@ -390,12 +392,14 @@ void CGameServer::Run()
 }
 
 
-int	CGameServer::OnConfiguration(const char * lpszConfigFile)
+int	CGameServer::OnConfiguration(const char* lpszConfigFile)
 {
 	CNtlIniFile file;
 	int rc = file.Create(lpszConfigFile);
 	if (NTL_SUCCESS != rc)
 		return rc;
+
+	NTL_PRINT(PRINT_APP, "[CONFIG] Using config file: %s", lpszConfigFile ? lpszConfigFile : "<null>");
 
 	if (!file.Read("Game Server", "Address", m_config.strClientAcceptAddr))
 	{
@@ -422,7 +426,7 @@ int	CGameServer::OnConfiguration(const char * lpszConfigFile)
 		return NTL_ERR_SYS_CONFIG_FILE_READ_FAIL;
 	}
 	file.Read("Game Server", "Channelname", m_config.ChannelName);
-	
+
 
 
 	//CONNECT CHAT SERVER
@@ -602,6 +606,18 @@ int	CGameServer::OnConfiguration(const char * lpszConfigFile)
 		return NTL_ERR_SYS_CONFIG_FILE_READ_FAIL;
 	}
 
+	// Optional helper NPC feature
+	GetHelperNpcManager()->LoadConfig(file);
+	{
+		const sHELPER_NPC_CONFIG& cfg = GetHelperNpcManager()->GetConfig();
+		NTL_PRINT(PRINT_APP, "[HELPER_NPC] Enable=%d AllowUltimate=%d AllowBattleDungeon=%d MinPartySizeToAvoid=%u",
+			(int)cfg.bEnabled, (int)cfg.bAllowUltimate, (int)cfg.bAllowBattleDungeon, cfg.byMinPartySizeToAvoidSpawn);
+		NTL_PRINT(PRINT_APP, "[HELPER_NPC] PrimaryNpcId=%u FallbackNpcId=%u UseMobAsHelper=%d MobId=%u",
+			cfg.primaryNpcTblidx, cfg.fallbackNpcTblidx, (int)cfg.bUseMobAsHelper, cfg.helperMobTblidx);
+		NTL_PRINT(PRINT_APP, "[HELPER_NPC] SpawnOffset=%.2f FollowLeader=%d AssistLeaderTarget=%d HealLpThresholdOverride=%u DamageMultiplier=%.2f MoveSpeedMultiplier=%.2f AttackSpeedPercent=%u EpRegenPercent=%u InvincibleHelper=%d BuffCount=%zu",
+			cfg.fSpawnOffset, (int)cfg.bFollowLeader, (int)cfg.bAssistLeaderTarget, cfg.wHealLpThresholdOverride, cfg.fDamageMultiplier, cfg.fMoveSpeedMultiplier, cfg.wAttackSpeedPercent, cfg.wEpRegenPercent, (int)cfg.bInvincibleHelper, cfg.vBuffSkills.size());
+	}
+
 	return NTL_SUCCESS;
 }
 
@@ -693,14 +709,15 @@ BOOL CGameServer::OnCommandInput(std::string& sCmd)
 		// addtitle <charname> <id>
 		std::string charname = args[1];
 		int titleId = atoi(args[2].c_str());
-		WCHAR wszCharName[64] = {0};
+		WCHAR wszCharName[64] = { 0 };
 		mbstowcs(wszCharName, charname.c_str(), 63);
 		CPlayer* pPlayer = g_pObjectManager->FindByName(wszCharName);
 		if (pPlayer) {
 			pPlayer->AddCharTitle((TBLIDX)titleId);
 			printf("Title %d added to %s\n", titleId, charname.c_str());
 			return TRUE;
-		} else {
+		}
+		else {
 			printf("Character '%s' not found\n", charname.c_str());
 			return FALSE;
 		}
@@ -779,6 +796,42 @@ BOOL CGameServer::OnCommandInput(std::string& sCmd)
 		g_pStoneDropEvent->EndEvent();
 		NTL_PRINT(PRINT_APP, "Drop Stone Event Stopped");
 	}
+	else if (args[0] == "dumphelper") {
+		const sHELPER_NPC_CONFIG& cfg = GetHelperNpcManager()->GetConfig();
+		printf("[HELPER_NPC] Enable=%d AllowUltimate=%d AllowBattleDungeon=%d MinPartySizeToAvoid=%u\n",
+			(int)cfg.bEnabled, (int)cfg.bAllowUltimate, (int)cfg.bAllowBattleDungeon, cfg.byMinPartySizeToAvoidSpawn);
+		printf("PrimaryNpcId=%u FallbackNpcId=%u UseMobAsHelper=%d MobId=%u\n",
+			cfg.primaryNpcTblidx, cfg.fallbackNpcTblidx, (int)cfg.bUseMobAsHelper, cfg.helperMobTblidx);
+		printf("SpawnOffset=%.2f FollowLeader=%d AssistLeaderTarget=%d HealLpThresholdOverride=%u DamageMultiplier=%.2f MoveSpeedMultiplier=%.2f AttackSpeedPercent=%u EpRegenPercent=%u InvincibleHelper=%d BuffCount=%zu\n",
+			cfg.fSpawnOffset, (int)cfg.bFollowLeader, (int)cfg.bAssistLeaderTarget, cfg.wHealLpThresholdOverride, cfg.fDamageMultiplier, cfg.fMoveSpeedMultiplier, cfg.wAttackSpeedPercent, cfg.wEpRegenPercent, (int)cfg.bInvincibleHelper, cfg.vBuffSkills.size());
+		if (!cfg.vBuffSkills.empty())
+		{
+			printf("BuffSkills: ");
+			for (size_t i=0; i<cfg.vBuffSkills.size(); ++i)
+			{
+				printf("%u%s", cfg.vBuffSkills[i], (i+1<cfg.vBuffSkills.size())?", ":"\n");
+			}
+			printf("BuffBasis=%u BuffLP=%u BuffTime=%u\n", cfg.buffBasis, cfg.buffLP, cfg.buffTime);
+		}
+	}
+	else if (args[0] == "findskill" && args.size() == 2)
+	{
+		TBLIDX skillId = (TBLIDX)atoi(args[1].c_str());
+		sSKILL_TBLDAT* pSkill = (sSKILL_TBLDAT*)g_pTableContainer->GetSkillTable()->FindData(skillId);
+		if (!pSkill)
+		{
+			printf("Skill %u not found in SkillTable\n", skillId);
+			return FALSE;
+		}
+		// Print name if available in table struct (commonly wszNameText)
+		// Note: If your sSKILL_TBLDAT does not have wszNameText, this will still compile if defined in SkillTable.h;
+		// otherwise, only the fallback line will execute after you add proper name resolution.
+		if (pSkill->wszNameText[0] != L'\0')
+			wprintf(L"Skill %u name: %ls\n", skillId, pSkill->wszNameText);
+		else
+			printf("Skill %u found (empty name field)\n", skillId);
+		return TRUE;
+	}
 	return TRUE;
 }
 
@@ -820,7 +873,7 @@ void CGameServer::DoUpdatePerformanceLog(DWORD dwNow)
 {
 	if (dwNow - m_dwLastTimePerformanceLogged >= 10000)
 	{
-	//	m_performance.UpdateLog();
+		//	m_performance.UpdateLog();
 
 		m_dwLastTimePerformanceLogged = dwNow;
 	}
@@ -833,7 +886,7 @@ void CGameServer::DoReportLoad(DWORD dwNow)
 	{
 		if (m_dwLastTimeLoadReported)
 		{
-		//	ERR_LOG(LOG_SYSTEM, "GetProcessProcessorLoad() = %u, GetSystemProcessorLoad() = %u, GetProcessMemoryUsage() = %u", m_performance.GetProcessProcessorLoad(), m_performance.GetSystemProcessorLoad(), m_performance.GetProcessMemoryUsage());
+			//	ERR_LOG(LOG_SYSTEM, "GetProcessProcessorLoad() = %u, GetSystemProcessorLoad() = %u, GetProcessMemoryUsage() = %u", m_performance.GetProcessProcessorLoad(), m_performance.GetSystemProcessorLoad(), m_performance.GetProcessMemoryUsage());
 			g_pServerInfoManager->SendMasterServerAlive();
 		}
 
@@ -862,11 +915,11 @@ int main(int argc, _TCHAR* argv[])
 	CNtlFileStream traceFileStream;
 
 	SYSTEMTIME ti;
-	GetLocalTime( &ti );
+	GetLocalTime(&ti);
 
-// CHECK INI FILE AND START PROGRAM
+	// CHECK INI FILE AND START PROGRAM
 	int rc = app.Create(argc, argv, argv[1]);
-	if( NTL_SUCCESS != rc )
+	if (NTL_SUCCESS != rc)
 		return rc;
 
 	CNtlString consolename;
@@ -876,20 +929,20 @@ int main(int argc, _TCHAR* argv[])
 
 	// LOG FILE
 	char m_LogFile[256];
-	sprintf(m_LogFile,"%s\\channel%u\\gamelog_%02u-%02u-%02u.txt", app.GetLogPath().c_str() ,app.GetGsChannel(), ti.wYear, ti.wMonth, ti.wDay);
+	sprintf(m_LogFile, "%s\\channel%u\\gamelog_%02u-%02u-%02u.txt", app.GetLogPath().c_str(), app.GetGsChannel(), ti.wYear, ti.wMonth, ti.wDay);
 
-	rc = traceFileStream.Create( m_LogFile );
-	if( NTL_SUCCESS != rc )
+	rc = traceFileStream.Create(m_LogFile);
+	if (NTL_SUCCESS != rc)
 		return rc;
 
 	app.GetLog()->AttachLogStream(traceFileStream.GetFilePtr());
 
 
-	NtlSetPrintFlag( PRINT_APP | PRINT_SYSTEM );
+	NtlSetPrintFlag(PRINT_APP | PRINT_SYSTEM);
 
 	app.Start();
 	app.WaitCommandInput();
-	app.WaitForTerminate();	
+	app.WaitForTerminate();
 
 	return 0;
 }

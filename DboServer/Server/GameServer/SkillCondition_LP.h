@@ -2,6 +2,8 @@
 #define __DBOG_SKILL_CONDITION_LP__
 
 #include "SkillCondition.h"
+#include "ObjectManager.h"
+#include "HelperNpcManager.h"
 
 class CSkillBot;
 
@@ -9,13 +11,17 @@ class CSkillCondition_LP : public CSkillCondition
 {
 public:
 
-	CSkillCondition_LP() {}
+	CSkillCondition_LP() : m_pPartyMemberLowLP(NULL) {}
 	virtual ~CSkillCondition_LP() {}
 
 public:
 
-	virtual CSkillBot*		OnUpdate(DWORD dwTickTime);
+	virtual CSkillBot*      OnUpdate(DWORD dwTickTime);
+	virtual void            AppointTargetSelf_ApplyTargetParty(sSKILL_TARGET_LIST& rTargetList);
+	virtual void            AppointTargetTarget_ApplyTargetParty(HOBJECT& hTarget, sSKILL_TARGET_LIST& rTargetList);
 
+private:
+	CCharacter*             m_pPartyMemberLowLP;
 };
 
 
@@ -29,14 +35,83 @@ inline CSkillBot* CSkillCondition_LP::OnUpdate(DWORD dwTickTime)
 			ERR_LOG(LOG_GENERAL, "fail : INVALID_WORD == m_wUse_Skill_LP");
 			return NULL;
 		}
-		else
+
+		// Reset per-tick preferred target
+		m_pPartyMemberLowLP = NULL;
+
+		// Helper override: if linked PC exists and is low (or simply missing any LP when override is zero), prefer healing them
+		if (GetBot()->GetLinkPc() != INVALID_HOBJECT)
 		{
-			if (GetBot()->ConsiderLPLow(m_wUse_Skill_LP))
-				return pSkill;
+			HOBJECT hLink = GetBot()->GetLinkPc();
+			CCharacter* pLinked = g_pObjectManager->GetChar(hLink);
+			if (pLinked && pLinked->IsInitialized())
+			{
+				WORD wThreshold = m_wUse_Skill_LP;
+				const sHELPER_NPC_CONFIG& cfg = GetHelperNpcManager()->GetConfig();
+				if (cfg.wHealLpThresholdOverride > 0)
+					wThreshold = cfg.wHealLpThresholdOverride;
+
+				bool bLinkedLow = pLinked->ConsiderLPLow((float)wThreshold);
+				// If no override is set and linked is missing any LP, still allow attempting a heal
+				if (!bLinkedLow && cfg.wHealLpThresholdOverride == 0)
+					bLinkedLow = pLinked->GetCurLP() < pLinked->GetMaxLP();
+
+				if (bLinkedLow)
+				{
+					m_pPartyMemberLowLP = pLinked;
+					return pSkill;
+				}
+			}
+		}
+
+		// Fallback: self LP low
+		if (GetBot()->ConsiderLPLow(m_wUse_Skill_LP))
+		{
+			return pSkill;
 		}
 	}
 
 	return NULL;
+}
+
+inline void CSkillCondition_LP::AppointTargetSelf_ApplyTargetParty(sSKILL_TARGET_LIST& rTargetList)
+{
+	if (GetApplyRangeType() && GetTargetMaxCount() != 1)
+	{
+		GetTarget_ApplyRange_Party_LPLow(m_pPartyMemberLowLP, rTargetList, GetTargetMaxCount());
+		if (rTargetList.byTargetCount == 0 && m_pPartyMemberLowLP)
+		{
+			rTargetList.Init();
+			rTargetList.AddTarget(m_pPartyMemberLowLP->GetID());
+		}
+	}
+	else
+	{
+		rTargetList.Init();
+		if (m_pPartyMemberLowLP)
+			rTargetList.AddTarget(m_pPartyMemberLowLP->GetID());
+	}
+}
+
+inline void CSkillCondition_LP::AppointTargetTarget_ApplyTargetParty(HOBJECT& hTarget, sSKILL_TARGET_LIST& rTargetList)
+{
+	hTarget = m_pPartyMemberLowLP ? m_pPartyMemberLowLP->GetID() : GetBot()->GetID();
+
+	if (GetApplyRangeType() && GetTargetMaxCount() != 1)
+	{
+		GetTarget_ApplyRange_Party_LPLow(m_pPartyMemberLowLP, rTargetList, GetTargetMaxCount());
+		if (rTargetList.byTargetCount == 0 && m_pPartyMemberLowLP)
+		{
+			rTargetList.Init();
+			rTargetList.AddTarget(m_pPartyMemberLowLP->GetID());
+		}
+	}
+	else
+	{
+		rTargetList.Init();
+		if (m_pPartyMemberLowLP)
+			rTargetList.AddTarget(m_pPartyMemberLowLP->GetID());
+	}
 }
 
 #endif

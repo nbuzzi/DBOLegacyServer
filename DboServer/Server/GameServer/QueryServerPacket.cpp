@@ -306,7 +306,7 @@ void CQueryServerSession::RecvBankMoveRes(CNtlPacket* pPacket)
 
 	if (req->wResultCode == GAME_SUCCESS)
 	{
-		// acá se busca por place/pos (como tu código original)
+		// ac?se busca por place/pos (como tu código original)
 		CItem* pSrcItem = pOwner->GetPlayerItemContainer()->GetItem(req->bySrcPlace, req->bySrcPos);
 		if (!pSrcItem)
 		{

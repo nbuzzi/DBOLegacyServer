@@ -346,6 +346,7 @@
     <ClCompile Include="EndCondition_HimSelf_LPCheck.cpp" />
     <ClCompile Include="EndCondition_TargetFixAttack.cpp" />
     <ClCompile Include="EscortManager.cpp" />
+  <ClCompile Include="HelperNpcManager.cpp" />
     <ClCompile Include="FactoryActionPatternUnit.cpp" />
     <ClCompile Include="GameData.cpp" />
     <ClCompile Include="GameMain.cpp" />
@@ -1012,6 +1013,7 @@
     <ClInclude Include="RejoinSystem.h" />
     <ClInclude Include="ScriptAlgoAction_Case.h" />
     <ClInclude Include="EscortManager.h" />
+  <ClInclude Include="HelperNpcManager.h" />
     <ClInclude Include="GameData.h" />
     <ClInclude Include="GameMain.h" />
     <ClInclude Include="GameProcessor.h" />

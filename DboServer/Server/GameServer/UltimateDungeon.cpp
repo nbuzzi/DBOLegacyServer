@@ -5,6 +5,7 @@
 #include "TableContainerManager.h"
 #include "ScriptAlgoObjectManager.h"
 #include "CPlayer.h"
+#include "HelperNpcManager.h"
 
 
 CUltimateDungeon::CUltimateDungeon(PARTYID partyId, sDUNGEON_TBLDAT* pDungeonTbldat) :
@@ -49,6 +50,9 @@ bool CUltimateDungeon::Create(CPlayer* pPlayer)
 
 	pPlayer->GetParty()->EnterDungeon(pPlayer, this, m_pWorld, pObj);
 
+	// Spawn helper follower NPC if configured (party underfilled)
+	GetHelperNpcManager()->SpawnHelperIfNeededForDungeon(pPlayer, m_pWorld, true);
+
 	pObj->Start(); //start dungeon script
 
 	return true;
@@ -66,6 +70,8 @@ void CUltimateDungeon::Destroy()
 	{
 		CGameServer* app = (CGameServer*)g_pApp;
 	//	printf("CUltimateDungeon::Destroy(): Idx %u \n", m_pDungeonTbldat->tblidx);
+	// Notify helper manager for cleanup
+	GetHelperNpcManager()->OnWorldDestroyed(m_pWorld);
 		app->GetGameMain()->GetWorldManager()->DestroyWorld(m_pWorld);
 	}
 }

@@ -58,6 +58,32 @@ This file explains how to configure `CustomDropEvent.cfg` used by GameServer. Be
   - `healMul` multiplies both direct-heal and HoT magnitudes.
 - Global settings: `all settings: radius=<m> interval=<ms> healMul=<x> duration=<ms>`  
   - `duration` here overrides totem buff durations globally (0 = use skill/default).
+
+### Debuff Immunity (selective)
+
+- Purpose: Prevents certain debuffs (curse-type buffs) from being applied to event‑modified mobs to avoid attribute recalculations.
+- Scope: Applies to mobs that receive event "modifiers" (via `modifiers:` or `all modifiers:`). If no modifiers apply to a mob, immunity does not engage for that mob.
+- Global toggle (default ON):
+  - `all settings: immuneDebuff=1`  
+  - Alias supported: `inmmuneDebuff=1`
+  - Set to `0` to disable immunity entirely.
+- Selective filtering (optional):
+  - `debuffEffects` accepts a list (separated by `|` or `,`) of effect names or numeric SystemEffect codes to block.
+  - Names can be ANY eSYSTEM_EFFECT_CODE defined in `NtlSystemEffect.h` (case‑insensitive). Examples: `ACTIVE_STUN`, `ACTIVE_SLEEP`, `ACTIVE_FREEZE`, `ACTIVE_POISON`, `ACTIVE_BLEED`, `ACTIVE_BURN`, `ACTIVE_TERROR`, `ACTIVE_CONFUSE`, `ACTIVE_TAUNT`, `ACTIVE_WOUND`, `ACTIVE_WARP_STUN`, `ACTIVE_MOVE_SPEED_DOWN`, etc.
+  - If omitted or empty and `immuneDebuff=1`, all curse‑type debuffs are blocked.
+  - If provided, only the listed debuffs are blocked; other debuffs may still apply.
+  - Numeric codes are also supported; mixing names and codes is fine.
+- Examples:
+  - Block all debuffs (default):  
+    `all settings: immuneDebuff=1`
+  - Disable immunity:  
+    `all settings: immuneDebuff=0`
+  - Block only stun and sleep by name:  
+    `all settings: immuneDebuff=1 debuffEffects=ACTIVE_STUN|ACTIVE_SLEEP`
+  - Block by numeric codes:  
+    `all settings: immuneDebuff=1 debuffEffects=12,34,56`
+  - Typo alias accepted:  
+    `all settings: inmmuneDebuff=1 debuffEffects=ACTIVE_POISON|ACTIVE_BLEED`
 - Examples:
   - `all totem: 3131101@60s@120@1500: 1520834@3s@1500`  
   - `46661101 totem: 3131101@30000@100@2000: 1529996@3s, 1520951@10s@5s`
@@ -126,3 +152,29 @@ This file explains how to configure `CustomDropEvent.cfg` used by GameServer. Be
   - Si `RADIUS_METERS > 0`, aplica a todos los jugadores dentro del radio del objetivo (o del caster si no hay objetivo).
   - Si el radio se omite o es `0`, solo aplica al objetivo (o al caster si no hay objetivo).
   - Las curaciones directas se aplican de inmediato.
+
+### Inmunidad a Debuffs (selectiva)
+
+- Propósito: Evitar que ciertos debuffs (buffs tipo "curse") se apliquen a mobs modificados por el evento para prevenir recalcular atributos.
+- Alcance: Aplica a mobs que reciban "modifiers" del evento (por `modifiers:` o `all modifiers:`). Si un mob no recibe modificadores, no se activa la inmunidad para ese mob.
+- Interruptor global (por defecto ACTIVADO):
+  - `all settings: immuneDebuff=1`  
+  - Alias aceptado: `inmmuneDebuff=1`
+  - Poner `0` para desactivar completamente.
+- Filtro selectivo (opcional):
+  - `debuffEffects` acepta una lista (separada por `|` o `,`) de nombres de efectos o códigos numéricos de SystemEffect a bloquear.
+  - Los nombres pueden ser CUALQUIER `eSYSTEM_EFFECT_CODE` definido en `NtlSystemEffect.h` (no distingue mayúsculas). Ejemplos: `ACTIVE_STUN`, `ACTIVE_SLEEP`, `ACTIVE_FREEZE`, `ACTIVE_POISON`, `ACTIVE_BLEED`, `ACTIVE_BURN`, `ACTIVE_TERROR`, `ACTIVE_CONFUSE`, `ACTIVE_TAUNT`, `ACTIVE_WOUND`, `ACTIVE_WARP_STUN`, `ACTIVE_MOVE_SPEED_DOWN`, etc.
+  - Si se omite y `immuneDebuff=1`, se bloquean todos los debuffs (curse).
+  - Si se provee, solo se bloquean los listados; otros debuffs pueden aplicarse.
+  - También se admiten códigos numéricos; se pueden mezclar nombres y códigos.
+- Ejemplos:
+  - Bloquear todos los debuffs (por defecto):  
+    `all settings: immuneDebuff=1`
+  - Desactivar inmunidad:  
+    `all settings: immuneDebuff=0`
+  - Bloquear solo aturdimiento y sueño:  
+    `all settings: immuneDebuff=1 debuffEffects=ACTIVE_STUN|ACTIVE_SLEEP`
+  - Bloquear por códigos numéricos:  
+    `all settings: immuneDebuff=1 debuffEffects=12,34,56`
+  - Alias con error ortográfico:  
+    `all settings: inmmuneDebuff=1 debuffEffects=ACTIVE_POISON|ACTIVE_BLEED`

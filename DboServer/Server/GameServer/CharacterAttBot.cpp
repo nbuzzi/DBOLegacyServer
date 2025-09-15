@@ -3,6 +3,7 @@
 #include "Monster.h"
 #include "FormulaTable.h"
 #include "calcs.h"
+#include "HelperNpcManager.h"
 
 
 CCharacterAttBot::CCharacterAttBot()
@@ -139,6 +140,46 @@ void CCharacterAttBot::CalculateAtt()
 	}
 
 	CCharacterAtt::CalculateAtt();
+
+	// If this bot is a helper linked to a PC, apply configurable multipliers
+	if (m_pBotRef)
+	{
+		float fMul = GetHelperNpcManager()->GetDamageMultiplierForHelper(m_pBotRef);
+		if (fMul > 1.0f)
+		{
+			// Scale final offense numbers; keep within WORD bounds
+			DWORD phys = (DWORD)NtlRound((float)m_pAttribute.wLastPhysicalOffense * fMul);
+			DWORD ener = (DWORD)NtlRound((float)m_pAttribute.wLastEnergyOffense * fMul);
+			m_pAttribute.wLastPhysicalOffense = (WORD)std::min<DWORD>(phys, 0xFFFF);
+			m_pAttribute.wLastEnergyOffense = (WORD)std::min<DWORD>(ener, 0xFFFF);
+		}
+
+		// Movement speed + EP regen + attack speed boosts
+		{
+			const sHELPER_NPC_CONFIG& cfg = GetHelperNpcManager()->GetConfig();
+			if (cfg.fMoveSpeedMultiplier > 0.f && m_pBotRef->GetLinkPc() != INVALID_HOBJECT)
+			{
+				m_pAttribute.fLastRunSpeed *= cfg.fMoveSpeedMultiplier;
+				m_pAttribute.fLastAirSpeed *= cfg.fMoveSpeedMultiplier;
+				m_pAttribute.fLastAirDashSpeed *= cfg.fMoveSpeedMultiplier;
+				m_pAttribute.fLastAirDashAccelSpeed *= cfg.fMoveSpeedMultiplier;
+			}
+			// EP regen percent boost
+			if (cfg.wEpRegenPercent > 0 && m_pBotRef->GetLinkPc() != INVALID_HOBJECT)
+			{
+				// Increase standing and battle EP regen by percent
+				DWORD add = (DWORD)NtlRound(((float)m_pAttribute.wLastEpRegen * (float)cfg.wEpRegenPercent) / 100.0f);
+				m_pAttribute.wLastEpRegen = (WORD)std::min<DWORD>(m_pAttribute.wLastEpRegen + add, 0xFFFF);
+				add = (DWORD)NtlRound(((float)m_pAttribute.wLastEpBattleRegen * (float)cfg.wEpRegenPercent) / 100.0f);
+				m_pAttribute.wLastEpBattleRegen = (WORD)std::min<DWORD>(m_pAttribute.wLastEpBattleRegen + add, 0xFFFF);
+			}
+			// Attack speed boost in percent
+			if (cfg.wAttackSpeedPercent > 0 && m_pBotRef->GetLinkPc() != INVALID_HOBJECT)
+			{
+				CalculateAttackSpeedRate((float)cfg.wAttackSpeedPercent, SYSTEM_EFFECT_APPLY_TYPE_PERCENT, false);
+			}
+		}
+	}
 }
 
 float CCharacterAttBot::GetWalkSpeed()

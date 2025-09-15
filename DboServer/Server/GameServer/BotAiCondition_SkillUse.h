@@ -20,6 +20,8 @@ public:
 private:
 
 	DWORD m_dwTime;
+	// Tracks how long the helper has been too far or in a different world than its leader
+	DWORD m_dwOutOfRangeTimeMs;
 
 };
 

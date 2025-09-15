@@ -96,12 +96,12 @@ enum eZENNY_CHANGE_TYPE
 	ZENNY_CHANGE_TYPE_RIDE_ON_BUS,
 	ZENNY_CHANGE_TYPE_ITEM_IDENTIFY,
 	ZENNY_CHANGE_TYPE_SCOUTER_ITEM_SELL,
-	ZENNY_CHANGE_TYPE_PARTY_ITEM_INVEST,	// ÆÄÆ¼ÀÎº¥ ¾ÆÀÌÅÛ °æ¸Å
-	ZENNY_CHANGE_TYPE_ITEM_MIX_MAKE,		// ¾ÆÀÌÅÛ ¸¸µå´Âµ¥ ¼Ò¸ð
-	ZENNY_CHANGE_TYPE_ITEM_MIX_FARE,		// ¾ÆÀÌÅÛ ¸¸µé±â·Î È¹µæ
+	ZENNY_CHANGE_TYPE_PARTY_ITEM_INVEST,	// ï¿½ï¿½Æ¼ï¿½Îºï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½
+	ZENNY_CHANGE_TYPE_ITEM_MIX_MAKE,		// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Âµï¿½ ï¿½Ò¸ï¿½
+	ZENNY_CHANGE_TYPE_ITEM_MIX_FARE,		// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ È¹ï¿½ï¿½
 	ZENNY_CHANGE_TYPE_DOJO_CHANGE,
-	ZENNY_CHANGE_TYPE_BANK,					// Ã¢°í ÀÔÃâ±Ý
-	ZENNY_CHANGE_TYPE_GUILD_BANK,			// ±æµå Ã¢°í ÀÔÃâ±Ý
+	ZENNY_CHANGE_TYPE_BANK,					// Ã¢ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½
+	ZENNY_CHANGE_TYPE_GUILD_BANK,			// ï¿½ï¿½ï¿½ Ã¢ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½
 	ZENNY_CHANGE_TYPE_DOJO_SCRAMBLE_REQ,	// Dojo war contest registration fee
 	ZENNY_CHANGE_TYPE_DOJO_ANTI_SCRAMBLE_ADD,	// Receive refusal to contest
 	ZENNY_CHANGE_TYPE_DOJO_ANTI_SCRAMBLE_DEL,	// Rejection of the dojo war contest
@@ -148,27 +148,27 @@ enum eZENNY_CHANGE_TYPE
 
 enum ePC_CLASS
 {
-	PC_CLASS_HUMAN_FIGHTER,  //(¹«µµ°¡)->(°ÝÅõ°¡,°Ë¼ú°¡)
-	PC_CLASS_HUMAN_MYSTIC,   //(±â°ø»ç)->(ÇÐ¼±»ç,±Í¼±»ç)
-	PC_CLASS_HUMAN_ENGINEER, //(¿£Áö´Ï¾î)->(°Ç¸Å´Ï¾Æ,¸ÞÄ«¸Þ´Ï¾Æ)
-	PC_CLASS_NAMEK_FIGHTER,  //(Àü»ç)->(¸¶°èÀü»ç,¸¶µµÀü»ç)
-	PC_CLASS_NAMEK_MYSTIC,   //(¿ëÁ·)->(µ§µ§µµ»ç,Æ÷ÄÚµµ»ç)
-	PC_CLASS_MIGHTY_MAJIN,   //(´ë¸¶ÀÎ)->(±×·£¸¶,¾óÆ¼¸¶)
-	PC_CLASS_WONDER_MAJIN,   //(ÀÇ¸¶ÀÎ)->(ÇÃ¶óÁî¸¶,Ä«¸£¸¶)
-	PC_CLASS_STREET_FIGHTER, //(°ÝÅõ°¡)
-	PC_CLASS_SWORD_MASTER,   //(°Ë¼ú°¡)
-	PC_CLASS_CRANE_ROSHI,    //(ÇÐ¼±»ç)
-	PC_CLASS_TURTLE_ROSHI,   //(±Í¼±»ç)
-	PC_CLASS_GUN_MANIA,      //(°Ç¸Å´Ï¾Æ)
-	PC_CLASS_MECH_MANIA,     //(¸ÞÄ«¸Å´Ï¾Æ)
-	PC_CLASS_DARK_WARRIOR,   //(¸¶°èÀü»ç)
-	PC_CLASS_SHADOW_KNIGHT,  //(¸¶µµÀü»ç)
-	PC_CLASS_DENDEN_HEALER,  //(µ§µ§µµ»ç)
-	PC_CLASS_POCO_SUMMONER,  //(Æ÷ÄÚµµ»ç)
-	PC_CLASS_ULTI_MA,        //(¾óÆ¼¸¶)
-	PC_CLASS_GRAND_MA,       //(±×·£¸¶)
-	PC_CLASS_PLAS_MA,        //(ÇÃ¶óÁî¸¶)
-	PC_CLASS_KAR_MA,         //(Ä«¸£¸¶)
+	PC_CLASS_HUMAN_FIGHTER,  //(ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½)->(ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,ï¿½Ë¼ï¿½ï¿½ï¿½)
+	PC_CLASS_HUMAN_MYSTIC,   //(ï¿½ï¿½ï¿½ï¿½ï¿½)->(ï¿½Ð¼ï¿½ï¿½ï¿½,ï¿½Í¼ï¿½ï¿½ï¿½)
+	PC_CLASS_HUMAN_ENGINEER, //(ï¿½ï¿½ï¿½ï¿½ï¿½Ï¾ï¿½)->(ï¿½Ç¸Å´Ï¾ï¿½,ï¿½ï¿½Ä«ï¿½Þ´Ï¾ï¿½)
+	PC_CLASS_NAMEK_FIGHTER,  //(ï¿½ï¿½ï¿½ï¿½)->(ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½)
+	PC_CLASS_NAMEK_MYSTIC,   //(ï¿½ï¿½ï¿½ï¿½)->(ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,ï¿½ï¿½ï¿½Úµï¿½ï¿½ï¿½)
+	PC_CLASS_MIGHTY_MAJIN,   //(ï¿½ë¸¶ï¿½ï¿½)->(ï¿½×·ï¿½ï¿½ï¿½,ï¿½ï¿½Æ¼ï¿½ï¿½)
+	PC_CLASS_WONDER_MAJIN,   //(ï¿½Ç¸ï¿½ï¿½ï¿½)->(ï¿½Ã¶ï¿½ï¿½î¸¶,Ä«ï¿½ï¿½ï¿½ï¿½)
+	PC_CLASS_STREET_FIGHTER, //(ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½)
+	PC_CLASS_SWORD_MASTER,   //(ï¿½Ë¼ï¿½ï¿½ï¿½)
+	PC_CLASS_CRANE_ROSHI,    //(ï¿½Ð¼ï¿½ï¿½ï¿½)
+	PC_CLASS_TURTLE_ROSHI,   //(ï¿½Í¼ï¿½ï¿½ï¿½)
+	PC_CLASS_GUN_MANIA,      //(ï¿½Ç¸Å´Ï¾ï¿½)
+	PC_CLASS_MECH_MANIA,     //(ï¿½ï¿½Ä«ï¿½Å´Ï¾ï¿½)
+	PC_CLASS_DARK_WARRIOR,   //(ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½)
+	PC_CLASS_SHADOW_KNIGHT,  //(ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½)
+	PC_CLASS_DENDEN_HEALER,  //(ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½)
+	PC_CLASS_POCO_SUMMONER,  //(ï¿½ï¿½ï¿½Úµï¿½ï¿½ï¿½)
+	PC_CLASS_ULTI_MA,        //(ï¿½ï¿½Æ¼ï¿½ï¿½)
+	PC_CLASS_GRAND_MA,       //(ï¿½×·ï¿½ï¿½ï¿½)
+	PC_CLASS_PLAS_MA,        //(ï¿½Ã¶ï¿½ï¿½î¸¶)
+	PC_CLASS_KAR_MA,         //(Ä«ï¿½ï¿½ï¿½ï¿½)
 
 	PC_CLASS_COUNT,
 	PC_CLASS_UNKNOWN = 0xFF,
@@ -182,30 +182,30 @@ enum ePC_CLASS
 	PC_CLASS_LAST = PC_CLASS_COUNT - 1,
 };
 
-// Class °Ë»ç¿ë ºñÆ® ÇÃ·¡±×
+// Class ï¿½Ë»ï¿½ï¿½ ï¿½ï¿½Æ® ï¿½Ã·ï¿½ï¿½ï¿½
 enum ePC_CLASS_FLAG
 {
 	PC_CLASS_FLAG_HUMAN_FIGHTER = (0x01 << PC_CLASS_HUMAN_FIGHTER),
 	PC_CLASS_FLAG_HUMAN_MYSTIC = (0x01 << PC_CLASS_HUMAN_MYSTIC),
-	PC_CLASS_FLAG_HUMAN_ENGINEER = (0x01 << PC_CLASS_HUMAN_ENGINEER),								//(¿£Áö´Ï¾î)->(°Ç¸Å´Ï¾Æ,¸ÞÄ«¸Þ´Ï¾Æ)
-	PC_CLASS_FLAG_NAMEK_FIGHTER = (0x01 << PC_CLASS_NAMEK_FIGHTER),								//(Àü»ç)->(¸¶°èÀü»ç,¸¶µµÀü»ç)
-	PC_CLASS_FLAG_NAMEK_MYSTIC = (0x01 << PC_CLASS_NAMEK_MYSTIC),									//(¿ëÁ·)->(µ§µ§µµ»ç,Æ÷ÄÚµµ»ç)
-	PC_CLASS_FLAG_MIGHTY_MAJIN = (0x01 << PC_CLASS_MIGHTY_MAJIN),									//(´ë¸¶ÀÎ)->(±×·£¸¶,¾óÆ¼¸¶)
-	PC_CLASS_FLAG_WONDER_MAJIN = (0x01 << PC_CLASS_WONDER_MAJIN),									//(ÀÇ¸¶ÀÎ)->(ÇÃ¶óÁî¸¶,Ä«¸£¸¶)
-	PC_CLASS_FLAG_STREET_FIGHTER = (0x01 << PC_CLASS_STREET_FIGHTER) | PC_CLASS_FLAG_HUMAN_FIGHTER,	//(°ÝÅõ°¡)
-	PC_CLASS_FLAG_SWORD_MASTER = (0x01 << PC_CLASS_SWORD_MASTER) | PC_CLASS_FLAG_HUMAN_FIGHTER,	//(°Ë¼ú°¡)
-	PC_CLASS_FLAG_CRANE_ROSHI = (0x01 << PC_CLASS_CRANE_ROSHI) | PC_CLASS_FLAG_HUMAN_MYSTIC,	//(ÇÐ¼±»ç)
-	PC_CLASS_FLAG_TURTLE_ROSHI = (0x01 << PC_CLASS_TURTLE_ROSHI) | PC_CLASS_FLAG_HUMAN_MYSTIC,	//(°ÅºÏ¼±»ç)
-	PC_CLASS_FLAG_GUN_MANIA = (0x01 << PC_CLASS_GUN_MANIA) | PC_CLASS_FLAG_HUMAN_ENGINEER,//(°Ç¸Å´Ï¾Æ)
-	PC_CLASS_FLAG_MECH_MANIA = (0x01 << PC_CLASS_MECH_MANIA) | PC_CLASS_FLAG_HUMAN_ENGINEER,//(¸ÞÄ«¸Å´Ï¾Æ)
-	PC_CLASS_FLAG_DARK_WARRIOR = (0x01 << PC_CLASS_DARK_WARRIOR) | PC_CLASS_FLAG_NAMEK_FIGHTER,	//(¸¶°èÀü»ç)
-	PC_CLASS_FLAG_SHADOW_KNIGHT = (0x01 << PC_CLASS_SHADOW_KNIGHT) | PC_CLASS_FLAG_NAMEK_FIGHTER,	//(¸¶µµÀü»ç)
-	PC_CLASS_FLAG_DENDEN_HEALER = (0x01 << PC_CLASS_DENDEN_HEALER) | PC_CLASS_FLAG_NAMEK_MYSTIC,	//(µ§µ§µµ»ç)
-	PC_CLASS_FLAG_POCO_SUMMONER = (0x01 << PC_CLASS_POCO_SUMMONER) | PC_CLASS_FLAG_NAMEK_MYSTIC,	//(Æ÷ÄÚµµ»ç)
-	PC_CLASS_FLAG_GRAND_MA = (0x01 << PC_CLASS_GRAND_MA) | PC_CLASS_FLAG_MIGHTY_MAJIN,	//(±×·£¸¶)
-	PC_CLASS_FLAG_ULTI_MA = (0x01 << PC_CLASS_ULTI_MA) | PC_CLASS_FLAG_MIGHTY_MAJIN,	//(¾óÆ¼¸¶)
-	PC_CLASS_FLAG_PLAS_MA = (0x01 << PC_CLASS_PLAS_MA) | PC_CLASS_FLAG_WONDER_MAJIN,	//(ÇÃ¶óÁî¸¶)
-	PC_CLASS_FLAG_KAR_MA = (0x01 << PC_CLASS_KAR_MA) | PC_CLASS_FLAG_WONDER_MAJIN,	//(Ä«¸£¸¶)
+	PC_CLASS_FLAG_HUMAN_ENGINEER = (0x01 << PC_CLASS_HUMAN_ENGINEER),								//(ï¿½ï¿½ï¿½ï¿½ï¿½Ï¾ï¿½)->(ï¿½Ç¸Å´Ï¾ï¿½,ï¿½ï¿½Ä«ï¿½Þ´Ï¾ï¿½)
+	PC_CLASS_FLAG_NAMEK_FIGHTER = (0x01 << PC_CLASS_NAMEK_FIGHTER),								//(ï¿½ï¿½ï¿½ï¿½)->(ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½)
+	PC_CLASS_FLAG_NAMEK_MYSTIC = (0x01 << PC_CLASS_NAMEK_MYSTIC),									//(ï¿½ï¿½ï¿½ï¿½)->(ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,ï¿½ï¿½ï¿½Úµï¿½ï¿½ï¿½)
+	PC_CLASS_FLAG_MIGHTY_MAJIN = (0x01 << PC_CLASS_MIGHTY_MAJIN),									//(ï¿½ë¸¶ï¿½ï¿½)->(ï¿½×·ï¿½ï¿½ï¿½,ï¿½ï¿½Æ¼ï¿½ï¿½)
+	PC_CLASS_FLAG_WONDER_MAJIN = (0x01 << PC_CLASS_WONDER_MAJIN),									//(ï¿½Ç¸ï¿½ï¿½ï¿½)->(ï¿½Ã¶ï¿½ï¿½î¸¶,Ä«ï¿½ï¿½ï¿½ï¿½)
+	PC_CLASS_FLAG_STREET_FIGHTER = (0x01 << PC_CLASS_STREET_FIGHTER) | PC_CLASS_FLAG_HUMAN_FIGHTER,	//(ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½)
+	PC_CLASS_FLAG_SWORD_MASTER = (0x01 << PC_CLASS_SWORD_MASTER) | PC_CLASS_FLAG_HUMAN_FIGHTER,	//(ï¿½Ë¼ï¿½ï¿½ï¿½)
+	PC_CLASS_FLAG_CRANE_ROSHI = (0x01 << PC_CLASS_CRANE_ROSHI) | PC_CLASS_FLAG_HUMAN_MYSTIC,	//(ï¿½Ð¼ï¿½ï¿½ï¿½)
+	PC_CLASS_FLAG_TURTLE_ROSHI = (0x01 << PC_CLASS_TURTLE_ROSHI) | PC_CLASS_FLAG_HUMAN_MYSTIC,	//(ï¿½ÅºÏ¼ï¿½ï¿½ï¿½)
+	PC_CLASS_FLAG_GUN_MANIA = (0x01 << PC_CLASS_GUN_MANIA) | PC_CLASS_FLAG_HUMAN_ENGINEER,//(ï¿½Ç¸Å´Ï¾ï¿½)
+	PC_CLASS_FLAG_MECH_MANIA = (0x01 << PC_CLASS_MECH_MANIA) | PC_CLASS_FLAG_HUMAN_ENGINEER,//(ï¿½ï¿½Ä«ï¿½Å´Ï¾ï¿½)
+	PC_CLASS_FLAG_DARK_WARRIOR = (0x01 << PC_CLASS_DARK_WARRIOR) | PC_CLASS_FLAG_NAMEK_FIGHTER,	//(ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½)
+	PC_CLASS_FLAG_SHADOW_KNIGHT = (0x01 << PC_CLASS_SHADOW_KNIGHT) | PC_CLASS_FLAG_NAMEK_FIGHTER,	//(ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½)
+	PC_CLASS_FLAG_DENDEN_HEALER = (0x01 << PC_CLASS_DENDEN_HEALER) | PC_CLASS_FLAG_NAMEK_MYSTIC,	//(ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½)
+	PC_CLASS_FLAG_POCO_SUMMONER = (0x01 << PC_CLASS_POCO_SUMMONER) | PC_CLASS_FLAG_NAMEK_MYSTIC,	//(ï¿½ï¿½ï¿½Úµï¿½ï¿½ï¿½)
+	PC_CLASS_FLAG_GRAND_MA = (0x01 << PC_CLASS_GRAND_MA) | PC_CLASS_FLAG_MIGHTY_MAJIN,	//(ï¿½×·ï¿½ï¿½ï¿½)
+	PC_CLASS_FLAG_ULTI_MA = (0x01 << PC_CLASS_ULTI_MA) | PC_CLASS_FLAG_MIGHTY_MAJIN,	//(ï¿½ï¿½Æ¼ï¿½ï¿½)
+	PC_CLASS_FLAG_PLAS_MA = (0x01 << PC_CLASS_PLAS_MA) | PC_CLASS_FLAG_WONDER_MAJIN,	//(ï¿½Ã¶ï¿½ï¿½î¸¶)
+	PC_CLASS_FLAG_KAR_MA = (0x01 << PC_CLASS_KAR_MA) | PC_CLASS_FLAG_WONDER_MAJIN,	//(Ä«ï¿½ï¿½ï¿½ï¿½)
 };
 
 
@@ -246,14 +246,14 @@ enum eSPAWN_REMOVE_TYPE
 };
 
 
-// ¸÷ µî±Þ
+// ï¿½ï¿½ ï¿½ï¿½ï¿½
 enum eMOB_GRADE
 {
-	MOB_GRADE_NORMAL,// (ÀÏ¹Ý)
-	MOB_GRADE_SUPER, // (½´ÆÛ)
-	MOB_GRADE_ULTRA, // (¿ïÆ®¶ó)
-	MOB_GRADE_BOSS,  // (º¸¾²)
-	MOB_GRADE_HERO,  // (È÷¾î·Î)
+	MOB_GRADE_NORMAL,// (ï¿½Ï¹ï¿½)
+	MOB_GRADE_SUPER, // (ï¿½ï¿½ï¿½ï¿½)
+	MOB_GRADE_ULTRA, // (ï¿½ï¿½Æ®ï¿½ï¿½)
+	MOB_GRADE_BOSS,  // (ï¿½ï¿½ï¿½ï¿½)
+	MOB_GRADE_HERO,  // (ï¿½ï¿½ï¿½ï¿½ï¿½)
 
 	MOB_GRADE_UNKNOWN = 0xFF,
 
@@ -264,7 +264,7 @@ enum eMOB_GRADE
 };
 
 
-// ¸÷ Å¸ÀÔ
+// ï¿½ï¿½ Å¸ï¿½ï¿½
 enum eMOB_TYPE
 {
 	MOB_TYPE_ANIMAL,
@@ -311,7 +311,7 @@ struct sCHAR_AGGRO_INFO
 
 // Avatar Type
 //
-// Summon Pet°ú Item PetÀº Å¬¶óÀÌ¾ðÆ®¿¡¼­ Á¦¾îÇÏ±â ¶§¹®¿¡ °°Àº avatar·Î °£ÁÖÇÑ´Ù.
+// Summon Petï¿½ï¿½ Item Petï¿½ï¿½ Å¬ï¿½ï¿½ï¿½Ì¾ï¿½Æ®ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï±ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ avatarï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ñ´ï¿½.
 // Summon Pet and Item Pet are regarded as 'avatar' because they are controlled by Client.
 // by YOSHIKI(2006-12-26)
 enum eDBO_AVATAR_TYPE
@@ -340,7 +340,7 @@ enum eDBO_AVATAR_TYPE
 
 enum eAI_FUNCTION
 {
-	AI_FUNC_DEFENSIVE = 0,			//ÈÄ°ø
+	AI_FUNC_DEFENSIVE = 0,			//ï¿½Ä°ï¿½
 	AI_FUNC_TIMID,					//coward
 	AI_FUNC_OFFENSIVE,				//aggresive
 	AI_FUNC_SMART_OFFENSIVE,		//smart aggresive
@@ -386,7 +386,7 @@ enum eAI_FUNCTION_FLAG
 	AI_FUNC_FLAG_BRAVE = 0x01 << AI_FUNC_BRAVE,
 
 	AI_FUNC_FLAG_ALLIANCE_HELP = 0x01 << AI_FUNC_ALLIANCE_HELP,// [3/11/2008]
-	AI_FUNC_FLAG_DEFEND = 0x01 << AI_FUNC_DEFEND,// °æºñ [3/12/2008]
+	AI_FUNC_FLAG_DEFEND = 0x01 << AI_FUNC_DEFEND,// ï¿½ï¿½ï¿½ [3/12/2008]
 
 	AI_FUNC_FLAG_NOT_CHASE = 0x01 << AI_FUNC_NOT_CHASE, // [11/10/2008]
 	AI_FUNC_FLAG_NOT_MOVE = 0x01 << AI_FUNC_NOT_MOVE, // [11/10/2008]
@@ -429,17 +429,17 @@ enum eNPC_JOB
 	NPC_JOB_GATE_KEEPER,					// gate keeper / teleporter
 	NPC_JOB_VENDING_MACHINE,				// sell items for zeni. Also used for seal bind items.
 	NPC_JOB_TIMEMACHINE_MERCHANT,			// TMQ teleporter 
-	NPC_JOB_PORTAL_MAN,						// ¼ø°£ ÀÌµ¿ ¼­ºñ½º¸Ç			
-	NPC_JOB_BUS,							// ¹ö½º
+	NPC_JOB_PORTAL_MAN,						// ï¿½ï¿½ï¿½ï¿½ ï¿½Ìµï¿½ ï¿½ï¿½ï¿½ñ½º¸ï¿½			
+	NPC_JOB_BUS,							// ï¿½ï¿½ï¿½ï¿½
 	NPC_JOB_RECEPTION,						// 
 	NPC_JOB_BUDOHSI_MERCHANT,				// npc exchange items for item and/or mudosa points
-	NPC_JOB_REFEREE,						// ½ÉÆÇ
+	NPC_JOB_REFEREE,						// ï¿½ï¿½ï¿½ï¿½
 	NPC_JOB_GAMBLE_MERCHANT,				// mudosa gambler npc
 	NPC_JOB_CHAMPION_MERCHANT,				// unknown
-	NPC_JOB_DOJO_MANAGER,					// µµÀå °ü¸®ÀÎ
+	NPC_JOB_DOJO_MANAGER,					// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 	NPC_JOB_DOJO_MERCHANT,					// sell shit for zeni
-	NPC_JOB_DOJO_SEAL,						// µµÀå ÀÎÀå
-	NPC_JOB_DOJO_BANKER,					// µµÀå Ã¢°í
+	NPC_JOB_DOJO_SEAL,						// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+	NPC_JOB_DOJO_BANKER,					// ï¿½ï¿½ï¿½ï¿½ Ã¢ï¿½ï¿½
 	NPC_JOB_MIX_MASTER,						// sell items for zeni
 
 	//new
@@ -473,33 +473,33 @@ enum eNPC_JOB
 // NPC Function Flag
 enum eNPC_FUNCTION
 {
-	NPC_FUNC_MERCHANT,			// »óÀÎ±â´É
+	NPC_FUNC_MERCHANT,			// ï¿½ï¿½ï¿½Î±ï¿½ï¿½
 	NPC_FUNC_GUARD,				// Ultimate Dungeon (UD) NPC
-	NPC_FUNC_SKILL_TRAINER,		// ±³°ü±â´É
-	NPC_FUNC_BANKER,			// ÀºÇà¿ø±â´É
-	NPC_FUNC_TALKER,			// ÀÌ¾ß±â±â´É
-	NPC_FUNC_QUEST_GRANTER,		// Äù½ºÆ® ºÎ¿©
-	NPC_FUNC_GUILD_MANAGER,		// ±æµå¸Å´ÏÀú
-	NPC_FUNC_SUMMON_PET,		// ¼ÒÈ¯¼ö
-	NPC_FUNC_GATE_KEEPER,		// ¹®Áö±â
-	NPC_FUNC_TIME_QUEST,		// Å¸ÀÓ¸Ó½Å Äù½ºÆ® ±â´É
+	NPC_FUNC_SKILL_TRAINER,		// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+	NPC_FUNC_BANKER,			// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+	NPC_FUNC_TALKER,			// ï¿½Ì¾ß±ï¿½ï¿½ï¿½
+	NPC_FUNC_QUEST_GRANTER,		// ï¿½ï¿½ï¿½ï¿½Æ® ï¿½Î¿ï¿½
+	NPC_FUNC_GUILD_MANAGER,		// ï¿½ï¿½ï¿½Å´ï¿½ï¿½ï¿½
+	NPC_FUNC_SUMMON_PET,		// ï¿½ï¿½È¯ï¿½ï¿½
+	NPC_FUNC_GATE_KEEPER,		// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+	NPC_FUNC_TIME_QUEST,		// Å¸ï¿½Ó¸Ó½ï¿½ ï¿½ï¿½ï¿½ï¿½Æ® ï¿½ï¿½ï¿½
 	NPC_FUNC_PORTAL,			// Teleport Portal
-	NPC_FUNC_SCAN_BY_MOB,		// ¸÷¿¡°Ô ¼±°øÀ» ´çÇÒ¼ö ÀÖÀ½
-	NPC_FUNC_BUS,				// ¹ö½º
-	NPC_FUNC_RECEPTION,			// ÃµÇÏÁ¦ÀÏ ¹«µµÈ¸ Á¢¼öÀÎ
-	NPC_FUNC_BUDOHSI_MERCHANT,	// ¹«µµ»ç »óÀÎ
-	NPC_FUNC_REFEREE,			// ½ÉÆÇ
-	NPC_FUNC_BUILDING,			// ºôµùÇü
-	NPC_FUNC_FACING,			// ´ë¸é : ÆÐÆ®·Ñ BOTÀ» Å¬¸¯ÇÏ¸é ¸ØÃß°ÔÇÏ´Â ±â´É
-	NPC_FUNC_TURN_OFF,			// °ø°ÝÀ» ´çÇØµµ ±× ¹æÇâÀ» ¾Èº»´Ù
-	NPC_FUNC_DISCLOSE_LP,		// LPÇ¥½Ã¿©ºÎ
-	NPC_FUNC_GAMBLE_MERCHANT,	// »Ì±â »óÀÎ
-	NPC_FUNC_MOVING_NPC,		// ¿òÁ÷ÀÌ´Â NPC (ÆÐ¾² µ¥ÀÌÅÍ)
-	NPC_FUNC_SPAWN_NPC,			//Áß°£ ½ºÆù NPC
-	NPC_FUNC_DOJO_MANAGER,		// µµÀå °ü¸®ÀÎ
-	NPC_FUNC_DOJO_MERCHANT,		// µµÀå »óÀÎ
-	NPC_FUNC_DOJO_SEAL,			// µµÀå ÀÎÀå
-	NPC_FUNC_DOJO_BANKER,		// µµÀå Ã¢°í
+	NPC_FUNC_SCAN_BY_MOB,		// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ò¼ï¿½ ï¿½ï¿½ï¿½ï¿½
+	NPC_FUNC_BUS,				// ï¿½ï¿½ï¿½ï¿½
+	NPC_FUNC_RECEPTION,			// Ãµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½È¸ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+	NPC_FUNC_BUDOHSI_MERCHANT,	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+	NPC_FUNC_REFEREE,			// ï¿½ï¿½ï¿½ï¿½
+	NPC_FUNC_BUILDING,			// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+	NPC_FUNC_FACING,			// ï¿½ï¿½ï¿½ : ï¿½ï¿½Æ®ï¿½ï¿½ BOTï¿½ï¿½ Å¬ï¿½ï¿½ï¿½Ï¸ï¿½ ï¿½ï¿½ï¿½ß°ï¿½ï¿½Ï´ï¿½ ï¿½ï¿½ï¿½
+	NPC_FUNC_TURN_OFF,			// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Øµï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Èºï¿½ï¿½ï¿½
+	NPC_FUNC_DISCLOSE_LP,		// LPÇ¥ï¿½Ã¿ï¿½ï¿½ï¿½
+	NPC_FUNC_GAMBLE_MERCHANT,	// ï¿½Ì±ï¿½ ï¿½ï¿½ï¿½ï¿½
+	NPC_FUNC_MOVING_NPC,		// ï¿½ï¿½ï¿½ï¿½ï¿½Ì´ï¿½ NPC (ï¿½Ð¾ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½)
+	NPC_FUNC_SPAWN_NPC,			//ï¿½ß°ï¿½ ï¿½ï¿½ï¿½ï¿½ NPC
+	NPC_FUNC_DOJO_MANAGER,		// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+	NPC_FUNC_DOJO_MERCHANT,		// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+	NPC_FUNC_DOJO_SEAL,			// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+	NPC_FUNC_DOJO_BANKER,		// ï¿½ï¿½ï¿½ï¿½ Ã¢ï¿½ï¿½
 
 	//new
 	NPC_FUNC_DWC_TELEPORT,
@@ -534,8 +534,8 @@ enum eNPC_FUNCTION_FLAG
 	NPC_FUNC_FLAG_BUDOHSI_MERCHANT = MAKE_BIT_FLAG(NPC_FUNC_BUDOHSI_MERCHANT),
 	NPC_FUNC_FLAG_REFEREE = MAKE_BIT_FLAG(NPC_FUNC_REFEREE),
 	NPC_FUNC_FLAG_BUILDING = MAKE_BIT_FLAG(NPC_FUNC_BUILDING),
-	NPC_FUNC_FLAG_FACING = MAKE_BIT_FLAG(NPC_FUNC_FACING),	// ¼öÁ¤ ( NPC_FUNC_FLAG_FACING = NPC_FUNC_FLAG_MERCHANT | NPC_FUNC_FLAG_QUEST_GRANTER, // ÀÌµ¿Áß¿¡ ¸Þ´º¸¦ ¶ç¿ì°Ô µÇ´Â NPC ¸ðÀ½ ) [5/19/2008]	
-																		// ÀÌ·¸°ÔÇÏ¸é ¹®Á¦µÇ´Â °ÍÀÌ ÇÏ³ª ÀÖ´Âµ¥, °°Àº NPC¸¦ ´Ù¸¥ °÷¿¡¼­ ½èÀ» ¶§ ±×°÷¿¡¼­´Â ¸»À» °É¸é ¸ØÃßÁö ¸»¾Æ¾ß µÉ¶§¿¡´Â NPC¸¦ »õ·Î ¸¸µé¾î¾ß ÇÑ´Ù
+	NPC_FUNC_FLAG_FACING = MAKE_BIT_FLAG(NPC_FUNC_FACING),	// ï¿½ï¿½ï¿½ï¿½ ( NPC_FUNC_FLAG_FACING = NPC_FUNC_FLAG_MERCHANT | NPC_FUNC_FLAG_QUEST_GRANTER, // ï¿½Ìµï¿½ï¿½ß¿ï¿½ ï¿½Þ´ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ç´ï¿½ NPC ï¿½ï¿½ï¿½ï¿½ ) [5/19/2008]	
+																		// ï¿½Ì·ï¿½ï¿½ï¿½ï¿½Ï¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ç´ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ï³ï¿½ ï¿½Ö´Âµï¿½, ï¿½ï¿½ï¿½ï¿½ NPCï¿½ï¿½ ï¿½Ù¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½×°ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½É¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Æ¾ï¿½ ï¿½É¶ï¿½ï¿½ï¿½ï¿½ï¿½ NPCï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ñ´ï¿½
 																		NPC_FUNC_FLAG_TURN_OFF = MAKE_BIT_FLAG(NPC_FUNC_TURN_OFF), // [6/2/2008]
 																		NPC_FUNC_FLAG_DISCLOSE_LP = MAKE_BIT_FLAG(NPC_FUNC_DISCLOSE_LP), // [8/21/2008 Peessi]
 																		NPC_FUNC_FLAG_GAMBLE_MERCHANT = MAKE_BIT_FLAG(NPC_FUNC_GAMBLE_MERCHANT),// [7/21/2008]
@@ -633,11 +633,11 @@ enum eLocalizeType : BYTE {
 };
 
 //-----------------------------------------------------------------------------------
-// Ä³¸¯ÅÍ °ü·Ã »ó¼ö Á¤ÀÇ : [4/25/2006 zeroera] : ¼öÁ¤ÇÊ¿ä : lua·Î ¿Å±æ °Í
+// Ä³ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ : [4/25/2006 zeroera] : ï¿½ï¿½ï¿½ï¿½ï¿½Ê¿ï¿½ : luaï¿½ï¿½ ï¿½Å±ï¿½ ï¿½ï¿½
 //-----------------------------------------------------------------------------------
 const DWORD			NTL_CHAR_RP_REGEN_WAIT_TIME = 15000; // Start decreasing after 15 seconds
 
-const DWORD			NTL_CHAR_RP_BALL_UPDATE_INTERVAL = 30000; // °æ°ú ÈÄ RP ±¸½½ °¨¼Ò ½ÃÀÛ (30)
+const DWORD			NTL_CHAR_RP_BALL_UPDATE_INTERVAL = 30000; // ï¿½ï¿½ï¿½ ï¿½ï¿½ RP ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ (30)
 
 const BYTE			NTL_CHAR_RP_BALL_MAX = 7; // Max 7 rp balls
 
@@ -685,7 +685,7 @@ const DWORD			NTL_CHAR_MAX_BANK_SAVE_ZENNY = 2000000000;
 
 const DWORD			NTL_MAX_USE_ZENI = 1000000000; //max amount of zeni player can use to trade/sell etc
 
-const int			NTL_MAX_NEWBIE_QUICKSLOT_COUNT = 5;  // »ý¼º½Ã ºÎ¿©°¡´É Äü½½·Ô 
+const int			NTL_MAX_NEWBIE_QUICKSLOT_COUNT = 5;  // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Î¿ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ 
 
 const DWORD			NTL_DELETE_CHAR_CHECK_TICK = 1000; //Check Delete waiting time
 
@@ -696,8 +696,8 @@ const DWORD			NTL_MAX_NETPY_SHOPPOINTS = 50000; //maximal NetPy shop points
 const DWORD			NTL_INVINCIBLE_EVENT_TIME = 5000;
 
 //-----------------------------------------------------------------------------------
-const BYTE			GMT_MAX_EFFECT_LIST_SIZE = 5;		// GMT Àû¿ë È¿°úÀÇ ÃÖ´ë °¹¼ö
-const BYTE			GMT_MAX_TIME_SLOT_SIZE = 3;		// GMT È¿°úÀÇ ½Ã°£ ¼³Á¤ °¹¼ö
+const BYTE			GMT_MAX_EFFECT_LIST_SIZE = 5;		// GMT ï¿½ï¿½ï¿½ï¿½ È¿ï¿½ï¿½ï¿½ï¿½ ï¿½Ö´ï¿½ ï¿½ï¿½ï¿½ï¿½
+const BYTE			GMT_MAX_TIME_SLOT_SIZE = 3;		// GMT È¿ï¿½ï¿½ï¿½ï¿½ ï¿½Ã°ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 
 //new
 const int 			NTL_MAX_CHAR_HISTORY_DATA_REQUEST = 20;
@@ -736,7 +736,7 @@ struct sMARKING
 
 };//end of sMARKING
 
-// Ä³¸¯ÅÍ »ý±è»õ
+// Ä³ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½
 struct sPC_SHAPE
 {
 	BYTE			byFace;
@@ -883,7 +883,7 @@ struct sPC_DATA
 	WCHAR			awchGuildName[NTL_MAX_SIZE_GUILD_NAME + 1];
 
 	DWORD			dwTutorialHint;
-	DWORD			dwMapInfoIndex;		// Ä³¸¯ÅÍ ¼±ÅÃ½Ã Ãâ·ÂÇØ ÁÙ ÇöÀç Àå¼ÒÀÇ Text Tblidx
+	DWORD			dwMapInfoIndex;		// Ä³ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ã½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ Text Tblidx
 
 	DWORD			dwReputation;
 	DWORD			dwMudosaPoint;
@@ -946,12 +946,12 @@ struct sPC_SUMMARY
 struct sPC_BRIEF
 {
 	CHARACTERID		charId;
-	TBLIDX			tblidx; // pc Å×ÀÌºí ÀÎµ¦½º
+	TBLIDX			tblidx; // pc ï¿½ï¿½ï¿½Ìºï¿½ ï¿½Îµï¿½ï¿½ï¿½
 	bool			bIsAdult;
 	WCHAR			awchName[NTL_MAX_SIZE_CHAR_NAME + 1];
 	WCHAR			wszGuildName[NTL_MAX_SIZE_GUILD_NAME + 1];
 
-	sPC_SHAPE		sPcShape; // pc ¿Ü¾ç ( ¾ó±¼/¸Ó¸®/¸Ó¸®»ö )
+	sPC_SHAPE		sPcShape; // pc ï¿½Ü¾ï¿½ ( ï¿½ï¿½/ï¿½Ó¸ï¿½/ï¿½Ó¸ï¿½ï¿½ï¿½ )
 
 	int				curLp;
 	int				maxLp;
@@ -971,7 +971,7 @@ struct sPC_BRIEF
 	FLOAT			fBaseAirDashBoostSpeed;
 	FLOAT			fLastAirDashBoostSpeed;
 
-	sITEM_BRIEF		sItemBrief[EQUIP_SLOT_TYPE_COUNT]; // ÀåÂø ¾ÆÀÌÅÛ Á¤º¸
+	sITEM_BRIEF		sItemBrief[EQUIP_SLOT_TYPE_COUNT]; // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 
 	WORD			wAttackSpeedRate;
 	float			fSkillAnimationSpeedModifier;
@@ -1025,13 +1025,13 @@ struct sPcProfileLocalize {
 // PC Characters Full information (used for loading avatar or character lookup)
 struct sPC_PROFILE
 {
-	TBLIDX				tblidx; // pc Å×ÀÌºí ÀÎµ¦½º
+	TBLIDX				tblidx; // pc ï¿½ï¿½ï¿½Ìºï¿½ ï¿½Îµï¿½ï¿½ï¿½
 	bool				bIsAdult;
 	bool				bChangeClass;		// Whether or not have rights to change class
-	CHARACTERID			charId;		// PC Ä³¸¯ÅÍÀÇ °íÀ¯ ID(DB index)
+	CHARACTERID			charId;		// PC Ä³ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ID(DB index)
 	WCHAR				awchName[NTL_MAX_SIZE_CHAR_NAME + 1];
 
-	sPC_SHAPE			sPcShape; // pc ¿Ü¾ç ( ¾ó±¼/¸Ó¸®/¸Ó¸®»ö )
+	sPC_SHAPE			sPcShape; // pc ï¿½Ü¾ï¿½ ( ï¿½ï¿½/ï¿½Ó¸ï¿½/ï¿½Ó¸ï¿½ï¿½ï¿½ )
 
 	sAVATAR_ATTRIBUTE	avatarAttribute;
 
@@ -1062,7 +1062,7 @@ struct sPC_PROFILE
 
 	sHOIPOIMIX_DATA		sMixData;
 
-	bool				bIsGameMaster;		// true : ¿î¿µÀÚ character
+	bool				bIsGameMaster;		// true : ï¿½î¿µï¿½ï¿½ character
 
 	GUILDID				guildId;
 
@@ -1090,7 +1090,7 @@ struct sPC_PROFILE
 };
 
 //-----------------------------------------------------------------------------------
-// BOT ( NPC/MOB/PET µîÀÇ ¼­¹ö°¡ ÄÁÆ®·Ñ ÇÏ´Â Ä³¸¯ÅÍµéÀÇ ÃÑÄª )
+// BOT ( NPC/MOB/PET ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Æ®ï¿½ï¿½ ï¿½Ï´ï¿½ Ä³ï¿½ï¿½ï¿½Íµï¿½ï¿½ï¿½ ï¿½ï¿½Äª )
 //-----------------------------------------------------------------------------------
 
 struct sBOT_SERVER_SCRIPT_DATA
@@ -1159,28 +1159,28 @@ struct sBOT_DATA
 
 	WORLDID			worldID; // world id
 	TBLIDX			worldtblidx;
-	sVECTOR3		vCurLoc; // ÇöÀçÀ§Ä¡
-	sVECTOR3		vCurDir; // ÇöÀç¹æÇâ
+	sVECTOR3		vCurLoc; // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¡
+	sVECTOR3		vCurDir; // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 
-	sVECTOR3		vSpawnLoc; // ½ºÆùÀ§Ä¡
-	sVECTOR3		vSpawnDir; // ½ºÆù ¹æÇâ
-	BYTE			bySpawnRange; // ·£´ý ½ºÆù °Å¸®
-	WORD			wSpawnTime; // ½ºÆù ½Ã°£ (ÃÊ)
-	BYTE			bySpawnFuncFlag; // ½ºÆù ±â´É ÇÃ·¡±×
+	sVECTOR3		vSpawnLoc; // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¡
+	sVECTOR3		vSpawnDir; // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+	BYTE			bySpawnRange; // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Å¸ï¿½
+	WORD			wSpawnTime; // ï¿½ï¿½ï¿½ï¿½ ï¿½Ã°ï¿½ (ï¿½ï¿½)
+	BYTE			bySpawnFuncFlag; // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½Ã·ï¿½ï¿½ï¿½
 
 	BYTE			byMoveType; // eSPAWN_MOVE_TYPE
-	BYTE			byWanderRange; // ¹èÈ¸ °Å¸® (m)
-	BYTE			byMoveRange; // ÇÑ¹ø¿¡ ¿òÁ÷ÀÌ´Â °Å¸® (m)
+	BYTE			byWanderRange; // ï¿½ï¿½È¸ ï¿½Å¸ï¿½ (m)
+	BYTE			byMoveRange; // ï¿½Ñ¹ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ì´ï¿½ ï¿½Å¸ï¿½ (m)
 
-	ACTIONPATTERNTBLIDX actionpatternTblIdx; //ºñÀüÅõ Çàµ¿ ÆÐÅÏ ¼Â¿¡ Å×ÀÌºí ID
+	ACTIONPATTERNTBLIDX actionpatternTblIdx; //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½àµ¿ ï¿½ï¿½ï¿½ï¿½ ï¿½Â¿ï¿½ ï¿½ï¿½ï¿½Ìºï¿½ ID
 
-	TBLIDX			pathTblidx; // °æ·Î Å×ÀÌºí ¹øÈ£
+	TBLIDX			pathTblidx; // ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ìºï¿½ ï¿½ï¿½È£
 
 	sBOT_SERVER_SCRIPT_DATA		sScriptData;
 
-	PARTYID			partyID; // ÆÄÆ¼ ¾ÆÀÌµð
-	bool			bPartyLeader; // ÆÄÆ¼ ¸®´õ
-	sVECTOR3		vPartyLeaderDistance; // ÆÄÆ¼ ¸®´õ¿ÍÀÇ °ø°£ °£°Ý
+	PARTYID			partyID; // ï¿½ï¿½Æ¼ ï¿½ï¿½ï¿½Ìµï¿½
+	bool			bPartyLeader; // ï¿½ï¿½Æ¼ ï¿½ï¿½ï¿½ï¿½
+	sVECTOR3		vPartyLeaderDistance; // ï¿½ï¿½Æ¼ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	QWORD			qwCharConditionFlag;
 	HOBJECT			hTargetFixedExecuter;
 	BYTE			byImmortalMode;
@@ -1217,23 +1217,23 @@ struct sBOT_BRIEF
 // bot profile
 struct sBOT_PROFILE
 {
-	CNtlVector		vSpawnLoc; // ½ºÆùÀ§Ä¡
-	CNtlVector		vSpawnDir; // ½ºÆù ¹æÇâ
-	BYTE			bySpawnRange; // ·£´ý ½ºÆù °Å¸®
-	WORD			wSpawnTime; // ½ºÆù ½Ã°£ (ÃÊ)
-	BYTE			bySpawnFuncFlag; // ¸®½ºÆù ¿©ºÎ
+	CNtlVector		vSpawnLoc; // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¡
+	CNtlVector		vSpawnDir; // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+	BYTE			bySpawnRange; // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Å¸ï¿½
+	WORD			wSpawnTime; // ï¿½ï¿½ï¿½ï¿½ ï¿½Ã°ï¿½ (ï¿½ï¿½)
+	BYTE			bySpawnFuncFlag; // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 
 	BYTE			byMoveType; // eSPAWN_MOVE_TYPE
-	BYTE			byWanderRange; // ¹èÈ¸ °Å¸®
-	BYTE			byMoveRange; // ÇÑ¹ø¿¡ ¿òÁ÷ÀÌ´Â °Å¸®
+	BYTE			byWanderRange; // ï¿½ï¿½È¸ ï¿½Å¸ï¿½
+	BYTE			byMoveRange; // ï¿½Ñ¹ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ì´ï¿½ ï¿½Å¸ï¿½
 
-//	BYTE			byMoveDelayTime; // ¿òÁ÷ÀÌ´Â ½Ã°£ °£°Ý
-	TBLIDX			pathTblidx; // °æ·Î Å×ÀÌºí ¹øÈ£
+//	BYTE			byMoveDelayTime; // ï¿½ï¿½ï¿½ï¿½ï¿½Ì´ï¿½ ï¿½Ã°ï¿½ ï¿½ï¿½ï¿½ï¿½
+	TBLIDX			pathTblidx; // ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ìºï¿½ ï¿½ï¿½È£
 
 	sBOT_SERVER_SCRIPT_DATA		sScriptData;
 
-	bool			bPartyLeader; // ÆÄÆ¼ ¸®´õ
-	sVECTOR3		vPartyLeaderDistance; // ¸®´õ¿ÍÀÇ °ø°£ °£°Ý
+	bool			bPartyLeader; // ï¿½ï¿½Æ¼ ï¿½ï¿½ï¿½ï¿½
+	sVECTOR3		vPartyLeaderDistance; // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	DWORD			dwParty_Index;
 
 	sBOT_SUB_DATA	sBotSubData;
@@ -1463,7 +1463,7 @@ enum eACCEPT_RES_TYPE
 
 
 //-----------------------------------------------------------------------------------
-// ´ÜÃàÅ°
+// ï¿½ï¿½ï¿½ï¿½Å°
 //-----------------------------------------------------------------------------------
 struct sSHORTCUT_UPDATE_DATA
 {
@@ -1603,7 +1603,7 @@ DWORD Dbo_CalculatePowerLevel(
 
 float Dbo_ConvertToAgentRadius(float fObjectRadius);
 
-float Dbo_GetTransformScale(eASPECTSTATE eAspect, BYTE byGrade);            ///< º¯½Å½Ã¿¡ º¯°æ ºñÀ²À» ¹ÝÈ¯ÇÑ´Ù.
+float Dbo_GetTransformScale(eASPECTSTATE eAspect, BYTE byGrade);            ///< ï¿½ï¿½ï¿½Å½Ã¿ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È¯ï¿½Ñ´ï¿½.
 
 const BYTE CalculateRPBallMaxByLevel(const BYTE byLevel);
 

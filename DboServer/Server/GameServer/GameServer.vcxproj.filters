@@ -1227,6 +1227,9 @@
     <ClCompile Include="EscortManager.cpp">
       <Filter>character NEW\Monster\Npc\EscortManager</Filter>
     </ClCompile>
+    <ClCompile Include="HelperNpcManager.cpp">
+      <Filter>character NEW\Monster\Npc\EscortManager</Filter>
+    </ClCompile>
     <ClCompile Include="RangeCheck.cpp">
       <Filter>utilities\range-check</Filter>
     </ClCompile>
@@ -3219,6 +3222,9 @@
       <Filter>character NEW\Character\MeHaterManager\Main</Filter>
     </ClInclude>
     <ClInclude Include="EscortManager.h">
+      <Filter>character NEW\Monster\Npc\EscortManager</Filter>
+    </ClInclude>
+    <ClInclude Include="HelperNpcManager.h">
       <Filter>character NEW\Monster\Npc\EscortManager</Filter>
     </ClInclude>
     <ClInclude Include="RangeCheck.h">

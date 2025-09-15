@@ -74,6 +74,11 @@ public:
 
 	bool				IsSightAngle(CCharacter* pTarget);
 
+	// CustomDropEvent: mark mob as immune to debuffs (curse-type buffs)
+public:
+	void                SetEventDebuffImmune(bool b) { m_bEventDebuffImmune = b; }
+	bool                IsEventDebuffImmune() const { return m_bEventDebuffImmune; }
+
 private:
 
 	SPAWNGROUPID		m_SpawnGroupID;
@@ -94,6 +99,9 @@ private:
 	BYTE				m_byCustomDropCount;
 
 	BYTE				m_byKillerLevel;
+
+	// CustomDropEvent: if true, block BUFF_TYPE_CURSE registration on this monster
+	bool                m_bEventDebuffImmune = false;
 
 };
 

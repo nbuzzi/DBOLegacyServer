@@ -132,6 +132,24 @@ void CBotAiState_Idle::OnEnter()
 			default: break;
 		}
 
+		// If this NPC is a helper linked to a player, allow using skills (e.g., heals/buffs)
+		// while idle regardless of NPC party presence. This ensures support behavior even
+		// when the helper isn't in an NPC party.
+		if (pBot->GetLinkPc() != INVALID_HOBJECT)
+		{
+			CSkillManagerBot* pSkillManager = (CSkillManagerBot *)GetBot()->GetSkillManager();
+			if (pSkillManager && pSkillManager->IsSkill() == true)
+			{
+				CBotAiCondition_SkillUse* pSkillUse = new CBotAiCondition_SkillUse(GetBot());
+				if (!AddSubControlList(pSkillUse, false))
+				{
+					m_status = CControlStateComposite::SYSTEMERROR;
+					return;
+				}
+				ERR_LOG(LOG_GENERAL, "HelperNPC: idle skill-use armed (no NPC party required)");
+			}
+		}
+
 		if (pBot->IsObjType(OBJTYPE_SUMMON_PET))
 		{
 			CBotAiCondition_PetFollow* pPetFollow = new CBotAiCondition_PetFollow(pBot);

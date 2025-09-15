@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "CPlayer.h"
 #include "Monster.h"
+#include "Npc.h"
 #include "NtlPacket.h"
 #include "NtlPacketGU.h"
 #include "GameServer.h"
@@ -863,6 +864,19 @@ float CCharacter::GetAttackFollowRange()
 //-------------------------------------------------------------------//
 bool CCharacter::IsTargetAttackble(CCharacter* pTarget, WORD wRange)
 {
+	// Helpers (NPC/Monster) linked to a PC and allied should never attack PCs
+	if (pTarget && pTarget->IsInitialized())
+	{
+		if ((IsNPC() || IsMonster()) && pTarget->IsPC())
+		{
+			CNpc* pSelfNpc = static_cast<CNpc*>(this);
+			if (pSelfNpc->GetLinkPc() != INVALID_HOBJECT && pSelfNpc->GetPcRelation() == RELATION_TYPE_ALLIENCE)
+			{
+				return false;
+			}
+		}
+	}
+
 	if (!IsAttackable(pTarget))
 	{
 		return false;

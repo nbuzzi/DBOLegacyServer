@@ -53,6 +53,9 @@ void CMonster::Initialize()
 	// custom drop override
 	m_customDropItemTblidx = INVALID_TBLIDX;
 	m_byCustomDropCount = 0;
+
+	// CustomDropEvent
+	m_bEventDebuffImmune = false;
 }
 
 void CMonster::Destroy()
@@ -183,6 +186,8 @@ bool CMonster::CreateDataAndSpawn(WORLDID worldId, sMOB_TBLDAT* mobTbldat, sSPAW
 		LoadSkillTable(bot_profile.sBotSubData.tblidxOnlyOneSkillUse);
 
 		GetCharAtt()->CalculateAll();
+		g_pCustomDropEvent->ApplyTitles(this);
+		g_pCustomDropEvent->ApplyBuffs(this);
 		g_pCustomDropEvent->ApplyModifiers(this);
 		Spawn(bSpawnOnServerStart);
 		return true;
@@ -282,6 +287,8 @@ bool CMonster::CreateDataAndSpawn(sMOB_DATA& sData, sMOB_TBLDAT* mobTbldat, BYTE
 		LoadSkillTable(bot_profile.sBotSubData.tblidxOnlyOneSkillUse);
 
 		GetCharAtt()->CalculateAll();
+		g_pCustomDropEvent->ApplyTitles(this);
+		g_pCustomDropEvent->ApplyBuffs(this);
 		g_pCustomDropEvent->ApplyModifiers(this);
 		Spawn(false);
 		return true;

@@ -1,6 +1,9 @@
 #include "stdafx.h"
 #include "Monster.h"
 #include "NtlRandom.h"
+#include "Npc.h"
+#include "ObjectManager.h"
+#include "HelperNpcManager.h"
 
 #include "SkillCondition_Give.h"
 #include "SkillCondition_LP.h"
@@ -246,6 +249,49 @@ CSkillCondition* CSkillManagerBot::GetSkill(DWORD dwTickTime)
 {
 	CSkillCondition* pSkill = NULL;
 
+	// If this bot is a helper linked to a PC and that PC is low on LP according to override,
+	// try healing/buff (Give) skills first to prioritize support behavior.
+	do
+	{
+		CNpc* pNpcOwner = dynamic_cast<CNpc*>(m_pOwnerRef);
+		if (!pNpcOwner)
+			break;
+		HOBJECT hLink = pNpcOwner->GetLinkPc();
+		if (hLink == INVALID_HOBJECT)
+			break;
+		const sHELPER_NPC_CONFIG& cfg = GetHelperNpcManager()->GetConfig();
+		if (cfg.wHealLpThresholdOverride == 0)
+			break;
+		CCharacter* pLinked = g_pObjectManager->GetChar(hLink);
+		if (!pLinked || !pLinked->IsInitialized())
+			break;
+		if (!pLinked->ConsiderLPLow((float)cfg.wHealLpThresholdOverride))
+			break;
+		// Linked PC is low: attempt Give skills first
+		pSkill = GetSkill(m_apSkillCondition_Give, m_bySkillCondition_Give, dwTickTime);
+		if (pSkill)
+			return pSkill;
+	} while (0);
+
+	// If linked PC exists and has any missing LP, attempt Give skills proactively (healing)
+	do
+	{
+		CNpc* pNpcOwner = dynamic_cast<CNpc*>(m_pOwnerRef);
+		if (!pNpcOwner)
+			break;
+		HOBJECT hLink = pNpcOwner->GetLinkPc();
+		if (hLink == INVALID_HOBJECT)
+			break;
+		CCharacter* pLinked = g_pObjectManager->GetChar(hLink);
+		if (!pLinked || !pLinked->IsInitialized())
+			break;
+		if (pLinked->GetCurLP() >= pLinked->GetMaxLP())
+			break;
+		pSkill = GetSkill(m_apSkillCondition_Give, m_bySkillCondition_Give, dwTickTime);
+		if (pSkill)
+			return pSkill;
+	} while (0);
+
 	pSkill = GetSkill(m_apSkillCondition_LP, m_bySkillCondition_LP, dwTickTime);
 	if (!pSkill)
 	{
@@ -348,7 +394,16 @@ void CSkillManagerBot::FinishCasting()
 		pSkillCond->GetTarget(hTarget, targetList); //refetch target because some might moved out/in
 
 		if (hTarget != INVALID_HOBJECT && targetList.byTargetCount > 0)
+		{
+			// Diagnostics: log actual casting details for helper bots
+			CNpc* pNpcOwner = dynamic_cast<CNpc*>(m_pOwnerRef);
+			if (pNpcOwner && pNpcOwner->GetLinkPc() != INVALID_HOBJECT)
+			{
+				ERR_LOG(LOG_BOTAI, "HelperNPC: casting skill %u on %u (targets=%u)",
+					pSkillCond->GetSkillTblidx(), hTarget, targetList.byTargetCount);
+			}
 			pSkillCond->GetSkill()->CastSkill(hTarget, targetList.byTargetCount, targetList.ahTarget);
+		}
 		else
 		{
 			CancelCasting();

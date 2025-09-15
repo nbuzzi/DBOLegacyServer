@@ -5,7 +5,8 @@
 #include "ObjectManager.h"
 #include "SkillCondition.h"
 #include "BotAiAction_Chase.h"
-
+#include "CPlayer.h"
+#include "NtlResultCode.h"
 
 
 CBotAiAction_SkillUse::CBotAiAction_SkillUse(CNpc* pBot)
@@ -96,87 +97,99 @@ int CBotAiAction_SkillUse::OnUpdate(DWORD dwTickDiff, float fMultiple)
 		return m_status;
 	}
 
-	CCharacter* pTarget = g_pObjectManager->GetChar(GetBot()->GetTargetHandle());
-	if (pTarget == NULL)
+	// Determine intended target via skill condition, not via current target handle
+	HOBJECT hTarget = INVALID_HOBJECT;
+	sSKILL_TARGET_LIST targetList;
+	pSkillCond->GetTarget(hTarget, targetList);
+
+	if (hTarget == INVALID_HOBJECT)
 	{
 		m_status = COMPLETED;
 		return m_status;
 	}
 
+	// For non-self skills, validate range and chase if out of range
 	bool bChase = false;
-	std::list<CNtlVector> rlistCollisionPos;
-
-	if (pSkillCond->GetSkill()->GetOriginalTableData()->byApply_Target != DBO_SKILL_APPLY_TARGET_SELF) //check if we dont use skill on ourself
+	if (pSkillCond->GetSkill()->GetOriginalTableData()->byApply_Target != DBO_SKILL_APPLY_TARGET_SELF)
 	{
-		if (GetBot()->ConsiderRange(pSkillCond->GetSkill()->GetOriginalTableData()->fUse_Range_Max, 30.0f / 100.0f) == false)
+		CCharacter* pRealTarget = g_pObjectManager->GetChar(hTarget);
+		if (pRealTarget)
 		{
-			if (GetBot()->IsReachable(pTarget, rlistCollisionPos) == false)
+			// Only set enemy target handle for harmful/enemy-targeting skills.
+			// Avoid setting the player as an "enemy" when casting heals/buffs on alliance/party.
+			if (pSkillCond->GetSkill()->GetOriginalTableData()->byApply_Target == DBO_SKILL_APPLY_TARGET_ENEMY)
 			{
-				if (rlistCollisionPos.size() > 0)
-				{
-					CNtlVector rLoc(rlistCollisionPos.back());
-					if (GetBot()->IsInRange(rLoc, 1.0f))
-						bChase = false;
-				}
-				else bChase = false;
+				if (GetBot()->GetTargetHandle() != hTarget)
+					GetBot()->SetTargetHandle(hTarget);
 			}
-			if (pTarget)
+			if (GetBot()->ConsiderRange(pSkillCond->GetSkill()->GetOriginalTableData()->fUse_Range_Max, 30.0f / 100.0f) == false)
 			{
-				//printf("Send Skill \n");
-				if (GetBot()->IsInRange(pTarget->GetCurLoc(), 2.0f))
-				{
-					//printf("Send Skill 2\n");
-					bChase = false;
-				}
-				else bChase = true;
+				bChase = true;
 			}
-			else bChase = true;
 		}
 	}
 
-	if (bChase == false)
-	{
-		HOBJECT hTarget = INVALID_HOBJECT;
-		sSKILL_TARGET_LIST targetList;
-
-		pSkillCond->GetTarget(hTarget, targetList);
-
-		if (hTarget == INVALID_HOBJECT)
-		{
-			m_status = COMPLETED;
-			return m_status;
-		}
-		else
-		{
-			GetBot()->GetTargetListManager()->SetAggroLastUpdateTime();
-
-			pSkillManager->SetCurSkillTblidx(pSkillCond->GetSkillTblidx());
-			pSkillManager->SetCurSkillConditionIdx(m_bySkillIndex);
-			pSkillManager->SetSkillUse_Lock();
-
-			WORD wTemp;
-			CNtlVector vFinalSubjectLoc;
-			pSkillCond->GetSkill()->UseSkill(INVALID_BYTE, hTarget, vFinalSubjectLoc, GetBot()->GetCurLoc(), targetList.byTargetCount, targetList.ahTarget, wTemp);
-
-			if (wTemp != 500)
-			{
-				pSkillManager->SetCurSkillTblidx(INVALID_TBLIDX);
-				pSkillManager->SetCurSkillConditionIdx(INVALID_BYTE);
-				pSkillManager->SetSkillUse_Unlock();
-			}
-
-			m_status = COMPLETED;
-			return m_status;
-		}
-	}
-	else
+	if (bChase)
 	{
 		CBotAiAction_Chase* pChase = new CBotAiAction_Chase(GetBot(), CBotAiAction_Chase::ATTACKTYPE_SKILL, pSkillCond->GetSkill()->GetOriginalTableData()->fUse_Range_Max);
 		if (!AddSubControlQueue(pChase, true))
 		{
 			m_status = FAILED;
 		}
+		return m_status;
 	}
+
+	// If we're moving or following, stop first and retry next tick.
+	// Casting from FOLLOWING/MOVING often returns GAME_SKILL_CANT_CAST_NOW (rc=605).
+	if (GetBot()->GetCharStateID() == CHARSTATE_FOLLOWING || GetBot()->GetMoveFlag() != NTL_MOVE_FLAG_INVALID)
+	{
+		GetBot()->SendCharStateStanding(true);
+		m_status = COMPLETED; // let scheduler try again next second after state settles
+		return m_status;
+	}
+
+	// Use the skill on the computed target
+	GetBot()->GetTargetListManager()->SetAggroLastUpdateTime();
+
+	pSkillManager->SetCurSkillTblidx(pSkillCond->GetSkillTblidx());
+	pSkillManager->SetCurSkillConditionIdx(m_bySkillIndex);
+	pSkillManager->SetSkillUse_Lock();
+
+	WORD wTemp;
+	CNtlVector vFinalSubjectLoc;
+	pSkillCond->GetSkill()->UseSkill(INVALID_BYTE, hTarget, vFinalSubjectLoc, GetBot()->GetCurLoc(), targetList.byTargetCount, targetList.ahTarget, wTemp);
+
+	if (wTemp != GAME_SUCCESS)
+	{
+		pSkillManager->SetCurSkillTblidx(INVALID_TBLIDX);
+		pSkillManager->SetCurSkillConditionIdx(INVALID_BYTE);
+		pSkillManager->SetSkillUse_Unlock();
+
+		// Diagnostics: capture reason code when helper fails to start casting
+		if (GetBot()->GetLinkPc() != INVALID_HOBJECT)
+		{
+			WORD wLeaderWorld = 0, wHelperWorld = 0;
+			float fDist = -1.0f;
+			CPlayer* pLeader = (CPlayer*)g_pObjectManager->GetChar(GetBot()->GetLinkPc());
+			if (pLeader)
+			{
+				wLeaderWorld = pLeader->GetWorldID();
+				wHelperWorld = GetBot()->GetWorldID();
+				// Use vector-based overload to avoid type mismatch
+				fDist = GetBot()->GetDistance(pLeader->GetCurLoc());
+			}
+			ERR_LOG(LOG_BOTAI, "HelperNPC: UseSkill failed rc=%u (skill=%u target=%u) worlds L=%u H=%u dist=%.1f state=%u moveFlag=%u", wTemp, pSkillCond->GetSkillTblidx(), hTarget, wLeaderWorld, wHelperWorld, fDist, GetBot()->GetCharStateID(), GetBot()->GetMoveFlag());
+		}
+
+		// Recovery: if "can't cast now" (commonly 605) or similar transient states, force-stand and let next tick retry
+		if (wTemp == GAME_SKILL_CANT_CAST_NOW)
+		{
+			GetBot()->SendCharStateStanding(true);
+		}
+	}
+
+	m_status = COMPLETED;
+	return m_status;
 
 	return m_status;
 }

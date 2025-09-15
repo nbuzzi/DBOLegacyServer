@@ -3,6 +3,7 @@
 #include "Monster.h"
 #include "SpellAreaChecker.h"
 #include "ObjectManager.h"
+#include "HelperNpcManager.h"
 
 
 
@@ -520,12 +521,54 @@ void CSkillCondition::GetTarget_ApplyRange_Party_LPLow(CCharacter *pAppointTarge
 {
 	CSpellAreaChecker rSpellAreaChecker;
 	rSpellAreaChecker.Create();
+	// Resolve a non-null appoint target for area checks: prefer provided, then linked PC, then self
+	CCharacter* pResolvedAppoint = pAppointTarget;
+	if (!pResolvedAppoint)
+	{
+		if (GetBot())
+		{
+			HOBJECT hLink = GetBot()->GetLinkPc();
+			if (hLink != INVALID_HOBJECT)
+			{
+				CCharacter* pLinked = g_pObjectManager->GetChar(hLink);
+				if (pLinked && pLinked->IsInitialized())
+					pResolvedAppoint = pLinked;
+			}
+			if (!pResolvedAppoint)
+				pResolvedAppoint = GetBot();
+		}
+	}
 
-	rSpellAreaChecker.PrepareForSelection(GetBot(), pAppointTarget, GetApplyRangeType(), GetApplyAreaSize1(), GetApplyAreaSize2());
+	rSpellAreaChecker.PrepareForSelection(GetBot(), pResolvedAppoint, GetApplyRangeType(), GetApplyAreaSize1(), GetApplyAreaSize2());
 
 	std::map<int, HOBJECT> mapCandidate;
 
-	if (GetBot()->GetObjType() == OBJTYPE_MOB && GetBot()->GetObjType() == OBJTYPE_NPC)
+	// Determine LP threshold, allowing helper override when linked to a PC
+	WORD wThreshold = m_wUse_Skill_LP;
+	if (GetBot()->GetLinkPc() != INVALID_HOBJECT)
+	{
+		const sHELPER_NPC_CONFIG& cfg = GetHelperNpcManager()->GetConfig();
+		if (cfg.wHealLpThresholdOverride > 0)
+			wThreshold = cfg.wHealLpThresholdOverride;
+	}
+
+	// First, if an appointed target was provided/resolved (e.g., linked PC), consider it as a candidate
+	if (pResolvedAppoint)
+	{
+		if (rSpellAreaChecker.IsObjectInApplyRange(pResolvedAppoint, NULL))
+		{
+			if (pResolvedAppoint->ConsiderLPLow((float)wThreshold))
+			{
+				if (GetBot()->GetID() != pResolvedAppoint->GetID() || IsApplyNotMe() != true)
+				{
+					mapCandidate.insert(std::make_pair(pResolvedAppoint->GetCurLP(), pResolvedAppoint->GetID()));
+				}
+			}
+		}
+	}
+
+	// Consider both mobs and npcs as valid bots for party LP-low selection
+	if (GetBot()->GetObjType() == OBJTYPE_MOB || GetBot()->GetObjType() == OBJTYPE_NPC)
 	{
 		CNpcParty* pParty = GetBot()->GetNpcParty();
 		if (pParty)
@@ -533,11 +576,11 @@ void CSkillCondition::GetTarget_ApplyRange_Party_LPLow(CCharacter *pAppointTarge
 			for (CNpcParty::MEMBER_MAP::iterator it = pParty->Begin(); it != pParty->End(); it++)
 			{
 				CNpc* pObject = g_pObjectManager->GetNpc(it->first);
-				if (pObject)
+					if (pObject)
 				{
 					if (rSpellAreaChecker.IsObjectInApplyRange(pObject, NULL))
 					{
-						if (pObject->ConsiderLPLow(m_wUse_Skill_LP))
+							if (pObject->ConsiderLPLow((float)wThreshold))
 						{
 							if (GetBot()->GetID() != pObject->GetID() || IsApplyNotMe() != true)
 							{

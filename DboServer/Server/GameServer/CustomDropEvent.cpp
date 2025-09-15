@@ -23,6 +23,21 @@
 
 // Heal multiplier is configurable via settings; default initialized in Init().
 
+// Helper: resolve a system effect name (e.g., "ACTIVE_STUN") to its numeric code.
+// Returns -1 if not found. Case-insensitive.
+static int ResolveSystemEffectCodeByName(const char* name)
+{
+	if (!name || !*name)
+		return -1;
+	for (int i = 0; i < (int)MAX_SYSTEM_EFFECT_CODE; ++i)
+	{
+		const char* s = NtlGetSystemEffectString((DWORD)i);
+		if (s && _stricmp(s, name) == 0)
+			return i;
+	}
+	return -1;
+}
+
 CCustomDropEvent::CCustomDropEvent()
 {
 	Init();
@@ -58,6 +73,9 @@ void CCustomDropEvent::Init()
 	m_eventSpawned.clear();
 	m_cfgPath = ".\\config\\CustomDropEvent.cfg";
 	m_allowChainSpawns = false; // default: prevent chain spawns
+	// Debuff immunity defaults
+	m_debuffImmuneEnabled = true; // default ON as requested
+	m_blockDebuffEffects.clear();
 	LoadConfigInternal(m_cfgPath.c_str());
 	LoadLevelsSidecar(m_cfgPath.c_str());
 }
@@ -92,6 +110,9 @@ bool CCustomDropEvent::LoadConfigInternal(const char* path)
 	m_exceptTitles.clear();
 	m_exceptVisuals.clear();
 	m_exceptTotems.clear();
+	// Preserve current immunity default; allow settings section to override
+	// but clear specific lists so reloading replaces them
+	m_blockDebuffEffects.clear();
 
 	FILE* f = nullptr;
 	errno_t e = fopen_s(&f, path, "rt");
@@ -121,7 +142,7 @@ bool CCustomDropEvent::LoadConfigInternal(const char* path)
 		const char* titlesKw = "titles";
 		const char* visualsKw = "visuals";
 		const char* totemKw = "totem";
-		const char* settingsKw = "settings"; // global settings for defaults
+	const char* settingsKw = "settings"; // global settings for defaults
 		bool isMods = false;
 		bool isSpawn = false;
 		bool isBuffs = false;
@@ -357,7 +378,7 @@ bool CCustomDropEvent::LoadConfigInternal(const char* path)
 		}
 		else if (isSettings)
 		{
-			// format: all settings: radius=50 interval=2000 healMul=3.5 duration=60000
+			// format: all settings: radius=50 interval=2000 healMul=3.5 duration=60000 immuneDebuff=1 debuffEffects=EFFECT1|EFFECT2|...
 			// Only allowed with mobId 0/all
 			if (mobId != 0)
 				continue;
@@ -379,6 +400,45 @@ bool CCustomDropEvent::LoadConfigInternal(const char* path)
 						m_totemHealMultiplier = (float)atof(val);
 					else if (_stricmp(key, "duration") == 0 || _stricmp(key, "buffDuration") == 0)
 						m_totemBuffDurationOverrideMs = (DWORD)strtoul(val, nullptr, 10);
+					else if (_stricmp(key, "immuneDebuff") == 0 || _stricmp(key, "inmmuneDebuff") == 0)
+						m_debuffImmuneEnabled = (atoi(val) != 0);
+					else if (_stricmp(key, "debuffEffects") == 0)
+					{
+						// Parse a '|' or ',' separated list of effect names or numeric codes
+						// Accept names matching eSYSTEM_EFFECT_CODE tokens (e.g., ACTIVE_POISON)
+						// and numeric integers; unknown tokens are ignored.
+						// Tokenize val by '|' and ','
+						char buf[512];
+						strncpy_s(buf, sizeof(buf), val, _TRUNCATE);
+						char* tok = strtok(buf, "|, ");
+						while (tok)
+						{
+							// Try numeric first
+							bool added = false;
+							char* endp = nullptr;
+							long num = strtol(tok, &endp, 10);
+							if (endp && *endp == '\0')
+							{
+								m_blockDebuffEffects.insert((int)num);
+								added = true;
+							}
+							else
+							{
+								// Resolve any valid system effect name to its code
+								int code = ResolveSystemEffectCodeByName(tok);
+								if (code >= 0)
+								{
+									m_blockDebuffEffects.insert(code);
+									added = true;
+								}
+							}
+							if (!added)
+							{
+								ERR_LOG(LOG_GENERAL, "[CustomDropEvent] Unknown debuffEffects token '%s' (ignored)", tok);
+							}
+							tok = strtok(nullptr, "|, ");
+						}
+					}
 				}
 				t = strtok(nullptr, " \t\n\r");
 			}
@@ -1372,6 +1432,10 @@ void CCustomDropEvent::ApplyModifiers(CMonster* pMob)
 			rate = 250; // hard cap for safety
 		pMob->UpdateSizeRate((BYTE)rate);
 	}
+
+	// Mark mob as debuff-immune to avoid recalculation via curse-type effects
+	if (m_debuffImmuneEnabled)
+		pMob->SetEventDebuffImmune(true);
 }
 
 void CCustomDropEvent::ApplyBuffs(CMonster* pMob)

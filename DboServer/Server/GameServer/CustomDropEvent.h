@@ -109,6 +109,7 @@ private:
     bool LoadConfigInternal(const char *path);
 
 public:
+    bool m_bOn;
     void StartEvent(BYTE byHours = 3);
     void EndEvent();
     void LoadEvent(HSESSION hSession);
@@ -125,9 +126,13 @@ public:
     float GetTotemHealMultiplier() const { return m_totemHealMultiplier; }
     void SetTotemBuffDurationOverrideMs(DWORD ms) { m_totemBuffDurationOverrideMs = ms; }
     DWORD GetTotemBuffDurationOverrideMs() const { return m_totemBuffDurationOverrideMs; }
+    // Debuff immunity configuration (global)
+    void SetDebuffImmunityEnabled(bool on) { m_debuffImmuneEnabled = on; }
+    bool IsDebuffImmunityEnabled() const { return m_debuffImmuneEnabled; }
+    bool IsDebuffEffectBlocked(int code) const { return m_blockDebuffEffects.find(code) != m_blockDebuffEffects.end(); }
+    size_t GetBlockedDebuffEffectCount() const { return m_blockDebuffEffects.size(); }
 
 private:
-    bool m_bOn;
     DBOTIME m_timeStart;
     DBOTIME m_timeEnd;
     DWORD m_dwNextUpdateTick;
@@ -168,6 +173,10 @@ private:
     DWORD m_totemBuffDurationOverrideMs;  // override duration for totem-applied buffs (0 = use skill/default)
     CNtlString m_cfgPath;
     bool m_allowChainSpawns;              // allow event-spawned mobs to trigger spawn/totem rules
+    // Debuff immunity: when true, event-modified mobs get marked as debuff-immune by default
+    bool m_debuffImmuneEnabled;
+    // Optional filter: if non-empty, only debuff effects in this set are blocked; otherwise all curse-type debuffs are blocked
+    std::unordered_set<int> m_blockDebuffEffects;
 
 private:
     bool LoadLevelsSidecar(const char* cfgPath);

@@ -7,6 +7,7 @@
 #include "WpsAlgoObject.h"
 #include "CPlayer.h"
 #include "ServerConfigTable.h"
+#include "HelperNpcManager.h"
 
 
 CBattleDungeon::CBattleDungeon(PARTYID partyId) :
@@ -53,6 +54,9 @@ bool CBattleDungeon::Create(CPlayer* pPlayer, BYTE byStartStage)
 
 	pPlayer->GetParty()->EnterBattleDungeon(pPlayer, this, m_pWorld, pObj);
 
+	// Spawn helper follower NPC if configured (party underfilled)
+	GetHelperNpcManager()->SpawnHelperIfNeededForDungeon(pPlayer, m_pWorld, false);
+
 	pObj->Start(); //start dungeon script
 
 	return true;
@@ -69,7 +73,8 @@ void CBattleDungeon::Destroy()
 	if (m_pWorld)
 	{
 		CGameServer* app = (CGameServer*)g_pApp;
-
+	// Notify helper manager for cleanup
+	GetHelperNpcManager()->OnWorldDestroyed(m_pWorld);
 		app->GetGameMain()->GetWorldManager()->DestroyWorld(m_pWorld);
 	}
 }

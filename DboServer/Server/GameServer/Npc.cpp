@@ -1140,11 +1140,24 @@ void CNpc::LoadSkillTable(TBLIDX tblidxOnlyOneSkillUse)
 			sSKILL_TBLDAT* pSkillTbldat = (sSKILL_TBLDAT*)g_pTableContainer->GetSkillTable()->FindData(pTbldat->use_Skill_Tblidx[i]);
 			if (pSkillTbldat)
 			{
+				// For helper NPCs (linked to a PC), log skills and basis to diagnose healing capability
+				if (GetLinkPc() != INVALID_HOBJECT)
+				{
+					ERR_LOG(LOG_GENERAL, "HelperNPC: skill[%u] basis=%u applyTarget=%u requireEP=%u use_LP=%u use_Time=%u",
+						pTbldat->use_Skill_Tblidx[i], pTbldat->byUse_Skill_Basis[i], pSkillTbldat->byApply_Target,
+						pSkillTbldat->wRequire_EP, pTbldat->wUse_Skill_LP[i], pTbldat->wUse_Skill_Time[i]);
+				}
+
 				if (pSkill->Create(pSkillTbldat, this, INVALID_BYTE))
 				{
 					if (tblidxOnlyOneSkillUse == INVALID_TBLIDX)
 					{
 						pSkillManager->AddSkill(i, this, pSkill, pTbldat->use_Skill_Tblidx[i], pTbldat->byUse_Skill_Basis[i], pTbldat->wUse_Skill_LP[i], pTbldat->wUse_Skill_Time[i]);
+						if (GetLinkPc() != INVALID_HOBJECT)
+						{
+							ERR_LOG(LOG_GENERAL, "HelperNPC: registered skill[%u] basis=%u (3=LP,4=Give,5=Time,6=Ring,7=OnlyLP)",
+								pTbldat->use_Skill_Tblidx[i], pTbldat->byUse_Skill_Basis[i]);
+						}
 					}
 					else
 					{

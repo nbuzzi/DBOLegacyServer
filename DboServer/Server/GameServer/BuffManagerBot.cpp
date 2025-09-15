@@ -3,6 +3,8 @@
 #include "BuffBot.h"
 #include "TableContainerManager.h"
 #include "SystemEffectTable.h"
+#include "Monster.h"
+#include "CustomDropEvent.h"
 
 
 CBuffManagerBot::CBuffManagerBot()
@@ -34,6 +36,33 @@ bool CBuffManagerBot::Create(CNpc *pOwnerRef)
 
 bool CBuffManagerBot::RegisterBuff(DWORD& rdwKeepTime, eSYSTEM_EFFECT_CODE* effectCode, sDBO_BUFF_PARAMETER * paBuffParameter, HOBJECT hCaster, eBUFF_TYPE buffType, sSKILL_TBLDAT* pSkillTbldat, BYTE* prBuffIndex)
 {
+	// Selective debuff immunity for event-modified monsters - only during custom event drop event
+	if (g_pCustomDropEvent->m_bOn == TRUE && buffType == BUFF_TYPE_CURSE && m_pBotRef && m_pBotRef->IsMonster())
+	{
+		CMonster* pMon = reinterpret_cast<CMonster*>(m_pBotRef);
+		if (pMon && pMon->IsEventDebuffImmune())
+		{
+			// Check global toggle
+			if (g_pCustomDropEvent->IsDebuffImmunityEnabled())
+			{
+				// If no specific debuff effects configured, block all curse-type buffs
+				if (g_pCustomDropEvent->GetBlockedDebuffEffectCount() == 0)
+					return false;
+				// Otherwise, block only if any effect code matches configured block list
+				if (effectCode)
+				{
+					for (int i = 0; i < NTL_MAX_EFFECT_IN_SKILL; ++i)
+					{
+						if (effectCode[i] == INVALID_SYSTEM_EFFECT_CODE)
+							continue;
+						if (g_pCustomDropEvent->IsDebuffEffectBlocked((int)effectCode[i]))
+							return false;
+					}
+				}
+			}
+		}
+	}
+
 	if (CBuffManager::RegisterBuff(rdwKeepTime, effectCode, paBuffParameter, hCaster, buffType, pSkillTbldat, prBuffIndex))
 	{
 		if (rdwKeepTime > 0)

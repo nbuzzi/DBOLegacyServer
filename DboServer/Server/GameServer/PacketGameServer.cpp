@@ -56,6 +56,7 @@
 #include "CustomDropEvent.h"
 
 #include "NtlNavi.h"
+#include "HelperNpcManager.h"
 #include "battle.h"
 #include "DojoWar.h"
 #include "BudokaiManager.h"
@@ -5172,8 +5173,11 @@ void CClientSession::RecvAttackBegin(CNtlPacket* pPacket)
 		if (cPlayer->IsKnockedDown())
 			return;
 
-		cPlayer->SetAttackTarget(victim->GetID());
+	cPlayer->SetAttackTarget(victim->GetID());
 		cPlayer->ChangeAttackProgress(true);
+
+	// Inform helper to assist this target if configured
+	GetHelperNpcManager()->OnLeaderAttackTarget(cPlayer, victim->GetID());
 	}
 	else if (req->byType == 1)
 	{
@@ -5192,8 +5196,10 @@ void CClientSession::RecvAttackEnd(CNtlPacket* pPacket)
 
 	if (req->byType == 0)
 	{
-		cPlayer->ChangeAttackProgress(false);
-		cPlayer->SetAttackTarget(INVALID_HOBJECT);
+	cPlayer->ChangeAttackProgress(false);
+	cPlayer->SetAttackTarget(INVALID_HOBJECT);
+	// Let helper resume following if not busy
+	GetHelperNpcManager()->OnLeaderAttackEnd(cPlayer);
 	}
 	else if (req->byType == 1)
 	{
@@ -11474,6 +11480,17 @@ void CClientSession::RecvAttackTargetNfy(CNtlPacket* pPacket)
 		{
 			pPet->SetAttackTarget(cPlayer->GetTargetHandle());
 		}
+	}
+
+	// Keep helper in sync with leader target changes
+	if (cPlayer->GetTargetHandle() != INVALID_HOBJECT && cPlayer->GetTargetHandle() != cPlayer->GetID())
+	{
+		GetHelperNpcManager()->OnLeaderAttackTarget(cPlayer, cPlayer->GetTargetHandle());
+	}
+	else
+	{
+		// No target selected; ensure helper goes back to follow if idle
+		GetHelperNpcManager()->OnLeaderAttackEnd(cPlayer);
 	}
 }
 

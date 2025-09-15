@@ -91,3 +91,20 @@ QuestExpRate = 0
 QuestMoneyRate = 0
 
 
+[HELPER_NPC]
+; Enable or disable helper NPC spawning in underfilled parties when entering dungeons
+Enable = 1
+; Control per-dungeon-type allowance
+AllowUltimate = 1
+AllowBattleDungeon = 1
+; Spawn only if current party size is less than this number
+MinPartySizeToAvoid = 5
+; Preferred healer NPC IDs (falling back if primary not found)
+PrimaryNpcId = 4754102
+FallbackNpcId = 4754101
+; Offset (meters) from leader when spawning
+SpawnOffset = 2.0
+; Whether the helper should follow the party leader
+FollowLeader = 1
+
+
