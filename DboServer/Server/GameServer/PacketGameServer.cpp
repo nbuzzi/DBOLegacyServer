@@ -334,8 +334,18 @@ void CClientSession::RecvEnterWorld(CNtlPacket* pPacket)
 			pWorld = app->GetGameMain()->GetWorldManager()->FindWorld(cPlayer->GetTeleportWorldID());
 			if (pWorld)
 			{
-				cPlayer->GetTeleportLoc().CopyTo(res->vCurLoc);
-				cPlayer->GetTeleportDir().CopyTo(res->vCurDir);
+				// Broly world override
+				if (pWorld->GetID() == 920000) {
+					res->vCurLoc.x = -327.210f;
+					res->vCurLoc.y = -29.850f;
+					res->vCurLoc.z = 98.050f;
+					res->vCurDir.x = -0.686f;
+					res->vCurDir.y = 0.000f;
+					res->vCurDir.z = 0.728f;
+				} else {
+					cPlayer->GetTeleportLoc().CopyTo(res->vCurLoc);
+					cPlayer->GetTeleportDir().CopyTo(res->vCurDir);
+				}
 				pWorld->CopyToInfo(&res->worldInfo);
 
 				if (cPlayer->GetTMQ()) // send tmq rule info if inside
@@ -495,6 +505,12 @@ void CClientSession::RecvEnterWorld(CNtlPacket* pPacket)
 				// ERR_LOG(LOG_USER, "ERROR: Char %u Enter world failed. WorldTblidx %u WorldID %u Loc(%f,%f,%f)", cPlayer->GetCharID(), res->worldInfo.tblidx, res->worldInfo.worldID, res->vCurLoc.x, res->vCurLoc.y, res->vCurLoc.z);
 				return;
 			}
+		}
+
+		// Immediate helper repair after teleports, including custom instance worlds
+		if (cPlayer->GetCurWorld() && cPlayer->GetCharStateID() == CHARSTATE_TELEPORTING)
+		{
+			GetHelperNpcManager()->EnsureHelperForLeaderNow(cPlayer);
 		}
 	}
 
@@ -1610,7 +1626,14 @@ void CClientSession::RecvCharJumpEnd(CNtlPacket* pPacket)
 
 	if (cPlayer->GetMoveFlag() != NTL_MOVE_FLAG_JUMP) // check if char is jumping
 	{
-		ERR_LOG(LOG_USER, "player %u is not jumping state (cur move flag: %u)", cPlayer->GetCharID(), cPlayer->GetMoveFlag());
+		// NICO: TODO: investigate why this is happening
+		// It seems that sometimes the client sends a jump end packet while not being in a jump state
+		// This can happen if the player is interrupted while jumping (e.g., by being hit)
+		// For now, we will just ignore the packet if the player is not in a jump state
+		// But ideally, we should investigate the root cause and fix it properly
+		// Disabled for now cause it's spawning too much spam in the logs
+		// If any issues with jumping arise, consider re-enabling and investigating
+		// ERR_LOG(LOG_USER, "player %u is not jumping state (cur move flag: %u)", cPlayer->GetCharID(), cPlayer->GetMoveFlag());
 
 		return;
 	}

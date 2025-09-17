@@ -39,6 +39,12 @@ private:
 	float m_fLastLeaderDist;
 	DWORD m_dwNoFollowProgressMs;
 
+	// Rebuff scheduler
+	DWORD m_dwSinceLastRebuffCheckMs;
+
+	// Random follow refresh timer
+	DWORD m_dwSinceRandomFollowMs;
+
 };
 
 #endif

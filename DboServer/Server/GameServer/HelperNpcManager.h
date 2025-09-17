@@ -5,6 +5,7 @@
 #include "NtlString.h"
 #include <set>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 class CNtlIniFile;
@@ -35,10 +36,21 @@ struct sHELPER_NPC_CONFIG
     float  fHealPowerMultiplier = 1.0f;    // multiply helper's direct/over-time healing power
     WORD   wHealPriorityMinMissingPercent = 8; // if HealLpThresholdOverride==0, require this % missing to prioritize heals (deadband)
 
+    // Attribute modifiers (helpers only)
+    WORD   wMaxLPPercent = 0;              // +% to Max LP
+    WORD   wMaxEPPercent = 0;              // +% to Max EP
+    WORD   wPhysicalOffensePercent = 0;    // +% to Physical Offense
+    WORD   wEnergyOffensePercent = 0;      // +% to Energy Offense
+    WORD   wPhysicalDefensePercent = 0;    // +% to Physical Defense
+    WORD   wEnergyDefensePercent = 0;      // +% to Energy Defense
+    WORD   wAttackRangePercent = 0;        // +% to attack range
+    float  fAttackRangeBonusMeters = 0.0f; // +meters to attack range
+    WORD   wSkillAnimSpeedPercent = 0;     // +% to skill animation speed
+
     // Proactive combat behavior
     bool   bProactiveAutoAttack = false;   // when true, helper scans and engages nearby enemies when idle
-    WORD   wAttackScanRange = 20;          // meters; default modest range to avoid overpulling
-    DWORD  dwAttackScanCooldownMs = 2000;  // scan interval while idle (ms)
+    WORD   wAttackScanRange = 45;          // meters; default large range to proactively find nearby mobs
+    DWORD  dwAttackScanCooldownMs = 1500;  // scan interval while idle (ms)
 
     // Logging control
     bool   bVerboseLogs = false;           // reduce noisy logs unless debugging
@@ -62,6 +74,13 @@ struct sHELPER_NPC_CONFIG
     BYTE   forcedSkillBasis = 4;                // default to Give (4). 3=LP,4=Give,5=Time,6=Ring,7=OnlyLP
     WORD   forcedSkillLP = 70;                  // LP threshold for LP/Give conditions (percent)
     WORD   forcedSkillTime = 5;                 // seconds for time-based condition
+
+    // Optional resurrection skill to revive fainted party members
+    TBLIDX resurrectSkillTblidx = INVALID_TBLIDX; // e.g., 1520065
+
+    // Rebuff controller: periodically re-check and reapply buffs
+    DWORD  dwRebuffCooldownMs = 0;          // 0 = disabled
+    DWORD  dwRebuffMinRemainingMs = 3000;   // reapply if remaining below this
 };
 
 class CHelperNpcManager
@@ -93,16 +112,104 @@ public:
     // Returns configured heal power multiplier if this NPC is a helper; otherwise 1.0f
     float GetHealMultiplierForHelper(class CNpc* pNpc);
 
+    // True if this NPC is a registered helper we spawned and track
+    bool IsRegisteredHelper(class CNpc* pNpc) const;
+
+    // Returns per-helper config snapshot if this NPC is a registered helper; otherwise nullptr
+    const sHELPER_NPC_CONFIG* GetConfigForHelper(class CNpc* pNpc) const;
+
+    // Periodic watchdog to ensure helpers are present after stage/floor transitions
+    void TickWatchdog(DWORD dwNow);
+
+    // Immediate repair/spawn on teleport: ensure helper exists for leader in current world
+    void EnsureHelperForLeaderNow(class CPlayer* pLeader);
+
+    // Despawn helpers when a leader leaves a world (e.g., exiting a dungeon)
+    void OnLeaderLeaveWorld(class CPlayer* pLeader, class CWorld* pWorld);
+
+    // Party leader changed: move any helpers from oldLeader to newLeader and re-link/follow
+    void OnPartyLeaderChanged(HOBJECT oldLeader, HOBJECT newLeader);
+
+    // Evaluate party composition and spawn role helpers if missing (HEALER/TANK/BUFFER)
+    void EvaluateAndSpawnRoleHelpers(class CPlayer* pLeader, class CWorld* pWorld);
+
+    // Called when a new member joins a party to remove conflicting role helpers
+    void OnPartyMemberJoined(class CParty* pParty, class CPlayer* pNewMember);
+
 private:
     CHelperNpcManager() = default;
     // Common spawn path after mode-specific allow checks pass
-    bool SpawnIfAllowed(CPlayer* pLeader, CWorld* pWorld);
+    bool SpawnIfAllowed(CPlayer* pLeader, CWorld* pWorld, const sHELPER_NPC_CONFIG& cfg);
+
+    // Load a config section by name and merge into destination; returns number of keys found
+    int LoadConfigSection(CNtlIniFile& file, const char* sectionName, sHELPER_NPC_CONFIG& out);
 
 private:
+    // Base/default configuration from [HELPER_NPC]
     sHELPER_NPC_CONFIG m_config;
+    // Optional per-dungeon overrides; if not present, fall back to m_config
+    sHELPER_NPC_CONFIG m_cfgUD;   // [HELPER_NPC_UD]
+    sHELPER_NPC_CONFIG m_cfgBD;   // [HELPER_NPC_BD]
+    sHELPER_NPC_CONFIG m_cfgTMQ;  // [HELPER_NPC_TMQ]
+    bool m_hasUDOverride = false;
+    bool m_hasBDOverride = false;
+    bool m_hasTMQOverride = false;
     std::set<WORLDID> m_worldsWithHelper; // prevent duplicate spawns per world instance
     // Map leader handle -> helper npc handle
     std::unordered_map<HOBJECT, HOBJECT> m_mapLeaderToHelper;
+    // Support multiple helpers: leader -> list of helper handles
+    std::unordered_map<HOBJECT, std::vector<HOBJECT>> m_leaderToHelpers;
+    // Map helper handle -> config snapshot used at spawn
+    std::unordered_map<HOBJECT, sHELPER_NPC_CONFIG> m_helperConfigByHelper;
+    // Map helper handle -> base tblidx (NPC or MOB) to dedupe by ID
+    std::unordered_map<HOBJECT, TBLIDX> m_helperKindByHelper;
+
+    // Watchdog ticker
+    DWORD m_dwLastWatchdogTick = 0;
+
+    // Extra allowlists: treat these WorldIDs as UD/BD/TMQ respectively
+    std::set<WORLDID> m_extraUDWorldIDs;
+    std::set<WORLDID> m_extraBDWorldIDs;
+    std::set<WORLDID> m_extraTMQWorldIDs;
+
+    // Spawn-in-progress guard to avoid duplicating the same helper (same tblidx) for the same leader in the same world
+    struct SpawnKey {
+        HOBJECT leader;
+        WORLDID world;
+        TBLIDX  tblidx;
+        bool operator==(const SpawnKey& o) const { return leader == o.leader && world == o.world && tblidx == o.tblidx; }
+    };
+    struct SpawnKeyHash {
+        size_t operator()(const SpawnKey& k) const {
+            // simple mix; good enough for small sets
+            size_t h1 = (size_t)k.leader;
+            size_t h2 = (size_t)k.world * 1315423911u;
+            size_t h3 = (size_t)k.tblidx * 2654435761u;
+            return h1 ^ h2 ^ h3;
+        }
+    };
+    std::unordered_set<SpawnKey, SpawnKeyHash> m_pendingSpawns;
+
+    // Role-based helper definitions
+    struct sROLE_DEF {
+        bool enabled = false;
+        BYTE maxCount = 1;
+        std::set<int> coveredClasses; // class IDs that satisfy this role
+        sHELPER_NPC_CONFIG cfg;       // spawn behavior for this role
+    };
+    sROLE_DEF m_roleHealer;
+    sROLE_DEF m_roleTank;
+    sROLE_DEF m_roleBuffer;
+    sROLE_DEF m_roleSpeed;
+
+    // Helpers to load role sections
+    bool LoadRoleSection(class CNtlIniFile& file, const char* sectionName, sROLE_DEF& outRole);
+
+    // Remove helpers for specific roles for the party leader in their current world
+    void RemoveRoleHelpersForLeader(class CPlayer* pLeader, class CWorld* pWorld, bool removeHealer, bool removeTank, bool removeBuffer, bool removeSpeed);
+
+    // Despawn all helpers for a given leader in the specified world
+    void DespawnAllHelpersForLeaderInWorld(class CPlayer* pLeader, class CWorld* pWorld);
 };
 
 #define GetHelperNpcManager() CHelperNpcManager::Instance()

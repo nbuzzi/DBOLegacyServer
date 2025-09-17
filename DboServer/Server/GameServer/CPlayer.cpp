@@ -30,6 +30,7 @@
 #include "BudokaiManager.h"
 #include "DragonballScramble.h"
 #include "BusSystem.h" // #include "NtlPacketGU.h"
+#include "HelperNpcManager.h"
 
 
 bool DeleteItemUponLogin(TBLIDX itemIdx)
@@ -1864,6 +1865,8 @@ void CPlayer::OnEnterWorld(CWorld* pWorld)
 void CPlayer::OnLeaveWorld(CWorld* pWorld)
 {
 	CSpawnObject::OnLeaveWorld(pWorld);
+	// Ensure any helper NPCs linked to this leader are cleaned up when leaving non-dungeon worlds
+	GetHelperNpcManager()->OnLeaderLeaveWorld(this, pWorld);
 }
 //--------------------------------------------------------------------------------------//
 //		ENTER WORLD COMPLETE
@@ -4678,6 +4681,11 @@ void CPlayer::Revival(CNtlVector& rVecLoc, WORLDID worldID, eREVIVAL_TYPE eReviv
 		//If not revived inside TLQ then dont heal. Because you will be healed by the item
 		SetIsReviving(false);
 		SendCharStateSpawning(eTeleportType);
+		// Ensure helper NPCs re-link and resume follow/assist on non-teleport respawn
+		if (GetCurWorld())
+		{
+			GetHelperNpcManager()->EnsureHelperForLeaderNow(this);
+		}
 	}
 	break;
 	case REVIVAL_TYPE_BIND_POINT:

@@ -88,7 +88,8 @@ void CFairyEvent::Update(CMonster* pMob, CCharacter* pPlayer)
 		pMob->GetTblidx() == 16454104 || pMob->GetTblidx() == 16454201 || pMob->GetTblidx() == 16454202 ||
 		pMob->GetTblidx() == 16454203)
 	{
-		ERR_LOG(LOG_GENERAL, "[DropTrace] FairyEvent CreateSingleDrop item=%u", 11160029);
+		// Disabled for now cause it's spawning too much
+		// ERR_LOG(LOG_GENERAL, "[DropTrace] FairyEvent CreateSingleDrop item=%u", 11160029);
 		CItemDrop* pDrop = g_pItemManager->CreateSingleDrop(90.f, 11160029);
 		if (pDrop)
 		{
@@ -112,7 +113,8 @@ void CFairyEvent::Update(CMonster* pMob, CCharacter* pPlayer)
 	{
 		for (int i = 0; i <= pMob->GetLevel(); i++)
 		{
-			ERR_LOG(LOG_GENERAL, "[DropTrace] FairyEvent CreateSingleDrop item=%u", 11160029);
+			// Disabled for now cause it's spawning too much
+			// ERR_LOG(LOG_GENERAL, "[DropTrace] FairyEvent CreateSingleDrop item=%u", 11160029);
 			CItemDrop* pDrop = g_pItemManager->CreateSingleDrop(80.f, 11160029);
 			if (pDrop)
 			{

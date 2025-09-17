@@ -13,6 +13,7 @@
 #include "ItemManager.h"
 #include "ItemDrop.h"
 #include "DiceManager.h"
+#include "HelperNpcManager.h"
 
 
 
@@ -486,6 +487,9 @@ bool CParty::AddPartyMember(CPlayer* player)
 	//increase member counter
 	SetMemberCount(true);
 
+	// Notify helper manager: new member joined, re-evaluate and remove conflicting role helpers
+	GetHelperNpcManager()->OnPartyMemberJoined(this, player);
+
 	return true;
 }
 
@@ -610,9 +614,19 @@ void CParty::LeaveParty(CPlayer* player)
 	{
 		printf("PartyID NUll 2\n");
 	}
-	if (player->GetID() == this->GetPartyLeaderID()) //if party leader leave party then update leader
+	if (player->GetID() == this->GetPartyLeaderID()) //if party leader leave (disconnect/kick), promote and rebind helpers
 	{
-		UpdatePartyLeader(m_memberInfo[0].hHandle);
+		HOBJECT newLead = m_memberInfo[0].hHandle;
+		HOBJECT oldLead = m_hLeader;
+		UpdatePartyLeader(newLead);
+		GetHelperNpcManager()->OnPartyLeaderChanged(oldLead, newLead);
+	}
+
+	// Backfill missing roles after a member leaves (non-leader case)
+	CPlayer* pLeader = g_pObjectManager->GetPC(m_hLeader);
+	if (pLeader && pLeader->GetCurWorld())
+	{
+		GetHelperNpcManager()->EvaluateAndSpawnRoleHelpers(pLeader, pLeader->GetCurWorld());
 	}
 }
 
@@ -668,6 +682,7 @@ bool CParty::IsMemberInsideGuild()
 void	CParty::UpdatePartyLeader(HOBJECT newLeader)
 {
 	CGameServer* app = (CGameServer*)g_pApp;
+	HOBJECT oldLeader = m_hLeader;
 
 	CNtlPacket pNewLeader(sizeof(sGU_PARTY_LEADER_CHANGED_NFY));
 	sGU_PARTY_LEADER_CHANGED_NFY * rNewLeader = (sGU_PARTY_LEADER_CHANGED_NFY *)pNewLeader.GetPacketData();
@@ -686,6 +701,9 @@ void	CParty::UpdatePartyLeader(HOBJECT newLeader)
 	app->SendTo(app->GetChatServerSession(), &chatpacket); //Send to chat server
 
 	m_hLeader = newLeader;
+
+	// Rebind helper NPCs to the new party leader
+	GetHelperNpcManager()->OnPartyLeaderChanged(oldLeader, newLeader);
 }
 
 //--------------------------------------------------------------------------------------//
@@ -794,6 +812,13 @@ void CParty::KickPartyMember(CPlayer* kickedplayer)
 	{
 		CWorld* pWorld = kickedplayer->GetUD()->GetWorld();
 		kickedplayer->StartTeleport(pWorld->GetTbldat()->outWorldLoc, pWorld->GetTbldat()->outWorldDir, pWorld->GetTbldat()->outWorldTblidx, TELEPORT_TYPE_DUNGEON);
+	}
+
+	// Backfill missing roles after a member is kicked
+	CPlayer* pLeader = g_pObjectManager->GetPC(m_hLeader);
+	if (pLeader && pLeader->GetCurWorld())
+	{
+		GetHelperNpcManager()->EvaluateAndSpawnRoleHelpers(pLeader, pLeader->GetCurWorld());
 	}
 }
 

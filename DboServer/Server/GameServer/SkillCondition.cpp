@@ -344,11 +344,18 @@ void CSkillCondition::GetTarget_ApplyRange_PCandNPC(CCharacter *pAppointTarget, 
 	{
 		float a1 = (float)GetApplyAreaSize1();
 		float a2 = (float)GetApplyAreaSize2();
-		// If not enemy-targeting, extend apply area by config bonus
+		// If not enemy-targeting, extend apply area by config bonus (helpers only)
 		if (m_pSkill && m_pSkill->GetOriginalTableData()->byApply_Target != DBO_SKILL_APPLY_TARGET_ENEMY)
 		{
-			a1 += GetHelperNpcManager()->GetConfig().fHealApplyAreaBonusMeters;
-			a2 += GetHelperNpcManager()->GetConfig().fHealApplyAreaBonusMeters;
+			if (GetHelperNpcManager()->IsRegisteredHelper(GetBot()))
+			{
+				const sHELPER_NPC_CONFIG* pcfg = GetHelperNpcManager()->GetConfigForHelper(GetBot());
+				if (pcfg)
+				{
+					a1 += pcfg->fHealApplyAreaBonusMeters;
+					a2 += pcfg->fHealApplyAreaBonusMeters;
+				}
+			}
 		}
 		rSpellAreaChecker.PrepareForSelection(GetBot(), pAppointTarget, GetApplyRangeType(), (int)a1, (int)a2);
 	}
@@ -439,7 +446,24 @@ void CSkillCondition::GetTarget_ApplyRange_Party(CCharacter *pAppointTarget, sSK
 	CSpellAreaChecker rSpellAreaChecker;
 	rSpellAreaChecker.Create();
 
-	rSpellAreaChecker.PrepareForSelection(GetBot(), pAppointTarget, GetApplyRangeType(), GetApplyAreaSize1(), GetApplyAreaSize2());
+	{
+		float a1 = (float)GetApplyAreaSize1();
+		float a2 = (float)GetApplyAreaSize2();
+		// If not enemy-targeting, extend apply area by config bonus (helpers only)
+		if (m_pSkill && m_pSkill->GetOriginalTableData()->byApply_Target != DBO_SKILL_APPLY_TARGET_ENEMY)
+		{
+			if (GetHelperNpcManager()->IsRegisteredHelper(GetBot()))
+			{
+				const sHELPER_NPC_CONFIG* pcfg = GetHelperNpcManager()->GetConfigForHelper(GetBot());
+				if (pcfg)
+				{
+					a1 += pcfg->fHealApplyAreaBonusMeters;
+					a2 += pcfg->fHealApplyAreaBonusMeters;
+				}
+			}
+		}
+		rSpellAreaChecker.PrepareForSelection(GetBot(), pAppointTarget, GetApplyRangeType(), (int)a1, (int)a2);
+	}
 
 	std::map<HOBJECT, HOBJECT> mapCandidate;
 
@@ -571,7 +595,24 @@ void CSkillCondition::GetTarget_ApplyRange_Party_LPLow(CCharacter *pAppointTarge
 		}
 	}
 
-	rSpellAreaChecker.PrepareForSelection(GetBot(), pResolvedAppoint, GetApplyRangeType(), GetApplyAreaSize1(), GetApplyAreaSize2());
+	{
+		float a1 = (float)GetApplyAreaSize1();
+		float a2 = (float)GetApplyAreaSize2();
+		// If not enemy-targeting, extend apply area by config bonus (helpers only)
+		if (m_pSkill && m_pSkill->GetOriginalTableData()->byApply_Target != DBO_SKILL_APPLY_TARGET_ENEMY)
+		{
+			if (GetHelperNpcManager()->IsRegisteredHelper(GetBot()))
+			{
+				const sHELPER_NPC_CONFIG* pcfg = GetHelperNpcManager()->GetConfigForHelper(GetBot());
+				if (pcfg)
+				{
+					a1 += pcfg->fHealApplyAreaBonusMeters;
+					a2 += pcfg->fHealApplyAreaBonusMeters;
+				}
+			}
+		}
+		rSpellAreaChecker.PrepareForSelection(GetBot(), pResolvedAppoint, GetApplyRangeType(), (int)a1, (int)a2);
+	}
 
 	std::map<int, HOBJECT> mapCandidate;
 

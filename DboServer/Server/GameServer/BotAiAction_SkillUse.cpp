@@ -126,8 +126,12 @@ int CBotAiAction_SkillUse::OnUpdate(DWORD dwTickDiff, float fMultiple)
 			float fUseRange = pSkillCond->GetSkill()->GetOriginalTableData()->fUse_Range_Max;
 			if (pSkillCond->GetSkill()->GetOriginalTableData()->byApply_Target != DBO_SKILL_APPLY_TARGET_ENEMY)
 			{
-				// extend heal/buff use range by config bonus
-				fUseRange += GetHelperNpcManager()->GetConfig().fHealUseRangeBonusMeters;
+				// extend heal/buff use range by config bonus only for registered helper
+				if (GetHelperNpcManager()->IsRegisteredHelper(GetBot()))
+				{
+					if (const sHELPER_NPC_CONFIG* pcfg = GetHelperNpcManager()->GetConfigForHelper(GetBot()))
+						fUseRange += pcfg->fHealUseRangeBonusMeters;
+				}
 			}
 			if (GetBot()->ConsiderRange(fUseRange, 30.0f / 100.0f) == false)
 			{
@@ -140,7 +144,13 @@ int CBotAiAction_SkillUse::OnUpdate(DWORD dwTickDiff, float fMultiple)
 	{
 		float fUseRange = pSkillCond->GetSkill()->GetOriginalTableData()->fUse_Range_Max;
 		if (pSkillCond->GetSkill()->GetOriginalTableData()->byApply_Target != DBO_SKILL_APPLY_TARGET_ENEMY)
-			fUseRange += GetHelperNpcManager()->GetConfig().fHealUseRangeBonusMeters;
+		{
+			if (GetHelperNpcManager()->IsRegisteredHelper(GetBot()))
+			{
+				if (const sHELPER_NPC_CONFIG* pcfg = GetHelperNpcManager()->GetConfigForHelper(GetBot()))
+					fUseRange += pcfg->fHealUseRangeBonusMeters;
+			}
+		}
 		CBotAiAction_Chase* pChase = new CBotAiAction_Chase(GetBot(), CBotAiAction_Chase::ATTACKTYPE_SKILL, fUseRange);
 		if (!AddSubControlQueue(pChase, true))
 		{
@@ -175,8 +185,8 @@ int CBotAiAction_SkillUse::OnUpdate(DWORD dwTickDiff, float fMultiple)
 		pSkillManager->SetCurSkillConditionIdx(INVALID_BYTE);
 		pSkillManager->SetSkillUse_Unlock();
 
-		// Diagnostics: capture reason code when helper fails to start casting
-		if (GetBot()->GetLinkPc() != INVALID_HOBJECT)
+		// Diagnostics: only for registered helper instances
+		if (GetHelperNpcManager()->IsRegisteredHelper(GetBot()))
 		{
 			WORD wLeaderWorld = 0, wHelperWorld = 0;
 			float fDist = -1.0f;
@@ -188,7 +198,9 @@ int CBotAiAction_SkillUse::OnUpdate(DWORD dwTickDiff, float fMultiple)
 				// Use vector-based overload to avoid type mismatch
 				fDist = GetBot()->GetDistance(pLeader->GetCurLoc());
 			}
-			const bool verbose = GetHelperNpcManager()->GetConfig().bVerboseLogs;
+			bool verbose = false;
+			if (const sHELPER_NPC_CONFIG* pcfg = GetHelperNpcManager()->GetConfigForHelper(GetBot()))
+				verbose = pcfg->bVerboseLogs;
 			if (verbose && wTemp != GAME_SKILL_CANT_CAST_NOW)
 			{
 				ERR_LOG(LOG_BOTAI, "HelperNPC: UseSkill failed rc=%u (skill=%u target=%u) worlds L=%u H=%u dist=%.1f state=%u moveFlag=%u", wTemp, pSkillCond->GetSkillTblidx(), hTarget, wLeaderWorld, wHelperWorld, fDist, GetBot()->GetCharStateID(), GetBot()->GetMoveFlag());

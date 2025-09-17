@@ -369,6 +369,9 @@ void CGameServer::Run()
 		if (GetMasterServerSession())		//master server is the last one we connect.. So only loop when we are connected to master server
 			m_pGameProcessor->Run(dwNow);
 
+		// Periodic helper-NPC watchdog to repair spawns after floor transitions
+		GetHelperNpcManager()->TickWatchdog(dwNow);
+
 		dwLastLoop = GetTickCount();
 		QueryPerformanceCounter(&rEnd);
 

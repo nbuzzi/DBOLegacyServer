@@ -69,13 +69,15 @@ inline CSkillBot* CSkillCondition_Give::OnUpdate(DWORD dwTickTime)
 		{
 			if (m_pPartyMemberLowLP && m_pPartyMemberLowLP->GetCurLP() < m_pPartyMemberLowLP->GetMaxLP())
 			{
-				ERR_LOG(LOG_BOTAI, "Give: healing target %u (missing LP mode)", m_pPartyMemberLowLP->GetID());
+				if (GetHelperNpcManager()->GetConfig().bVerboseLogs)
+					ERR_LOG(LOG_BOTAI, "Give: healing target %u (missing LP mode)", m_pPartyMemberLowLP->GetID());
 				return pSkill;
 			}
 		}
 		else if (m_pPartyMemberLowLP && m_pPartyMemberLowLP->ConsiderLPLow((float)wThreshold))
 		{
-			ERR_LOG(LOG_BOTAI, "Give: healing target %u with threshold %u (curLP=%u)", m_pPartyMemberLowLP->GetID(), wThreshold, m_pPartyMemberLowLP->GetCurLP());
+			if (GetHelperNpcManager()->GetConfig().bVerboseLogs)
+				ERR_LOG(LOG_BOTAI, "Give: healing target %u with threshold %u (curLP=%u)", m_pPartyMemberLowLP->GetID(), wThreshold, m_pPartyMemberLowLP->GetCurLP());
 			return pSkill;
 		}
 	}

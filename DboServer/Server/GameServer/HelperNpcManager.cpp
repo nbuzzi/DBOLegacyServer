@@ -2,10 +2,12 @@
 #include "HelperNpcManager.h"
 #include "GameServer.h"
 #include "CPlayer.h"
+#include "Party.h"
 #include "World.h"
 #include "Npc.h"
 #include "Monster.h"
 #include "ObjectManager.h"
+#include "BotAiController.h"
 #include "TableContainerManager.h"
 #include "NtlIniFile.h"
 #include "ObjectMsg.h"
@@ -15,6 +17,8 @@
 #include <sstream>
 #include <cctype>
 #include <algorithm>
+#include <cstdarg>
+#include <cstdio>
 
 // simple string trim helper (both ends)
 static inline void str_trim(std::string& x)
@@ -22,6 +26,19 @@ static inline void str_trim(std::string& x)
 	auto notspace = [](int c) { return !std::isspace(c); };
 	x.erase(x.begin(), std::find_if(x.begin(), x.end(), notspace));
 	x.erase(std::find_if(x.rbegin(), x.rend(), notspace).base(), x.end());
+}
+
+// verbose logging helper
+static inline void VLog(bool enabled, const char* fmt, ...)
+{
+	if (!enabled)
+		return;
+	char buf[1024];
+	va_list args;
+	va_start(args, fmt);
+	vsnprintf(buf, sizeof(buf), fmt, args);
+	va_end(args);
+	ERR_LOG(LOG_GENERAL, "%s", buf);
 }
 
 CHelperNpcManager* CHelperNpcManager::Instance()
@@ -78,13 +95,43 @@ bool CHelperNpcManager::LoadConfig(CNtlIniFile& file)
 	// Proactive attack behavior
 	{
 		int v = m_config.bProactiveAutoAttack ? 1 : 0;
-	if (file.Read("HELPER_NPC", "ProactiveAutoAttack", v)) m_config.bProactiveAutoAttack = (v != 0);
-	if (file.Read("HELPER_NPC", "VerboseLogs", v)) m_config.bVerboseLogs = (v != 0);
-	file.Read("HELPER_NPC", "HealUseRangeBonusMeters", m_config.fHealUseRangeBonusMeters);
-	file.Read("HELPER_NPC", "HealApplyAreaBonusMeters", m_config.fHealApplyAreaBonusMeters);
+		if (file.Read("HELPER_NPC", "ProactiveAutoAttack", v)) m_config.bProactiveAutoAttack = (v != 0);
+		if (file.Read("HELPER_NPC", "VerboseLogs", v)) m_config.bVerboseLogs = (v != 0);
+		file.Read("HELPER_NPC", "HealUseRangeBonusMeters", m_config.fHealUseRangeBonusMeters);
+		file.Read("HELPER_NPC", "HealApplyAreaBonusMeters", m_config.fHealApplyAreaBonusMeters);
 	}
 	file.Read("HELPER_NPC", "AttackScanRange", m_config.wAttackScanRange);
 	file.Read("HELPER_NPC", "AttackScanCooldownMs", m_config.dwAttackScanCooldownMs);
+
+	// Attribute modifiers (helpers only)
+	file.Read("HELPER_NPC", "MaxLPPercent", m_config.wMaxLPPercent);
+	file.Read("HELPER_NPC", "MaxEPPercent", m_config.wMaxEPPercent);
+	file.Read("HELPER_NPC", "PhysicalOffensePercent", m_config.wPhysicalOffensePercent);
+	file.Read("HELPER_NPC", "EnergyOffensePercent", m_config.wEnergyOffensePercent);
+	file.Read("HELPER_NPC", "PhysicalDefensePercent", m_config.wPhysicalDefensePercent);
+	file.Read("HELPER_NPC", "EnergyDefensePercent", m_config.wEnergyDefensePercent);
+	file.Read("HELPER_NPC", "AttackRangePercent", m_config.wAttackRangePercent);
+	file.Read("HELPER_NPC", "AttackRangeBonusMeters", m_config.fAttackRangeBonusMeters);
+	file.Read("HELPER_NPC", "SkillAnimSpeedPercent", m_config.wSkillAnimSpeedPercent);
+
+	// Resurrection + rebuff controller
+	file.Read("HELPER_NPC", "ResurrectSkillTblidx", m_config.resurrectSkillTblidx);
+	file.Read("HELPER_NPC", "RebuffCooldownMs", m_config.dwRebuffCooldownMs);
+	file.Read("HELPER_NPC", "RebuffMinRemainingMs", m_config.dwRebuffMinRemainingMs);
+
+	// Optional global base modifiers section
+	{
+		// Only modifier keys are read from [NPC_MODIFIERS], leaving behavior keys to [HELPER_NPC]
+		file.Read("NPC_MODIFIERS", "MaxLPPercent", m_config.wMaxLPPercent);
+		file.Read("NPC_MODIFIERS", "MaxEPPercent", m_config.wMaxEPPercent);
+		file.Read("NPC_MODIFIERS", "PhysicalOffensePercent", m_config.wPhysicalOffensePercent);
+		file.Read("NPC_MODIFIERS", "EnergyOffensePercent", m_config.wEnergyOffensePercent);
+		file.Read("NPC_MODIFIERS", "PhysicalDefensePercent", m_config.wPhysicalDefensePercent);
+		file.Read("NPC_MODIFIERS", "EnergyDefensePercent", m_config.wEnergyDefensePercent);
+		file.Read("NPC_MODIFIERS", "AttackRangePercent", m_config.wAttackRangePercent);
+		file.Read("NPC_MODIFIERS", "AttackRangeBonusMeters", m_config.fAttackRangeBonusMeters);
+		file.Read("NPC_MODIFIERS", "SkillAnimSpeedPercent", m_config.wSkillAnimSpeedPercent);
+	}
 
 	// Force skill (optional)
 	// ForcedSkillTblidx supports single value or comma-separated list; fill both forcedSkillTblidx and vForcedSkills
@@ -152,39 +199,39 @@ bool CHelperNpcManager::LoadConfig(CNtlIniFile& file)
 			std::istringstream iss(s);
 			std::string tok;
 			auto parseTblidxToken = [&](const std::string& raw, TBLIDX& out) -> bool
-			{
-				std::string t = raw;
-				// strip optional prefixes like "S:" or "B:" (GM-like), case-insensitive
-				if (t.size() > 2 && t[1] == ':')
 				{
-					char pfx = (char)std::toupper((unsigned char)t[0]);
-					if (pfx == 'S' || pfx == 'B')
-						t = t.substr(2);
-				}
-				str_trim(t);
-				if (t.empty()) return false;
-				// hex support (0x...)
-				if (t.size() > 2 && (t[0] == '0') && (t[1] == 'x' || t[1] == 'X'))
-				{
+					std::string t = raw;
+					// strip optional prefixes like "S:" or "B:" (GM-like), case-insensitive
+					if (t.size() > 2 && t[1] == ':')
+					{
+						char pfx = (char)std::toupper((unsigned char)t[0]);
+						if (pfx == 'S' || pfx == 'B')
+							t = t.substr(2);
+					}
+					str_trim(t);
+					if (t.empty()) return false;
+					// hex support (0x...)
+					if (t.size() > 2 && (t[0] == '0') && (t[1] == 'x' || t[1] == 'X'))
+					{
+						char* endp = nullptr;
+						unsigned long val = std::strtoul(t.c_str(), &endp, 16);
+						if (endp && *endp == '\0' && val != 0 && val != INVALID_TBLIDX)
+						{
+							out = (TBLIDX)val;
+							return true;
+						}
+						return false;
+					}
+					// decimal
 					char* endp = nullptr;
-					unsigned long val = std::strtoul(t.c_str(), &endp, 16);
+					unsigned long val = std::strtoul(t.c_str(), &endp, 10);
 					if (endp && *endp == '\0' && val != 0 && val != INVALID_TBLIDX)
 					{
 						out = (TBLIDX)val;
 						return true;
 					}
 					return false;
-				}
-				// decimal
-				char* endp = nullptr;
-				unsigned long val = std::strtoul(t.c_str(), &endp, 10);
-				if (endp && *endp == '\0' && val != 0 && val != INVALID_TBLIDX)
-				{
-					out = (TBLIDX)val;
-					return true;
-				}
-				return false;
-			};
+				};
 			while (std::getline(iss, tok, ','))
 			{
 				str_trim(tok);
@@ -249,26 +296,292 @@ bool CHelperNpcManager::LoadConfig(CNtlIniFile& file)
 		file.Read("HELPER_NPC", "BuffLP", m_config.buffLP);
 		file.Read("HELPER_NPC", "BuffTime", m_config.buffTime);
 	}
+
+	// Verbose config summary
+	VLog(m_config.bVerboseLogs,
+		"HelperNPC: Config loaded: Enabled=%d AllowUltimate=%d AllowBattleDungeon=%d AllowTimeQuest=%d FollowLeader=%d AssistLeaderTarget=%d Invincible=%d ProactiveAutoAttack=%d",
+		m_config.bEnabled ? 1 : 0,
+		m_config.bAllowUltimate ? 1 : 0,
+		m_config.bAllowBattleDungeon ? 1 : 0,
+		m_config.bAllowTimeQuest ? 1 : 0,
+		m_config.bFollowLeader ? 1 : 0,
+		m_config.bAssistLeaderTarget ? 1 : 0,
+		m_config.bInvincibleHelper ? 1 : 0,
+		m_config.bProactiveAutoAttack ? 1 : 0);
+	VLog(m_config.bVerboseLogs,
+		"HelperNPC: IDs: PrimaryNpcId=%u FallbackNpcId=%u MobId=%u MinPartyNoHelper=%u",
+		m_config.primaryNpcTblidx,
+		m_config.fallbackNpcTblidx,
+		m_config.helperMobTblidx,
+		m_config.byMinPartySizeToAvoidSpawn);
+	VLog(m_config.bVerboseLogs,
+		"HelperNPC: Multipliers: Damage=%.2f Heal=%.2f Move=%.2f AttackSpeed%%=%u EPRegen%%=%u LP%%=%u EP%%=%u OffP%%=%u OffE%%=%u DefP%%=%u DefE%%=%u Range%%=%u Range+%.1fm SkillAnim%%=%u",
+		m_config.fDamageMultiplier,
+		m_config.fHealPowerMultiplier,
+		m_config.fMoveSpeedMultiplier,
+		m_config.wAttackSpeedPercent,
+		m_config.wEpRegenPercent,
+		m_config.wMaxLPPercent,
+		m_config.wMaxEPPercent,
+		m_config.wPhysicalOffensePercent,
+		m_config.wEnergyOffensePercent,
+		m_config.wPhysicalDefensePercent,
+		m_config.wEnergyDefensePercent,
+		m_config.wAttackRangePercent,
+		m_config.fAttackRangeBonusMeters,
+		m_config.wSkillAnimSpeedPercent);
+	VLog(m_config.bVerboseLogs,
+		"HelperNPC: Skills: ForcedCount=%u ForcedBasis=%u LP=%u Time=%u BuffCount=%u BuffBasis=%u LP=%u Time=%u AliasMap=%u Resurrect=%u RebuffCd=%u RebuffMinRemain=%u",
+		(unsigned)m_config.vForcedSkills.size(),
+		m_config.forcedSkillBasis,
+		m_config.forcedSkillLP,
+		m_config.forcedSkillTime,
+		(unsigned)m_config.vBuffSkills.size(),
+		m_config.buffBasis,
+		m_config.buffLP,
+		m_config.buffTime,
+		(unsigned)m_config.buffIndexAlias.size(),
+		m_config.resurrectSkillTblidx,
+		m_config.dwRebuffCooldownMs,
+		m_config.dwRebuffMinRemainingMs);
+	VLog(m_config.bVerboseLogs,
+		"HelperNPC: Scan: AttackScanRange=%u AttackScanCooldownMs=%u HealUseRange+%.1fm HealApplyArea+%.1fm SpawnOffset=%.1fm",
+		m_config.wAttackScanRange,
+		m_config.dwAttackScanCooldownMs,
+		m_config.fHealUseRangeBonusMeters,
+		m_config.fHealApplyAreaBonusMeters,
+		m_config.fSpawnOffset);
+
+	// Optional per-dungeon override sections: [HELPER_NPC_UD], [HELPER_NPC_BD], [HELPER_NPC_TMQ]
+	m_cfgUD = m_config; m_cfgBD = m_config; m_cfgTMQ = m_config;
+	int udCount = LoadConfigSection(file, "HELPER_NPC_UD", m_cfgUD);
+	int bdCount = LoadConfigSection(file, "HELPER_NPC_BD", m_cfgBD);
+	int tmqCount = LoadConfigSection(file, "HELPER_NPC_TMQ", m_cfgTMQ);
+	m_hasUDOverride = (udCount > 0);
+	m_hasBDOverride = (bdCount > 0);
+	m_hasTMQOverride = (tmqCount > 0);
+	if (m_hasUDOverride) VLog(m_config.bVerboseLogs, "HelperNPC: UD override loaded with %d keys", udCount);
+	if (m_hasBDOverride) VLog(m_config.bVerboseLogs, "HelperNPC: BD override loaded with %d keys", bdCount);
+	if (m_hasTMQOverride) VLog(m_config.bVerboseLogs, "HelperNPC: TMQ override loaded with %d keys", tmqCount);
+
+	// Extra allowlists for custom worlds
+	{
+		CNtlString cs;
+		if (file.Read("HELPER_NPC", "ExtraUDWorldIDs", cs))
+		{
+			m_extraUDWorldIDs.clear();
+			std::string s = cs.c_str();
+			for (char& ch : s) { if (ch == ';') ch = ','; }
+			std::istringstream iss(s); std::string tok;
+			while (std::getline(iss, tok, ','))
+			{
+				str_trim(tok); if (tok.empty()) continue; WORLDID wid = (WORLDID)std::strtoul(tok.c_str(), NULL, 10);
+				if (wid != 0 && wid != INVALID_WORLDID) m_extraUDWorldIDs.insert(wid);
+			}
+			if (!m_extraUDWorldIDs.empty()) VLog(m_config.bVerboseLogs, "HelperNPC: Extra UD worlds loaded: %zu", m_extraUDWorldIDs.size());
+		}
+	}
+	{
+		CNtlString cs;
+		if (file.Read("HELPER_NPC", "ExtraBDWorldIDs", cs))
+		{
+			m_extraBDWorldIDs.clear();
+			std::string s = cs.c_str(); for (char& ch : s) { if (ch == ';') ch = ','; }
+			std::istringstream iss(s); std::string tok;
+			while (std::getline(iss, tok, ',')) { str_trim(tok); if (tok.empty()) continue; WORLDID wid = (WORLDID)std::strtoul(tok.c_str(), NULL, 10); if (wid != 0 && wid != INVALID_WORLDID) m_extraBDWorldIDs.insert(wid); }
+			if (!m_extraBDWorldIDs.empty()) VLog(m_config.bVerboseLogs, "HelperNPC: Extra BD worlds loaded: %zu", m_extraBDWorldIDs.size());
+		}
+	}
+	{
+		CNtlString cs;
+		if (file.Read("HELPER_NPC", "ExtraTMQWorldIDs", cs))
+		{
+			m_extraTMQWorldIDs.clear();
+			std::string s = cs.c_str(); for (char& ch : s) { if (ch == ';') ch = ','; }
+			std::istringstream iss(s); std::string tok;
+			while (std::getline(iss, tok, ',')) { str_trim(tok); if (tok.empty()) continue; WORLDID wid = (WORLDID)std::strtoul(tok.c_str(), NULL, 10); if (wid != 0 && wid != INVALID_WORLDID) m_extraTMQWorldIDs.insert(wid); }
+			if (!m_extraTMQWorldIDs.empty()) VLog(m_config.bVerboseLogs, "HelperNPC: Extra TMQ worlds loaded: %zu", m_extraTMQWorldIDs.size());
+		}
+	}
+
+	// Role sections: [HEALER], [TANK], [BUFFER], [SPEED]
+	LoadRoleSection(file, "HEALER", m_roleHealer);
+	LoadRoleSection(file, "TANK", m_roleTank);
+	LoadRoleSection(file, "BUFFER", m_roleBuffer);
+	LoadRoleSection(file, "SPEED", m_roleSpeed);
+	if (m_roleTank.enabled && m_roleTank.coveredClasses.empty())
+	{
+		// Default tank classes if not specified
+		m_roleTank.coveredClasses.insert(13);
+		m_roleTank.coveredClasses.insert(14);
+		m_roleTank.coveredClasses.insert(17);
+		m_roleTank.coveredClasses.insert(18);
+	}
 	return true;
+}
+
+bool CHelperNpcManager::LoadRoleSection(CNtlIniFile& file, const char* sectionName, sROLE_DEF& outRole)
+{
+	int en = 0;
+	if (!file.Read(sectionName, "Enabled", en))
+		return false;
+	outRole.enabled = (en != 0);
+	int mc = 1;
+	file.Read(sectionName, "MaxCount", mc);
+	if (mc < 1) mc = 1; if (mc > 3) mc = 3;
+	outRole.maxCount = (BYTE)mc;
+
+	// Load role behavior config using existing section loader
+	outRole.cfg = m_config;
+	LoadConfigSection(file, sectionName, outRole.cfg);
+
+	// Parse covered class IDs
+	CNtlString cs;
+	if (file.Read(sectionName, "Classes", cs))
+	{
+		outRole.coveredClasses.clear();
+		std::string s = cs.c_str();
+		for (char& ch : s) { if (ch == ';') ch = ','; }
+		std::istringstream iss(s); std::string tok;
+		while (std::getline(iss, tok, ','))
+		{
+			str_trim(tok); if (tok.empty()) continue;
+			int cid = (int)std::strtol(tok.c_str(), NULL, 10);
+			if (cid > 0) outRole.coveredClasses.insert(cid);
+		}
+	}
+	VLog(m_config.bVerboseLogs, "HelperNPC: Loaded role [%s] enabled=%d max=%u classes=%zu",
+		sectionName, outRole.enabled ? 1 : 0, (unsigned)outRole.maxCount, outRole.coveredClasses.size());
+	return true;
+}
+
+int CHelperNpcManager::LoadConfigSection(CNtlIniFile& file, const char* sectionName, sHELPER_NPC_CONFIG& out)
+{
+	int readCount = 0;
+	// Booleans via int
+	{ int v = out.bEnabled ? 1 : 0; if (file.Read(sectionName, "Enable", v)) { out.bEnabled = (v != 0); ++readCount; } }
+	{ int v = out.bAllowUltimate ? 1 : 0; if (file.Read(sectionName, "AllowUltimate", v)) { out.bAllowUltimate = (v != 0); ++readCount; } }
+	{ int v = out.bAllowBattleDungeon ? 1 : 0; if (file.Read(sectionName, "AllowBattleDungeon", v)) { out.bAllowBattleDungeon = (v != 0); ++readCount; } }
+	{ int v = out.bAllowTimeQuest ? 1 : 0; if (file.Read(sectionName, "AllowTimeQuest", v)) { out.bAllowTimeQuest = (v != 0); ++readCount; } }
+	if (file.Read(sectionName, "MinPartySizeToAvoid", out.byMinPartySizeToAvoidSpawn)) ++readCount;
+	if (file.Read(sectionName, "PrimaryNpcId", out.primaryNpcTblidx)) ++readCount;
+	if (file.Read(sectionName, "FallbackNpcId", out.fallbackNpcTblidx)) ++readCount;
+	if (file.Read(sectionName, "SpawnOffset", out.fSpawnOffset)) ++readCount;
+	{ int v = out.bFollowLeader ? 1 : 0; if (file.Read(sectionName, "FollowLeader", v)) { out.bFollowLeader = (v != 0); ++readCount; } }
+	{ int v = out.bAssistLeaderTarget ? 1 : 0; if (file.Read(sectionName, "AssistLeaderTarget", v)) { out.bAssistLeaderTarget = (v != 0); ++readCount; } }
+	if (file.Read(sectionName, "HealLpThresholdOverride", out.wHealLpThresholdOverride)) ++readCount;
+	if (file.Read(sectionName, "HealPriorityMinMissingPercent", out.wHealPriorityMinMissingPercent)) ++readCount;
+	if (file.Read(sectionName, "DamageMultiplier", out.fDamageMultiplier)) ++readCount;
+	if (file.Read(sectionName, "HealPowerMultiplier", out.fHealPowerMultiplier)) ++readCount;
+	if (file.Read(sectionName, "MoveSpeedMultiplier", out.fMoveSpeedMultiplier)) ++readCount;
+	if (file.Read(sectionName, "AttackSpeedPercent", out.wAttackSpeedPercent)) ++readCount;
+	if (file.Read(sectionName, "EpRegenPercent", out.wEpRegenPercent)) ++readCount;
+	{ int v = out.bInvincibleHelper ? 1 : 0; if (file.Read(sectionName, "InvincibleHelper", v)) { out.bInvincibleHelper = (v != 0); ++readCount; } }
+	{ int v = out.bProactiveAutoAttack ? 1 : 0; if (file.Read(sectionName, "ProactiveAutoAttack", v)) { out.bProactiveAutoAttack = (v != 0); ++readCount; } }
+	// Accept 0/1 for verbose
+	{ int v = out.bVerboseLogs ? 1 : 0; if (file.Read(sectionName, "VerboseLogs", v)) { out.bVerboseLogs = (v != 0); ++readCount; } }
+	if (file.Read(sectionName, "HealUseRangeBonusMeters", out.fHealUseRangeBonusMeters)) ++readCount;
+	if (file.Read(sectionName, "HealApplyAreaBonusMeters", out.fHealApplyAreaBonusMeters)) ++readCount;
+	if (file.Read(sectionName, "AttackScanRange", out.wAttackScanRange)) ++readCount;
+	if (file.Read(sectionName, "AttackScanCooldownMs", out.dwAttackScanCooldownMs)) ++readCount;
+	// Attribute modifiers (helpers only)
+	if (file.Read(sectionName, "MaxLPPercent", out.wMaxLPPercent)) ++readCount;
+	if (file.Read(sectionName, "MaxEPPercent", out.wMaxEPPercent)) ++readCount;
+	if (file.Read(sectionName, "PhysicalOffensePercent", out.wPhysicalOffensePercent)) ++readCount;
+	if (file.Read(sectionName, "EnergyOffensePercent", out.wEnergyOffensePercent)) ++readCount;
+	if (file.Read(sectionName, "PhysicalDefensePercent", out.wPhysicalDefensePercent)) ++readCount;
+	if (file.Read(sectionName, "EnergyDefensePercent", out.wEnergyDefensePercent)) ++readCount;
+	if (file.Read(sectionName, "AttackRangePercent", out.wAttackRangePercent)) ++readCount;
+	if (file.Read(sectionName, "AttackRangeBonusMeters", out.fAttackRangeBonusMeters)) ++readCount;
+	if (file.Read(sectionName, "SkillAnimSpeedPercent", out.wSkillAnimSpeedPercent)) ++readCount;
+	// Resurrection + rebuff controller (per-section overrides)
+	if (file.Read(sectionName, "ResurrectSkillTblidx", out.resurrectSkillTblidx)) ++readCount;
+	if (file.Read(sectionName, "RebuffCooldownMs", out.dwRebuffCooldownMs)) ++readCount;
+	if (file.Read(sectionName, "RebuffMinRemainingMs", out.dwRebuffMinRemainingMs)) ++readCount;
+	{ int v = out.bUseMobAsHelper ? 1 : 0; if (file.Read(sectionName, "UseMobAsHelper", v)) { out.bUseMobAsHelper = (v != 0); ++readCount; } }
+	if (file.Read(sectionName, "MobId", out.helperMobTblidx)) ++readCount;
+
+	// Buff skills list
+	{
+		CNtlString cs;
+		if (file.Read(sectionName, "BuffSkills", cs))
+		{
+			out.vBuffSkills.clear();
+			std::string s = cs.c_str(); for (char& ch : s) { if (ch == ';') ch = ','; }
+			std::istringstream iss(s); std::string tok;
+			auto parseTblidxToken = [&](const std::string& raw, TBLIDX& val) -> bool {
+				std::string t = raw; if (t.size() > 2 && t[1] == ':') { char p = (char)std::toupper((unsigned char)t[0]); if (p == 'S' || p == 'B') t = t.substr(2); }
+				str_trim(t); if (t.empty()) return false;
+				if (t.size() > 2 && t[0] == '0' && (t[1] == 'x' || t[1] == 'X')) { char* e = nullptr; unsigned long v = std::strtoul(t.c_str(), &e, 16); if (e && *e == '\0' && v != 0 && v != INVALID_TBLIDX) { val = (TBLIDX)v; return true; } return false; }
+				char* e = nullptr; unsigned long v = std::strtoul(t.c_str(), &e, 10); if (e && *e == '\0' && v != 0 && v != INVALID_TBLIDX) { val = (TBLIDX)v; return true; }
+				return false; };
+			while (std::getline(iss, tok, ',')) { str_trim(tok); if (tok.empty()) continue; TBLIDX id = INVALID_TBLIDX; if (parseTblidxToken(tok, id)) out.vBuffSkills.push_back(id); }
+			++readCount;
+		}
+	}
+	// BuffIndexMap
+	{
+		CNtlString csMap;
+		if (file.Read(sectionName, "BuffIndexMap", csMap))
+		{
+			out.buffIndexAlias.clear();
+			std::string ms = csMap.c_str(); for (char& ch : ms) { if (ch == ';') ch = ','; }
+			std::istringstream miss(ms); std::string pair;
+			while (std::getline(miss, pair, ','))
+			{
+				str_trim(pair); if (pair.empty()) continue; size_t pos = pair.find_first_of("=:"); if (pos == std::string::npos) continue;
+				std::string k = pair.substr(0, pos); std::string v = pair.substr(pos + 1); str_trim(k); str_trim(v); if (k.empty() || v.empty()) continue;
+				char* ek = nullptr; unsigned long ext = std::strtoul(k.c_str(), &ek, 10); if (!(ek && *ek == '\0') || ext == 0) continue;
+				char* ev = nullptr; unsigned long vv = std::strtoul(v.c_str(), &ev, 10); if (!(ev && *ev == '\0') || vv == 0 || vv == INVALID_TBLIDX) continue;
+				if (!g_pTableContainer->GetSkillTable()->FindData((TBLIDX)vv)) continue;
+				out.buffIndexAlias[(DWORD)ext] = (TBLIDX)vv;
+			}
+			++readCount;
+		}
+	}
+	{ int basis = out.buffBasis; if (file.Read(sectionName, "BuffBasis", basis)) { out.buffBasis = (BYTE)basis; ++readCount; } }
+	if (file.Read(sectionName, "BuffLP", out.buffLP)) ++readCount;
+	if (file.Read(sectionName, "BuffTime", out.buffTime)) ++readCount;
+
+	// Forced skills (single value or comma-separated list)
+	{
+		CNtlString cs;
+		if (file.Read(sectionName, "ForcedSkillTblidx", cs))
+		{
+			out.vForcedSkills.clear();
+			std::string sfs = cs.c_str(); std::stringstream ss(sfs); std::string token; bool any = false;
+			while (std::getline(ss, token, ',')) { TBLIDX id = (TBLIDX)std::strtoul(token.c_str(), NULL, 10); if (id != 0 && id != INVALID_TBLIDX) { out.vForcedSkills.push_back(id); any = true; } }
+			out.forcedSkillTblidx = any ? out.vForcedSkills.front() : INVALID_TBLIDX; ++readCount;
+		}
+		else if (file.Read(sectionName, "ForcedSkillTblidx", out.forcedSkillTblidx))
+		{
+			out.vForcedSkills.clear(); if (out.forcedSkillTblidx != INVALID_TBLIDX) out.vForcedSkills.push_back(out.forcedSkillTblidx); ++readCount;
+		}
+	}
+	{ int basis = out.forcedSkillBasis; if (file.Read(sectionName, "ForcedSkillBasis", basis)) { out.forcedSkillBasis = (BYTE)basis; ++readCount; } }
+	if (file.Read(sectionName, "ForcedSkillLP", out.forcedSkillLP)) ++readCount;
+	if (file.Read(sectionName, "ForcedSkillTime", out.forcedSkillTime)) ++readCount;
+
+	return readCount;
 }
 
 bool CHelperNpcManager::SpawnHelperIfNeededForDungeon(CPlayer* pLeader, CWorld* pWorld, bool bIsUltimateDungeon)
 {
-	if (bIsUltimateDungeon && !m_config.bAllowUltimate)
-		return false;
-	if (!bIsUltimateDungeon && !m_config.bAllowBattleDungeon)
-		return false;
-	return SpawnIfAllowed(pLeader, pWorld);
+	const sHELPER_NPC_CONFIG& cfg = bIsUltimateDungeon ? (m_hasUDOverride ? m_cfgUD : m_config)
+		: (m_hasBDOverride ? m_cfgBD : m_config);
+	if (bIsUltimateDungeon && !cfg.bAllowUltimate) return false;
+	if (!bIsUltimateDungeon && !cfg.bAllowBattleDungeon) return false;
+	return SpawnIfAllowed(pLeader, pWorld, cfg);
 }
 
 bool CHelperNpcManager::SpawnHelperIfNeededForTmq(CPlayer* pLeader, CWorld* pWorld)
 {
-	if (!m_config.bAllowTimeQuest)
-		return false;
-	return SpawnIfAllowed(pLeader, pWorld);
+	const sHELPER_NPC_CONFIG& cfg = m_hasTMQOverride ? m_cfgTMQ : m_config;
+	if (!cfg.bAllowTimeQuest) return false;
+	return SpawnIfAllowed(pLeader, pWorld, cfg);
 }
 
-bool CHelperNpcManager::SpawnIfAllowed(CPlayer* pLeader, CWorld* pWorld)
+bool CHelperNpcManager::SpawnIfAllowed(CPlayer* pLeader, CWorld* pWorld, const sHELPER_NPC_CONFIG& cfg)
 {
 	if (!pLeader || !pWorld)
 	{
@@ -276,9 +589,23 @@ bool CHelperNpcManager::SpawnIfAllowed(CPlayer* pLeader, CWorld* pWorld)
 		return false;
 	}
 
-	if (!m_config.bEnabled)
+	if (!cfg.bEnabled)
 	{
-		ERR_LOG(LOG_GENERAL, "HelperNPC: disabled by config");
+		VLog(cfg.bVerboseLogs, "HelperNPC: disabled by config");
+		return false;
+	}
+
+	// Only allow in dungeon-like worlds (UD/BD/TMQ or extra lists)
+	eGAMERULE_TYPE rule = pWorld->GetRuleType();
+	WORLDID wid = pWorld->GetID();
+	bool bUD = (rule == GAMERULE_HUNT) || (this->m_extraUDWorldIDs.find(wid) != this->m_extraUDWorldIDs.end());
+	bool bBD = (rule == GAMERULE_CCBATTLEDUNGEON) || (this->m_extraBDWorldIDs.find(wid) != this->m_extraBDWorldIDs.end());
+	bool bTMQ = (rule == GAMERULE_TIMEQUEST) || (this->m_extraTMQWorldIDs.find(wid) != this->m_extraTMQWorldIDs.end());
+	if (!bUD && !bBD && !bTMQ)
+	{
+		VLog(cfg.bVerboseLogs, "HelperNPC: skip - world %u not a dynamic dungeon (rule=%u)", wid, (unsigned)rule);
+		// Safety: ensure no stale helpers lingering in non-dynamic world
+		DespawnAllHelpersForLeaderInWorld(pLeader, pWorld);
 		return false;
 	}
 
@@ -287,89 +614,118 @@ bool CHelperNpcManager::SpawnIfAllowed(CPlayer* pLeader, CWorld* pWorld)
 	if (pLeader->GetParty())
 		byCount = pLeader->GetParty()->GetPartyMemberCount();
 	else
-		ERR_LOG(LOG_GENERAL, "HelperNPC: leader has no party - treating as solo size 1");
+		VLog(cfg.bVerboseLogs, "HelperNPC: leader has no party - treating as solo size 1");
 
-	if (byCount >= m_config.byMinPartySizeToAvoidSpawn)
+	if (byCount >= cfg.byMinPartySizeToAvoidSpawn)
 	{
-		ERR_LOG(LOG_GENERAL, "HelperNPC: skip - party size %u >= threshold %u", byCount, m_config.byMinPartySizeToAvoidSpawn);
+		VLog(cfg.bVerboseLogs, "HelperNPC: skip - party size %u >= threshold %u", byCount, cfg.byMinPartySizeToAvoidSpawn);
 		return false; // party large enough; no helper
 	}
 
-	// Prevent duplicate spawns within the same world instance
-	if (m_worldsWithHelper.find(pWorld->GetID()) != m_worldsWithHelper.end())
-	{
-		ERR_LOG(LOG_GENERAL, "HelperNPC: skip - helper already spawned in world %u", pWorld->GetID());
-		return false;
-	}
+	// Change dedup logic: allow multiple helpers in a world, but avoid duplicates of the same helper ID per leader
+	// We'll check existing helpers for this leader below once helperTblidx is known
 
 	// Decide what to spawn (NPC vs MOB)
 	bool bSpawnMob = false;
 	TBLIDX helperTblidx = INVALID_TBLIDX;
-	if (m_config.bUseMobAsHelper)
+	if (cfg.bUseMobAsHelper)
 	{
-		if (g_pTableContainer->GetMobTable()->FindData(m_config.helperMobTblidx))
+		if (g_pTableContainer->GetMobTable()->FindData(cfg.helperMobTblidx))
 		{
 			bSpawnMob = true;
-			helperTblidx = m_config.helperMobTblidx;
+			helperTblidx = cfg.helperMobTblidx;
 		}
 		else
 		{
-			ERR_LOG(LOG_GENERAL, "HelperNPC: configured MOB %u not found", m_config.helperMobTblidx);
+			ERR_LOG(LOG_GENERAL, "HelperNPC: configured MOB %u not found", cfg.helperMobTblidx);
 			return false;
 		}
 	}
 	else
 	{
-		if (g_pTableContainer->GetNpcTable()->FindData(m_config.primaryNpcTblidx))
-			helperTblidx = m_config.primaryNpcTblidx;
-		else if (g_pTableContainer->GetNpcTable()->FindData(m_config.fallbackNpcTblidx))
-			helperTblidx = m_config.fallbackNpcTblidx;
-		else if (g_pTableContainer->GetMobTable()->FindData(m_config.helperMobTblidx))
+		if (g_pTableContainer->GetNpcTable()->FindData(cfg.primaryNpcTblidx))
+			helperTblidx = cfg.primaryNpcTblidx;
+		else if (g_pTableContainer->GetNpcTable()->FindData(cfg.fallbackNpcTblidx))
+			helperTblidx = cfg.fallbackNpcTblidx;
+		else if (g_pTableContainer->GetMobTable()->FindData(cfg.helperMobTblidx))
 		{
 			// fallback to MOB healer if NPCs not found
 			bSpawnMob = true;
-			helperTblidx = m_config.helperMobTblidx;
+			helperTblidx = cfg.helperMobTblidx;
 		}
 		else
 		{
 			ERR_LOG(LOG_GENERAL, "HelperNPC: no valid NPC or MOB tblidx (npc primary %u, fallback %u; mob %u)",
-				m_config.primaryNpcTblidx, m_config.fallbackNpcTblidx, m_config.helperMobTblidx);
+				cfg.primaryNpcTblidx, cfg.fallbackNpcTblidx, cfg.helperMobTblidx);
 			return false;
 		}
 	}
 
-	// Use world start location/direction so we spawn where players land post-teleport
-	const sWORLD_TBLDAT* pWorldTbl = pWorld->GetTbldat();
+	// Dedupe by helper ID for the same leader in the same world
+	{
+		auto itList = m_leaderToHelpers.find(pLeader->GetID());
+		if (itList != m_leaderToHelpers.end())
+		{
+			for (HOBJECT h : itList->second)
+			{
+				CNpc* existing = g_pObjectManager->GetNpc(h);
+				if (existing && existing->IsInitialized() && existing->GetCurWorld() == pWorld)
+				{
+					auto itKind = m_helperKindByHelper.find(h);
+					if (itKind != m_helperKindByHelper.end() && itKind->second == helperTblidx)
+					{
+						VLog(cfg.bVerboseLogs, "HelperNPC: skip - leader %u already has helper tblidx %u in world %u", pLeader->GetID(), helperTblidx, pWorld->GetID());
+						return false;
+					}
+				}
+			}
+		}
+	}
+
+	// Guard: prevent duplicate spawn for the same leader/world/helperTblidx in parallel/rapid calls
+	SpawnKey key{ pLeader->GetID(), pWorld->GetID(), helperTblidx };
+	if (m_pendingSpawns.find(key) != m_pendingSpawns.end())
+	{
+		VLog(cfg.bVerboseLogs, "HelperNPC: spawn already in progress for leader %u world %u tblidx %u", key.leader, key.world, key.tblidx);
+		return false;
+	}
+	m_pendingSpawns.insert(key);
+
+	// Spawn near the leader's current position (safer for custom worlds/overrides)
+	// Fallback to world start only if leader location is unavailable (shouldn't happen)
 	sVECTOR3 baseLoc;
 	sVECTOR3 baseDir;
-	if (pWorldTbl)
-	{
-		baseLoc.x = pWorldTbl->vStart1Loc.x;
-		baseLoc.y = pWorldTbl->vStart1Loc.y;
-		baseLoc.z = pWorldTbl->vStart1Loc.z;
-		baseDir.x = pWorldTbl->vStart1Dir.x;
-		baseDir.y = pWorldTbl->vStart1Dir.y;
-		baseDir.z = pWorldTbl->vStart1Dir.z;
-	}
-	else
 	{
 		const auto& pl = pLeader->GetCurLoc();
 		const auto& pd = pLeader->GetCurDir();
 		baseLoc.x = pl.x; baseLoc.y = pl.y; baseLoc.z = pl.z;
 		baseDir.x = pd.x; baseDir.y = pd.y; baseDir.z = pd.z;
+		// If leader position appears defaulted (0,0,0), try world Start1 as a fallback
+		if (baseLoc.x == 0.f && baseLoc.y == 0.f && baseLoc.z == 0.f)
+		{
+			if (const sWORLD_TBLDAT* pWorldTbl = pWorld->GetTbldat())
+			{
+				baseLoc.x = pWorldTbl->vStart1Loc.x;
+				baseLoc.y = pWorldTbl->vStart1Loc.y;
+				baseLoc.z = pWorldTbl->vStart1Loc.z;
+				baseDir.x = pWorldTbl->vStart1Dir.x;
+				baseDir.y = pWorldTbl->vStart1Dir.y;
+				baseDir.z = pWorldTbl->vStart1Dir.z;
+			}
+		}
 	}
 
 	sVECTOR3 spawnLoc;
-	spawnLoc.x = baseLoc.x + m_config.fSpawnOffset;
+	spawnLoc.x = baseLoc.x + cfg.fSpawnOffset;
 	spawnLoc.y = baseLoc.y;
-	spawnLoc.z = baseLoc.z + m_config.fSpawnOffset;
+	spawnLoc.z = baseLoc.z + cfg.fSpawnOffset;
 
 	sVECTOR3 spawnDir;
 	spawnDir.x = baseDir.x;
 	spawnDir.y = baseDir.y;
 	spawnDir.z = baseDir.z;
 
-	ERR_LOG(LOG_GENERAL, "HelperNPC: attempt spawn %s %u in world %u (partySize=%u) at Start1Loc (%.2f, %.2f, %.2f)",
+	VLog(cfg.bVerboseLogs, "HelperNPC: attempt spawn %s %u in world %u (partySize=%u) near leader at (%.2f, %.2f, %.2f)",
 		bSpawnMob ? "mob" : "npc", helperTblidx, pWorld->GetID(), byCount, spawnLoc.x, spawnLoc.y, spawnLoc.z);
 	sSPAWN_TBLDAT sSpawn;
 	sSpawn.vSpawn_Loc.CopyFrom(spawnLoc);
@@ -393,17 +749,20 @@ bool CHelperNpcManager::SpawnIfAllowed(CPlayer* pLeader, CWorld* pWorld)
 		if (!pNpcTbl)
 		{
 			ERR_LOG(LOG_GENERAL, "HelperNPC: NPC table data missing for tblidx %u", helperTblidx);
+			m_pendingSpawns.erase(key);
 			return false;
 		}
 		CNpc* pNpc = (CNpc*)g_pObjectManager->CreateCharacter(OBJTYPE_NPC);
 		if (!pNpc)
 		{
 			ERR_LOG(LOG_GENERAL, "HelperNPC: CreateCharacter(NPC) returned NULL");
+			m_pendingSpawns.erase(key);
 			return false;
 		}
 		if (!pNpc->CreateDataAndSpawn(pWorld->GetID(), pNpcTbl, &sSpawn, false, 0))
 		{
 			ERR_LOG(LOG_GENERAL, "HelperNPC: CreateDataAndSpawn(NPC) failed for %u in world %u", helperTblidx, pWorld->GetID());
+			m_pendingSpawns.erase(key);
 			return false;
 		}
 		pHelper = pNpc;
@@ -414,17 +773,20 @@ bool CHelperNpcManager::SpawnIfAllowed(CPlayer* pLeader, CWorld* pWorld)
 		if (!pMobTbl)
 		{
 			ERR_LOG(LOG_GENERAL, "HelperNPC: MOB table data missing for tblidx %u", helperTblidx);
+			m_pendingSpawns.erase(key);
 			return false;
 		}
 		CMonster* pMob = (CMonster*)g_pObjectManager->CreateCharacter(OBJTYPE_MOB);
 		if (!pMob)
 		{
 			ERR_LOG(LOG_GENERAL, "HelperNPC: CreateCharacter(MOB) returned NULL");
+			m_pendingSpawns.erase(key);
 			return false;
 		}
 		if (!pMob->CreateDataAndSpawn(pWorld->GetID(), pMobTbl, &sSpawn, false, 0))
 		{
 			ERR_LOG(LOG_GENERAL, "HelperNPC: CreateDataAndSpawn(MOB) failed for %u in world %u", helperTblidx, pWorld->GetID());
+			m_pendingSpawns.erase(key);
 			return false;
 		}
 		pHelper = pMob; // CMonster derives from CNpc
@@ -439,68 +801,82 @@ bool CHelperNpcManager::SpawnIfAllowed(CPlayer* pLeader, CWorld* pWorld)
 	pHelper->SetLinkPc(pLeader->GetCharID(), pLeader->GetID());
 
 	// Optional: make helper invincible and untargettable if configured
-	if (m_config.bInvincibleHelper)
+	if (cfg.bInvincibleHelper)
 	{
 		pHelper->GetStateManager()->AddConditionState(CHARCOND_INVINCIBLE, NULL, true);
 		pHelper->GetStateManager()->AddConditionState(CHARCOND_CANT_BE_TARGETTED, NULL, true);
-		ERR_LOG(LOG_GENERAL, "HelperNPC: invincible + untargettable set by config");
+		VLog(cfg.bVerboseLogs, "HelperNPC: invincible + untargettable set by config");
 	}
 
 	// Reload skills after linking so Helper skills initialize properly.
 	pHelper->LoadSkillTable(INVALID_TBLIDX);
-	ERR_LOG(LOG_GENERAL, "HelperNPC: skills reloaded after link to leader %u", pLeader->GetID());
+	VLog(cfg.bVerboseLogs, "HelperNPC: skills reloaded after link to leader %u", pLeader->GetID());
 
 	// Optionally force-add a specific skill if configured
-	if (!m_config.vForcedSkills.empty())
+	if (!cfg.vForcedSkills.empty())
 	{
 		CSkillManagerBot* pSM = (CSkillManagerBot*)pHelper->GetSkillManager();
 		if (pSM)
 		{
-			for (TBLIDX forcedId : m_config.vForcedSkills)
+			for (TBLIDX forcedId : cfg.vForcedSkills)
 			{
 				sSKILL_TBLDAT* pSkillTbldat = (sSKILL_TBLDAT*)g_pTableContainer->GetSkillTable()->FindData(forcedId);
 				if (!pSkillTbldat)
 				{
-					ERR_LOG(LOG_GENERAL, "HelperNPC: forced skill %u not found", forcedId);
+					VLog(cfg.bVerboseLogs, "HelperNPC: forced skill %u not found", forcedId);
 					continue;
 				}
 				CSkillBot* pSkill = new CSkillBot;
 				if (!pSkill->Create(pSkillTbldat, pHelper, INVALID_BYTE))
 				{
-					ERR_LOG(LOG_GENERAL, "HelperNPC: forced skill %u create FAIL", forcedId);
+					VLog(cfg.bVerboseLogs, "HelperNPC: forced skill %u create FAIL", forcedId);
 					continue;
 				}
 				bool ok = pSM->AddSkill(0, pHelper, pSkill, forcedId,
-					m_config.forcedSkillBasis, m_config.forcedSkillLP, m_config.forcedSkillTime);
-				ERR_LOG(LOG_GENERAL, "HelperNPC: forced skill %u add %s (basis=%u lp=%u time=%u)",
-					forcedId, ok ? "OK" : "FAIL", m_config.forcedSkillBasis, m_config.forcedSkillLP, m_config.forcedSkillTime);
+					cfg.forcedSkillBasis, cfg.forcedSkillLP, cfg.forcedSkillTime);
+				VLog(cfg.bVerboseLogs, "HelperNPC: forced skill %u add %s (basis=%u lp=%u time=%u)",
+					forcedId, ok ? "OK" : "FAIL", cfg.forcedSkillBasis, cfg.forcedSkillLP, cfg.forcedSkillTime);
 			}
 		}
 	}
 
 	// Optionally add a list of buff skills
-	if (!m_config.vBuffSkills.empty())
+	if (!cfg.vBuffSkills.empty())
 	{
 		CSkillManagerBot* pSM = (CSkillManagerBot*)pHelper->GetSkillManager();
 		if (pSM)
 		{
-			for (TBLIDX buffId : m_config.vBuffSkills)
+			for (TBLIDX buffId : cfg.vBuffSkills)
 			{
 				sSKILL_TBLDAT* pSkillTbldat = (sSKILL_TBLDAT*)g_pTableContainer->GetSkillTable()->FindData(buffId);
 				if (!pSkillTbldat)
 				{
-					ERR_LOG(LOG_GENERAL, "HelperNPC: buff skill %u not found in SkillTable", buffId);
+					VLog(cfg.bVerboseLogs, "HelperNPC: buff skill %u not found in SkillTable", buffId);
 					continue;
 				}
 				CSkillBot* pSkill = new CSkillBot;
 				if (!pSkill->Create(pSkillTbldat, pHelper, INVALID_BYTE))
 				{
-					ERR_LOG(LOG_GENERAL, "HelperNPC: buff skill %u create FAIL", buffId);
+					VLog(cfg.bVerboseLogs, "HelperNPC: buff skill %u create FAIL", buffId);
 					continue;
 				}
-				bool ok = pSM->AddSkill(0, pHelper, pSkill, buffId, m_config.buffBasis, m_config.buffLP, m_config.buffTime);
-				ERR_LOG(LOG_GENERAL, "HelperNPC: buff skill %u add %s (basis=%u lp=%u time=%u)",
-					buffId, ok ? "OK" : "FAIL", m_config.buffBasis, m_config.buffLP, m_config.buffTime);
+				bool ok = pSM->AddSkill(0, pHelper, pSkill, buffId, cfg.buffBasis, cfg.buffLP, cfg.buffTime);
+				VLog(cfg.bVerboseLogs, "HelperNPC: buff skill %u add %s (basis=%u lp=%u time=%u)",
+					buffId, ok ? "OK" : "FAIL", cfg.buffBasis, cfg.buffLP, cfg.buffTime);
+			}
+			// Ensure resurrect skill is available
+			if (cfg.resurrectSkillTblidx != INVALID_TBLIDX && !pSM->FindSkillCondition(cfg.resurrectSkillTblidx))
+			{
+				sSKILL_TBLDAT* pSkillTbldat = (sSKILL_TBLDAT*)g_pTableContainer->GetSkillTable()->FindData(cfg.resurrectSkillTblidx);
+				if (pSkillTbldat)
+				{
+					CSkillBot* pSkill = new CSkillBot;
+					if (pSkill->Create(pSkillTbldat, pHelper, INVALID_BYTE))
+					{
+						bool ok = pSM->AddSkill(0, pHelper, pSkill, cfg.resurrectSkillTblidx, /*Give*/4, /*LP*/0, /*Time*/0);
+						VLog(cfg.bVerboseLogs, "HelperNPC: resurrect skill %u add %s", cfg.resurrectSkillTblidx, ok ? "OK" : "FAIL");
+					}
+				}
 			}
 		}
 	}
@@ -509,10 +885,10 @@ bool CHelperNpcManager::SpawnIfAllowed(CPlayer* pLeader, CWorld* pWorld)
 	if (pHelper->GetCurEP() < pHelper->GetMaxEP())
 	{
 		pHelper->SetCurEP(pHelper->GetMaxEP());
-		ERR_LOG(LOG_GENERAL, "HelperNPC: EP set to max (%u) for helper %u", pHelper->GetMaxEP(), pHelper->GetID());
+		VLog(cfg.bVerboseLogs, "HelperNPC: EP set to max (%u) for helper %u", pHelper->GetMaxEP(), pHelper->GetID());
 	}
 
-	if (m_config.bFollowLeader)
+	if (cfg.bFollowLeader)
 	{
 		// Drive following directly without starting Escort action, to avoid escort-triggered Leave states
 		sVECTOR3 vLeaderLoc;
@@ -520,19 +896,26 @@ bool CHelperNpcManager::SpawnIfAllowed(CPlayer* pLeader, CWorld* pWorld)
 		const float fFollowDist = 2.0f; // keep very close to the leader
 		if (pHelper->SendCharStateFollowing(pLeader->GetID(), fFollowDist, DBO_MOVE_FOLLOW_FRIENDLY, vLeaderLoc, true))
 		{
-			ERR_LOG(LOG_GENERAL, "HelperNPC: Direct follow started to leader %u at (%.2f, %.2f, %.2f)", pLeader->GetID(), vLeaderLoc.x, vLeaderLoc.y, vLeaderLoc.z);
+			VLog(cfg.bVerboseLogs, "HelperNPC: Direct follow started to leader %u at (%.2f, %.2f, %.2f)", pLeader->GetID(), vLeaderLoc.x, vLeaderLoc.y, vLeaderLoc.z);
 		}
 		else
 		{
-			ERR_LOG(LOG_GENERAL, "HelperNPC: Direct follow failed to start (npc state transition rejected)");
+			VLog(cfg.bVerboseLogs, "HelperNPC: Direct follow failed to start (npc state transition rejected)");
 		}
 	}
 
-	// Track mapping so we can assist leader's target and avoid duplicates per world
-	m_worldsWithHelper.insert(pWorld->GetID());
+	// Track mappings so we can assist leader's target and dedupe by helper ID
+	// Keep legacy single mapping as the most recent helper
 	m_mapLeaderToHelper[pLeader->GetID()] = pHelper->GetID();
+	m_helperConfigByHelper[pHelper->GetID()] = cfg;
+	m_helperKindByHelper[pHelper->GetID()] = helperTblidx;
+	auto& list = m_leaderToHelpers[pLeader->GetID()];
+	list.push_back(pHelper->GetID());
 
-	ERR_LOG(LOG_GENERAL, "HelperNPC: spawn success %s %u in world %u%s", bSpawnMob ? "mob" : "npc", helperTblidx, pWorld->GetID(), m_config.bInvincibleHelper ? " (invincible)" : "");
+	VLog(cfg.bVerboseLogs, "HelperNPC: spawn success %s %u in world %u%s", bSpawnMob ? "mob" : "npc", helperTblidx, pWorld->GetID(), cfg.bInvincibleHelper ? " (invincible)" : "");
+
+	// Clear pending guard on success
+	m_pendingSpawns.erase(key);
 
 	return true;
 }
@@ -541,32 +924,69 @@ void CHelperNpcManager::OnWorldDestroyed(CWorld* pWorld)
 {
 	if (!pWorld)
 		return;
-	m_worldsWithHelper.erase(pWorld->GetID());
-	ERR_LOG(LOG_GENERAL, "HelperNPC: world %u destroyed - cleared helper mark", pWorld->GetID());
+	// Clean up helpers tied to this world
+	std::vector<HOBJECT> toErase;
+	for (const auto& kv : m_helperConfigByHelper)
+	{
+		HOBJECT hHelper = kv.first;
+		CNpc* p = g_pObjectManager->GetNpc(hHelper);
+		if (!p || !p->IsInitialized() || p->GetCurWorld() == pWorld)
+			toErase.push_back(hHelper);
+	}
+	for (HOBJECT h : toErase)
+	{
+		m_helperConfigByHelper.erase(h);
+		m_helperKindByHelper.erase(h);
+		// Also remove from leader lists
+		for (auto& lk : m_leaderToHelpers)
+		{
+			auto& vec = lk.second;
+			vec.erase(std::remove(vec.begin(), vec.end(), h), vec.end());
+		}
+	}
+	VLog(m_config.bVerboseLogs, "HelperNPC: world %u destroyed - cleaned helper tracking", pWorld->GetID());
 }
 
 void CHelperNpcManager::OnLeaderAttackTarget(CPlayer* pLeader, HOBJECT hTarget)
 {
-	if (!m_config.bEnabled || !m_config.bAssistLeaderTarget)
-		return;
 	if (!pLeader || hTarget == INVALID_HOBJECT)
 		return;
 
 	auto it = m_mapLeaderToHelper.find(pLeader->GetID());
 	if (it == m_mapLeaderToHelper.end())
+	{
+		VLog(m_config.bVerboseLogs, "HelperNPC: no helper linked to leader %u - ignore attack target", pLeader->GetID());
 		return;
+	}
 
 	CNpc* pHelper = g_pObjectManager->GetNpc(it->second);
 	if (!pHelper || !pHelper->IsInitialized() || pHelper->GetCurWorld() != pLeader->GetCurWorld())
+	{
+		VLog(m_config.bVerboseLogs, "HelperNPC: helper handle invalid or not in same world for leader %u", pLeader->GetID());
+		return;
+	}
+
+	const sHELPER_NPC_CONFIG* pcfg = nullptr;
+	{
+		auto itCfg = m_helperConfigByHelper.find(pHelper->GetID());
+		pcfg = (itCfg != m_helperConfigByHelper.end()) ? &itCfg->second : &m_config;
+	}
+	if (!pcfg->bEnabled || !pcfg->bAssistLeaderTarget)
 		return;
 
 	// Only assist if the target is attackable by the helper
 	CCharacter* pVictim = g_pObjectManager->GetChar(hTarget);
 	if (!pVictim || !pVictim->IsInitialized())
+	{
+		VLog(pcfg->bVerboseLogs, "HelperNPC: leader %u target invalid - skip assist", pLeader->GetID());
 		return;
+	}
 
 	if (!pHelper->IsTargetAttackble(pVictim, pHelper->GetTbldat()->wSight_Range))
+	{
+		VLog(pcfg->bVerboseLogs, "HelperNPC: helper %u cannot attack target %u - out of constraints", pHelper->GetID(), hTarget);
 		return;
+	}
 
 	// Nudge helper's aggro to the leader's target so existing AI will attack
 	CObjMsg_YouKeepAggro msg;
@@ -574,12 +994,11 @@ void CHelperNpcManager::OnLeaderAttackTarget(CPlayer* pLeader, HOBJECT hTarget)
 	msg.hProvoker = hTarget;
 	msg.dwAggroPoint = pHelper->GetTbldat()->wBasic_Aggro_Point + 1;
 	pHelper->SendObjectMsg(&msg);
+	VLog(pcfg->bVerboseLogs, "HelperNPC: nudged aggro of helper %u toward target %u for leader %u", pHelper->GetID(), hTarget, pLeader->GetID());
 }
 
 void CHelperNpcManager::OnLeaderAttackEnd(CPlayer* pLeader)
 {
-	if (!m_config.bEnabled || !m_config.bFollowLeader)
-		return;
 	if (!pLeader)
 		return;
 
@@ -591,6 +1010,14 @@ void CHelperNpcManager::OnLeaderAttackEnd(CPlayer* pLeader)
 	if (!pHelper || !pHelper->IsInitialized() || pHelper->GetCurWorld() != pLeader->GetCurWorld())
 		return;
 
+	const sHELPER_NPC_CONFIG* pcfg = nullptr;
+	{
+		auto itCfg = m_helperConfigByHelper.find(pHelper->GetID());
+		pcfg = (itCfg != m_helperConfigByHelper.end()) ? &itCfg->second : &m_config;
+	}
+	if (!pcfg->bEnabled || !pcfg->bFollowLeader)
+		return;
+
 	// If helper has no aggro and no current target, resume following leader
 	if (pHelper->GetTargetListManager()->GetAggroCount() == 0 && pHelper->GetTargetHandle() == INVALID_HOBJECT)
 	{
@@ -598,6 +1025,7 @@ void CHelperNpcManager::OnLeaderAttackEnd(CPlayer* pLeader)
 		pLeader->GetCurLoc().CopyTo(vLeaderLoc);
 		const float fFollowDist = 1.5f;
 		pHelper->SendCharStateFollowing(pLeader->GetID(), fFollowDist, DBO_MOVE_FOLLOW_FRIENDLY, vLeaderLoc, true);
+		VLog(pcfg->bVerboseLogs, "HelperNPC: resumed follow to leader %u after combat", pLeader->GetID());
 	}
 }
 
@@ -605,16 +1033,14 @@ float CHelperNpcManager::GetDamageMultiplierForHelper(CNpc* pNpc)
 {
 	if (!pNpc)
 		return 1.0f;
-	// A helper is identified by having a link to a PC and being marked allied, and also being tracked in our leader->helper map.
+	// A helper is identified by having a link to a PC and being marked allied, and also being tracked in our helper maps.
 	if (pNpc->GetLinkPc() != INVALID_HOBJECT && pNpc->GetPcRelation() == RELATION_TYPE_ALLIENCE)
 	{
-		// Ensure this npc is one of our registered helpers
-		for (const auto& kv : m_mapLeaderToHelper)
+		auto itCfg = m_helperConfigByHelper.find(pNpc->GetID());
+		if (itCfg != m_helperConfigByHelper.end())
 		{
-			if (kv.second == pNpc->GetID())
-			{
-				return m_config.fDamageMultiplier > 0.f ? m_config.fDamageMultiplier : 1.0f;
-			}
+			const sHELPER_NPC_CONFIG* pcfg = &itCfg->second;
+			return pcfg->fDamageMultiplier > 0.f ? pcfg->fDamageMultiplier : 1.0f;
 		}
 	}
 	return 1.0f;
@@ -626,13 +1052,468 @@ float CHelperNpcManager::GetHealMultiplierForHelper(CNpc* pNpc)
 		return 1.0f;
 	if (pNpc->GetLinkPc() != INVALID_HOBJECT && pNpc->GetPcRelation() == RELATION_TYPE_ALLIENCE)
 	{
-		for (const auto& kv : m_mapLeaderToHelper)
+		auto itCfg = m_helperConfigByHelper.find(pNpc->GetID());
+		if (itCfg != m_helperConfigByHelper.end())
 		{
-			if (kv.second == pNpc->GetID())
-			{
-				return m_config.fHealPowerMultiplier > 0.f ? m_config.fHealPowerMultiplier : 1.0f;
-			}
+			const sHELPER_NPC_CONFIG* pcfg = &itCfg->second;
+			return pcfg->fHealPowerMultiplier > 0.f ? pcfg->fHealPowerMultiplier : 1.0f;
 		}
 	}
 	return 1.0f;
+}
+
+bool CHelperNpcManager::IsRegisteredHelper(CNpc* pNpc) const
+{
+	if (!pNpc)
+		return false;
+	if (pNpc->GetLinkPc() == INVALID_HOBJECT || pNpc->GetPcRelation() != RELATION_TYPE_ALLIENCE)
+		return false;
+	for (const auto& kv : m_mapLeaderToHelper)
+	{
+		if (kv.second == pNpc->GetID())
+			return true;
+	}
+	return false;
+}
+
+const sHELPER_NPC_CONFIG* CHelperNpcManager::GetConfigForHelper(CNpc* pNpc) const
+{
+	if (!pNpc)
+		return nullptr;
+	auto it = m_helperConfigByHelper.find(pNpc->GetID());
+	if (it == m_helperConfigByHelper.end())
+		return nullptr;
+	return &it->second;
+}
+
+void CHelperNpcManager::TickWatchdog(DWORD dwNow)
+{
+	const DWORD WATCHDOG_INTERVAL_MS = 2000; // light check
+	if (m_dwLastWatchdogTick != 0 && (dwNow - m_dwLastWatchdogTick) < WATCHDOG_INTERVAL_MS)
+		return;
+	m_dwLastWatchdogTick = dwNow;
+
+	// For each leader we know, ensure valid helpers exist in the same world
+	for (const auto& kv : m_mapLeaderToHelper)
+	{
+		HOBJECT hLeader = kv.first;
+		CPlayer* pLeader = (CPlayer*)g_pObjectManager->GetPC(hLeader);
+		if (!pLeader || !pLeader->IsInitialized())
+		{
+			continue; // leader gone; let cleanup happen elsewhere
+		}
+		CWorld* pWorld = pLeader->GetCurWorld();
+		if (!pWorld)
+			continue;
+
+		// Only allow helpers inside instance/dungeon-like worlds (HUNT/CCBATTLEDUNGEON/TIMEQUEST or extra lists)
+		eGAMERULE_TYPE rule = pWorld->GetRuleType();
+		WORLDID wid = pWorld->GetID();
+		bool bUD = (rule == GAMERULE_HUNT) || (this->m_extraUDWorldIDs.find(wid) != this->m_extraUDWorldIDs.end());
+		bool bBD = (rule == GAMERULE_CCBATTLEDUNGEON) || (this->m_extraBDWorldIDs.find(wid) != this->m_extraBDWorldIDs.end());
+		bool bTMQ = (rule == GAMERULE_TIMEQUEST) || (this->m_extraTMQWorldIDs.find(wid) != this->m_extraTMQWorldIDs.end());
+		if (!bUD && !bBD && !bTMQ)
+		{
+			// Not a dynamic world; ensure any helpers in this world for this leader are despawned
+			DespawnAllHelpersForLeaderInWorld(pLeader, pWorld);
+			continue;
+		}
+
+		// Check all helpers for this leader
+		std::vector<TBLIDX> existingKinds;
+		{
+			auto itList = m_leaderToHelpers.find(hLeader);
+			if (itList != m_leaderToHelpers.end())
+			{
+				for (HOBJECT h : itList->second)
+				{
+					CNpc* hh = g_pObjectManager->GetNpc(h);
+					if (hh && hh->IsInitialized() && hh->GetCurWorld() == pWorld)
+					{
+						auto itK = m_helperKindByHelper.find(h);
+						if (itK != m_helperKindByHelper.end()) existingKinds.push_back(itK->second);
+					}
+				}
+			}
+		}
+
+		// Determine proper config for this world (UD vs BD vs TMQ) based on world rule type
+		const sHELPER_NPC_CONFIG* pCfg = &m_config;
+	// rule flags already computed above
+		if (bUD)
+			pCfg = m_hasUDOverride ? &m_cfgUD : &m_config;
+		else if (bBD)
+			pCfg = m_hasBDOverride ? &m_cfgBD : &m_config;
+		else if (bTMQ)
+			pCfg = m_hasTMQOverride ? &m_cfgTMQ : &m_config;
+
+		if (!pCfg->bEnabled)
+			continue;
+
+		// Only care about dungeons we allow
+		if (bUD && !pCfg->bAllowUltimate) continue;
+		if (bBD && !pCfg->bAllowBattleDungeon) continue;
+		if (bTMQ && !pCfg->bAllowTimeQuest) continue;
+
+		// Re-run spawn rule: if party is small enough
+		BYTE byCount = 1;
+		if (pLeader->GetParty())
+			byCount = pLeader->GetParty()->GetPartyMemberCount();
+		if (byCount >= pCfg->byMinPartySizeToAvoidSpawn)
+			continue;
+
+		// Evaluate role-based helpers first (healer/tank/buffer/speed)
+		EvaluateAndSpawnRoleHelpers(pLeader, pWorld);
+
+		// If leader currently has no helper of this config’s helper ID, attempt base spawn
+		TBLIDX desiredTblidx = INVALID_TBLIDX;
+		if (pCfg->bUseMobAsHelper)
+			desiredTblidx = pCfg->helperMobTblidx;
+		else if (g_pTableContainer->GetNpcTable()->FindData(pCfg->primaryNpcTblidx))
+			desiredTblidx = pCfg->primaryNpcTblidx;
+		else
+			desiredTblidx = pCfg->fallbackNpcTblidx;
+
+		bool hasSame = false;
+		for (TBLIDX t : existingKinds) { if (t == desiredTblidx) { hasSame = true; break; } }
+		if (!hasSame)
+		{
+			VLog(pCfg->bVerboseLogs, "HelperNPC: watchdog spawn for leader %u world %u (missing helper tblidx %u)", pLeader->GetID(), pWorld->GetID(), desiredTblidx);
+			SpawnIfAllowed(pLeader, pWorld, *pCfg);
+		}
+
+		// Done
+	}
+}
+
+void CHelperNpcManager::EnsureHelperForLeaderNow(CPlayer* pLeader)
+{
+	if (!pLeader || !pLeader->IsInitialized())
+		return;
+	CWorld* pWorld = pLeader->GetCurWorld();
+	if (!pWorld)
+		return;
+
+	// If helper is already present in this world for this leader, nothing to do
+	auto it = m_mapLeaderToHelper.find(pLeader->GetID());
+	if (it != m_mapLeaderToHelper.end())
+	{
+		CNpc* pHelper = g_pObjectManager->GetNpc(it->second);
+		if (pHelper && pHelper->IsInitialized() && pHelper->GetCurWorld() == pWorld)
+		{
+			// Re-link to ensure the helper targets the correct leader handle after respawn
+			pHelper->SetLinkPc(pLeader->GetCharID(), pLeader->GetID());
+			// Reassert follow/assist to recover from any stale state after respawn
+			const sHELPER_NPC_CONFIG* pcfg = GetConfigForHelper(pHelper);
+			const sHELPER_NPC_CONFIG& cfg = pcfg ? *pcfg : m_config;
+			if (cfg.bFollowLeader)
+			{
+				sVECTOR3 vLeaderLoc; pLeader->GetCurLoc().CopyTo(vLeaderLoc);
+				pHelper->SendCharStateFollowing(pLeader->GetID(), 1.5f, DBO_MOVE_FOLLOW_FRIENDLY, vLeaderLoc, true);
+				VLog(cfg.bVerboseLogs, "HelperNPC: EnsureHelperForLeaderNow - reassert follow to leader %u in world %u", pLeader->GetID(), pWorld->GetID());
+			}
+			if (cfg.bAssistLeaderTarget)
+			{
+				HOBJECT hVictim = pLeader->GetTargetHandle();
+				if (hVictim != INVALID_HOBJECT)
+				{
+					if (pHelper->GetTargetHandle() != hVictim) pHelper->SetTargetHandle(hVictim);
+					VLog(cfg.bVerboseLogs, "HelperNPC: EnsureHelperForLeaderNow - reassert assist target %u for leader %u", hVictim, pLeader->GetID());
+				}
+			}
+			return;
+		}
+	}
+
+	// Choose config by world rule type, with allowlists
+	const sHELPER_NPC_CONFIG* pCfg = &m_config;
+	eGAMERULE_TYPE rule = pWorld->GetRuleType();
+	WORLDID wid = pWorld->GetID();
+	bool forceUD = (this->m_extraUDWorldIDs.find(wid) != this->m_extraUDWorldIDs.end());
+	bool forceBD = (this->m_extraBDWorldIDs.find(wid) != this->m_extraBDWorldIDs.end());
+	bool forceTMQ = (this->m_extraTMQWorldIDs.find(wid) != this->m_extraTMQWorldIDs.end());
+	if (rule == GAMERULE_HUNT || forceUD)
+		pCfg = m_hasUDOverride ? &m_cfgUD : &m_config;
+	else if (rule == GAMERULE_CCBATTLEDUNGEON || forceBD)
+		pCfg = m_hasBDOverride ? &m_cfgBD : &m_config;
+	else if (rule == GAMERULE_TIMEQUEST || forceTMQ)
+		pCfg = m_hasTMQOverride ? &m_cfgTMQ : &m_config;
+
+	if (!pCfg->bEnabled)
+		return;
+
+	if ((rule == GAMERULE_HUNT || forceUD) && !pCfg->bAllowUltimate) return;
+	if ((rule == GAMERULE_CCBATTLEDUNGEON || forceBD) && !pCfg->bAllowBattleDungeon) return;
+	if ((rule == GAMERULE_TIMEQUEST || forceTMQ) && !pCfg->bAllowTimeQuest) return;
+
+	// Party size rule
+	BYTE byCount = 1;
+	if (pLeader->GetParty()) byCount = pLeader->GetParty()->GetPartyMemberCount();
+	if (byCount >= pCfg->byMinPartySizeToAvoidSpawn) return;
+
+	// Allow immediate repair by clearing any stale world mark and spawning now
+	m_worldsWithHelper.erase(pWorld->GetID());
+	VLog(pCfg->bVerboseLogs, "HelperNPC: EnsureHelperForLeaderNow - attempting immediate repair for leader %u world %u", pLeader->GetID(), pWorld->GetID());
+	// Spawn role helpers first to avoid base helper blocking same-tblidx roles (e.g., HEALER)
+	EvaluateAndSpawnRoleHelpers(pLeader, pWorld);
+	// Then spawn base helper if allowed (will be skipped if party size threshold met)
+	SpawnIfAllowed(pLeader, pWorld, *pCfg);
+}
+
+void CHelperNpcManager::DespawnAllHelpersForLeaderInWorld(CPlayer* pLeader, CWorld* pWorld)
+{
+	if (!pLeader || !pWorld) return;
+	auto itList = m_leaderToHelpers.find(pLeader->GetID());
+	if (itList == m_leaderToHelpers.end()) return;
+	std::vector<HOBJECT> kept;
+	for (HOBJECT h : itList->second)
+	{
+		CNpc* hh = g_pObjectManager->GetNpc(h);
+		if (hh && hh->IsInitialized() && hh->GetCurWorld() == pWorld)
+		{
+			if (hh->GetBotController())
+				hh->GetBotController()->ChangeControlState_Despawn();
+			m_helperConfigByHelper.erase(hh->GetID());
+			m_helperKindByHelper.erase(hh->GetID());
+			continue;
+		}
+		kept.push_back(h);
+	}
+	itList->second.swap(kept);
+	if (itList->second.empty())
+		m_mapLeaderToHelper.erase(pLeader->GetID());
+}
+
+void CHelperNpcManager::OnLeaderLeaveWorld(CPlayer* pLeader, CWorld* pWorld)
+{
+	if (!pLeader || !pWorld) return;
+	// Despawn helpers whenever the leader leaves a world. If it's a dungeon world, helpers should not persist once leader exits.
+	DespawnAllHelpersForLeaderInWorld(pLeader, pWorld);
+	VLog(m_config.bVerboseLogs, "HelperNPC: leader %u left world %u - despawned helpers in that world", pLeader->GetID(), pWorld->GetID());
+}
+
+void CHelperNpcManager::EvaluateAndSpawnRoleHelpers(CPlayer* pLeader, CWorld* pWorld)
+{
+	if (!pLeader || !pWorld) return;
+
+	auto evalRole = [&](const sROLE_DEF& role) {
+		if (!role.enabled) return;
+
+		// Respect world types using the role cfg's allow flags
+		const sHELPER_NPC_CONFIG& cfg = role.cfg;
+		eGAMERULE_TYPE rule = pWorld->GetRuleType();
+		WORLDID wid = pWorld->GetID();
+		bool bUD = (rule == GAMERULE_HUNT) || (this->m_extraUDWorldIDs.find(wid) != this->m_extraUDWorldIDs.end());
+		bool bBD = (rule == GAMERULE_CCBATTLEDUNGEON) || (this->m_extraBDWorldIDs.find(wid) != this->m_extraBDWorldIDs.end());
+		bool bTMQ = (rule == GAMERULE_TIMEQUEST) || (this->m_extraTMQWorldIDs.find(wid) != this->m_extraTMQWorldIDs.end());
+		if ((bUD && !cfg.bAllowUltimate) || (bBD && !cfg.bAllowBattleDungeon) || (bTMQ && !cfg.bAllowTimeQuest)) return;
+
+		// Party size rule
+		BYTE byCount = 1;
+		if (pLeader->GetParty()) byCount = pLeader->GetParty()->GetPartyMemberCount();
+		if (byCount >= cfg.byMinPartySizeToAvoidSpawn) return;
+
+		// Determine if party already covers this role
+		bool covered = false;
+		if (pLeader->GetParty())
+		{
+			CParty* party = pLeader->GetParty();
+			BYTE mc = party->GetPartyMemberCount();
+			for (BYTE i = 0; i < mc; ++i)
+			{
+				const sPARTY_MEMBER_INFO& info = party->GetMemberInfo(i);
+				if (role.coveredClasses.find((int)info.byClass) != role.coveredClasses.end())
+				{ covered = true; break; }
+			}
+		}
+		// If no class list provided, require at least 1 party member to skip spawning (otherwise always missing)
+		if (role.coveredClasses.empty())
+		{
+			// If only solo (no party), treat as missing
+			if (!pLeader->GetParty() || pLeader->GetParty()->GetPartyMemberCount() <= 1)
+				covered = false;
+			else
+				covered = true; // party exists; assume covered unless stated otherwise
+		}
+		if (covered) return;
+
+		// Desired helper ID for this role
+		TBLIDX desiredTblidx = INVALID_TBLIDX;
+		bool useMob = cfg.bUseMobAsHelper;
+		if (useMob)
+			desiredTblidx = cfg.helperMobTblidx;
+		else if (g_pTableContainer->GetNpcTable()->FindData(cfg.primaryNpcTblidx))
+			desiredTblidx = cfg.primaryNpcTblidx;
+		else
+			desiredTblidx = cfg.fallbackNpcTblidx;
+		if (desiredTblidx == INVALID_TBLIDX || desiredTblidx == 0) return;
+
+		// Count existing helpers of this kind for this leader in this world
+		int existing = 0;
+		{
+			auto itList = m_leaderToHelpers.find(pLeader->GetID());
+			if (itList != m_leaderToHelpers.end())
+			{
+				for (HOBJECT h : itList->second)
+				{
+					CNpc* hh = g_pObjectManager->GetNpc(h);
+					if (hh && hh->IsInitialized() && hh->GetCurWorld() == pWorld)
+					{
+						auto itK = m_helperKindByHelper.find(h);
+						if (itK != m_helperKindByHelper.end() && itK->second == desiredTblidx)
+							existing++;
+					}
+				}
+			}
+		}
+		if (existing >= role.maxCount) return;
+
+		VLog(cfg.bVerboseLogs, "HelperNPC: role spawn [%s] for leader %u world %u (existing=%d < max=%u)",
+			(useMob ? "MOB" : "NPC"), pLeader->GetID(), pWorld->GetID(), existing, (unsigned)role.maxCount);
+		SpawnIfAllowed(pLeader, pWorld, cfg);
+	};
+
+	evalRole(m_roleHealer);
+	evalRole(m_roleTank);
+	evalRole(m_roleBuffer);
+	evalRole(m_roleSpeed);
+}
+
+void CHelperNpcManager::RemoveRoleHelpersForLeader(CPlayer* pLeader, CWorld* pWorld, bool removeHealer, bool removeTank, bool removeBuffer, bool removeSpeed)
+{
+	if (!pLeader || !pWorld) return;
+	auto it = m_leaderToHelpers.find(pLeader->GetID());
+	if (it == m_leaderToHelpers.end()) return;
+
+	std::vector<HOBJECT> kept;
+	for (HOBJECT h : it->second)
+	{
+		CNpc* hh = g_pObjectManager->GetNpc(h);
+		if (!hh || !hh->IsInitialized() || hh->GetCurWorld() != pWorld)
+		{
+			// Clean dangling
+			m_helperConfigByHelper.erase(h);
+			m_helperKindByHelper.erase(h);
+			continue;
+		}
+		TBLIDX kind = INVALID_TBLIDX;
+		{
+			auto itK = m_helperKindByHelper.find(h);
+			if (itK != m_helperKindByHelper.end()) kind = itK->second;
+		}
+	bool isHealer = false, isTank = false, isBuffer = false, isSpeed = false;
+		if (kind != INVALID_TBLIDX)
+		{
+			// Classify by comparing with role-config desired IDs
+			auto classify = [&](const sROLE_DEF& role, bool& out) {
+				if (!role.enabled) return;
+				const sHELPER_NPC_CONFIG& cfg = role.cfg;
+				TBLIDX desired = cfg.bUseMobAsHelper ? cfg.helperMobTblidx : (g_pTableContainer->GetNpcTable()->FindData(cfg.primaryNpcTblidx) ? cfg.primaryNpcTblidx : cfg.fallbackNpcTblidx);
+				if (desired != INVALID_TBLIDX && desired == kind) out = true;
+			};
+			classify(m_roleHealer, isHealer);
+			classify(m_roleTank, isTank);
+			classify(m_roleBuffer, isBuffer);
+			classify(m_roleSpeed, isSpeed);
+		}
+
+		bool shouldRemove = (removeHealer && isHealer) || (removeTank && isTank) || (removeBuffer && isBuffer) || (removeSpeed && isSpeed);
+		if (shouldRemove)
+		{
+			VLog(m_config.bVerboseLogs, "HelperNPC: removing role helper kind %u for leader %u due to party composition change", kind, pLeader->GetID());
+			// Transition helper to despawn state for a clean removal
+			if (hh->GetBotController())
+				hh->GetBotController()->ChangeControlState_Despawn();
+			// Remove tracking immediately to prevent re-spawn loops until next watchdog cycle
+			m_helperConfigByHelper.erase(hh->GetID());
+			m_helperKindByHelper.erase(hh->GetID());
+			continue; // do not keep
+		}
+		kept.push_back(h);
+	}
+	it->second.swap(kept);
+	// Update single latest mapping if needed
+	if (!it->second.empty())
+		m_mapLeaderToHelper[pLeader->GetID()] = it->second.back();
+	else
+		m_mapLeaderToHelper.erase(pLeader->GetID());
+}
+
+void CHelperNpcManager::OnPartyMemberJoined(CParty* pParty, CPlayer* pNewMember)
+{
+	if (!pParty || !pNewMember) return;
+	// Only act if the party is in a dungeon world where helpers can exist
+	CPlayer* pLeader = g_pObjectManager->GetPC(pParty->GetPartyLeaderID());
+	if (!pLeader || !pLeader->IsInitialized()) return;
+	CWorld* pWorld = pLeader->GetCurWorld();
+	if (!pWorld) return;
+
+	// Determine the role coverage impact of the new member
+	BYTE cls = pNewMember->GetClass();
+	bool hasHealerNow = false;
+	bool hasBufferTankNow = false;
+	bool hasSpeedNow = false;
+
+	// Healer: explicit class id 15 as requested
+	if (cls == 15)
+		hasHealerNow = true;
+
+	// Buffer/Tank: Ultimate Majin or Grand Chef (IDs depend on server; use examples provided)
+	// From earlier defaults: GrandChef=17, UltimateMajin=18. Treat either as tank+buffer coverage.
+	if (cls == 17 || cls == 18)
+		hasBufferTankNow = true;
+	// Speed buffer classes: Poko=16, Karma=20
+	if (cls == 16 || cls == 20)
+		hasSpeedNow = true;
+
+	if (!hasHealerNow && !hasBufferTankNow && !hasSpeedNow)
+		return;
+
+	// Remove appropriate role helpers
+	RemoveRoleHelpersForLeader(pLeader, pWorld, /*removeHealer*/hasHealerNow, /*removeTank*/hasBufferTankNow, /*removeBuffer*/hasBufferTankNow, /*removeSpeed*/hasSpeedNow);
+}
+void CHelperNpcManager::OnPartyLeaderChanged(HOBJECT oldLeader, HOBJECT newLeader)
+{
+	if (oldLeader == INVALID_HOBJECT || newLeader == INVALID_HOBJECT || oldLeader == newLeader)
+		return;
+
+	// Move single-latest mapping if it matches oldLeader
+	auto itSingle = m_mapLeaderToHelper.find(oldLeader);
+	if (itSingle != m_mapLeaderToHelper.end())
+	{
+		HOBJECT hHelper = itSingle->second;
+		m_mapLeaderToHelper.erase(itSingle);
+		m_mapLeaderToHelper[newLeader] = hHelper;
+	}
+
+	// Move list of helpers to new leader
+	auto itList = m_leaderToHelpers.find(oldLeader);
+	if (itList != m_leaderToHelpers.end())
+	{
+		auto& from = itList->second;
+		auto& to = m_leaderToHelpers[newLeader];
+		to.insert(to.end(), from.begin(), from.end());
+		m_leaderToHelpers.erase(itList);
+
+		// Re-link each helper to the new leader and restart following
+		CPlayer* pNewLeader = (CPlayer*)g_pObjectManager->GetPC(newLeader);
+		if (pNewLeader && pNewLeader->IsInitialized())
+		{
+			for (HOBJECT h : to)
+			{
+				CNpc* pHelper = g_pObjectManager->GetNpc(h);
+				if (!pHelper || !pHelper->IsInitialized())
+					continue;
+				pHelper->SetLinkPc(pNewLeader->GetCharID(), newLeader);
+				pHelper->SetPcRelation(RELATION_TYPE_ALLIENCE);
+				if (pHelper->GetCurWorld() == pNewLeader->GetCurWorld())
+				{
+					sVECTOR3 vLeaderLoc; pNewLeader->GetCurLoc().CopyTo(vLeaderLoc);
+					const float fFollowDist = 2.0f;
+					pHelper->SendCharStateFollowing(newLeader, fFollowDist, DBO_MOVE_FOLLOW_FRIENDLY, vLeaderLoc, true);
+				}
+			}
+			EvaluateAndSpawnRoleHelpers(pNewLeader, pNewLeader->GetCurWorld());
+		}
+	}
 }
