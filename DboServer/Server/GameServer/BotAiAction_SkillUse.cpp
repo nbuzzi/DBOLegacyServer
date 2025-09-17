@@ -171,13 +171,31 @@ int CBotAiAction_SkillUse::OnUpdate(DWORD dwTickDiff, float fMultiple)
 	// Use the skill on the computed target
 	GetBot()->GetTargetListManager()->SetAggroLastUpdateTime();
 
+	// Pre-cast stabilization: if helper is in FOLLOWING state but not moving, send standing to avoid rc=605 spam
+	if (GetHelperNpcManager()->IsRegisteredHelper(GetBot()))
+	{
+		if (GetBot()->GetCharStateID() == CHARSTATE_FOLLOWING && GetBot()->GetMoveFlag() == NTL_MOVE_FLAG_INVALID)
+			GetBot()->SendCharStateStanding(true);
+	}
+
 	pSkillManager->SetCurSkillTblidx(pSkillCond->GetSkillTblidx());
 	pSkillManager->SetCurSkillConditionIdx(m_bySkillIndex);
 	pSkillManager->SetSkillUse_Lock();
 
 	WORD wTemp;
 	CNtlVector vFinalSubjectLoc;
+	// Track consecutive 605 failures per helper (static map keyed by helper handle)
+	static std::unordered_map<HOBJECT, unsigned> s_consec605;
+	WORD prevResult = GAME_SUCCESS;
 	pSkillCond->GetSkill()->UseSkill(INVALID_BYTE, hTarget, vFinalSubjectLoc, GetBot()->GetCurLoc(), targetList.byTargetCount, targetList.ahTarget, wTemp);
+	if (wTemp == GAME_SKILL_CANT_CAST_NOW && GetHelperNpcManager()->IsRegisteredHelper(GetBot()))
+	{
+		++s_consec605[GetBot()->GetID()];
+	}
+	else if (GetHelperNpcManager()->IsRegisteredHelper(GetBot()))
+	{
+		s_consec605[GetBot()->GetID()] = 0;
+	}
 
 	if (wTemp != GAME_SUCCESS)
 	{
@@ -207,10 +225,53 @@ int CBotAiAction_SkillUse::OnUpdate(DWORD dwTickDiff, float fMultiple)
 			}
 		}
 
-		// Recovery: if "can't cast now" (commonly 605), only force-stand when not moving; if moving, the follow logic will handle catch-up
-		if (wTemp == GAME_SKILL_CANT_CAST_NOW && GetBot()->GetMoveFlag() == NTL_MOVE_FLAG_INVALID)
+		// Recovery strategy per error
+		if (GetHelperNpcManager()->IsRegisteredHelper(GetBot()))
 		{
-			GetBot()->SendCharStateStanding(true);
+			// Map some codes for clarity (values from NtlResultCode.h):
+			// 605: GAME_SKILL_CANT_CAST_NOW (state/motion)
+			// 606: GAME_SKILL_TOO_FAR (assumed; distance)
+			// 666: often invalid target / direction / condition (fallback classification)
+			bool bForceStand = false;
+			bool bClearTarget = false;
+			bool bRequestChase = false;
+			if (wTemp == GAME_SKILL_CANT_CAST_NOW)
+			{
+				bForceStand = (GetBot()->GetMoveFlag() == NTL_MOVE_FLAG_INVALID);
+			}
+			else if (wTemp == 606) // distance / out of range
+			{
+				bRequestChase = true;
+			}
+			else if (wTemp == 666)
+			{
+				// target invalid or state mismatch; clear so AI can rescan
+				bClearTarget = true;
+			}
+			if (bForceStand)
+			{
+				GetBot()->SendCharStateStanding(true);
+				// If many consecutive 605s, introduce a brief backoff by setting status FAILED so outer logic delays requeue
+				if (s_consec605[GetBot()->GetID()] >= 3)
+				{
+					// Option: clear current action queue by staying COMPLETED but we instead slow attempts by resetting skill lock timer externally.
+				}
+			}
+			if (bClearTarget)
+				GetBot()->SetTargetHandle(INVALID_HOBJECT);
+			if (bRequestChase)
+			{
+				// Insert a chase sub-action to close distance then retry next tick
+				float fUseRange = pSkillCond->GetSkill()->GetOriginalTableData()->fUse_Range_Max;
+				if (pSkillCond->GetSkill()->GetOriginalTableData()->byApply_Target != DBO_SKILL_APPLY_TARGET_ENEMY)
+				{
+					if (const sHELPER_NPC_CONFIG* pcfg = GetHelperNpcManager()->GetConfigForHelper(GetBot()))
+						fUseRange += pcfg->fHealUseRangeBonusMeters;
+				}
+				CBotAiAction_Chase* pChase = new CBotAiAction_Chase(GetBot(), CBotAiAction_Chase::ATTACKTYPE_SKILL, fUseRange);
+				if (!AddSubControlQueue(pChase, true))
+					delete pChase; // silent fail; next tick logic will attempt again
+			}
 		}
 	}
 

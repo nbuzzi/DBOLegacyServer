@@ -32,6 +32,7 @@
 #include "StoneDropEvent.h"
 #include "Fairy Event.h"
 #include "CustomDropEvent.h"
+#include "HelperNpcManager.h"
 
 void gm_read_command(sUG_SERVER_COMMAND* sPacket, CPlayer* pPlayer)
 {
@@ -1842,7 +1843,16 @@ ACMD(do_purge) //despawn all monster around player
 				pNextMob = (CMonster*)pWorldCellSibling->GetObjectList()->GetNext(pMobTarget->GetWorldCellObjectLinker());
 
 				if (pMobTarget->GetCurWorld() && !pMobTarget->IsFainting())
-					pMobTarget->Faint(pPlayer);
+				{
+					if (GetHelperNpcManager()->IsRegisteredHelper(pMobTarget) || pMobTarget->GetStandAlone())
+					{
+						// Skip helpers (registered) and standalone MOBs (spawned as helpers)
+					}
+					else
+					{
+						pMobTarget->Faint(pPlayer);
+					}
+				}
 
 				pMobTarget = pNextMob;
 			}
@@ -1852,8 +1862,17 @@ ACMD(do_purge) //despawn all monster around player
 			{
 				pNextNpc = (CMonster*)pWorldCellSibling->GetObjectList()->GetNext(pNpcTarget->GetWorldCellObjectLinker());
 
-				if (pNpcTarget->GetCurWorld() && !pNpcTarget->IsFainting() && !pNpcTarget->GetStandAlone())
-					pNpcTarget->Faint(pPlayer);
+				if (pNpcTarget->GetCurWorld() && !pNpcTarget->IsFainting())
+				{
+					if (GetHelperNpcManager()->IsRegisteredHelper(pNpcTarget) || pNpcTarget->GetStandAlone())
+					{
+						// Skip helpers and standalone NPCs
+					}
+					else
+					{
+						pNpcTarget->Faint(pPlayer);
+					}
+				}
 
 				pNpcTarget = pNextNpc;
 			}

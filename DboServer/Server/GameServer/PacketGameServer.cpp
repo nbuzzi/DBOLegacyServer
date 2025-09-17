@@ -64,6 +64,25 @@
 #include "scsManager.h"
 #include "WPShopContainer.h"
 
+// Local helpers: detect Broly worlds by name instead of numeric IDs
+#include <string>
+#include <algorithm>
+static bool IsBrolyWorld(CWorld* pWorld)
+{
+	if (!pWorld) return false;
+	const char* name = pWorld->GetName();
+	if (!name) return false;
+	std::string s(name);
+	std::transform(s.begin(), s.end(), s.begin(), ::tolower);
+	return s.find("broly") != std::string::npos;
+}
+static bool IsBrolyWorldId(WORLDID worldId)
+{
+	CGameServer* app = (CGameServer*)g_pApp;
+	CWorld* w = app->GetGameMain()->GetWorldManager()->FindWorld(worldId);
+	return IsBrolyWorld(w);
+}
+
 //--------------------------------------------------------------------------------------//
 //		WHEN RECEIVE INVALID PACKET
 //--------------------------------------------------------------------------------------//
@@ -335,7 +354,7 @@ void CClientSession::RecvEnterWorld(CNtlPacket* pPacket)
 			if (pWorld)
 			{
 				// Broly world override
-				if (pWorld->GetID() == 920000) {
+				if (IsBrolyWorld(pWorld)) {
 					res->vCurLoc.x = -327.210f;
 					res->vCurLoc.y = -29.850f;
 					res->vCurLoc.z = 98.050f;
@@ -1069,7 +1088,7 @@ void CClientSession::RecvCharMove(CNtlPacket* pPacket)
 	}
 	else
 	{
-		if (worldId != 920000) // IS NOT BROLY DUNGEON
+		if (!IsBrolyWorldId(worldId)) // IS NOT BROLY DUNGEON
 		{
 			ERR_LOG(LOG_HACK, "Player: %u seems to be location hacking. CurLoc: %f, %f, %f NewLoc: %f %f %f", cPlayer->GetCharID(), cPlayer->GetCurLoc().x, cPlayer->GetCurLoc().y, cPlayer->GetCurLoc().z, vLoc.x, vLoc.y, vLoc.z);
 		}
@@ -1155,7 +1174,7 @@ void CClientSession::RecvCharAirMove(CNtlPacket* pPacket)
 	}
 	else
 	{
-		if (worldId != 920000) // IS NOT BROLY DUNGEON
+		if (!IsBrolyWorldId(worldId)) // IS NOT BROLY DUNGEON
 		{
 			ERR_LOG(LOG_HACK, "Player: %u seems to be location hacking. CurLoc: %f, %f, %f NewLoc: %f %f %f", cPlayer->GetCharID(), cPlayer->GetCurLoc().x, cPlayer->GetCurLoc().y, cPlayer->GetCurLoc().z, vLoc.x, vLoc.y, vLoc.z);
 		}
@@ -1233,7 +1252,7 @@ void CClientSession::RecvCharDestMove(CNtlPacket* pPacket)
 	}
 	else
 	{
-		if (worldId != 920000) // IS NOT BROLY DUNGEON
+		if (!IsBrolyWorldId(worldId)) // IS NOT BROLY DUNGEON
 		{
 			ERR_LOG(LOG_HACK, "Player: %u seems to be location hacking. CurLoc: %f, %f, %f NewLoc: %f %f %f", cPlayer->GetCharID(), cPlayer->GetCurLoc().x, cPlayer->GetCurLoc().y, cPlayer->GetCurLoc().z, vLoc.x, vLoc.y, vLoc.z);
 		}
@@ -1277,7 +1296,7 @@ void CClientSession::RecvCharAirMoveSync(CNtlPacket* pPacket)
 	}
 	else
 	{
-		if (worldId != 920000) // IS NOT BROLY DUNGEON
+		if (!IsBrolyWorldId(worldId)) // IS NOT BROLY DUNGEON
 		{
 			ERR_LOG(LOG_HACK, "Player: %u seems to be location hacking. CurLoc: %f, %f, %f NewLoc: %f %f %f", cPlayer->GetCharID(), cPlayer->GetCurLoc().x, cPlayer->GetCurLoc().y, cPlayer->GetCurLoc().z, vLoc.x, vLoc.y, vLoc.z);
 		}
@@ -1396,7 +1415,7 @@ void CClientSession::RecvCharMoveCollision(CNtlPacket* pPacket)
 		}
 		else
 		{
-			if (worldId != 920000) // IS NOT BROLY DUNGEON
+			if (!IsBrolyWorldId(worldId)) // IS NOT BROLY DUNGEON
 			{
 				ERR_LOG(LOG_HACK, "Player: %u seems to be location hacking. CurLoc: %f, %f, %f NewLoc: %f %f %f", cPlayer->GetCharID(), cPlayer->GetCurLoc().x, cPlayer->GetCurLoc().y, cPlayer->GetCurLoc().z, vLoc.x, vLoc.y, vLoc.z);
 			}
@@ -1437,7 +1456,7 @@ void CClientSession::RecvCharMoveCollisionEnd(CNtlPacket* pPacket)
 		}
 		else
 		{
-			if (worldId != 920000) // IS NOT BROLY DUNGEON
+			if (!IsBrolyWorldId(worldId)) // IS NOT BROLY DUNGEON
 			{
 				ERR_LOG(LOG_HACK, "Player: %u seems to be location hacking. CurLoc: %f, %f, %f NewLoc: %f %f %f", cPlayer->GetCharID(), cPlayer->GetCurLoc().x, cPlayer->GetCurLoc().y, cPlayer->GetCurLoc().z, vLoc.x, vLoc.y, vLoc.z);
 			}
@@ -1608,7 +1627,7 @@ void CClientSession::RecvCharJump(CNtlPacket* pPacket)
 	}
 	else
 	{
-		if (worldId != 920000) // IS NOT BROLY DUNGEON
+		if (!IsBrolyWorldId(worldId)) // IS NOT BROLY DUNGEON
 		{
 			ERR_LOG(LOG_HACK, "Player: %u seems to be location hacking. CurLoc: %f, %f, %f NewLoc: %f %f %f", cPlayer->GetCharID(), cPlayer->GetCurLoc().x, cPlayer->GetCurLoc().y, cPlayer->GetCurLoc().z, vLoc.x, vLoc.y, vLoc.z);
 		}
@@ -1936,7 +1955,7 @@ void CClientSession::RecvCharFalling(CNtlPacket* pPacket)
 	}
 	else
 	{
-		if (worldId != 920000) // IS NOT BROLY DUNGEON
+		if (!IsBrolyWorldId(worldId)) // IS NOT BROLY DUNGEON
 		{
 			ERR_LOG(LOG_HACK, "Player: %u seems to be location hacking. CurLoc: %f, %f, %f NewLoc: %f %f %f", cPlayer->GetCharID(), cPlayer->GetCurLoc().x, cPlayer->GetCurLoc().y, cPlayer->GetCurLoc().z, vLoc.x, vLoc.y, vLoc.z);
 		}
@@ -1978,7 +1997,7 @@ void CClientSession::RecvCharAirFalling(CNtlPacket* pPacket)
 	}
 	else
 	{
-		if (worldId != 920000) // IS NOT BROLY DUNGEON
+		if (!IsBrolyWorldId(worldId)) // IS NOT BROLY DUNGEON
 		{
 			ERR_LOG(LOG_HACK, "Player: %u seems to be location hacking. CurLoc: %f, %f, %f NewLoc: %f %f %f", cPlayer->GetCharID(), cPlayer->GetCurLoc().x, cPlayer->GetCurLoc().y, cPlayer->GetCurLoc().z, vLoc.x, vLoc.y, vLoc.z);
 		}
@@ -2022,7 +2041,7 @@ void CClientSession::RecvCharAirEnd(CNtlPacket* pPacket)
 	}
 	else
 	{
-		if (worldId != 920000) // IS NOT BROLY DUNGEON
+		if (!IsBrolyWorldId(worldId)) // IS NOT BROLY DUNGEON
 		{
 			ERR_LOG(LOG_HACK, "Player: %u seems to be location hacking. CurLoc: %f, %f, %f NewLoc: %f %f %f", cPlayer->GetCharID(), cPlayer->GetCurLoc().x, cPlayer->GetCurLoc().y, cPlayer->GetCurLoc().z, vLoc.x, vLoc.y, vLoc.z);
 		}
@@ -8264,7 +8283,7 @@ void CClientSession::RecvCharDashKeyBoard(CNtlPacket* pPacket)
 	}
 	else
 	{
-		if (worldID != 920000)
+		if (!IsBrolyWorldId(worldID))
 		{
 			ERR_LOG(LOG_HACK, "Player: %u seems to be location hacking. CurLoc: %f, %f, %f NewLoc: %f %f %f", cPlayer->GetCharID(), cPlayer->GetCurLoc().x, cPlayer->GetCurLoc().y, cPlayer->GetCurLoc().z, vLoc.x, vLoc.y, vLoc.z);
 		}
@@ -8428,7 +8447,7 @@ void CClientSession::RecvCharDashAir(CNtlPacket* pPacket)
 			}
 			else
 			{
-				if (worldId != 920000)
+				if (!IsBrolyWorldId(worldId))
 				{
 					ERR_LOG(LOG_HACK, "Player: %u seems to be location hacking. CurLoc: %f, %f, %f NewLoc: %f %f %f", cPlayer->GetCharID(), cPlayer->GetCurLoc().x, cPlayer->GetCurLoc().y, cPlayer->GetCurLoc().z, vLoc.x, vLoc.y, vLoc.z);
 				}
@@ -8475,7 +8494,7 @@ void CClientSession::RecvCharAirAccel(CNtlPacket* pPacket)
 				}
 				else
 				{
-					if (worldId != 920000)
+					if (!IsBrolyWorldId(worldId))
 					{
 						ERR_LOG(LOG_HACK, "Player: %u seems to be location hacking. CurLoc: %f, %f, %f NewLoc: %f %f %f", cPlayer->GetCharID(), cPlayer->GetCurLoc().x, cPlayer->GetCurLoc().y, cPlayer->GetCurLoc().z, vLoc.x, vLoc.y, vLoc.z);
 					}
@@ -10115,7 +10134,7 @@ void CClientSession::RecvCharLocAfterKnockdown(CNtlPacket* pPacket)
 	}
 	else
 	{
-		if (pWorldId != 920000)
+		if (!IsBrolyWorldId(pWorldId))
 		{
 			ERR_LOG(LOG_HACK, "Player: %u seems to be location hacking. CurLoc: %f, %f, %f NewLoc: %f %f %f", cPlayer->GetCharID(), cPlayer->GetCurLoc().x, cPlayer->GetCurLoc().y, cPlayer->GetCurLoc().z, vLoc.x, vLoc.y, vLoc.z);
 		}
@@ -10144,7 +10163,7 @@ void CClientSession::RecvCharLocAfterSliding(CNtlPacket* pPacket)
 	}
 	else
 	{
-		if (pWorldId != 920000)
+		if (!IsBrolyWorldId(pWorldId))
 		{
 			ERR_LOG(LOG_HACK, "Player: %u seems to be location hacking. CurLoc: %f, %f, %f NewLoc: %f %f %f", cPlayer->GetCharID(), cPlayer->GetCurLoc().x, cPlayer->GetCurLoc().y, cPlayer->GetCurLoc().z, vLoc.x, vLoc.y, vLoc.z);
 		}
@@ -10188,7 +10207,7 @@ void CClientSession::RecvCharLocAfterPush(CNtlPacket* pPacket)
 	}
 	else
 	{
-		if (pWorldId != 920000)
+		if (!IsBrolyWorldId(pWorldId))
 		{
 			ERR_LOG(LOG_HACK, "Player: %u seems to be location hacking. CurLoc: %f, %f, %f NewLoc: %f %f %f", cPlayer->GetCharID(), cPlayer->GetCurLoc().x, cPlayer->GetCurLoc().y, cPlayer->GetCurLoc().z, vLoc.x, vLoc.y, vLoc.z);
 		}
@@ -17660,7 +17679,7 @@ void CClientSession::RecvItemUseReq(CNtlPacket* pPacket)
 	}
 	else
 	{
-		if (pWorldId != 920000)
+		if (!IsBrolyWorldId(pWorldId))
 		{
 			ERR_LOG(LOG_HACK, "Player: %u seems to be location hacking. CurLoc: %f, %f, %f NewLoc: %f %f %f", cPlayer->GetCharID(), cPlayer->GetCurLoc().x, cPlayer->GetCurLoc().y, cPlayer->GetCurLoc().z, vLoc.x, vLoc.y, vLoc.z);
 		}

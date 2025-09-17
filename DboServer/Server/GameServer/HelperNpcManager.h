@@ -81,6 +81,14 @@ struct sHELPER_NPC_CONFIG
     // Rebuff controller: periodically re-check and reapply buffs
     DWORD  dwRebuffCooldownMs = 0;          // 0 = disabled
     DWORD  dwRebuffMinRemainingMs = 3000;   // reapply if remaining below this
+
+    // AI preference: if true, attempt forced skills first when choosing an offensive ability
+    bool   bPrioritizeForcedSkills = false;
+
+    // Tank aggro enforcement
+    bool   bEnforceTankAggro = true;      // default on: keep mobs focused on tank helper
+    DWORD  dwTankAggroPulseMs = 500;      // how often to pulse aggro (ms)
+    DWORD  dwTankAggroBonus = 800;        // flat bonus threat added per pulse when not top
 };
 
 class CHelperNpcManager

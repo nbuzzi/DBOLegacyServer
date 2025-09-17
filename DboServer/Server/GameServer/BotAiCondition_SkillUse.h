@@ -45,6 +45,15 @@ private:
 	// Random follow refresh timer
 	DWORD m_dwSinceRandomFollowMs;
 
+	// Half-second cadence resurrection scan timer
+	DWORD m_dwSinceLastResurrectScanMs = 0;
+
+	// Tank aggro pulse timer
+	DWORD m_dwSinceLastTankAggroPulseMs = 0;
+
+	// Time since last engage/follow switch to prevent oscillation
+	DWORD m_dwSinceLastEngageMs = 0;
+
 };
 
 #endif

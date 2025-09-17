@@ -141,97 +141,91 @@ void CCharacterAttBot::CalculateAtt()
 
 	CCharacterAtt::CalculateAtt();
 
-	// If this bot is a helper linked to a PC, apply configurable multipliers
-	if (m_pBotRef)
+	// If this bot is a registered helper linked to a PC, apply configurable multipliers
+	if (m_pBotRef && GetHelperNpcManager()->IsRegisteredHelper(m_pBotRef))
 	{
 		float fMul = GetHelperNpcManager()->GetDamageMultiplierForHelper(m_pBotRef);
 		if (fMul > 1.0f)
 		{
-			// Scale final offense numbers; keep within WORD bounds
 			DWORD phys = (DWORD)NtlRound((float)m_pAttribute.wLastPhysicalOffense * fMul);
 			DWORD ener = (DWORD)NtlRound((float)m_pAttribute.wLastEnergyOffense * fMul);
 			m_pAttribute.wLastPhysicalOffense = (WORD)std::min<DWORD>(phys, 0xFFFF);
 			m_pAttribute.wLastEnergyOffense = (WORD)std::min<DWORD>(ener, 0xFFFF);
 		}
-
-		// Movement speed + EP regen + attack speed boosts (helpers only)
-		if (GetHelperNpcManager()->IsRegisteredHelper(m_pBotRef))
+		const sHELPER_NPC_CONFIG* pcfg = GetHelperNpcManager()->GetConfigForHelper(m_pBotRef);
+		if (pcfg)
 		{
-			const sHELPER_NPC_CONFIG* pcfg = GetHelperNpcManager()->GetConfigForHelper(m_pBotRef);
-			if (pcfg)
+			// Max LP/EP percent increases
+			if (pcfg->wMaxLPPercent > 0)
 			{
-				// Max LP/EP percent increases
-				if (pcfg->wMaxLPPercent > 0)
-				{
-					DWORD add = (DWORD)NtlRound(((float)m_pAttribute.dwLastMaxLP * (float)pcfg->wMaxLPPercent) / 100.0f);
-					m_pAttribute.dwLastMaxLP = std::min<DWORD>(m_pAttribute.dwLastMaxLP + add, 0x7FFFFFFF);
-				}
-				if (pcfg->wMaxEPPercent > 0)
-				{
-					DWORD add = (DWORD)NtlRound(((float)m_pAttribute.wLastMaxEP * (float)pcfg->wMaxEPPercent) / 100.0f);
-					m_pAttribute.wLastMaxEP = (WORD)std::min<DWORD>(m_pAttribute.wLastMaxEP + add, 0xFFFF);
-				}
+				DWORD add = (DWORD)NtlRound(((float)m_pAttribute.dwLastMaxLP * (float)pcfg->wMaxLPPercent) / 100.0f);
+				m_pAttribute.dwLastMaxLP = std::min<DWORD>(m_pAttribute.dwLastMaxLP + add, 0x7FFFFFFF);
+			}
+			if (pcfg->wMaxEPPercent > 0)
+			{
+				DWORD add = (DWORD)NtlRound(((float)m_pAttribute.wLastMaxEP * (float)pcfg->wMaxEPPercent) / 100.0f);
+				m_pAttribute.wLastMaxEP = (WORD)std::min<DWORD>(m_pAttribute.wLastMaxEP + add, 0xFFFF);
+			}
 
-				// Offense/Defense percent modifiers
-				if (pcfg->wPhysicalOffensePercent > 0)
-				{
-					DWORD add = (DWORD)NtlRound(((float)m_pAttribute.wLastPhysicalOffense * (float)pcfg->wPhysicalOffensePercent) / 100.0f);
-					m_pAttribute.wLastPhysicalOffense = (WORD)std::min<DWORD>(m_pAttribute.wLastPhysicalOffense + add, 0xFFFF);
-				}
-				if (pcfg->wEnergyOffensePercent > 0)
-				{
-					DWORD add = (DWORD)NtlRound(((float)m_pAttribute.wLastEnergyOffense * (float)pcfg->wEnergyOffensePercent) / 100.0f);
-					m_pAttribute.wLastEnergyOffense = (WORD)std::min<DWORD>(m_pAttribute.wLastEnergyOffense + add, 0xFFFF);
-				}
-				if (pcfg->wPhysicalDefensePercent > 0)
-				{
-					DWORD add = (DWORD)NtlRound(((float)m_pAttribute.wLastPhysicalDefense * (float)pcfg->wPhysicalDefensePercent) / 100.0f);
-					m_pAttribute.wLastPhysicalDefense = (WORD)std::min<DWORD>(m_pAttribute.wLastPhysicalDefense + add, 0xFFFF);
-				}
-				if (pcfg->wEnergyDefensePercent > 0)
-				{
-					DWORD add = (DWORD)NtlRound(((float)m_pAttribute.wLastEnergyDefense * (float)pcfg->wEnergyDefensePercent) / 100.0f);
-					m_pAttribute.wLastEnergyDefense = (WORD)std::min<DWORD>(m_pAttribute.wLastEnergyDefense + add, 0xFFFF);
-				}
+			// Offense/Defense percent modifiers
+			if (pcfg->wPhysicalOffensePercent > 0)
+			{
+				DWORD add = (DWORD)NtlRound(((float)m_pAttribute.wLastPhysicalOffense * (float)pcfg->wPhysicalOffensePercent) / 100.0f);
+				m_pAttribute.wLastPhysicalOffense = (WORD)std::min<DWORD>(m_pAttribute.wLastPhysicalOffense + add, 0xFFFF);
+			}
+			if (pcfg->wEnergyOffensePercent > 0)
+			{
+				DWORD add = (DWORD)NtlRound(((float)m_pAttribute.wLastEnergyOffense * (float)pcfg->wEnergyOffensePercent) / 100.0f);
+				m_pAttribute.wLastEnergyOffense = (WORD)std::min<DWORD>(m_pAttribute.wLastEnergyOffense + add, 0xFFFF);
+			}
+			if (pcfg->wPhysicalDefensePercent > 0)
+			{
+				DWORD add = (DWORD)NtlRound(((float)m_pAttribute.wLastPhysicalDefense * (float)pcfg->wPhysicalDefensePercent) / 100.0f);
+				m_pAttribute.wLastPhysicalDefense = (WORD)std::min<DWORD>(m_pAttribute.wLastPhysicalDefense + add, 0xFFFF);
+			}
+			if (pcfg->wEnergyDefensePercent > 0)
+			{
+				DWORD add = (DWORD)NtlRound(((float)m_pAttribute.wLastEnergyDefense * (float)pcfg->wEnergyDefensePercent) / 100.0f);
+				m_pAttribute.wLastEnergyDefense = (WORD)std::min<DWORD>(m_pAttribute.wLastEnergyDefense + add, 0xFFFF);
+			}
 
-				// Attack range modifiers: percent plus flat meters
-				if (pcfg->wAttackRangePercent > 0)
-				{
-					m_pAttribute.fLastAttackRange *= (1.0f + ((float)pcfg->wAttackRangePercent / 100.0f));
-				}
-				if (pcfg->fAttackRangeBonusMeters > 0.f)
-				{
-					m_pAttribute.fLastAttackRange += pcfg->fAttackRangeBonusMeters;
-				}
+			// Attack range modifiers: percent plus flat meters
+			if (pcfg->wAttackRangePercent > 0)
+			{
+				m_pAttribute.fLastAttackRange *= (1.0f + ((float)pcfg->wAttackRangePercent / 100.0f));
+			}
+			if (pcfg->fAttackRangeBonusMeters > 0.f)
+			{
+				m_pAttribute.fLastAttackRange += pcfg->fAttackRangeBonusMeters;
+			}
 
-				// Movement speed multiplier
-				if (pcfg->fMoveSpeedMultiplier > 0.f)
-				{
-					m_pAttribute.fLastRunSpeed *= pcfg->fMoveSpeedMultiplier;
-					m_pAttribute.fLastAirSpeed *= pcfg->fMoveSpeedMultiplier;
-					m_pAttribute.fLastAirDashSpeed *= pcfg->fMoveSpeedMultiplier;
-					m_pAttribute.fLastAirDashAccelSpeed *= pcfg->fMoveSpeedMultiplier;
-				}
-				// EP regen percent boost
-				if (pcfg->wEpRegenPercent > 0)
-				{
-					DWORD add = (DWORD)NtlRound(((float)m_pAttribute.wLastEpRegen * (float)pcfg->wEpRegenPercent) / 100.0f);
-					m_pAttribute.wLastEpRegen = (WORD)std::min<DWORD>(m_pAttribute.wLastEpRegen + add, 0xFFFF);
-					add = (DWORD)NtlRound(((float)m_pAttribute.wLastEpBattleRegen * (float)pcfg->wEpRegenPercent) / 100.0f);
-					m_pAttribute.wLastEpBattleRegen = (WORD)std::min<DWORD>(m_pAttribute.wLastEpBattleRegen + add, 0xFFFF);
-				}
-				// Attack speed boost in percent
-				if (pcfg->wAttackSpeedPercent > 0)
-				{
-					CalculateAttackSpeedRate((float)pcfg->wAttackSpeedPercent, SYSTEM_EFFECT_APPLY_TYPE_PERCENT, false);
-				}
+			// Movement speed multiplier
+			if (pcfg->fMoveSpeedMultiplier > 0.f)
+			{
+				m_pAttribute.fLastRunSpeed *= pcfg->fMoveSpeedMultiplier;
+				m_pAttribute.fLastAirSpeed *= pcfg->fMoveSpeedMultiplier;
+				m_pAttribute.fLastAirDashSpeed *= pcfg->fMoveSpeedMultiplier;
+				m_pAttribute.fLastAirDashAccelSpeed *= pcfg->fMoveSpeedMultiplier;
+			}
+			// EP regen percent boost
+			if (pcfg->wEpRegenPercent > 0)
+			{
+				DWORD add = (DWORD)NtlRound(((float)m_pAttribute.wLastEpRegen * (float)pcfg->wEpRegenPercent) / 100.0f);
+				m_pAttribute.wLastEpRegen = (WORD)std::min<DWORD>(m_pAttribute.wLastEpRegen + add, 0xFFFF);
+				add = (DWORD)NtlRound(((float)m_pAttribute.wLastEpBattleRegen * (float)pcfg->wEpRegenPercent) / 100.0f);
+				m_pAttribute.wLastEpBattleRegen = (WORD)std::min<DWORD>(m_pAttribute.wLastEpBattleRegen + add, 0xFFFF);
+			}
+			// Attack speed boost in percent
+			if (pcfg->wAttackSpeedPercent > 0)
+			{
+				CalculateAttackSpeedRate((float)pcfg->wAttackSpeedPercent, SYSTEM_EFFECT_APPLY_TYPE_PERCENT, false);
+			}
 
-				// Skill animation speed modifier
-				if (pcfg->wSkillAnimSpeedPercent > 0)
-				{
-					// base is 100.0, apply percent additively
-					m_pAttribute.fLastSkillAnimationSpeed *= (1.0f + ((float)pcfg->wSkillAnimSpeedPercent / 100.0f));
-				}
+			// Skill animation speed modifier
+			if (pcfg->wSkillAnimSpeedPercent > 0)
+			{
+				// base is 100.0, apply percent additively
+				m_pAttribute.fLastSkillAnimationSpeed *= (1.0f + ((float)pcfg->wSkillAnimSpeedPercent / 100.0f));
 			}
 		}
 	}

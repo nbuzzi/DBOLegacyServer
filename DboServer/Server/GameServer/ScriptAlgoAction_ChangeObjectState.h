@@ -28,6 +28,10 @@ private:
 
 	BYTE						m_subStateUnset;
 
+	// Cache: avoid repeated world-name lookups per tick
+	bool                        m_worldChecked = false;
+	bool                        m_isBrolyWorld = false;
+
 };
 
 #endif

@@ -118,6 +118,13 @@ bool CHelperNpcManager::LoadConfig(CNtlIniFile& file)
 	file.Read("HELPER_NPC", "ResurrectSkillTblidx", m_config.resurrectSkillTblidx);
 	file.Read("HELPER_NPC", "RebuffCooldownMs", m_config.dwRebuffCooldownMs);
 	file.Read("HELPER_NPC", "RebuffMinRemainingMs", m_config.dwRebuffMinRemainingMs);
+	// Tank aggro enforcement (global defaults)
+	{
+		int v = m_config.bEnforceTankAggro ? 1 : 0;
+		if (file.Read("HELPER_NPC", "EnforceTankAggro", v)) m_config.bEnforceTankAggro = (v != 0);
+	}
+	file.Read("HELPER_NPC", "TankAggroPulseMs", m_config.dwTankAggroPulseMs);
+	file.Read("HELPER_NPC", "TankAggroBonus", m_config.dwTankAggroBonus);
 
 	// Optional global base modifiers section
 	{
@@ -498,6 +505,11 @@ int CHelperNpcManager::LoadConfigSection(CNtlIniFile& file, const char* sectionN
 	if (file.Read(sectionName, "ResurrectSkillTblidx", out.resurrectSkillTblidx)) ++readCount;
 	if (file.Read(sectionName, "RebuffCooldownMs", out.dwRebuffCooldownMs)) ++readCount;
 	if (file.Read(sectionName, "RebuffMinRemainingMs", out.dwRebuffMinRemainingMs)) ++readCount;
+	{ int v = out.bPrioritizeForcedSkills ? 1 : 0; if (file.Read(sectionName, "PrioritizeForcedSkills", v)) { out.bPrioritizeForcedSkills = (v != 0); ++readCount; } }
+	// Tank aggro enforcement overrides
+	{ int v = out.bEnforceTankAggro ? 1 : 0; if (file.Read(sectionName, "EnforceTankAggro", v)) { out.bEnforceTankAggro = (v != 0); ++readCount; } }
+	if (file.Read(sectionName, "TankAggroPulseMs", out.dwTankAggroPulseMs)) ++readCount;
+	if (file.Read(sectionName, "TankAggroBonus", out.dwTankAggroBonus)) ++readCount;
 	{ int v = out.bUseMobAsHelper ? 1 : 0; if (file.Read(sectionName, "UseMobAsHelper", v)) { out.bUseMobAsHelper = (v != 0); ++readCount; } }
 	if (file.Read(sectionName, "MobId", out.helperMobTblidx)) ++readCount;
 
@@ -840,11 +852,10 @@ bool CHelperNpcManager::SpawnIfAllowed(CPlayer* pLeader, CWorld* pWorld, const s
 		}
 	}
 
-	// Optionally add a list of buff skills
-	if (!cfg.vBuffSkills.empty())
+	// Add configured buff skills (if any)
 	{
 		CSkillManagerBot* pSM = (CSkillManagerBot*)pHelper->GetSkillManager();
-		if (pSM)
+		if (pSM && !cfg.vBuffSkills.empty())
 		{
 			for (TBLIDX buffId : cfg.vBuffSkills)
 			{
@@ -861,21 +872,33 @@ bool CHelperNpcManager::SpawnIfAllowed(CPlayer* pLeader, CWorld* pWorld, const s
 					continue;
 				}
 				bool ok = pSM->AddSkill(0, pHelper, pSkill, buffId, cfg.buffBasis, cfg.buffLP, cfg.buffTime);
-				VLog(cfg.bVerboseLogs, "HelperNPC: buff skill %u add %s (basis=%u lp=%u time=%u)",
-					buffId, ok ? "OK" : "FAIL", cfg.buffBasis, cfg.buffLP, cfg.buffTime);
+				VLog(cfg.bVerboseLogs, "HelperNPC: buff skill %u add %s (basis=%u lp=%u time=%u)", buffId, ok ? "OK" : "FAIL", cfg.buffBasis, cfg.buffLP, cfg.buffTime);
 			}
-			// Ensure resurrect skill is available
-			if (cfg.resurrectSkillTblidx != INVALID_TBLIDX && !pSM->FindSkillCondition(cfg.resurrectSkillTblidx))
+		}
+	}
+
+	// Always ensure resurrect skill (if configured) is present regardless of BuffSkills list
+	if (cfg.resurrectSkillTblidx != INVALID_TBLIDX)
+	{
+		CSkillManagerBot* pSM = (CSkillManagerBot*)pHelper->GetSkillManager();
+		if (pSM && !pSM->FindSkillCondition(cfg.resurrectSkillTblidx))
+		{
+			sSKILL_TBLDAT* pSkillTbldat = (sSKILL_TBLDAT*)g_pTableContainer->GetSkillTable()->FindData(cfg.resurrectSkillTblidx);
+			if (!pSkillTbldat)
 			{
-				sSKILL_TBLDAT* pSkillTbldat = (sSKILL_TBLDAT*)g_pTableContainer->GetSkillTable()->FindData(cfg.resurrectSkillTblidx);
-				if (pSkillTbldat)
+				VLog(cfg.bVerboseLogs, "HelperNPC: resurrect skill %u NOT FOUND in SkillTable", cfg.resurrectSkillTblidx);
+			}
+			else
+			{
+				CSkillBot* pSkill = new CSkillBot;
+				if (!pSkill->Create(pSkillTbldat, pHelper, INVALID_BYTE))
 				{
-					CSkillBot* pSkill = new CSkillBot;
-					if (pSkill->Create(pSkillTbldat, pHelper, INVALID_BYTE))
-					{
-						bool ok = pSM->AddSkill(0, pHelper, pSkill, cfg.resurrectSkillTblidx, /*Give*/4, /*LP*/0, /*Time*/0);
-						VLog(cfg.bVerboseLogs, "HelperNPC: resurrect skill %u add %s", cfg.resurrectSkillTblidx, ok ? "OK" : "FAIL");
-					}
+					VLog(cfg.bVerboseLogs, "HelperNPC: resurrect skill %u create FAIL", cfg.resurrectSkillTblidx);
+				}
+				else
+				{
+					bool ok = pSM->AddSkill(0, pHelper, pSkill, cfg.resurrectSkillTblidx, /*Give*/4, /*LP*/0, /*Time*/0);
+					VLog(cfg.bVerboseLogs, "HelperNPC: resurrect skill %u add %s", cfg.resurrectSkillTblidx, ok ? "OK" : "FAIL");
 				}
 			}
 		}
@@ -1033,33 +1056,26 @@ float CHelperNpcManager::GetDamageMultiplierForHelper(CNpc* pNpc)
 {
 	if (!pNpc)
 		return 1.0f;
-	// A helper is identified by having a link to a PC and being marked allied, and also being tracked in our helper maps.
-	if (pNpc->GetLinkPc() != INVALID_HOBJECT && pNpc->GetPcRelation() == RELATION_TYPE_ALLIENCE)
-	{
-		auto itCfg = m_helperConfigByHelper.find(pNpc->GetID());
-		if (itCfg != m_helperConfigByHelper.end())
-		{
-			const sHELPER_NPC_CONFIG* pcfg = &itCfg->second;
-			return pcfg->fDamageMultiplier > 0.f ? pcfg->fDamageMultiplier : 1.0f;
-		}
-	}
-	return 1.0f;
+	if (!IsRegisteredHelper(pNpc))
+		return 1.0f;
+	auto itCfg = m_helperConfigByHelper.find(pNpc->GetID());
+	if (itCfg == m_helperConfigByHelper.end())
+		return 1.0f;
+	const sHELPER_NPC_CONFIG* pcfg = &itCfg->second;
+	return pcfg->fDamageMultiplier > 0.f ? pcfg->fDamageMultiplier : 1.0f;
 }
 
 float CHelperNpcManager::GetHealMultiplierForHelper(CNpc* pNpc)
 {
 	if (!pNpc)
 		return 1.0f;
-	if (pNpc->GetLinkPc() != INVALID_HOBJECT && pNpc->GetPcRelation() == RELATION_TYPE_ALLIENCE)
-	{
-		auto itCfg = m_helperConfigByHelper.find(pNpc->GetID());
-		if (itCfg != m_helperConfigByHelper.end())
-		{
-			const sHELPER_NPC_CONFIG* pcfg = &itCfg->second;
-			return pcfg->fHealPowerMultiplier > 0.f ? pcfg->fHealPowerMultiplier : 1.0f;
-		}
-	}
-	return 1.0f;
+	if (!IsRegisteredHelper(pNpc))
+		return 1.0f;
+	auto itCfg = m_helperConfigByHelper.find(pNpc->GetID());
+	if (itCfg == m_helperConfigByHelper.end())
+		return 1.0f;
+	const sHELPER_NPC_CONFIG* pcfg = &itCfg->second;
+	return pcfg->fHealPowerMultiplier > 0.f ? pcfg->fHealPowerMultiplier : 1.0f;
 }
 
 bool CHelperNpcManager::IsRegisteredHelper(CNpc* pNpc) const
@@ -1068,11 +1084,27 @@ bool CHelperNpcManager::IsRegisteredHelper(CNpc* pNpc) const
 		return false;
 	if (pNpc->GetLinkPc() == INVALID_HOBJECT || pNpc->GetPcRelation() != RELATION_TYPE_ALLIENCE)
 		return false;
+	// Original single-helper mapping (latest helper per leader)
 	for (const auto& kv : m_mapLeaderToHelper)
 	{
 		if (kv.second == pNpc->GetID())
 			return true;
 	}
+	// Any helper we spawned is placed into m_helperConfigByHelper; treat presence as registration
+	if (m_helperConfigByHelper.find(pNpc->GetID()) != m_helperConfigByHelper.end())
+		return true;
+	// Fallback: scan multi-helper list vectors (kept small, acceptable O(n))
+	for (const auto& kv : m_leaderToHelpers)
+	{
+		for (HOBJECT h : kv.second)
+		{
+			if (h == pNpc->GetID())
+				return true;
+		}
+	}
+	// As a last resort, if we recorded its kind (tblidx) we also consider it registered
+	if (m_helperKindByHelper.find(pNpc->GetID()) != m_helperKindByHelper.end())
+		return true;
 	return false;
 }
 

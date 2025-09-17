@@ -7,6 +7,7 @@
 #include "HelperNpcManager.h"
 #include "ObjectManager.h"
 #include "CPlayer.h"
+#include <unordered_set>
 
 
 CBotAiCondition_SkillUse::CBotAiCondition_SkillUse(CNpc* pBot)
@@ -32,31 +33,84 @@ CBotAiCondition_SkillUse::~CBotAiCondition_SkillUse()
 
 int CBotAiCondition_SkillUse::OnUpdate(DWORD dwTickDiff, float fMultiple)
 {
-	// Advance timers for responsiveness
-	m_dwSinceLastProactiveScanMs = UnsignedSafeIncrease<DWORD>(m_dwSinceLastProactiveScanMs, dwTickDiff);
-	m_dwSinceLastSkillTryMs = UnsignedSafeIncrease<DWORD>(m_dwSinceLastSkillTryMs, dwTickDiff);
-	m_dwSinceLastFollowReassertMs = UnsignedSafeIncrease<DWORD>(m_dwSinceLastFollowReassertMs, dwTickDiff);
-
-	m_dwTime = UnsignedSafeIncrease<DWORD>(m_dwTime, dwTickDiff);
-	if (m_dwTime >= 1000)
+    const bool isHelper = GetHelperNpcManager()->IsRegisteredHelper(GetBot());
+    const sHELPER_NPC_CONFIG* pHelperCfg = isHelper ? GetHelperNpcManager()->GetConfigForHelper(GetBot()) : nullptr;
+	// Track time since last proactive engage/follow switch to prevent rapid oscillation (buffer jitter fix)
+	static const DWORD HELPER_MIN_ENGAGE_STICK_MS = 1500; // stay committed at least 1.5s
+	if (isHelper)
 	{
-		m_dwTime = 0;
+		m_dwSinceLastEngageMs = UnsignedSafeIncrease<DWORD>(m_dwSinceLastEngageMs, dwTickDiff);
+	}
+    // Advance timers for responsiveness
+    m_dwSinceLastProactiveScanMs = UnsignedSafeIncrease<DWORD>(m_dwSinceLastProactiveScanMs, dwTickDiff);
+    m_dwSinceLastSkillTryMs = UnsignedSafeIncrease<DWORD>(m_dwSinceLastSkillTryMs, dwTickDiff);
+    m_dwSinceLastFollowReassertMs = UnsignedSafeIncrease<DWORD>(m_dwSinceLastFollowReassertMs, dwTickDiff);
 
-		bool bPrioritizeHealing = false;
-		if (GetBot()->GetLinkPc() != INVALID_HOBJECT)
+    m_dwTime = UnsignedSafeIncrease<DWORD>(m_dwTime, dwTickDiff);
+    if (m_dwTime >= 1000)
+    {
+        m_dwTime = 0;
+
+        // Non-helper: use legacy simple skill queuing
+        if (!isHelper)
+        {
+            if (GetBot()->HasNearbyPlayer(false))
+            {
+                if (!GetBot()->GetStateManager()->IsCharCondition(CHARCOND_CONFUSED))
+                {
+                    CBotAiState* pCurState = GetBot()->GetBotController()->GetCurrentState();
+                    if (pCurState)
+                    {
+                        CComplexState* pCurAction = pCurState->GetCurrentAction();
+                        if (pCurAction && pCurAction->GetControlStateID() == BOTCONTROL_ACTION_LOOK)
+                        {
+                            return m_status;
+                        }
+                        else
+                        {
+                            CSkillManagerBot* pBotSkillManager = (CSkillManagerBot*)GetBot()->GetSkillManager();
+                            if (!pBotSkillManager->IsSkillUseLock())
+                            {
+                                CSkillCondition* pSkillCondition = NULL;
+                                if (pBotSkillManager->GetNumberOfSkill() > 0)
+                                    pSkillCondition = pBotSkillManager->GetSkill(dwTickDiff);
+
+                                if (pSkillCondition && pSkillCondition->GetCanUseSkill())
+                                {
+                                    if (GetBot()->GetCharStateID() == CHARSTATE_FOLLOWING || GetBot()->GetMoveFlag() != NTL_MOVE_FLAG_INVALID)
+                                        GetBot()->SendCharStateStanding(true);
+
+                                    CBotAiAction_SkillUse* pSkillUse = new CBotAiAction_SkillUse(GetBot(), pSkillCondition->GetSkillConditionIdx());
+                                    if (!pCurState->AddSubControlQueue(pSkillUse, true))
+                                    {
+                                        delete pSkillUse;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            // Early exit for non-helpers to avoid helper-only logic below
+            return m_status;
+        }
+
+        bool bPrioritizeHealing = false;
+		if (GetBot()->GetLinkPc() != INVALID_HOBJECT && isHelper)
 		{
-			const sHELPER_NPC_CONFIG& cfg = GetHelperNpcManager()->GetConfig();
+			// Use per-helper config and only apply healing priority if helper is actually a healer (has resurrect skill)
+			const sHELPER_NPC_CONFIG* pRoleCfg = pHelperCfg ? pHelperCfg : &GetHelperNpcManager()->GetConfig();
 			CCharacter* pLinked = g_pObjectManager->GetChar(GetBot()->GetLinkPc());
-			if (pLinked && pLinked->IsInitialized())
+			if (pLinked && pLinked->IsInitialized() && pRoleCfg && pRoleCfg->resurrectSkillTblidx != INVALID_TBLIDX)
 			{
-				if (cfg.wHealLpThresholdOverride == 0)
+				if (pRoleCfg->wHealLpThresholdOverride == 0)
 				{
 					float fMissingPct = 100.f - pLinked->GetCurLpInPercent();
-					bPrioritizeHealing = (fMissingPct >= (float)cfg.wHealPriorityMinMissingPercent);
+					bPrioritizeHealing = (fMissingPct >= (float)pRoleCfg->wHealPriorityMinMissingPercent);
 				}
 				else
 				{
-					bPrioritizeHealing = pLinked->ConsiderLPLow((float)cfg.wHealLpThresholdOverride);
+					bPrioritizeHealing = pLinked->ConsiderLPLow((float)pRoleCfg->wHealLpThresholdOverride);
 				}
 			}
 
@@ -82,7 +136,7 @@ int CBotAiCondition_SkillUse::OnUpdate(DWORD dwTickDiff, float fMultiple)
 		}
 
 		// Random follow behavior when FollowLeader is disabled
-		if (GetBot()->GetLinkPc() != INVALID_HOBJECT)
+		if (GetBot()->GetLinkPc() != INVALID_HOBJECT && isHelper)
 		{
 			const sHELPER_NPC_CONFIG* pCfg = GetHelperNpcManager()->IsRegisteredHelper(GetBot())
 				? GetHelperNpcManager()->GetConfigForHelper(GetBot())
@@ -122,45 +176,62 @@ int CBotAiCondition_SkillUse::OnUpdate(DWORD dwTickDiff, float fMultiple)
 			}
 		}
 
-		// Healer resurrection: if configured, try to resurrect fainted party members
-		if (GetHelperNpcManager()->IsRegisteredHelper(GetBot()))
+		// Healer resurrection (500ms cadence)
+		if (isHelper)
 		{
 			const sHELPER_NPC_CONFIG* pCfg = GetHelperNpcManager()->GetConfigForHelper(GetBot());
 			if (pCfg && pCfg->resurrectSkillTblidx != INVALID_TBLIDX)
 			{
-				CPlayer* pLeader = (CPlayer*)g_pObjectManager->GetChar(GetBot()->GetLinkPc());
-				if (pLeader && pLeader->IsInitialized() && pLeader->GetParty())
+				// Accumulate inside 1s gate; add 1000ms per second, but allow sub-second scans via separate fast path reset if added later
+				m_dwSinceLastResurrectScanMs = UnsignedSafeIncrease<DWORD>(m_dwSinceLastResurrectScanMs, 1000);
+				if (m_dwSinceLastResurrectScanMs >= 500)
 				{
-					CParty* party = pLeader->GetParty();
-					BYTE cnt = party->GetPartyMemberCount();
-					for (BYTE i = 0; i < cnt; ++i)
+					m_dwSinceLastResurrectScanMs = 0;
+					CPlayer* pLeader = (CPlayer*)g_pObjectManager->GetChar(GetBot()->GetLinkPc());
+					if (pLeader && pLeader->IsInitialized() && pLeader->GetParty())
 					{
-						const sPARTY_MEMBER_INFO& mi = party->GetMemberInfo(i);
-						CPlayer* pMem = g_pObjectManager->GetPC(mi.hHandle);
-						if (pMem && pMem->IsInitialized() && pMem->IsFainting() && pMem->GetCurWorld() == GetBot()->GetCurWorld())
+						CParty* party = pLeader->GetParty();
+						BYTE cnt = party->GetPartyMemberCount();
+						for (BYTE i = 0; i < cnt; ++i)
 						{
-							CSkillManagerBot* pSM = (CSkillManagerBot*)GetBot()->GetSkillManager();
-							if (pSM)
+							const sPARTY_MEMBER_INFO& mi = party->GetMemberInfo(i);
+							CPlayer* pMem = g_pObjectManager->GetPC(mi.hHandle);
+							if (pMem && pMem->IsInitialized() && pMem->IsFainting() && pMem->GetCurWorld() == GetBot()->GetCurWorld())
 							{
-								CSkillCondition* pCond = pSM->FindSkillCondition(pCfg->resurrectSkillTblidx);
-								if (pCond && !pSM->IsSkillUseLock())
+								CSkillManagerBot* pSM = (CSkillManagerBot*)GetBot()->GetSkillManager();
+								if (pSM)
 								{
-									// Temporarily set target to the fainted member and queue the skill
-									if (GetHelperNpcManager()->GetConfig().bVerboseLogs)
-										ERR_LOG(LOG_BOTAI, "HelperNPC: attempt resurrect skill=%u on %u", pCfg->resurrectSkillTblidx, pMem->GetID());
-									CBotAiState* pCurState = GetBot()->GetBotController()->GetCurrentState();
-									if (pCurState)
+									CSkillCondition* pCond = pSM->FindSkillCondition(pCfg->resurrectSkillTblidx);
+									if (pCond && !pSM->IsSkillUseLock())
 									{
-										CBotAiAction_SkillUse* pSkillUse = new CBotAiAction_SkillUse(GetBot(), pCond->GetSkillConditionIdx());
-										if (pCurState->AddSubControlQueue(pSkillUse, true))
+										// Stand / cancel follow first
+										if (GetBot()->GetCharStateID() == CHARSTATE_FOLLOWING || GetBot()->GetMoveFlag() != NTL_MOVE_FLAG_INVALID)
 										{
-											// Set appoint target to fainted member by updating bot's target handle only for chase stop; actual target computed by condition
-											GetBot()->SetTargetHandle(pMem->GetID());
+											GetBot()->SendCharStateStanding(true);
+											if (GetHelperNpcManager()->GetConfig().bVerboseLogs)
+												ERR_LOG(LOG_BOTAI, "HelperNPC: stand before resurrect target=%u", pMem->GetID());
+										}
+										CBotAiState* pCurState = GetBot()->GetBotController()->GetCurrentState();
+										if (pCurState)
+										{
+											CBotAiAction_SkillUse* pSkillUse = new CBotAiAction_SkillUse(GetBot(), pCond->GetSkillConditionIdx());
+											if (pCurState->AddSubControlQueue(pSkillUse, true))
+											{
+												GetBot()->SetTargetHandle(pMem->GetID());
+												if (pCfg->bVerboseLogs)
+													ERR_LOG(LOG_BOTAI, "HelperNPC: queued resurrect skill=%u on %u", pCfg->resurrectSkillTblidx, pMem->GetID());
+											}
+											else
+											{
+												delete pSkillUse;
+												if (pCfg->bVerboseLogs)
+													ERR_LOG(LOG_BOTAI, "HelperNPC: failed queue resurrect skill=%u", pCfg->resurrectSkillTblidx);
+											}
 										}
 									}
 								}
+								break; // one attempt per scan
 							}
-							break; // one at a time
 						}
 					}
 				}
@@ -168,7 +239,7 @@ int CBotAiCondition_SkillUse::OnUpdate(DWORD dwTickDiff, float fMultiple)
 		}
 
 		// Follow watchdog
-		if (GetBot()->GetLinkPc() != INVALID_HOBJECT && GetHelperNpcManager()->GetConfig().bFollowLeader)
+		if (GetBot()->GetLinkPc() != INVALID_HOBJECT && isHelper && GetHelperNpcManager()->GetConfig().bFollowLeader)
 		{
 			if (GetBot()->GetTargetListManager()->GetAggroCount() == 0)
 			{
@@ -194,6 +265,7 @@ int CBotAiCondition_SkillUse::OnUpdate(DWORD dwTickDiff, float fMultiple)
 									GetBot()->SendCharStateFollowing(hLocalEnemy, GetBot()->GetAttackRange(pVictim), DBO_MOVE_FOLLOW_AUTO_ATTACK, vDestLoc, true);
 									if (GetHelperNpcManager()->GetConfig().bVerboseLogs)
 										ERR_LOG(LOG_BOTAI, "HelperNPC: far-from-leader proactive engage enemy=%u", hLocalEnemy);
+									m_dwSinceLastEngageMs = 0; // start stick window
 									m_dwOutOfRangeTimeMs = 0;
 									return m_status;
 								}
@@ -389,7 +461,9 @@ int CBotAiCondition_SkillUse::OnUpdate(DWORD dwTickDiff, float fMultiple)
 								}
 							}
 
-							if (bShouldReassert && m_dwSinceLastFollowReassertMs >= FOLLOW_REASSERT_COOLDOWN_MS)
+							// Suppress reasserting follow if helper recently engaged an enemy (stick window)
+							bool bWithinStick = (isHelper && m_dwSinceLastEngageMs < HELPER_MIN_ENGAGE_STICK_MS && GetBot()->GetTargetHandle() != INVALID_HOBJECT);
+							if (!bWithinStick && bShouldReassert && m_dwSinceLastFollowReassertMs >= FOLLOW_REASSERT_COOLDOWN_MS)
 							{
 								sVECTOR3 vLeaderLoc; pLeader->GetCurLoc().CopyTo(vLeaderLoc);
 								if (GetBot()->SendCharStateFollowing(pLeader->GetID(), 1.5f, DBO_MOVE_FOLLOW_FRIENDLY, vLeaderLoc, true))
@@ -493,6 +567,80 @@ int CBotAiCondition_SkillUse::OnUpdate(DWORD dwTickDiff, float fMultiple)
 											GetBot()->SendCharStateFollowing(hEnemy, GetBot()->GetAttackRange(pVictim), DBO_MOVE_FOLLOW_AUTO_ATTACK, vDestLoc, true);
 											if (pCfg->bVerboseLogs)
 												ERR_LOG(LOG_BOTAI, "HelperNPC: proactive engage enemy=%u range=%u (auto-attack)", hEnemy, wRange);
+											m_dwSinceLastEngageMs = 0; // start stick window
+										}
+									}
+								}
+							}
+
+							// Tank aggro enforcement pulse (1s gate accumulation only)
+							if (GetHelperNpcManager()->IsRegisteredHelper(GetBot()))
+							{
+								const sHELPER_NPC_CONFIG* pTankCfg = GetHelperNpcManager()->GetConfigForHelper(GetBot());
+								if (pTankCfg && pTankCfg->bEnforceTankAggro)
+								{
+									m_dwSinceLastTankAggroPulseMs = UnsignedSafeIncrease<DWORD>(m_dwSinceLastTankAggroPulseMs, 1000);
+									DWORD pulseMs = pTankCfg->dwTankAggroPulseMs > 0 ? pTankCfg->dwTankAggroPulseMs : 500;
+									if (m_dwSinceLastTankAggroPulseMs >= pulseMs)
+									{
+										m_dwSinceLastTankAggroPulseMs = 0;
+										// Simple strategy: if we have a current offensive target, add bonus aggro; else scan current aggro list and reinforce
+										HOBJECT hCurTarget = GetBot()->GetTargetHandle();
+										if (hCurTarget != INVALID_HOBJECT && hCurTarget != GetBot()->GetLinkPc())
+										{
+											CCharacter* pVict = g_pObjectManager->GetChar(hCurTarget);
+											if (pVict && pVict->IsInitialized())
+											{
+												if (pVict->IsNPC() || pVict->IsMonster())
+												{
+													// Basic throttling: skip if victim already actively targeting tank AND tank already top threat
+													bool bSkip = false;
+													// Fallback: no GetHighestAggroChar API; use current target handle as top-threat proxy
+													HOBJECT hTop = pVict->GetTargetHandle();
+													if (hTop == GetBot()->GetID())
+													{
+														bSkip = true;
+													}
+													// Avoid spamming if victim in casting or stunned state (prevent AI reset)
+													BYTE vs = pVict->GetCharStateID();
+													if (vs == CHARSTATE_SKILL_AFFECTING || vs == CHARSTATE_CASTING)
+														bSkip = true;
+													if (!bSkip)
+													{
+														((CCharacter*)pVict)->ChangeAggro(GetBot()->GetID(), DBO_AGGRO_CHANGE_TYPE_INCREASE, pTankCfg->dwTankAggroBonus);
+														if (pTankCfg->bVerboseLogs)
+															ERR_LOG(LOG_BOTAI, "HelperNPC: tank aggro pulse target=%u bonus=%u", hCurTarget, pTankCfg->dwTankAggroBonus);
+													}
+													else if (pTankCfg->bVerboseLogs)
+													{
+														ERR_LOG(LOG_BOTAI, "HelperNPC: tank aggro pulse skipped target=%u (topThreat/casting)", hCurTarget);
+													}
+												}
+											}
+										}
+										else
+										{
+											// If no explicit target, optionally iterate enemies already aggroed on party (lightweight: use scan)
+											WORD wRange = pTankCfg->wAttackScanRange > 0 ? pTankCfg->wAttackScanRange : GetBot()->GetTbldat()->wSight_Range;
+											HOBJECT hEnemy = GetBot()->ConsiderScanTarget(wRange);
+											if (hEnemy != INVALID_HOBJECT)
+											{
+												CCharacter* pScan = g_pObjectManager->GetChar(hEnemy);
+												if (pScan && (pScan->IsNPC() || pScan->IsMonster()))
+												{
+													HOBJECT hTop = pScan->GetTargetHandle();
+													if (hTop != GetBot()->GetID())
+													{
+														pScan->ChangeAggro(GetBot()->GetID(), DBO_AGGRO_CHANGE_TYPE_INCREASE, pTankCfg->dwTankAggroBonus);
+														if (pTankCfg->bVerboseLogs)
+															ERR_LOG(LOG_BOTAI, "HelperNPC: tank aggro pulse (scan) enemy=%u bonus=%u", hEnemy, pTankCfg->dwTankAggroBonus);
+													}
+													else if (pTankCfg->bVerboseLogs)
+													{
+														ERR_LOG(LOG_BOTAI, "HelperNPC: tank aggro pulse (scan) skipped enemy=%u (already top)", hEnemy);
+													}
+												}
+											}
 										}
 									}
 								}
@@ -508,7 +656,7 @@ int CBotAiCondition_SkillUse::OnUpdate(DWORD dwTickDiff, float fMultiple)
 		}
 
 		// Skill queuing
-		if (GetBot()->HasNearbyPlayer(false) || GetBot()->GetLinkPc() != INVALID_HOBJECT)
+		if ((GetBot()->HasNearbyPlayer(false) || GetBot()->GetLinkPc() != INVALID_HOBJECT) && isHelper)
 		{
 			if (!GetBot()->GetStateManager()->IsCharCondition(CHARCOND_CONFUSED))
 			{
@@ -525,6 +673,29 @@ int CBotAiCondition_SkillUse::OnUpdate(DWORD dwTickDiff, float fMultiple)
 						CSkillManagerBot* pBotSkillManager = (CSkillManagerBot*)GetBot()->GetSkillManager();
 						if (!pBotSkillManager->IsSkillUseLock())
 						{
+							// Forced skill priority: attempt any forced skill first if flagged
+							if (GetHelperNpcManager()->IsRegisteredHelper(GetBot()))
+							{
+								const sHELPER_NPC_CONFIG* pCfgPrio = GetHelperNpcManager()->GetConfigForHelper(GetBot());
+								if (pCfgPrio && pCfgPrio->bPrioritizeForcedSkills && !pCfgPrio->vForcedSkills.empty())
+								{
+									for (TBLIDX fsId : pCfgPrio->vForcedSkills)
+									{
+										CSkillCondition* pForcedCond = pBotSkillManager->FindSkillCondition(fsId);
+										if (pForcedCond && pForcedCond->GetCanUseSkill())
+										{
+											if (GetBot()->GetCharStateID() == CHARSTATE_FOLLOWING || GetBot()->GetMoveFlag() != NTL_MOVE_FLAG_INVALID)
+												GetBot()->SendCharStateStanding(true);
+											if (pCfgPrio->bVerboseLogs)
+												ERR_LOG(LOG_BOTAI, "HelperNPC: prioritized forced skill tblidx=%u", fsId);
+											CBotAiAction_SkillUse* pSkillUse = new CBotAiAction_SkillUse(GetBot(), pForcedCond->GetSkillConditionIdx());
+											if (!pCurState->AddSubControlQueue(pSkillUse, true))
+												delete pSkillUse;
+											return m_status; // do not attempt generic skill this tick
+										}
+									}
+								}
+							}
 							const DWORD SKILL_TRY_COOLDOWN_MS = 100;
 							if (GetBot()->GetLinkPc() != INVALID_HOBJECT && m_dwSinceLastSkillTryMs >= SKILL_TRY_COOLDOWN_MS)
 							{
@@ -569,8 +740,20 @@ int CBotAiCondition_SkillUse::OnUpdate(DWORD dwTickDiff, float fMultiple)
 		}
 	}
 
+	// From here onward we run helper-only fast paths (rebuff, proactive fast scan, fast skill cadence).
+	// Non-helpers exit; helpers continue. Keep this narrow so helpers never bail unexpectedly.
+	if (!isHelper)
+		return m_status;
+	// One-time trace that helper reached fast path (stored in reserved DWORD using map if needed; simple static guard here).
+	static std::unordered_set<HOBJECT> s_loggedHelpers; // NOTE: acceptable minor static; if disallowed convert to bitset in manager.
+	if (pHelperCfg && pHelperCfg->bVerboseLogs && s_loggedHelpers.find(GetBot()->GetID()) == s_loggedHelpers.end())
+	{
+		ERR_LOG(LOG_BOTAI, "HelperNPC: fast-path activated helper=%u", GetBot()->GetID());
+		s_loggedHelpers.insert(GetBot()->GetID());
+	}
+
 	// Rebuff controller (simple cadence): check party members and reapply missing/expiring buffs
-	if (GetHelperNpcManager()->IsRegisteredHelper(GetBot()))
+	if (isHelper)
 	{
 		const sHELPER_NPC_CONFIG* pCfg = GetHelperNpcManager()->GetConfigForHelper(GetBot());
 		if (pCfg && pCfg->dwRebuffCooldownMs > 0 && !pCfg->vBuffSkills.empty())
@@ -632,71 +815,135 @@ int CBotAiCondition_SkillUse::OnUpdate(DWORD dwTickDiff, float fMultiple)
 		}
 	}
 
-	// Fast-path proactive scan (outside 1s gate)
-	do
+	// Fast-path proactive scan (outside 1s gate) - helpers only (redundant gating for safety)
+	if (isHelper)
 	{
-		if (GetBot()->GetLinkPc() == INVALID_HOBJECT)
-			break;
-
-		const sHELPER_NPC_CONFIG& cfg = GetHelperNpcManager()->GetConfig();
-		if (!cfg.bProactiveAutoAttack)
-			break;
-
-		if (GetBot()->GetTargetListManager()->GetAggroCount() != 0 || GetBot()->GetTargetHandle() != INVALID_HOBJECT)
+		// If helper has an attack target but no aggro entries for some time, clear it so scans resume
+		if (GetBot()->GetTargetHandle() != INVALID_HOBJECT && GetBot()->GetTargetListManager()->GetAggroCount() == 0)
 		{
-			m_dwSinceLastProactiveScanMs = 0;
-			break;
-		}
-
-		bool bHealPriority = false;
-		{
-			CCharacter* pLeader = g_pObjectManager->GetChar(GetBot()->GetLinkPc());
-			if (pLeader && pLeader->IsInitialized())
+			m_dwChaseNoAggroMs = UnsignedSafeIncrease<DWORD>(m_dwChaseNoAggroMs, dwTickDiff);
+			if (m_dwChaseNoAggroMs >= 2500)
 			{
-				if (cfg.wHealLpThresholdOverride == 0)
+				GetBot()->SetTargetHandle(INVALID_HOBJECT);
+				m_dwChaseNoAggroMs = 0;
+				if (pHelperCfg && pHelperCfg->bVerboseLogs)
+					ERR_LOG(LOG_BOTAI, "HelperNPC: cleared stale target (no aggro) to resume proactive scan");
+			}
+		}
+		else
+		{
+			m_dwChaseNoAggroMs = 0;
+		}
+		do
+		{
+			if (GetBot()->GetLinkPc() == INVALID_HOBJECT)
+				break;
+			const sHELPER_NPC_CONFIG* pCfg = GetHelperNpcManager()->GetConfigForHelper(GetBot());
+			if (!pCfg || !pCfg->bProactiveAutoAttack)
+				break;
+			if (GetBot()->GetTargetListManager()->GetAggroCount() != 0 || (GetBot()->GetTargetHandle() != INVALID_HOBJECT && GetBot()->GetTargetHandle() != GetBot()->GetLinkPc()))
+			{
+				m_dwSinceLastProactiveScanMs = 0; break;
+			}
+			m_dwSinceLastProactiveScanMs = UnsignedSafeIncrease<DWORD>(m_dwSinceLastProactiveScanMs, dwTickDiff);
+			bool bHealPriority = false;
+			{
+				CCharacter* pLeader = g_pObjectManager->GetChar(GetBot()->GetLinkPc());
+				if (pLeader && pLeader->IsInitialized())
 				{
-					float fMissingPct = 100.f - pLeader->GetCurLpInPercent();
-					bHealPriority = (fMissingPct >= (float)cfg.wHealPriorityMinMissingPercent);
+					if (pCfg->wHealLpThresholdOverride == 0)
+					{
+						float fMissingPct = 100.f - pLeader->GetCurLpInPercent();
+						bHealPriority = (fMissingPct >= (float)pCfg->wHealPriorityMinMissingPercent);
+					}
+					else
+					{
+						bHealPriority = pLeader->ConsiderLPLow((float)pCfg->wHealLpThresholdOverride);
+					}
 				}
-				else
+			}
+			if (bHealPriority) break;
+			DWORD dwCooldown = pCfg->dwAttackScanCooldownMs > 0 ? pCfg->dwAttackScanCooldownMs : 500;
+			if (m_dwSinceLastProactiveScanMs < dwCooldown) break;
+			m_dwSinceLastProactiveScanMs = 0;
+			WORD wRange = pCfg->wAttackScanRange > 0 ? pCfg->wAttackScanRange : GetBot()->GetTbldat()->wSight_Range;
+			HOBJECT hEnemy = GetBot()->ConsiderScanTarget(wRange);
+			if (hEnemy == INVALID_HOBJECT) break;
+			CCharacter* pVictim = g_pObjectManager->GetChar(hEnemy);
+			if (!pVictim || !pVictim->IsInitialized()) break;
+			if (!GetBot()->IsTargetAttackble(pVictim, wRange)) break;
+			if (GetBot()->GetTargetHandle() != hEnemy) GetBot()->SetTargetHandle(hEnemy);
+			GetBot()->ChangeAggro(hEnemy, DBO_AGGRO_CHANGE_TYPE_INCREASE, GetBot()->GetTbldat()->wBasic_Aggro_Point + 1);
+			sVECTOR3 vDestLoc; pVictim->GetCurLoc().CopyTo(vDestLoc);
+			GetBot()->SendCharStateFollowing(hEnemy, GetBot()->GetAttackRange(pVictim), DBO_MOVE_FOLLOW_AUTO_ATTACK, vDestLoc, true);
+			if (pCfg->bVerboseLogs) ERR_LOG(LOG_BOTAI, "HelperNPC: fast-scan proactive engage enemy=%u range=%u", hEnemy, wRange);
+			m_dwSinceLastEngageMs = 0; // start stick window
+		} while (false);
+	}
+
+	// Fast-cadence skill queuing (outside 1s gate) to improve reaction speed (helpers only)
+	if (isHelper && (GetBot()->HasNearbyPlayer(false) || GetBot()->GetLinkPc() != INVALID_HOBJECT))
+	{
+		// Fast resurrection scan (independent of 1s gate)
+		if (GetHelperNpcManager()->IsRegisteredHelper(GetBot()))
+		{
+			const sHELPER_NPC_CONFIG* pCfg = GetHelperNpcManager()->GetConfigForHelper(GetBot());
+			if (pCfg && pCfg->resurrectSkillTblidx != INVALID_TBLIDX)
+			{
+				// Use dwTickDiff via accumulating m_dwSinceLastResurrectScanMs (already exists) here as true fast path
+				m_dwSinceLastResurrectScanMs = UnsignedSafeIncrease<DWORD>(m_dwSinceLastResurrectScanMs, dwTickDiff);
+				DWORD cadence = 500; // 500ms target
+				if (m_dwSinceLastResurrectScanMs >= cadence)
 				{
-					bHealPriority = pLeader->ConsiderLPLow((float)cfg.wHealLpThresholdOverride);
+					m_dwSinceLastResurrectScanMs = 0;
+					CPlayer* pLeader = (CPlayer*)g_pObjectManager->GetChar(GetBot()->GetLinkPc());
+					if (pLeader && pLeader->IsInitialized())
+					{
+						auto considerMember = [&](CPlayer* pMem) -> bool {
+							if (!pMem || !pMem->IsInitialized() || !pMem->IsFainting()) return false;
+							if (pMem->GetCurWorld() != GetBot()->GetCurWorld()) return false;
+							CSkillManagerBot* pSM = (CSkillManagerBot*)GetBot()->GetSkillManager(); if (!pSM) return false;
+							CSkillCondition* pCond = pSM->FindSkillCondition(pCfg->resurrectSkillTblidx);
+							if (!pCond)
+							{
+								if (pCfg->bVerboseLogs) ERR_LOG(LOG_BOTAI, "HelperNPC: resurrect skill condition missing skill=%u", pCfg->resurrectSkillTblidx);
+								return false;
+							}
+							if (pSM->IsSkillUseLock()) return false; // busy
+							if (!pCond->GetCanUseSkill()) { if (pCfg->bVerboseLogs) ERR_LOG(LOG_BOTAI, "HelperNPC: resurrect skill not usable (cd/resources) skill=%u", pCfg->resurrectSkillTblidx); return false; }
+							if (GetBot()->GetCharStateID() == CHARSTATE_FOLLOWING || GetBot()->GetMoveFlag() != NTL_MOVE_FLAG_INVALID)
+								GetBot()->SendCharStateStanding(true);
+							CBotAiState* pCurState = GetBot()->GetBotController()->GetCurrentState(); if (!pCurState) return false;
+							CBotAiAction_SkillUse* pSkillUse = new CBotAiAction_SkillUse(GetBot(), pCond->GetSkillConditionIdx());
+							if (pCurState->AddSubControlQueue(pSkillUse, true))
+							{
+								GetBot()->SetTargetHandle(pMem->GetID());
+								if (pCfg->bVerboseLogs) ERR_LOG(LOG_BOTAI, "HelperNPC: fast resurrect queued skill=%u target=%u", pCfg->resurrectSkillTblidx, pMem->GetID());
+								return true;
+							}
+							delete pSkillUse; return false;
+						};
+						// Solo case (no party) revive leader if fainted (edge scenario)
+						if (!pLeader->GetParty())
+						{
+							considerMember(pLeader);
+						}
+						else
+						{
+							CParty* party = pLeader->GetParty();
+							BYTE cnt = party->GetPartyMemberCount();
+							for (BYTE i = 0; i < cnt; ++i)
+							{
+								const sPARTY_MEMBER_INFO& mi = party->GetMemberInfo(i);
+								CPlayer* pMem = g_pObjectManager->GetPC(mi.hHandle);
+								if (considerMember(pMem)) break;
+							}
+						}
+					}
 				}
 			}
 		}
-		if (bHealPriority)
-			break;
-
-		if (m_dwSinceLastProactiveScanMs < cfg.dwAttackScanCooldownMs)
-			break;
-
-		m_dwSinceLastProactiveScanMs = 0;
-		WORD wRange = cfg.wAttackScanRange > 0 ? cfg.wAttackScanRange : GetBot()->GetTbldat()->wSight_Range;
-		HOBJECT hEnemy = GetBot()->ConsiderScanTarget(wRange);
-		if (hEnemy == INVALID_HOBJECT)
-			break;
-
-		CCharacter* pVictim = g_pObjectManager->GetChar(hEnemy);
-		if (!pVictim || !pVictim->IsInitialized())
-			break;
-
-		if (!GetBot()->IsTargetAttackble(pVictim, wRange))
-			break;
-
-		if (GetBot()->GetTargetHandle() != hEnemy)
-			GetBot()->SetTargetHandle(hEnemy);
-
-		GetBot()->ChangeAggro(hEnemy, DBO_AGGRO_CHANGE_TYPE_INCREASE, GetBot()->GetTbldat()->wBasic_Aggro_Point + 1);
-		sVECTOR3 vDestLoc; pVictim->GetCurLoc().CopyTo(vDestLoc);
-		GetBot()->SendCharStateFollowing(hEnemy, GetBot()->GetAttackRange(pVictim), DBO_MOVE_FOLLOW_AUTO_ATTACK, vDestLoc, true);
-		if (GetHelperNpcManager()->GetConfig().bVerboseLogs)
-			ERR_LOG(LOG_BOTAI, "HelperNPC: fast-scan proactive engage enemy=%u range=%u", hEnemy, wRange);
-	} while (false);
-
-	// Fast-cadence skill queuing (outside 1s gate) to improve reaction speed
-	if (GetBot()->HasNearbyPlayer(false) || GetBot()->GetLinkPc() != INVALID_HOBJECT)
-	{
-		if (!GetBot()->GetStateManager()->IsCharCondition(CHARCOND_CONFUSED))
+		if (isHelper && !GetBot()->GetStateManager()->IsCharCondition(CHARCOND_CONFUSED))
 		{
 			CBotAiState* pCurState = GetBot()->GetBotController()->GetCurrentState();
 			if (pCurState)

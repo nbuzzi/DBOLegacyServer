@@ -7,6 +7,8 @@
 
 CWpsAlgoAction_ChangeObjectState::CWpsAlgoAction_ChangeObjectState(CWpsAlgoObject *pObject) : CScriptAlgoAction(pObject, SCRIPTCONTROL_ACTION_CHANGE_OBJECT_STATE, "SCRIPTCONTROL_ACTION_CHANGE_OBJECT_STATE")
 {
+	m_worldChecked = false;
+	m_isBrolyWorld = false;
 }
 
 CWpsAlgoAction_ChangeObjectState::~CWpsAlgoAction_ChangeObjectState()
@@ -45,9 +47,16 @@ int CWpsAlgoAction_ChangeObjectState::OnUpdate(DWORD dwTickDiff, float fMultiple
 		m_status = SYSTEMERROR;
 
 		auto worldId = GetOwner()->GetWorld()->GetIdx();
-		if (worldId == 920000) // Broly world
+		if (!m_worldChecked)
 		{
-			// dont spam log for broly world
+			m_worldChecked = true;
+			const char* wname = GetOwner()->GetWorld()->GetName();
+			std::string s = wname ? wname : "";
+			std::transform(s.begin(), s.end(), s.begin(), ::tolower);
+			m_isBrolyWorld = (s.find("broly") != std::string::npos);
+		}
+		if (m_isBrolyWorld)
+		{
 			return m_status;
 		}
 
