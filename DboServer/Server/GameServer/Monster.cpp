@@ -66,9 +66,26 @@ void CMonster::CopyToObjectInfo(sOBJECT_INFO * pObjectInfo, CHARACTERID playerCh
 {
 	pObjectInfo->objType = GetObjType();
 
+	CGameServer* app = (CGameServer*)g_pApp;
+	if (!m_pStateManager)
+	{
+		if (app && app->m_config.m_bAIVerbose)
+			ERR_LOG(LOG_SYSTEM, "AI_GUARD Null m_pStateManager mob tblidx=%u", GetTblidx());
+		return;
+	}
 	m_pStateManager->CopyTo(&pObjectInfo->mobState);
 
-	pObjectInfo->mobBrief.actionpatternTblIdx = GetActionPattern()->GetTableIdx();
+	CActionPattern* pPattern = GetActionPattern();
+	if (!pPattern)
+	{
+		if (app && app->m_config.m_bAIVerbose)
+			ERR_LOG(LOG_SYSTEM, "AI_GUARD Null ActionPattern mob tblidx=%u", GetTblidx());
+		pObjectInfo->mobBrief.actionpatternTblIdx = INVALID_TBLIDX;
+	}
+	else
+	{
+		pObjectInfo->mobBrief.actionpatternTblIdx = pPattern->GetTableIdx();
+	}
 
 	pObjectInfo->mobBrief.byActualLevel = GetLevel();
 	pObjectInfo->mobBrief.byBallType = (playerCharID == m_hKillerCharID) ? m_byBallType : DRAGON_BALL_TYPE_NONE;
@@ -363,8 +380,7 @@ void CMonster::Spawn(bool bSpawnOnServerStart)
 	g_pCustomDropEvent->ApplyBuffs(this);
 	// Apply configured title attribute effects when event is active
 	g_pCustomDropEvent->ApplyTitles(this);
-	// Broadcast configured visual effects when event is active
-	g_pCustomDropEvent->ApplyVisuals(this);
+
 
 	m_vecFirstBattleLoc =(GetEnterLoc());
 	m_vecFirstBattleDir =(GetEnterDir());
@@ -426,12 +442,24 @@ void CMonster::TickProcess(DWORD dwTickDiff, float fMultiple)
 HOBJECT CMonster::ConsiderScanTarget(WORD wRange)
 {
 	CWorldCell* pWorldCell = GetCurWorldCell();
+	CGameServer* app = (CGameServer*)g_pApp;
 	if (!pWorldCell)
+	{
+		if (app && app->m_config.m_bAIVerbose)
+			ERR_LOG(LOG_SYSTEM, "AI_GUARD Null WorldCell mob tblidx=%u", GetTblidx());
 		return INVALID_HOBJECT;
+	}
 
 	WORD wScanRange = wRange;
+	sMOB_TBLDAT* pTbl = GetTbldat();
+	if (!pTbl)
+	{
+		if (app && app->m_config.m_bAIVerbose)
+			ERR_LOG(LOG_SYSTEM, "AI_GUARD Null Tbldat in ConsiderScanTarget mob handle=%u", GetID());
+		return INVALID_HOBJECT;
+	}
 	if (wScanRange == INVALID_WORD)
-		wScanRange = GetTbldat()->wScan_Range;
+		wScanRange = pTbl->wScan_Range;
 
 	CRangeCheck pRangeCheck(this, CRangeCheck::eSINGLENESS);
 

@@ -86,6 +86,8 @@ struct sGAME_SERVERCONFIG
 	CNtlString		m_strPathEngineDllName;
 	CNtlString		m_strNavDataPath;
 	bool			m_bEnableNavigator;
+	// Verbose AI / null-guard logging flag (optional; default false)
+	bool            m_bAIVerbose = false;
 };
 
 struct sCHAT_SERVERCONFIG

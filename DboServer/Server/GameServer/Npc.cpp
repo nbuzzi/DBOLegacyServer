@@ -1869,12 +1869,24 @@ HOBJECT CNpc::SelectTarget_AI_Type()
 HOBJECT CNpc::ConsiderScanTarget(WORD wRange)
 {
 	CWorldCell* pWorldCell = GetCurWorldCell();
+	CGameServer* app = (CGameServer*)g_pApp;
 	if (!pWorldCell)
+	{
+		if (app && app->m_config.m_bAIVerbose)
+			ERR_LOG(LOG_SYSTEM, "AI_GUARD Null WorldCell (NPC) tblidx=%u", GetTblidx());
 		return INVALID_HOBJECT;
+	}
 
 	WORD wScanRange = wRange;
+	sNPC_TBLDAT* pTbl = (sNPC_TBLDAT*)GetTbldat();
+	if (!pTbl)
+	{
+		if (app && app->m_config.m_bAIVerbose)
+			ERR_LOG(LOG_SYSTEM, "AI_GUARD Null Tbldat (NPC) handle=%u", GetID());
+		return INVALID_HOBJECT;
+	}
 	if (wScanRange == INVALID_WORD)
-		wScanRange = GetTbldat()->wScan_Range;
+		wScanRange = pTbl->wScan_Range;
 
 	CRangeCheck pRangeCheck(this, CRangeCheck::eSINGLENESS);
 

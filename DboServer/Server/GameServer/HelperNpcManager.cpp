@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "HelperNpcManager.h"
+#include "SafeObjectResolve.h"
 #include "GameServer.h"
 #include "CPlayer.h"
 #include "Party.h"
@@ -639,14 +640,14 @@ bool CHelperNpcManager::SpawnIfAllowed(CPlayer* pLeader, CWorld* pWorld, const s
 	// Prevent GM-triggered helper spawns when teleporting for inspections unless explicitly allowed
 	if (!cfg.bAllowGMHelpers && pLeader->IsGameMaster())
 	{
-		VLog(cfg.bVerboseLogs, "HelperNPC: skip - leader %u is GM and GM helpers disabled", pLeader->GetID());
+		VLog(cfg.bVerboseLogs, "HelperNPC: skip - leader %u is GM and GM helpers disabled", SAFE_ID(pLeader));
 		return false;
 	}
 
 	// Only spawn for actual party leader (or solo) to avoid duplicates when GM spectates or non-leaders zone in first
 	if (pLeader->GetParty() && pLeader->GetParty()->GetPartyLeaderID() != pLeader->GetID())
 	{
-		VLog(cfg.bVerboseLogs, "HelperNPC: skip - player %u is not party leader (%u)", pLeader->GetID(), pLeader->GetParty()->GetPartyLeaderID());
+		VLog(cfg.bVerboseLogs, "HelperNPC: skip - player %u is not party leader (%u)", SAFE_ID(pLeader), pLeader->GetParty()->GetPartyLeaderID());
 		return false;
 	}
 
@@ -1343,13 +1344,6 @@ void CHelperNpcManager::EnsureHelperForLeaderNow(CPlayer* pLeader)
 	if (!pWorld)
 		return;
 
-	// Prevent duplicate helper sets: only the party leader (or solo player) may trigger ensure logic.
-	if (pLeader->GetParty() && pLeader->GetParty()->GetPartyLeaderID() != pLeader->GetID())
-	{
-		VLog(m_config.bVerboseLogs, "HelperNPC: EnsureHelperForLeaderNow skip - player %u not party leader (%u)", pLeader->GetID(), pLeader->GetParty()->GetPartyLeaderID());
-		return;
-	}
-
 	// If helper is already present in this world for this leader, nothing to do
 	auto it = m_mapLeaderToHelper.find(pLeader->GetID());
 	if (it != m_mapLeaderToHelper.end())
@@ -1451,13 +1445,6 @@ void CHelperNpcManager::OnLeaderLeaveWorld(CPlayer* pLeader, CWorld* pWorld)
 void CHelperNpcManager::EvaluateAndSpawnRoleHelpers(CPlayer* pLeader, CWorld* pWorld)
 {
 	if (!pLeader || !pWorld) return;
-
-	// Only allow the party leader (or solo) to evaluate and spawn role helpers to avoid one set per member.
-	if (pLeader->GetParty() && pLeader->GetParty()->GetPartyLeaderID() != pLeader->GetID())
-	{
-		VLog(m_config.bVerboseLogs, "HelperNPC: Role evaluation skip - player %u not party leader (%u)", pLeader->GetID(), pLeader->GetParty()->GetPartyLeaderID());
-		return;
-	}
 
 	auto evalRole = [&](const sROLE_DEF& role) {
 		if (!role.enabled) return;

@@ -275,6 +275,11 @@ int CGameServer::OnInitApp()
 		return NTL_FAIL;
 	}
 
+	// This is only to prepare the manager, actual loading is done on demand - see CHelperNpcManager::LoadFromIni
+	NTL_PRINT(PRINT_APP, "Init Helper Npc Manager");
+	//CHelperNpcManager* pHelperNpcManager = new CHelperNpcManager;
+	//UNREFERENCED_PARAMETER(pHelperNpcManager);
+
 	return NTL_SUCCESS;
 }
 
@@ -368,9 +373,6 @@ void CGameServer::Run()
 
 		if (GetMasterServerSession())		//master server is the last one we connect.. So only loop when we are connected to master server
 			m_pGameProcessor->Run(dwNow);
-
-		// Periodic helper-NPC watchdog to repair spawns after floor transitions
-		GetHelperNpcManager()->TickWatchdog(dwNow);
 
 		dwLastLoop = GetTickCount();
 		QueryPerformanceCounter(&rEnd);
@@ -566,6 +568,16 @@ int	CGameServer::OnConfiguration(const char* lpszConfigFile)
 		return NTL_ERR_SYS_CONFIG_FILE_READ_FAIL;
 	if (!file.Read("Navigator", "EnableNavigator", m_config.m_bEnableNavigator))
 		return NTL_ERR_SYS_CONFIG_FILE_READ_FAIL;
+
+	// Optional AI verbose guard logging flag (defaults to false if missing)
+	{
+		m_config.m_bAIVerbose = false; // hard default
+		int v = 0;
+		if (file.Read("AI", "VerboseGuards", v))
+		{
+			m_config.m_bAIVerbose = (v != 0);
+		}
+	}
 
 	//GAME CONFIGS
 	if (!file.Read("GAMECONFIG", "MaxLevel", m_config.MaxLevel))
