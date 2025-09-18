@@ -908,21 +908,21 @@ void CSkill::CastSkill(HOBJECT hAppointTargetHandle, BYTE byApplyTargetCount, HO
 							}
 
 							CalcDirectHeal(m_pOwnerRef, m_pSkillDataRef, e, res->aSkillResult[i].effectResult[e].fResultValue);
-									// Helper fallback: if caster is helper NPC with configured resurrect skill and target still fainting, force revival
-									if (m_pOwnerRef && (m_pOwnerRef->IsNPC() || m_pOwnerRef->IsMonster()) && pTarget && pTarget->IsPC() && pTarget->IsFainting())
+							// Helper fallback: if caster is helper NPC with configured resurrect skill and target still fainting, force revival
+							if (m_pOwnerRef && (m_pOwnerRef->IsNPC() || m_pOwnerRef->IsMonster()) && pTarget && pTarget->IsPC() && pTarget->IsFainting())
+							{
+								CNpc* pNpc = static_cast<CNpc*>(m_pOwnerRef);
+								if (GetHelperNpcManager()->IsRegisteredHelper(pNpc))
+								{
+									const sHELPER_NPC_CONFIG* pCfg = GetHelperNpcManager()->GetConfigForHelper(pNpc);
+									if (pCfg && pCfg->resurrectSkillTblidx == m_pSkillDataRef->tblidx)
 									{
-										CNpc* pNpc = static_cast<CNpc*>(m_pOwnerRef);
-										if (GetHelperNpcManager()->IsRegisteredHelper(pNpc))
-										{
-											const sHELPER_NPC_CONFIG* pCfg = GetHelperNpcManager()->GetConfigForHelper(pNpc);
-											if (pCfg && pCfg->resurrectSkillTblidx == m_pSkillDataRef->tblidx)
-											{
-												pTarget->Revival(pTarget->GetCurLoc(), pTarget->GetWorldID(), REVIVAL_TYPE_RESCUED, TELEPORT_TYPE_SKILL);
-												if (pCfg->bVerboseLogs)
-													ERR_LOG(LOG_BOTAI, "HelperNPC: forced revival fallback target=%u skill=%u", pTarget->GetID(), pCfg->resurrectSkillTblidx);
-											}
-										}
+										pTarget->Revival(pTarget->GetCurLoc(), pTarget->GetWorldID(), REVIVAL_TYPE_RESCUED, TELEPORT_TYPE_SKILL);
+										if (pCfg->bVerboseLogs)
+											ERR_LOG(LOG_BOTAI, "HelperNPC: forced revival fallback target=%u skill=%u", pTarget->GetID(), pCfg->resurrectSkillTblidx);
 									}
+								}
+							}
 
 							if (m_byUseRpBonusType == DBO_RP_BONUS_TYPE_RESULT_PLUS)
 								res->aSkillResult[i].effectResult[e].fResultValue += m_pSkillDataRef->afRpEffectValue[DBO_RP_BONUS_SLOT_RESULT_PLUS];

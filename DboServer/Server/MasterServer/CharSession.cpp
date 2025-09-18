@@ -1,8 +1,6 @@
 #include "stdafx.h"
 #include "MasterServer.h"
 #include "PacketHead.h"
-#include "IpGuard.h"
-extern IpGuard g_ipGuard;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
 //// RECEIVE PACKETS FROM CONNECTED SERVERS
@@ -10,27 +8,16 @@ extern IpGuard g_ipGuard;
 
 int CCharServerPassiveSession::OnAccept()
 {
-	const char* rip = GetRemoteIP();
-	std::string ip = rip ? rip : "";
+	NTL_PRINT(PRINT_APP, "CHAR SERVER CONNECTED");
 
-	std::string reason;
-	if (!g_ipGuard.OnAccept(ip, reason)) {
-		ERR_LOG(LOG_NETWORK, "DROP %s (Char): %s", ip.c_str(), reason.c_str());
-		Disconnect(false);
-		return NTL_SUCCESS;
-	}
-
-	NTL_PRINT(PRINT_APP, "CHAR SERVER CONNECTED (%s)", ip.c_str());
 	return CNtlSession::OnAccept();
 }
 
 
 void CCharServerPassiveSession::OnClose()
 {
-	const char* rip = GetRemoteIP();
-	if (rip) g_ipGuard.OnClose(rip);
-
 	NTL_PRINT(PRINT_APP, "CHAR SERVER %u DISCONNECTED", serverIndex);
+	
 	g_pSrvMgr->SetServerOff(NTL_SERVER_TYPE_CHARACTER, 0, 0, serverIndex);
 }
 

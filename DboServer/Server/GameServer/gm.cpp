@@ -150,6 +150,10 @@ ACMD(do_reload_customdrop_cfg);
 ACMD(do_customdrop_chainspawns);
 ACMD(do_customdrop_healmul);
 ACMD(do_customdrop_buffduration);
+ACMD(do_reload_helpernpc_cfg);
+ACMD(do_helpernpc_metrics);
+ACMD(do_helpernpc_resetmetrics);
+ACMD(do_helpernpc_refresh);
 
 struct command_info cmd_info[] =
 {
@@ -230,6 +234,10 @@ struct command_info cmd_info[] =
 	{ L"@start_customdrop", do_start_customdrop, ADMIN_LEVEL_GAME_MASTER },
 	{ L"@stop_customdrop", do_stop_customdrop, ADMIN_LEVEL_GAME_MASTER },
 	{ L"@reload_customdrop", do_reload_customdrop_cfg, ADMIN_LEVEL_GAME_MASTER },
+	{ L"@reload_helpernpc", do_reload_helpernpc_cfg, ADMIN_LEVEL_GAME_MASTER },
+	{ L"@helpernpc_metrics", do_helpernpc_metrics, ADMIN_LEVEL_GAME_MASTER },
+	{ L"@helpernpc_resetmetrics", do_helpernpc_resetmetrics, ADMIN_LEVEL_GAME_MASTER },
+	{ L"@helpernpc_refresh", do_helpernpc_refresh, ADMIN_LEVEL_GAME_MASTER },
 	{ L"@customdrop_chainspawns", do_customdrop_chainspawns, ADMIN_LEVEL_GAME_MASTER },
     { L"@customdrop_healmul", do_customdrop_healmul, ADMIN_LEVEL_GAME_MASTER },
     { L"@customdrop_buffduration", do_customdrop_buffduration, ADMIN_LEVEL_GAME_MASTER },
@@ -369,6 +377,69 @@ ACMD(do_reload_customdrop_cfg)
 		NTL_PRINT(PRINT_APP, "CustomDropEvent: config reloaded from %s", path.c_str());
 	else
 		NTL_PRINT(PRINT_APP, "CustomDropEvent: failed to reload config from %s", path.c_str());
+}
+
+// Reload helper NPC configuration at runtime
+ACMD(do_reload_helpernpc_cfg)
+{
+	// usage: @reload_helpernpc [GameServer.ini]
+	pToken->PopToPeek();
+	std::wstring strToken = pToken->PeekNextToken(NULL, &iLine);
+	std::string arg = ws2s(strToken);
+	std::string path;
+	if (arg.empty())
+		path = ".\\config\\GameServer.ini"; // default
+	else
+	{
+		bool hasBackslash = arg.find('\\') != std::string::npos || arg.find('/') != std::string::npos;
+		bool hasExt = arg.rfind('.') != std::string::npos;
+		if (!hasBackslash && !hasExt)
+			path = ".\\config\\" + arg + ".ini";
+		else
+			path = arg;
+	}
+
+	CNtlIniFile ini;
+	if (!ini.Create(path.c_str()))
+	{
+		NTL_PRINT(PRINT_APP, "HelperNPC: failed to open %s", path.c_str());
+		return;
+	}
+	if (GetHelperNpcManager()->LoadConfig(ini))
+	{
+		NTL_PRINT(PRINT_APP, "HelperNPC: config reloaded from %s", path.c_str());
+	}
+	else
+	{
+		NTL_PRINT(PRINT_APP, "HelperNPC: failed to reload config from %s", path.c_str());
+	}
+}
+
+ACMD(do_helpernpc_metrics)
+{
+	// @helpernpc_metrics -> dump all metrics
+	GetHelperNpcManager()->DumpMetrics();
+}
+
+ACMD(do_helpernpc_resetmetrics)
+{
+	// @helpernpc_resetmetrics -> zero counters
+	GetHelperNpcManager()->ResetMetrics();
+}
+
+ACMD(do_helpernpc_refresh)
+{
+	// @helpernpc_refresh [respawn]
+	pToken->PopToPeek();
+	std::wstring strToken = pToken->PeekNextToken(NULL, &iLine);
+	std::string arg = ws2s(strToken);
+	bool respawn = true;
+	if (!arg.empty())
+	{
+		if (_stricmp(arg.c_str(), "norespawn") == 0 || _stricmp(arg.c_str(), "nr") == 0 || _stricmp(arg.c_str(), "off") == 0)
+			respawn = false;
+	}
+	GetHelperNpcManager()->RefreshAllHelpers(respawn);
 }
 
 ACMD(do_customdrop_chainspawns)

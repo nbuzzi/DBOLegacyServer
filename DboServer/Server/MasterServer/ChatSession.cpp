@@ -1,8 +1,6 @@
 #include "stdafx.h"
 #include "MasterServer.h"
 #include "PacketHead.h"
-#include "IpGuard.h"
-extern IpGuard g_ipGuard;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
 //// RECEIVE PACKETS FROM CONNECTED SERVERS
@@ -10,27 +8,16 @@ extern IpGuard g_ipGuard;
 
 int CChatServerPassiveSession::OnAccept()
 {
-	const char* rip = GetRemoteIP();
-	std::string ip = rip ? rip : "";
-
-	std::string reason;
-	if (!g_ipGuard.OnAccept(ip, reason)) {
-		ERR_LOG(LOG_NETWORK, "DROP %s (Chat): %s", ip.c_str(), reason.c_str());
-		Disconnect(false);
-		return NTL_SUCCESS;
-	}
-
 	NTL_PRINT(PRINT_APP, "CHAT SERVER CONNECTED");
+
 	return CNtlSession::OnAccept();
 }
 
 
 void CChatServerPassiveSession::OnClose()
 {
-	const char* rip = GetRemoteIP();
-	if (rip) g_ipGuard.OnClose(rip);
-
 	NTL_PRINT(PRINT_APP, "CHAT SERVER DISCONNECTED");
+
 	g_pSrvMgr->SetServerOff(NTL_SERVER_TYPE_COMMUNITY, 0, 0, 0);
 }
 

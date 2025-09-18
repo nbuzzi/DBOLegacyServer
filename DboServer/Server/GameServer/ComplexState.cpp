@@ -407,7 +407,14 @@ int CComplexState::UpdateSubControlList(DWORD dwTickTime, float fMultiple)
 
 							default:
 							{
-								ERR_LOG(LOG_SCRIPT, "invalid status. [%u]", iUpdateRes);
+								// Harden: unexpected status returned from sub-control update.
+								// Capture context, then stop & delete the control to avoid perpetual spam and stalled AI.
+								ERR_LOG(LOG_SCRIPT, "invalid status from sub-control (state=%s id=%u returned=%u) - forcing removal",
+									pLinkObject->GetControlStateName(), pLinkObject->GetControlStateID(), iUpdateRes);
+								pLinkObject->Stop();
+								m_subControlList.Remove(pLinkObject);
+								SAFE_DELETE(pLinkObject);
+								goto LABEL_7; // continue with next state safely
 							}
 							break;
 						}

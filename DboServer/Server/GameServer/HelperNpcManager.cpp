@@ -125,6 +125,28 @@ bool CHelperNpcManager::LoadConfig(CNtlIniFile& file)
 	}
 	file.Read("HELPER_NPC", "TankAggroPulseMs", m_config.dwTankAggroPulseMs);
 	file.Read("HELPER_NPC", "TankAggroBonus", m_config.dwTankAggroBonus);
+	{
+		int v = m_config.bAllowGMHelpers ? 1 : 0; if (file.Read("HELPER_NPC", "AllowGMHelpers", v)) m_config.bAllowGMHelpers = (v != 0);
+	}
+	{
+		int v = m_config.bAllowMultipleHelpersPerWorld ? 1 : 0; if (file.Read("HELPER_NPC", "AllowMultipleHelpersPerWorld", v)) m_config.bAllowMultipleHelpersPerWorld = (v != 0);
+	}
+	{
+		int v = m_config.bDisallowDuplicateHelperKindPerWorld ? 1 : 0; if (file.Read("HELPER_NPC", "DisallowDuplicateHelperKindPerWorld", v)) m_config.bDisallowDuplicateHelperKindPerWorld = (v != 0);
+	}
+
+	// Resurrection retry/backoff + buff audit burst limits
+	file.Read("HELPER_NPC", "ResurrectRetryDelay1Ms", m_config.dwResurrectRetryDelay1Ms);
+	file.Read("HELPER_NPC", "ResurrectRetryDelay2Ms", m_config.dwResurrectRetryDelay2Ms);
+	{
+		int attempts = m_config.byResurrectMaxAttempts; if (file.Read("HELPER_NPC", "ResurrectMaxAttempts", attempts)) m_config.byResurrectMaxAttempts = (BYTE)attempts;
+	}
+	{
+		int n = m_config.byMaxBuffsPerAudit; if (file.Read("HELPER_NPC", "MaxBuffsPerAudit", n)) { if (n < 1) n = 1; else if (n > 10) n = 10; m_config.byMaxBuffsPerAudit = (BYTE)n; }
+	}
+	{
+		int n = m_config.byMaxBuffsPerTargetPerAudit; if (file.Read("HELPER_NPC", "MaxBuffsPerTargetPerAudit", n)) { if (n < 1) n = 1; else if (n > 10) n = 10; m_config.byMaxBuffsPerTargetPerAudit = (BYTE)n; }
+	}
 
 	// Optional global base modifiers section
 	{
@@ -352,12 +374,14 @@ bool CHelperNpcManager::LoadConfig(CNtlIniFile& file)
 		m_config.dwRebuffCooldownMs,
 		m_config.dwRebuffMinRemainingMs);
 	VLog(m_config.bVerboseLogs,
-		"HelperNPC: Scan: AttackScanRange=%u AttackScanCooldownMs=%u HealUseRange+%.1fm HealApplyArea+%.1fm SpawnOffset=%.1fm",
+		"HelperNPC: Scan: AttackScanRange=%u AttackScanCooldownMs=%u HealUseRange+%.1fm HealApplyArea+%.1fm SpawnOffset=%.1fm GMHelpers=%d MultiWorldHelpers=%d",
 		m_config.wAttackScanRange,
 		m_config.dwAttackScanCooldownMs,
 		m_config.fHealUseRangeBonusMeters,
 		m_config.fHealApplyAreaBonusMeters,
-		m_config.fSpawnOffset);
+		m_config.fSpawnOffset,
+		m_config.bAllowGMHelpers ? 1 : 0,
+		m_config.bAllowMultipleHelpersPerWorld ? 1 : 0);
 
 	// Optional per-dungeon override sections: [HELPER_NPC_UD], [HELPER_NPC_BD], [HELPER_NPC_TMQ]
 	m_cfgUD = m_config; m_cfgBD = m_config; m_cfgTMQ = m_config;
@@ -510,6 +534,11 @@ int CHelperNpcManager::LoadConfigSection(CNtlIniFile& file, const char* sectionN
 	{ int v = out.bEnforceTankAggro ? 1 : 0; if (file.Read(sectionName, "EnforceTankAggro", v)) { out.bEnforceTankAggro = (v != 0); ++readCount; } }
 	if (file.Read(sectionName, "TankAggroPulseMs", out.dwTankAggroPulseMs)) ++readCount;
 	if (file.Read(sectionName, "TankAggroBonus", out.dwTankAggroBonus)) ++readCount;
+	if (file.Read(sectionName, "ResurrectRetryDelay1Ms", out.dwResurrectRetryDelay1Ms)) ++readCount;
+	if (file.Read(sectionName, "ResurrectRetryDelay2Ms", out.dwResurrectRetryDelay2Ms)) ++readCount;
+	{ int v = out.byResurrectMaxAttempts; if (file.Read(sectionName, "ResurrectMaxAttempts", v)) { out.byResurrectMaxAttempts = (BYTE)v; ++readCount; } }
+	{ int v = out.byMaxBuffsPerAudit; if (file.Read(sectionName, "MaxBuffsPerAudit", v)) { if (v < 1) v = 1; else if (v > 10) v = 10; out.byMaxBuffsPerAudit = (BYTE)v; ++readCount; } }
+	{ int v = out.byMaxBuffsPerTargetPerAudit; if (file.Read(sectionName, "MaxBuffsPerTargetPerAudit", v)) { if (v < 1) v = 1; else if (v > 10) v = 10; out.byMaxBuffsPerTargetPerAudit = (BYTE)v; ++readCount; } }
 	{ int v = out.bUseMobAsHelper ? 1 : 0; if (file.Read(sectionName, "UseMobAsHelper", v)) { out.bUseMobAsHelper = (v != 0); ++readCount; } }
 	if (file.Read(sectionName, "MobId", out.helperMobTblidx)) ++readCount;
 
@@ -607,6 +636,20 @@ bool CHelperNpcManager::SpawnIfAllowed(CPlayer* pLeader, CWorld* pWorld, const s
 		return false;
 	}
 
+	// Prevent GM-triggered helper spawns when teleporting for inspections unless explicitly allowed
+	if (!cfg.bAllowGMHelpers && pLeader->IsGameMaster())
+	{
+		VLog(cfg.bVerboseLogs, "HelperNPC: skip - leader %u is GM and GM helpers disabled", pLeader->GetID());
+		return false;
+	}
+
+	// Only spawn for actual party leader (or solo) to avoid duplicates when GM spectates or non-leaders zone in first
+	if (pLeader->GetParty() && pLeader->GetParty()->GetPartyLeaderID() != pLeader->GetID())
+	{
+		VLog(cfg.bVerboseLogs, "HelperNPC: skip - player %u is not party leader (%u)", pLeader->GetID(), pLeader->GetParty()->GetPartyLeaderID());
+		return false;
+	}
+
 	// Only allow in dungeon-like worlds (UD/BD/TMQ or extra lists)
 	eGAMERULE_TYPE rule = pWorld->GetRuleType();
 	WORLDID wid = pWorld->GetID();
@@ -634,8 +677,29 @@ bool CHelperNpcManager::SpawnIfAllowed(CPlayer* pLeader, CWorld* pWorld, const s
 		return false; // party large enough; no helper
 	}
 
-	// Change dedup logic: allow multiple helpers in a world, but avoid duplicates of the same helper ID per leader
-	// We'll check existing helpers for this leader below once helperTblidx is known
+	// Composite capacity cap: real players + existing helpers must not exceed 5
+	// (helpers count as pseudo party members for slot pressure balancing)
+	{
+		int existingHelpersInWorld = 0;
+		auto itList = m_leaderToHelpers.find(pLeader->GetID());
+		if (itList != m_leaderToHelpers.end())
+		{
+			for (HOBJECT h : itList->second)
+			{
+				CNpc* hh = g_pObjectManager->GetNpc(h);
+				if (hh && hh->IsInitialized() && hh->GetCurWorld() == pWorld)
+					existingHelpersInWorld++;
+			}
+		}
+		int composite = (int)byCount + existingHelpersInWorld;
+		if (composite >= 5)
+		{
+			VLog(cfg.bVerboseLogs, "HelperNPC: skip - composite party size %d (players %u + helpers %d) >= max 5", composite, byCount, existingHelpersInWorld);
+			return false;
+		}
+	}
+
+	// Change dedup logic continues after helperTblidx is resolved below
 
 	// Decide what to spawn (NPC vs MOB)
 	bool bSpawnMob = false;
@@ -670,6 +734,36 @@ bool CHelperNpcManager::SpawnIfAllowed(CPlayer* pLeader, CWorld* pWorld, const s
 			ERR_LOG(LOG_GENERAL, "HelperNPC: no valid NPC or MOB tblidx (npc primary %u, fallback %u; mob %u)",
 				cfg.primaryNpcTblidx, cfg.fallbackNpcTblidx, cfg.helperMobTblidx);
 			return false;
+		}
+	}
+
+	// World-level uniqueness: revised to allow one helper per distinct kind (role)
+	// When multi-helpers disabled, we now only block spawning if the SAME helper kind (tblidx) already exists in the world.
+	if (!cfg.bAllowMultipleHelpersPerWorld)
+	{
+		for (const auto& kv : m_helperKindByHelper)
+		{
+			CNpc* existing = g_pObjectManager->GetNpc(kv.first);
+			if (!existing || !existing->IsInitialized()) continue;
+			if (existing->GetCurWorld() != pWorld) continue;
+			// If identical kind already present, block; otherwise allow coexistence (different role/helper kind)
+			if (kv.second == helperTblidx)
+			{
+				VLog(cfg.bVerboseLogs, "HelperNPC: skip - world %u already has helper kind tblidx=%u (multi disabled, per-kind uniqueness)", pWorld->GetID(), helperTblidx);
+				return false;
+			}
+		}
+	}
+	else if (cfg.bDisallowDuplicateHelperKindPerWorld)
+	{
+		for (const auto& kv : m_helperKindByHelper)
+		{
+			CNpc* existing = g_pObjectManager->GetNpc(kv.first);
+			if (existing && existing->IsInitialized() && existing->GetCurWorld() == pWorld && kv.second == helperTblidx)
+			{
+				VLog(cfg.bVerboseLogs, "HelperNPC: skip - world %u already has helper kind tblidx=%u (duplicate kind disallowed)", pWorld->GetID(), helperTblidx);
+				return false;
+			}
 		}
 	}
 
@@ -937,6 +1031,29 @@ bool CHelperNpcManager::SpawnIfAllowed(CPlayer* pLeader, CWorld* pWorld, const s
 
 	VLog(cfg.bVerboseLogs, "HelperNPC: spawn success %s %u in world %u%s", bSpawnMob ? "mob" : "npc", helperTblidx, pWorld->GetID(), cfg.bInvincibleHelper ? " (invincible)" : "");
 
+	// Prime AI: if newly spawned helper has no active control state queued (common after manual cleanup),
+	// trigger a minimal follow refresh so Bot AI conditions evaluate next tick.
+	{
+		CBotAiController* pAI = (CBotAiController*)pHelper->GetBotController();
+		// Prime only if controller exists and no active AI state
+		if (pAI && !pAI->GetCurrentState())
+		{
+			// Re-send follow (idempotent) to ensure movement state set and AI updates run.
+			if (cfg.bFollowLeader)
+			{
+				sVECTOR3 vLeaderLoc; pLeader->GetCurLoc().CopyTo(vLeaderLoc);
+				pHelper->SendCharStateFollowing(pLeader->GetID(), 2.0f, DBO_MOVE_FOLLOW_FRIENDLY, vLeaderLoc, true);
+				VLog(cfg.bVerboseLogs, "HelperNPC: AI prime follow resend for helper %u", pHelper->GetID());
+			}
+			else
+			{
+				// Force an idle look action if available (prevents inert state machine)
+				pHelper->SendCharStateStanding();
+				VLog(cfg.bVerboseLogs, "HelperNPC: AI prime idle stand for helper %u", pHelper->GetID());
+			}
+		}
+	}
+
 	// Clear pending guard on success
 	m_pendingSpawns.erase(key);
 
@@ -1012,12 +1129,12 @@ void CHelperNpcManager::OnLeaderAttackTarget(CPlayer* pLeader, HOBJECT hTarget)
 	}
 
 	// Nudge helper's aggro to the leader's target so existing AI will attack
-	CObjMsg_YouKeepAggro msg;
-	msg.hSource = pLeader->GetID();
-	msg.hProvoker = hTarget;
-	msg.dwAggroPoint = pHelper->GetTbldat()->wBasic_Aggro_Point + 1;
-	pHelper->SendObjectMsg(&msg);
-	VLog(pcfg->bVerboseLogs, "HelperNPC: nudged aggro of helper %u toward target %u for leader %u", pHelper->GetID(), hTarget, pLeader->GetID());
+	// CObjMsg_YouKeepAggro msg;
+	// msg.hSource = pLeader->GetID();
+	// msg.hProvoker = hTarget;
+	// msg.dwAggroPoint = pHelper->GetTbldat()->wBasic_Aggro_Point + 1;
+	// pHelper->SendObjectMsg(&msg);
+	// VLog(pcfg->bVerboseLogs, "HelperNPC: nudged aggro of helper %u toward target %u for leader %u", pHelper->GetID(), hTarget, pLeader->GetID());
 }
 
 void CHelperNpcManager::OnLeaderAttackEnd(CPlayer* pLeader)
@@ -1226,6 +1343,13 @@ void CHelperNpcManager::EnsureHelperForLeaderNow(CPlayer* pLeader)
 	if (!pWorld)
 		return;
 
+	// Prevent duplicate helper sets: only the party leader (or solo player) may trigger ensure logic.
+	if (pLeader->GetParty() && pLeader->GetParty()->GetPartyLeaderID() != pLeader->GetID())
+	{
+		VLog(m_config.bVerboseLogs, "HelperNPC: EnsureHelperForLeaderNow skip - player %u not party leader (%u)", pLeader->GetID(), pLeader->GetParty()->GetPartyLeaderID());
+		return;
+	}
+
 	// If helper is already present in this world for this leader, nothing to do
 	auto it = m_mapLeaderToHelper.find(pLeader->GetID());
 	if (it != m_mapLeaderToHelper.end())
@@ -1327,6 +1451,13 @@ void CHelperNpcManager::OnLeaderLeaveWorld(CPlayer* pLeader, CWorld* pWorld)
 void CHelperNpcManager::EvaluateAndSpawnRoleHelpers(CPlayer* pLeader, CWorld* pWorld)
 {
 	if (!pLeader || !pWorld) return;
+
+	// Only allow the party leader (or solo) to evaluate and spawn role helpers to avoid one set per member.
+	if (pLeader->GetParty() && pLeader->GetParty()->GetPartyLeaderID() != pLeader->GetID())
+	{
+		VLog(m_config.bVerboseLogs, "HelperNPC: Role evaluation skip - player %u not party leader (%u)", pLeader->GetID(), pLeader->GetParty()->GetPartyLeaderID());
+		return;
+	}
 
 	auto evalRole = [&](const sROLE_DEF& role) {
 		if (!role.enabled) return;
@@ -1469,6 +1600,90 @@ void CHelperNpcManager::RemoveRoleHelpersForLeader(CPlayer* pLeader, CWorld* pWo
 		m_mapLeaderToHelper[pLeader->GetID()] = it->second.back();
 	else
 		m_mapLeaderToHelper.erase(pLeader->GetID());
+}
+
+void CHelperNpcManager::ResetMetrics()
+{
+	for (auto& kv : m_helperConfigByHelper)
+	{
+		sHELPER_NPC_CONFIG& cfg = kv.second;
+		cfg.dwMetricResurrectAttempts = 0;
+		cfg.dwMetricResurrectRetries = 0;
+		cfg.dwMetricResurrectSuccess = 0;
+		cfg.dwMetricBuffsQueuedMissing = 0;
+		cfg.dwMetricBuffsQueuedRefresh = 0;
+	}
+	NTL_PRINT(PRINT_APP, "HelperNPC: metrics reset for %zu helpers", m_helperConfigByHelper.size());
+}
+
+void CHelperNpcManager::DumpMetrics()
+{
+	DWORD totalRA=0,totalRR=0,totalRS=0,totalBM=0,totalBR=0;
+	for (auto& kv : m_helperConfigByHelper)
+	{
+		const sHELPER_NPC_CONFIG& cfg = kv.second;
+		totalRA += cfg.dwMetricResurrectAttempts;
+		totalRR += cfg.dwMetricResurrectRetries;
+		totalRS += cfg.dwMetricResurrectSuccess;
+		totalBM += cfg.dwMetricBuffsQueuedMissing;
+		totalBR += cfg.dwMetricBuffsQueuedRefresh;
+		NTL_PRINT(PRINT_APP, "HelperNPC: helper=%u stats Ra=%u Rr=%u Rs=%u Bm=%u Br=%u", kv.first, cfg.dwMetricResurrectAttempts, cfg.dwMetricResurrectRetries, cfg.dwMetricResurrectSuccess, cfg.dwMetricBuffsQueuedMissing, cfg.dwMetricBuffsQueuedRefresh);
+	}
+	NTL_PRINT(PRINT_APP, "HelperNPC: totals Ra=%u Rr=%u Rs=%u Bm=%u Br=%u helpers=%zu", totalRA,totalRR,totalRS,totalBM,totalBR,m_helperConfigByHelper.size());
+}
+
+void CHelperNpcManager::RefreshAllHelpers(bool bRespawn)
+{
+	// Capture leaders + worlds first
+	std::vector<std::pair<HOBJECT, CWorld*>> leaderWorlds;
+	for (auto& kv : m_leaderToHelpers)
+	{
+		HOBJECT leader = kv.first;
+		CPlayer* pLeader = g_pObjectManager->GetPC(leader);
+		if (!pLeader || !pLeader->IsInitialized()) continue;
+		CWorld* pWorld = pLeader->GetCurWorld();
+		if (!pWorld) continue;
+		leaderWorlds.emplace_back(leader, pWorld);
+	}
+
+	// Properly despawn existing helpers using engine lifecycle (LeaveGame -> DestroyCharacter)
+	for (auto& kv : m_leaderToHelpers)
+	{
+		for (HOBJECT h : kv.second)
+		{
+			CNpc* npc = g_pObjectManager->GetNpc(h);
+			if (!npc) continue;
+			// Ensure respawn flag cleared so ConsiderRespawn() path fully destroys
+			npc->SetSpawnFuncFlag(0);
+			npc->LeaveGame(); // handles party/script cleanup & ConsiderRespawn()
+			// If npc still exists in object manager and not scheduled for respawn, destroy directly
+			if (!npc->IsInRespawn())
+			{
+				g_pObjectManager->DestroyCharacter(npc);
+			}
+		}
+	}
+	// Clear tracking maps after lifecycle teardown
+	m_leaderToHelpers.clear();
+	m_helperConfigByHelper.clear();
+	m_helperKindByHelper.clear();
+
+	if (!bRespawn) {
+		NTL_PRINT(PRINT_APP, "HelperNPC: all helpers despawned (no respawn requested)");
+		return;
+	}
+	// Respawn based on current config
+	for (auto& lw : leaderWorlds)
+	{
+		CPlayer* pLeader = g_pObjectManager->GetPC(lw.first);
+		CWorld* pWorld = lw.second;
+		if (!pLeader || !pWorld) continue;
+		// Base helper (if still allowed)
+		SpawnIfAllowed(pLeader, pWorld, m_config);
+		// Role helpers
+		EvaluateAndSpawnRoleHelpers(pLeader, pWorld);
+	}
+	NTL_PRINT(PRINT_APP, "HelperNPC: helpers refreshed (respawned) leaders=%zu", leaderWorlds.size());
 }
 
 void CHelperNpcManager::OnPartyMemberJoined(CParty* pParty, CPlayer* pNewMember)

@@ -1,33 +1,18 @@
 #include "stdafx.h"
 #include "MasterServer.h"
 #include "PacketHead.h"
-#include "IpGuard.h"
-extern IpGuard g_ipGuard;
+
 
 int CWebSession::OnAccept()
 {
-	const char* rip = GetRemoteIP();
-	std::string ip = rip ? rip : "";
-
-	std::string reason;
-	if (!g_ipGuard.OnAccept(ip, reason)) {
-		ERR_LOG(LOG_NETWORK, "DROP %s (Web): %s", ip.c_str(), reason.c_str());
-		Disconnect(false);
-		return NTL_SUCCESS;
-	}
-
-	NTL_PRINT(PRINT_APP, "CONNECTION FROM WEB-SERVER ACCEPTED");
+	//NTL_PRINT(PRINT_APP, "CONNECTION FROM WEB-SERVER ACCEPTED");
 	return CNtlSession::OnAccept();
 }
 
 
 void CWebSession::OnClose()
 {
-	const char* rip = GetRemoteIP();
-	std::string ip = rip ? rip : "";
-	if (rip) g_ipGuard.OnClose(rip);
-
-	NTL_PRINT(PRINT_APP, "WEB SERVER DISCONNECTED, IP: %s", ip.c_str());
+	//NTL_PRINT(PRINT_APP, "CONNECTION FROM WEB-SERVER CLOSED");
 }
 
 

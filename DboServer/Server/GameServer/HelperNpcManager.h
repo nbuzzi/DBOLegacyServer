@@ -85,10 +85,32 @@ struct sHELPER_NPC_CONFIG
     // AI preference: if true, attempt forced skills first when choosing an offensive ability
     bool   bPrioritizeForcedSkills = false;
 
-    // Tank aggro enforcement
-    bool   bEnforceTankAggro = true;      // default on: keep mobs focused on tank helper
+    // Tank aggro enforcement (default off; enable explicitly for [TANK] role to reduce unintended threat churn)
+    bool   bEnforceTankAggro = false;      // default off: only pulse aggro if role config enables it
     DWORD  dwTankAggroPulseMs = 500;      // how often to pulse aggro (ms)
     DWORD  dwTankAggroBonus = 800;        // flat bonus threat added per pulse when not top
+
+    // Resurrection retry/backoff tuning (exposed via INI)
+    // Attempt 1 occurs immediately when a faint target is detected; these control subsequent retries.
+    DWORD  dwResurrectRetryDelay1Ms = 1200; // delay before second attempt
+    DWORD  dwResurrectRetryDelay2Ms = 2500; // delay before third attempt
+    BYTE   byResurrectMaxAttempts = 3;      // total attempts including first; 0=disable retry logic
+
+    // Buff audit burst: number of buffs allowed to queue in a single audit cycle (default 1 for fairness)
+    BYTE   byMaxBuffsPerAudit = 1;          // increase to accelerate full restoration after wipe
+    BYTE   byMaxBuffsPerTargetPerAudit = 1; // cap per single target within one audit
+
+    // Metrics (runtime counters; not configurable; zeroed at spawn copy)
+    mutable DWORD dwMetricResurrectAttempts = 0;    // total resurrect casts queued
+    mutable DWORD dwMetricResurrectRetries = 0;      // attempts beyond the first
+    mutable DWORD dwMetricResurrectSuccess = 0;      // successful revivals observed (clears pending)
+    mutable DWORD dwMetricBuffsQueuedMissing = 0;    // buffs queued because missing
+    mutable DWORD dwMetricBuffsQueuedRefresh = 0;    // buffs queued because expiring
+
+    // Administrative / duplication controls
+    bool   bAllowGMHelpers = false;            // when false, GM characters never spawn helpers on entering worlds
+    bool   bAllowMultipleHelpersPerWorld = true; // when false, limit to at most one helper entity per world instance (first creator wins)
+    bool   bDisallowDuplicateHelperKindPerWorld = true; // when true, prevent spawning another helper with identical tblidx (NPC or MOB) in same world
 };
 
 class CHelperNpcManager
@@ -143,6 +165,13 @@ public:
 
     // Called when a new member joins a party to remove conflicting role helpers
     void OnPartyMemberJoined(class CParty* pParty, class CPlayer* pNewMember);
+
+    // Metrics utilities
+    void ResetMetrics();
+    void DumpMetrics(); // logs aggregated and per-helper metrics
+
+    // Refresh existing helpers: despawn all current helpers and respawn according to current config (roles + base)
+    void RefreshAllHelpers(bool bRespawn);
 
 private:
     CHelperNpcManager() = default;

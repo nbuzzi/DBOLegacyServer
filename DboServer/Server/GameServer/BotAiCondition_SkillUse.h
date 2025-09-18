@@ -54,6 +54,14 @@ private:
 	// Time since last engage/follow switch to prevent oscillation
 	DWORD m_dwSinceLastEngageMs = 0;
 
+	// Resurrect retry tracking
+	HOBJECT m_hPendingResurrectTarget = INVALID_HOBJECT; // currently tracked faint target
+	DWORD  m_dwSinceLastResurrectAttemptMs = 0;          // time since last attempt
+	BYTE   m_byResurrectAttemptCount = 0;                // number of attempts so far
+
+	// Buff coverage rotation: index offset to start from next cycle so one member isn't always first
+	BYTE   m_byBuffCoverageStartIndex = 0;
+
 };
 
 #endif
