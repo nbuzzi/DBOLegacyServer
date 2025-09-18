@@ -19,6 +19,7 @@
 #include "NtlNavi.h"
 
 #include "RangeCheck.h"
+#include "HelperNpcManager.h"
 
 
 
@@ -864,7 +865,8 @@ float CCharacter::GetAttackFollowRange()
 //-------------------------------------------------------------------//
 bool CCharacter::IsTargetAttackble(CCharacter* pTarget, WORD wRange)
 {
-	// Helpers (NPC/Monster) linked to a PC and allied should never attack PCs
+	// Registered helpers (NPC/Monster) linked to a PC and allied should never attack PCs.
+	// Legacy non-helper NPCs/mobs must continue to evaluate original attackability rules.
 	if (pTarget && pTarget->IsInitialized())
 	{
 		if ((IsNPC() || IsMonster()) && pTarget->IsPC())
@@ -872,7 +874,9 @@ bool CCharacter::IsTargetAttackble(CCharacter* pTarget, WORD wRange)
 			CNpc* pSelfNpc = static_cast<CNpc*>(this);
 			if (pSelfNpc->GetLinkPc() != INVALID_HOBJECT && pSelfNpc->GetPcRelation() == RELATION_TYPE_ALLIENCE)
 			{
-				return false;
+				// Only block if this NPC is a registered helper managed by HelperNpcManager
+				if (GetHelperNpcManager()->IsRegisteredHelper(pSelfNpc))
+					return false;
 			}
 		}
 	}

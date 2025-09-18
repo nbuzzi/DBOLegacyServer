@@ -108,7 +108,7 @@ int CBotAiCondition_SkillUse::OnUpdate(DWORD dwTickDiff, float fMultiple)
 				}
 			}
 
-			//return m_status; // early exit for non-helper path
+			return m_status; // early exit for non-helper path
 		}
 
 		// Pending resurrect retry housekeeping (runs every tick pre logic)

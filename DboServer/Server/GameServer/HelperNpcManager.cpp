@@ -441,6 +441,38 @@ bool CHelperNpcManager::LoadConfig(CNtlIniFile& file)
 	LoadRoleSection(file, "TANK", m_roleTank);
 	LoadRoleSection(file, "BUFFER", m_roleBuffer);
 	LoadRoleSection(file, "SPEED", m_roleSpeed);
+
+	// SPEED parity adjustment:
+	// The SPEED helper is intended to behave similarly to the TANK role in terms of
+	// proactive engagement and holding aggro so that party leaders experience a
+	// consistent "frontline" behavior regardless of selecting TANK or SPEED.
+	// We therefore mirror key aggression flags when SPEED is enabled. We do NOT
+	// copy raw damage / defense multipliers (retain distinct balance), only the
+	// behavioral flags that drive scanning & aggro pulsing. Pulse timing / bonus
+	// are inherited from TANK if SPEED leaves them at defaults.
+	if (m_roleSpeed.enabled)
+	{
+		// Always ensure proactive auto attack & aggro enforcement for SPEED
+		m_roleSpeed.cfg.bProactiveAutoAttack = true;
+		m_roleSpeed.cfg.bEnforceTankAggro = true;
+		// Adopt tank pulse parameters if SPEED has not customized them (zero / default)
+		if (m_roleSpeed.cfg.dwTankAggroPulseMs == 0 && m_roleTank.cfg.dwTankAggroPulseMs > 0)
+			m_roleSpeed.cfg.dwTankAggroPulseMs = m_roleTank.cfg.dwTankAggroPulseMs;
+		if (m_roleSpeed.cfg.dwTankAggroBonus == 0 && m_roleTank.cfg.dwTankAggroBonus > 0)
+			m_roleSpeed.cfg.dwTankAggroBonus = m_roleTank.cfg.dwTankAggroBonus;
+		// Ensure scan range / cooldown are at least as strong as tank if not overridden
+		if (m_roleSpeed.cfg.wAttackScanRange < m_roleTank.cfg.wAttackScanRange)
+			m_roleSpeed.cfg.wAttackScanRange = m_roleTank.cfg.wAttackScanRange;
+		if (m_roleSpeed.cfg.dwAttackScanCooldownMs > m_roleTank.cfg.dwAttackScanCooldownMs && m_roleTank.cfg.dwAttackScanCooldownMs > 0)
+			m_roleSpeed.cfg.dwAttackScanCooldownMs = m_roleTank.cfg.dwAttackScanCooldownMs;
+		// Also enforce sensible floors so SPEED is never too passive even if TANK is disabled or weakly configured
+		if (m_roleSpeed.cfg.wAttackScanRange < 45)
+			m_roleSpeed.cfg.wAttackScanRange = 45; // default proactive range
+		if (m_roleSpeed.cfg.dwAttackScanCooldownMs == 0 || m_roleSpeed.cfg.dwAttackScanCooldownMs > 1000)
+			m_roleSpeed.cfg.dwAttackScanCooldownMs = 1000; // at most 1s between scans
+		// Default to assisting leader target unless explicitly disabled in SPEED section
+		m_roleSpeed.cfg.bAssistLeaderTarget = true;
+	}
 	if (m_roleTank.enabled && m_roleTank.coveredClasses.empty())
 	{
 		// Default tank classes if not specified
@@ -750,7 +782,7 @@ bool CHelperNpcManager::SpawnIfAllowed(CPlayer* pLeader, CWorld* pWorld, const s
 			// If identical kind already present, block; otherwise allow coexistence (different role/helper kind)
 			if (kv.second == helperTblidx)
 			{
-				VLog(cfg.bVerboseLogs, "HelperNPC: skip - world %u already has helper kind tblidx=%u (multi disabled, per-kind uniqueness)", pWorld->GetID(), helperTblidx);
+					VLog(cfg.bVerboseLogs, "HelperNPC: skip - world %u already has helper kind tblidx=%u (multi disabled, per-kind uniqueness)", SAFE_ID(pWorld), helperTblidx);
 				return false;
 			}
 		}
@@ -762,7 +794,7 @@ bool CHelperNpcManager::SpawnIfAllowed(CPlayer* pLeader, CWorld* pWorld, const s
 			CNpc* existing = g_pObjectManager->GetNpc(kv.first);
 			if (existing && existing->IsInitialized() && existing->GetCurWorld() == pWorld && kv.second == helperTblidx)
 			{
-				VLog(cfg.bVerboseLogs, "HelperNPC: skip - world %u already has helper kind tblidx=%u (duplicate kind disallowed)", pWorld->GetID(), helperTblidx);
+					VLog(cfg.bVerboseLogs, "HelperNPC: skip - world %u already has helper kind tblidx=%u (duplicate kind disallowed)", SAFE_ID(pWorld), helperTblidx);
 				return false;
 			}
 		}
@@ -781,7 +813,7 @@ bool CHelperNpcManager::SpawnIfAllowed(CPlayer* pLeader, CWorld* pWorld, const s
 					auto itKind = m_helperKindByHelper.find(h);
 					if (itKind != m_helperKindByHelper.end() && itKind->second == helperTblidx)
 					{
-						VLog(cfg.bVerboseLogs, "HelperNPC: skip - leader %u already has helper tblidx %u in world %u", pLeader->GetID(), helperTblidx, pWorld->GetID());
+						VLog(cfg.bVerboseLogs, "HelperNPC: skip - leader %u already has helper tblidx %u in world %u", SAFE_ID(pLeader), helperTblidx, SAFE_ID(pWorld));
 						return false;
 					}
 				}
@@ -790,7 +822,7 @@ bool CHelperNpcManager::SpawnIfAllowed(CPlayer* pLeader, CWorld* pWorld, const s
 	}
 
 	// Guard: prevent duplicate spawn for the same leader/world/helperTblidx in parallel/rapid calls
-	SpawnKey key{ pLeader->GetID(), pWorld->GetID(), helperTblidx };
+	SpawnKey key{ pLeader->GetID(), pWorld->GetID(), helperTblidx }; // raw IDs for map key
 	if (m_pendingSpawns.find(key) != m_pendingSpawns.end())
 	{
 		VLog(cfg.bVerboseLogs, "HelperNPC: spawn already in progress for leader %u world %u tblidx %u", key.leader, key.world, key.tblidx);
@@ -833,7 +865,7 @@ bool CHelperNpcManager::SpawnIfAllowed(CPlayer* pLeader, CWorld* pWorld, const s
 	spawnDir.z = baseDir.z;
 
 	VLog(cfg.bVerboseLogs, "HelperNPC: attempt spawn %s %u in world %u (partySize=%u) near leader at (%.2f, %.2f, %.2f)",
-		bSpawnMob ? "mob" : "npc", helperTblidx, pWorld->GetID(), byCount, spawnLoc.x, spawnLoc.y, spawnLoc.z);
+		bSpawnMob ? "mob" : "npc", helperTblidx, SAFE_ID(pWorld), byCount, spawnLoc.x, spawnLoc.y, spawnLoc.z);
 	sSPAWN_TBLDAT sSpawn;
 	sSpawn.vSpawn_Loc.CopyFrom(spawnLoc);
 	sSpawn.vSpawn_Dir.CopyFrom(spawnDir);
@@ -868,7 +900,7 @@ bool CHelperNpcManager::SpawnIfAllowed(CPlayer* pLeader, CWorld* pWorld, const s
 		}
 		if (!pNpc->CreateDataAndSpawn(pWorld->GetID(), pNpcTbl, &sSpawn, false, 0))
 		{
-			ERR_LOG(LOG_GENERAL, "HelperNPC: CreateDataAndSpawn(NPC) failed for %u in world %u", helperTblidx, pWorld->GetID());
+			ERR_LOG(LOG_GENERAL, "HelperNPC: CreateDataAndSpawn(NPC) failed for %u in world %u", helperTblidx, SAFE_ID(pWorld));
 			m_pendingSpawns.erase(key);
 			return false;
 		}
@@ -917,7 +949,7 @@ bool CHelperNpcManager::SpawnIfAllowed(CPlayer* pLeader, CWorld* pWorld, const s
 
 	// Reload skills after linking so Helper skills initialize properly.
 	pHelper->LoadSkillTable(INVALID_TBLIDX);
-	VLog(cfg.bVerboseLogs, "HelperNPC: skills reloaded after link to leader %u", pLeader->GetID());
+	VLog(cfg.bVerboseLogs, "HelperNPC: skills reloaded after link to leader %u", SAFE_ID(pLeader));
 
 	// Optionally force-add a specific skill if configured
 	if (!cfg.vForcedSkills.empty())
@@ -1003,7 +1035,7 @@ bool CHelperNpcManager::SpawnIfAllowed(CPlayer* pLeader, CWorld* pWorld, const s
 	if (pHelper->GetCurEP() < pHelper->GetMaxEP())
 	{
 		pHelper->SetCurEP(pHelper->GetMaxEP());
-		VLog(cfg.bVerboseLogs, "HelperNPC: EP set to max (%u) for helper %u", pHelper->GetMaxEP(), pHelper->GetID());
+		VLog(cfg.bVerboseLogs, "HelperNPC: EP set to max (%u) for helper %u", pHelper->GetMaxEP(), SAFE_ID(pHelper));
 	}
 
 	if (cfg.bFollowLeader)
@@ -1014,7 +1046,7 @@ bool CHelperNpcManager::SpawnIfAllowed(CPlayer* pLeader, CWorld* pWorld, const s
 		const float fFollowDist = 2.0f; // keep very close to the leader
 		if (pHelper->SendCharStateFollowing(pLeader->GetID(), fFollowDist, DBO_MOVE_FOLLOW_FRIENDLY, vLeaderLoc, true))
 		{
-			VLog(cfg.bVerboseLogs, "HelperNPC: Direct follow started to leader %u at (%.2f, %.2f, %.2f)", pLeader->GetID(), vLeaderLoc.x, vLeaderLoc.y, vLeaderLoc.z);
+			VLog(cfg.bVerboseLogs, "HelperNPC: Direct follow started to leader %u at (%.2f, %.2f, %.2f)", SAFE_ID(pLeader), vLeaderLoc.x, vLeaderLoc.y, vLeaderLoc.z);
 		}
 		else
 		{
@@ -1030,7 +1062,7 @@ bool CHelperNpcManager::SpawnIfAllowed(CPlayer* pLeader, CWorld* pWorld, const s
 	auto& list = m_leaderToHelpers[pLeader->GetID()];
 	list.push_back(pHelper->GetID());
 
-	VLog(cfg.bVerboseLogs, "HelperNPC: spawn success %s %u in world %u%s", bSpawnMob ? "mob" : "npc", helperTblidx, pWorld->GetID(), cfg.bInvincibleHelper ? " (invincible)" : "");
+	VLog(cfg.bVerboseLogs, "HelperNPC: spawn success %s %u in world %u%s", bSpawnMob ? "mob" : "npc", helperTblidx, SAFE_ID(pWorld), cfg.bInvincibleHelper ? " (invincible)" : "");
 
 	// Prime AI: if newly spawned helper has no active control state queued (common after manual cleanup),
 	// trigger a minimal follow refresh so Bot AI conditions evaluate next tick.
@@ -1044,13 +1076,13 @@ bool CHelperNpcManager::SpawnIfAllowed(CPlayer* pLeader, CWorld* pWorld, const s
 			{
 				sVECTOR3 vLeaderLoc; pLeader->GetCurLoc().CopyTo(vLeaderLoc);
 				pHelper->SendCharStateFollowing(pLeader->GetID(), 2.0f, DBO_MOVE_FOLLOW_FRIENDLY, vLeaderLoc, true);
-				VLog(cfg.bVerboseLogs, "HelperNPC: AI prime follow resend for helper %u", pHelper->GetID());
+				VLog(cfg.bVerboseLogs, "HelperNPC: AI prime follow resend for helper %u", SAFE_ID(pHelper));
 			}
 			else
 			{
 				// Force an idle look action if available (prevents inert state machine)
 				pHelper->SendCharStateStanding();
-				VLog(cfg.bVerboseLogs, "HelperNPC: AI prime idle stand for helper %u", pHelper->GetID());
+				VLog(cfg.bVerboseLogs, "HelperNPC: AI prime idle stand for helper %u", SAFE_ID(pHelper));
 			}
 		}
 	}
@@ -1085,7 +1117,7 @@ void CHelperNpcManager::OnWorldDestroyed(CWorld* pWorld)
 			vec.erase(std::remove(vec.begin(), vec.end(), h), vec.end());
 		}
 	}
-	VLog(m_config.bVerboseLogs, "HelperNPC: world %u destroyed - cleaned helper tracking", pWorld->GetID());
+	VLog(m_config.bVerboseLogs, "HelperNPC: world %u destroyed - cleaned helper tracking", SAFE_ID(pWorld));
 }
 
 void CHelperNpcManager::OnLeaderAttackTarget(CPlayer* pLeader, HOBJECT hTarget)
@@ -1096,14 +1128,14 @@ void CHelperNpcManager::OnLeaderAttackTarget(CPlayer* pLeader, HOBJECT hTarget)
 	auto it = m_mapLeaderToHelper.find(pLeader->GetID());
 	if (it == m_mapLeaderToHelper.end())
 	{
-		VLog(m_config.bVerboseLogs, "HelperNPC: no helper linked to leader %u - ignore attack target", pLeader->GetID());
+		VLog(m_config.bVerboseLogs, "HelperNPC: no helper linked to leader %u - ignore attack target", SAFE_ID(pLeader));
 		return;
 	}
 
 	CNpc* pHelper = g_pObjectManager->GetNpc(it->second);
 	if (!pHelper || !pHelper->IsInitialized() || pHelper->GetCurWorld() != pLeader->GetCurWorld())
 	{
-		VLog(m_config.bVerboseLogs, "HelperNPC: helper handle invalid or not in same world for leader %u", pLeader->GetID());
+		VLog(m_config.bVerboseLogs, "HelperNPC: helper handle invalid or not in same world for leader %u", SAFE_ID(pLeader));
 		return;
 	}
 
@@ -1119,13 +1151,13 @@ void CHelperNpcManager::OnLeaderAttackTarget(CPlayer* pLeader, HOBJECT hTarget)
 	CCharacter* pVictim = g_pObjectManager->GetChar(hTarget);
 	if (!pVictim || !pVictim->IsInitialized())
 	{
-		VLog(pcfg->bVerboseLogs, "HelperNPC: leader %u target invalid - skip assist", pLeader->GetID());
+		VLog(pcfg->bVerboseLogs, "HelperNPC: leader %u target invalid - skip assist", SAFE_ID(pLeader));
 		return;
 	}
 
 	if (!pHelper->IsTargetAttackble(pVictim, pHelper->GetTbldat()->wSight_Range))
 	{
-		VLog(pcfg->bVerboseLogs, "HelperNPC: helper %u cannot attack target %u - out of constraints", pHelper->GetID(), hTarget);
+		VLog(pcfg->bVerboseLogs, "HelperNPC: helper %u cannot attack target %u - out of constraints", SAFE_ID(pHelper), hTarget);
 		return;
 	}
 
@@ -1166,7 +1198,7 @@ void CHelperNpcManager::OnLeaderAttackEnd(CPlayer* pLeader)
 		pLeader->GetCurLoc().CopyTo(vLeaderLoc);
 		const float fFollowDist = 1.5f;
 		pHelper->SendCharStateFollowing(pLeader->GetID(), fFollowDist, DBO_MOVE_FOLLOW_FRIENDLY, vLeaderLoc, true);
-		VLog(pcfg->bVerboseLogs, "HelperNPC: resumed follow to leader %u after combat", pLeader->GetID());
+		VLog(pcfg->bVerboseLogs, "HelperNPC: resumed follow to leader %u after combat", SAFE_ID(pLeader));
 	}
 }
 
@@ -1328,7 +1360,7 @@ void CHelperNpcManager::TickWatchdog(DWORD dwNow)
 		for (TBLIDX t : existingKinds) { if (t == desiredTblidx) { hasSame = true; break; } }
 		if (!hasSame)
 		{
-			VLog(pCfg->bVerboseLogs, "HelperNPC: watchdog spawn for leader %u world %u (missing helper tblidx %u)", pLeader->GetID(), pWorld->GetID(), desiredTblidx);
+			VLog(pCfg->bVerboseLogs, "HelperNPC: watchdog spawn for leader %u world %u (missing helper tblidx %u)", SAFE_ID(pLeader), SAFE_ID(pWorld), desiredTblidx);
 			SpawnIfAllowed(pLeader, pWorld, *pCfg);
 		}
 
@@ -1360,7 +1392,7 @@ void CHelperNpcManager::EnsureHelperForLeaderNow(CPlayer* pLeader)
 			{
 				sVECTOR3 vLeaderLoc; pLeader->GetCurLoc().CopyTo(vLeaderLoc);
 				pHelper->SendCharStateFollowing(pLeader->GetID(), 1.5f, DBO_MOVE_FOLLOW_FRIENDLY, vLeaderLoc, true);
-				VLog(cfg.bVerboseLogs, "HelperNPC: EnsureHelperForLeaderNow - reassert follow to leader %u in world %u", pLeader->GetID(), pWorld->GetID());
+				VLog(cfg.bVerboseLogs, "HelperNPC: EnsureHelperForLeaderNow - reassert follow to leader %u in world %u", SAFE_ID(pLeader), SAFE_ID(pWorld));
 			}
 			if (cfg.bAssistLeaderTarget)
 			{
@@ -1368,7 +1400,7 @@ void CHelperNpcManager::EnsureHelperForLeaderNow(CPlayer* pLeader)
 				if (hVictim != INVALID_HOBJECT)
 				{
 					if (pHelper->GetTargetHandle() != hVictim) pHelper->SetTargetHandle(hVictim);
-					VLog(cfg.bVerboseLogs, "HelperNPC: EnsureHelperForLeaderNow - reassert assist target %u for leader %u", hVictim, pLeader->GetID());
+					VLog(cfg.bVerboseLogs, "HelperNPC: EnsureHelperForLeaderNow - reassert assist target %u for leader %u", hVictim, SAFE_ID(pLeader));
 				}
 			}
 			return;
@@ -1403,7 +1435,7 @@ void CHelperNpcManager::EnsureHelperForLeaderNow(CPlayer* pLeader)
 
 	// Allow immediate repair by clearing any stale world mark and spawning now
 	m_worldsWithHelper.erase(pWorld->GetID());
-	VLog(pCfg->bVerboseLogs, "HelperNPC: EnsureHelperForLeaderNow - attempting immediate repair for leader %u world %u", pLeader->GetID(), pWorld->GetID());
+	VLog(pCfg->bVerboseLogs, "HelperNPC: EnsureHelperForLeaderNow - attempting immediate repair for leader %u world %u", SAFE_ID(pLeader), SAFE_ID(pWorld));
 	// Spawn role helpers first to avoid base helper blocking same-tblidx roles (e.g., HEALER)
 	EvaluateAndSpawnRoleHelpers(pLeader, pWorld);
 	// Then spawn base helper if allowed (will be skipped if party size threshold met)
@@ -1439,7 +1471,7 @@ void CHelperNpcManager::OnLeaderLeaveWorld(CPlayer* pLeader, CWorld* pWorld)
 	if (!pLeader || !pWorld) return;
 	// Despawn helpers whenever the leader leaves a world. If it's a dungeon world, helpers should not persist once leader exits.
 	DespawnAllHelpersForLeaderInWorld(pLeader, pWorld);
-	VLog(m_config.bVerboseLogs, "HelperNPC: leader %u left world %u - despawned helpers in that world", pLeader->GetID(), pWorld->GetID());
+	VLog(m_config.bVerboseLogs, "HelperNPC: leader %u left world %u - despawned helpers in that world", SAFE_ID(pLeader), SAFE_ID(pWorld));
 }
 
 void CHelperNpcManager::EvaluateAndSpawnRoleHelpers(CPlayer* pLeader, CWorld* pWorld)
@@ -1570,7 +1602,7 @@ void CHelperNpcManager::RemoveRoleHelpersForLeader(CPlayer* pLeader, CWorld* pWo
 		bool shouldRemove = (removeHealer && isHealer) || (removeTank && isTank) || (removeBuffer && isBuffer) || (removeSpeed && isSpeed);
 		if (shouldRemove)
 		{
-			VLog(m_config.bVerboseLogs, "HelperNPC: removing role helper kind %u for leader %u due to party composition change", kind, pLeader->GetID());
+			VLog(m_config.bVerboseLogs, "HelperNPC: removing role helper kind %u for leader %u due to party composition change", kind, SAFE_ID(pLeader));
 			// Transition helper to despawn state for a clean removal
 			if (hh->GetBotController())
 				hh->GetBotController()->ChangeControlState_Despawn();

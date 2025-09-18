@@ -252,7 +252,7 @@ void CGameServerSession::RecvItemMoveStackReq(CNtlPacket* pPacket, CQueryServer*
 		goto SEND;
 	}
 
-	// source en caché
+	// source en cachï¿½
 	sITEM_DATA* pSrcItem = pCache->GetItemData(req->srcItemId);
 	if (!pSrcItem)
 	{
@@ -260,7 +260,7 @@ void CGameServerSession::RecvItemMoveStackReq(CNtlPacket* pPacket, CQueryServer*
 		goto SEND;
 	}
 
-	// UNSTACK: crear ítem nuevo copiando TODO el estado vía CreateItem (evita columnas faltantes)
+	// UNSTACK: crear ï¿½tem nuevo copiando TODO el estado vï¿½a CreateItem (evita columnas faltantes)
 	if (req->hDstItem == INVALID_HOBJECT)
 	{
 		// 1) update count del source (DB + cache)
@@ -268,13 +268,13 @@ void CGameServerSession::RecvItemMoveStackReq(CNtlPacket* pPacket, CQueryServer*
 			req->byStackCount1, req->srcItemId);
 		pSrcItem->byStackcount = req->byStackCount1;
 
-		// 2) construir copia para el nuevo ítem con place/pos/count de destino
+		// 2) construir copia para el nuevo ï¿½tem con place/pos/count de destino
 		sITEM_DATA dst = *pSrcItem;
 		dst.itemId = 0; // el manager asigna
 		dst.byPlace = req->byDstPlace;
 		dst.byPosition = req->byDstPos;
 		dst.byStackcount = req->byStackCount2;
-		dst.charId = req->charId; // dueño actual
+		dst.charId = req->charId; // dueï¿½o actual
 
 		// 3) CreateItem: inserta en DB con TODAS las columnas y devuelve itemId
 		const ITEMID newId = g_pItemManager->CreateItem(dst);
@@ -3648,7 +3648,24 @@ void CGameServerSession::RecvCashitemBuyReq(CNtlPacket* pPacket, CQueryServer* a
 	CAccountCache* pCache = g_pPlayerCache->GetAccount(req->accountId);
 	if (pCache)
 	{
-		if (pCache->GetCash() >= req->dwPrice)
+		// Sync account cache with authoritative DB balance before processing purchase
+		{
+			smart_ptr<QueryResult> spQuery = GetAccDB.Query("SELECT mallpoints FROM accounts WHERE AccountID=%u", req->accountId);
+			if (spQuery)
+			{
+				Field* f = spQuery->Fetch();
+				pCache->SetCash(f[0].GetDWORD());
+			}
+			else
+			{
+				res->wResultCode = QUERY_FAIL;
+			}
+		}
+
+		// Always include current balance in response so client can refresh UI
+		res->dwRemainAmount = pCache->GetCash();
+
+		if (res->wResultCode == GAME_SUCCESS && pCache->GetCash() >= req->dwPrice)
 		{
 			SYSTEMTIME ti;
 			GetLocalTime(&ti);
@@ -3659,7 +3676,7 @@ void CGameServerSession::RecvCashitemBuyReq(CNtlPacket* pPacket, CQueryServer* a
 				productId, req->accountId, req->HLSitemTblidx, req->byCount, ti.wYear, ti.wMonth, ti.wDay, ti.wHour, ti.wMinute, ti.wSecond, ti.wMilliseconds, req->accountId, req->dwPrice);
 
 			pCache->SetCash(pCache->GetCash() - req->dwPrice);
-			GetAccDB.WaitExecute("UPDATE accounts SET mallpoints=mallpoints-%u WHERE AccountID=%u", req->dwPrice, req->accountId); //if player bought cash and did not update his cash in game.. This is why we do like this
+			GetAccDB.WaitExecute("UPDATE accounts SET mallpoints=mallpoints-%u WHERE AccountID=%u", req->dwPrice, req->accountId); // deduct from authoritative DB
 
 			res->qwProductId = productId;
 			res->dwRemainAmount = pCache->GetCash();

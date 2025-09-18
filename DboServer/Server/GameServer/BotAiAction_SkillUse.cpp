@@ -104,8 +104,11 @@ int CBotAiAction_SkillUse::OnUpdate(DWORD dwTickDiff, float fMultiple)
 	// Original (legacy) path for non-helpers
 	if (!isHelper)
 	{
-		CCharacter* pTarget = g_pObjectManager->GetChar(GetBot()->GetTargetHandle());
-		if (pTarget == NULL)
+		// Only require an existing target for non-self skills. Self-target skills (e.g., bomb detonation)
+		// should be allowed to execute even without a pre-set target handle.
+		bool bRequiresTarget = (pSkillCond->GetSkill()->GetOriginalTableData()->byApply_Target != DBO_SKILL_APPLY_TARGET_SELF);
+		CCharacter* pTarget = bRequiresTarget ? g_pObjectManager->GetChar(GetBot()->GetTargetHandle()) : nullptr;
+		if (bRequiresTarget && pTarget == NULL)
 		{
 			m_status = COMPLETED;
 			return m_status;
@@ -149,7 +152,8 @@ int CBotAiAction_SkillUse::OnUpdate(DWORD dwTickDiff, float fMultiple)
 
 			pSkillCond->GetTarget(hTarget, targetList);
 
-			if (hTarget == INVALID_HOBJECT)
+			// For self-apply skills, allow hTarget to be invalid (skill system will handle subject=bot)
+			if (hTarget == INVALID_HOBJECT && pSkillCond->GetSkill()->GetOriginalTableData()->byApply_Target != DBO_SKILL_APPLY_TARGET_SELF)
 			{
 				m_status = COMPLETED;
 				return m_status;

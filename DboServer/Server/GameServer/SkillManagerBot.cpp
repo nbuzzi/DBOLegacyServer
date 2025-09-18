@@ -249,47 +249,49 @@ CSkillCondition* CSkillManagerBot::GetSkill(DWORD dwTickTime)
 {
 	CSkillCondition* pSkill = NULL;
 
-	// If this bot is a helper linked to a PC and that PC is low on LP according to override,
-	// try healing/buff (Give) skills first to prioritize support behavior.
-	do
-	{
+	// Helper-only gating for Give/heal prioritization
+	do {
 		CNpc* pNpcOwner = dynamic_cast<CNpc*>(m_pOwnerRef);
 		if (!pNpcOwner)
 			break;
-		HOBJECT hLink = pNpcOwner->GetLinkPc();
-		if (hLink == INVALID_HOBJECT)
+		if (!GetHelperNpcManager()->IsRegisteredHelper(pNpcOwner))
 			break;
-		const sHELPER_NPC_CONFIG& cfg = GetHelperNpcManager()->GetConfig();
-		if (cfg.wHealLpThresholdOverride == 0)
-			break;
-		CCharacter* pLinked = g_pObjectManager->GetChar(hLink);
-		if (!pLinked || !pLinked->IsInitialized())
-			break;
-		if (!pLinked->ConsiderLPLow((float)cfg.wHealLpThresholdOverride))
-			break;
-		// Linked PC is low: attempt Give skills first
-		pSkill = GetSkill(m_apSkillCondition_Give, m_bySkillCondition_Give, dwTickTime);
-		if (pSkill)
-			return pSkill;
-	} while (0);
 
-	// If linked PC exists and has any missing LP, attempt Give skills proactively (healing)
-	do
-	{
-		CNpc* pNpcOwner = dynamic_cast<CNpc*>(m_pOwnerRef);
-		if (!pNpcOwner)
-			break;
-		HOBJECT hLink = pNpcOwner->GetLinkPc();
-		if (hLink == INVALID_HOBJECT)
-			break;
-		CCharacter* pLinked = g_pObjectManager->GetChar(hLink);
-		if (!pLinked || !pLinked->IsInitialized())
-			break;
-		if (pLinked->GetCurLP() >= pLinked->GetMaxLP())
-			break;
-		pSkill = GetSkill(m_apSkillCondition_Give, m_bySkillCondition_Give, dwTickTime);
-		if (pSkill)
-			return pSkill;
+		// Prioritize Give/heal skills when linked PC is below configured threshold
+		do
+		{
+			HOBJECT hLink = pNpcOwner->GetLinkPc();
+			if (hLink == INVALID_HOBJECT)
+				break;
+			const sHELPER_NPC_CONFIG& cfg = GetHelperNpcManager()->GetConfig();
+			if (cfg.wHealLpThresholdOverride == 0)
+				break;
+			CCharacter* pLinked = g_pObjectManager->GetChar(hLink);
+			if (!pLinked || !pLinked->IsInitialized())
+				break;
+			if (!pLinked->ConsiderLPLow((float)cfg.wHealLpThresholdOverride))
+				break;
+			pSkill = GetSkill(m_apSkillCondition_Give, m_bySkillCondition_Give, dwTickTime);
+			if (pSkill)
+				return pSkill;
+		} while (0);
+
+		// If linked PC is missing any LP, attempt Give skills
+		do
+		{
+			HOBJECT hLink = pNpcOwner->GetLinkPc();
+			if (hLink == INVALID_HOBJECT)
+				break;
+			CCharacter* pLinked = g_pObjectManager->GetChar(hLink);
+			if (!pLinked || !pLinked->IsInitialized())
+				break;
+			if (pLinked->GetCurLP() >= pLinked->GetMaxLP())
+				break;
+			pSkill = GetSkill(m_apSkillCondition_Give, m_bySkillCondition_Give, dwTickTime);
+			if (pSkill)
+				return pSkill;
+		} while (0);
+
 	} while (0);
 
 	pSkill = GetSkill(m_apSkillCondition_LP, m_bySkillCondition_LP, dwTickTime);
@@ -391,9 +393,10 @@ void CSkillManagerBot::FinishCasting()
 		HOBJECT hTarget = INVALID_HOBJECT;
 		sSKILL_TARGET_LIST targetList;
 
-		pSkillCond->GetTarget(hTarget, targetList); //refetch target because some might moved out/in
+		pSkillCond->GetTarget(hTarget, targetList); // refetch target because some might moved out/in
 
-		if (hTarget != INVALID_HOBJECT && targetList.byTargetCount > 0)
+		// Allow self-cast skills to proceed when target list is valid even if hTarget is INVALID
+		if (targetList.byTargetCount > 0)
 		{
 			// Diagnostics: log actual casting details for helper bots
 			CNpc* pNpcOwner = dynamic_cast<CNpc*>(m_pOwnerRef);
