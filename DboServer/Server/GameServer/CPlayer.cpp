@@ -4290,7 +4290,7 @@ bool CPlayer::IsAttackable(CCharacterObject* pTarget)
 			CNpc* pNpcTarget = dynamic_cast<CNpc*>(pTarget);
 			if (pNpcTarget)
 			{
-				if (GetHelperNpcManager()->IsRegisteredHelper(pNpcTarget) || pNpcTarget->GetStandAlone() || (pNpcTarget->GetLinkPc() != INVALID_HOBJECT && pNpcTarget->GetPcRelation() == RELATION_TYPE_ALLIENCE))
+				if (GetHelperNpcManager()->IsRegisteredHelper(pNpcTarget) || (pNpcTarget->GetLinkPc() != INVALID_HOBJECT && pNpcTarget->GetPcRelation() == RELATION_TYPE_ALLIENCE))
 					return false;
 			}
 		}
