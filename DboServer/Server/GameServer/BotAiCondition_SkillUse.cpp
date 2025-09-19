@@ -10,6 +10,58 @@
 #include <unordered_set>
 #include <unordered_map>
 #include "SafeObjectResolve.h"
+#include <float.h>
+
+static HOBJECT ResolvePartyAssistTarget(CPlayer* pLeader, CNpc* pBot, bool preferLeaderTarget)
+{
+	if (!pLeader || !pBot) return INVALID_HOBJECT;
+
+	auto isValidVictim = [&](HOBJECT hTarget) -> bool {
+		if (hTarget == INVALID_HOBJECT) return false;
+		CCharacter* pVictim = g_pObjectManager->GetChar(hTarget);
+		if (!pVictim || !pVictim->IsInitialized()) return false;
+		WORD wRange = pBot->GetTbldat() ? pBot->GetTbldat()->wSight_Range : 20;
+		return pBot->IsTargetAttackble(pVictim, wRange);
+	};
+
+	if (preferLeaderTarget)
+	{
+		HOBJECT hLead = pLeader->GetTargetHandle();
+		if (isValidVictim(hLead)) return hLead;
+	}
+
+	CParty* pParty = pLeader->GetParty();
+	if (!pParty || pParty->GetPartyMemberCount() == 0)
+		return INVALID_HOBJECT;
+
+	HOBJECT hBest = INVALID_HOBJECT;
+	float fBestDist = FLT_MAX;
+	BYTE cnt = pParty->GetPartyMemberCount();
+	for (BYTE i = 0; i < cnt; ++i)
+	{
+		const sPARTY_MEMBER_INFO& mi = pParty->GetMemberInfo(i);
+		CPlayer* pMem = g_pObjectManager->GetPC(mi.hHandle);
+		if (!pMem || !pMem->IsInitialized() || pMem->IsFainting()) continue;
+		if (pMem->GetCurWorld() != pBot->GetCurWorld()) continue;
+		HOBJECT hVictim = pMem->GetTargetHandle();
+		if (!isValidVictim(hVictim)) continue;
+		CCharacter* pVictim = g_pObjectManager->GetChar(hVictim);
+		float fDist = pBot->GetDistance(pVictim->GetCurLoc());
+		if (fDist < fBestDist)
+		{
+			fBestDist = fDist;
+			hBest = hVictim;
+		}
+	}
+
+	if (!preferLeaderTarget && hBest == INVALID_HOBJECT)
+	{
+		HOBJECT hLead = pLeader->GetTargetHandle();
+		if (isValidVictim(hLead)) return hLead;
+	}
+
+	return hBest;
+}
 
 
 CBotAiCondition_SkillUse::CBotAiCondition_SkillUse(CNpc* pBot)
@@ -244,25 +296,43 @@ int CBotAiCondition_SkillUse::OnUpdate(DWORD dwTickDiff, float fMultiple)
 			}
 		}
 
-		// Random follow behavior when FollowLeader is disabled
+		// Party-aware follow behavior: periodically follow a party member (not only leader)
+		// Prefers the most injured non-fainting member in same world; falls back to random party member
 	if (isActiveLinkedHelper)
 		{
 			const sHELPER_NPC_CONFIG* pCfg = GetHelperNpcManager()->IsRegisteredHelper(GetBot())
 				? GetHelperNpcManager()->GetConfigForHelper(GetBot())
 				: &GetHelperNpcManager()->GetConfig();
-			if (pCfg && !pCfg->bFollowLeader)
+			// Cooldown and only when idle (no aggro) to avoid interrupting combat
+			m_dwSinceRandomFollowMs = UnsignedSafeIncrease<DWORD>(m_dwSinceRandomFollowMs, dwTickDiff);
+			if (m_dwSinceRandomFollowMs >= 4000 && GetBot()->GetTargetListManager()->GetAggroCount() == 0)
 			{
-				m_dwSinceRandomFollowMs = UnsignedSafeIncrease<DWORD>(m_dwSinceRandomFollowMs, 1000);
-				if (m_dwSinceRandomFollowMs >= 4000 && GetBot()->GetTargetListManager()->GetAggroCount() == 0)
+				m_dwSinceRandomFollowMs = 0;
+				CPlayer* pLeader = (CPlayer*)g_pObjectManager->GetChar(GetBot()->GetLinkPc());
+				if (pLeader && pLeader->IsInitialized())
 				{
-					m_dwSinceRandomFollowMs = 0;
-					CPlayer* pLeader = (CPlayer*)g_pObjectManager->GetChar(GetBot()->GetLinkPc());
-					if (pLeader && pLeader->IsInitialized())
+					CPlayer* pFollow = pLeader; // default
+					float bestMissing = -1.0f;
+					if (pLeader->GetParty() && pLeader->GetParty()->GetPartyMemberCount() > 0)
 					{
-						CPlayer* pFollow = pLeader; // default to leader if no party
-						if (pLeader->GetParty() && pLeader->GetParty()->GetPartyMemberCount() > 0)
+						BYTE cnt = pLeader->GetParty()->GetPartyMemberCount();
+						// First pass: choose most injured member in same world (non-fainting)
+						for (BYTE i = 0; i < cnt; ++i)
 						{
-							BYTE cnt = pLeader->GetParty()->GetPartyMemberCount();
+							const sPARTY_MEMBER_INFO& mi = pLeader->GetParty()->GetMemberInfo(i);
+							CPlayer* pCand = g_pObjectManager->GetPC(mi.hHandle);
+							if (!pCand || !pCand->IsInitialized() || pCand->IsFainting()) continue;
+							if (pCand->GetCurWorld() != GetBot()->GetCurWorld()) continue;
+							float missing = 100.0f - pCand->GetCurLpInPercent();
+							if (missing > bestMissing)
+							{
+								bestMissing = missing;
+								pFollow = pCand;
+							}
+						}
+						// If nobody is injured, pick a random online party member in same world
+						if (bestMissing <= 0.0f)
+						{
 							BYTE tries = 0;
 							while (tries < cnt)
 							{
@@ -270,15 +340,14 @@ int CBotAiCondition_SkillUse::OnUpdate(DWORD dwTickDiff, float fMultiple)
 								const sPARTY_MEMBER_INFO& mi = pLeader->GetParty()->GetMemberInfo(idx);
 								CPlayer* pCand = g_pObjectManager->GetPC(mi.hHandle);
 								if (pCand && pCand->IsInitialized() && !pCand->IsFainting() && pCand->GetCurWorld() == GetBot()->GetCurWorld())
-								{
-									pFollow = pCand; break;
-								}
+								{ pFollow = pCand; break; }
 								++tries;
 							}
 						}
-						sVECTOR3 vLoc; pFollow->GetCurLoc().CopyTo(vLoc);
-						GetBot()->SendCharStateFollowing(pFollow->GetID(), 1.5f, DBO_MOVE_FOLLOW_FRIENDLY, vLoc, true);
 					}
+					// Reassert follow if we are not already following this target closely
+					sVECTOR3 vLoc; pFollow->GetCurLoc().CopyTo(vLoc);
+					GetBot()->SendCharStateFollowing(pFollow->GetID(), 1.5f, DBO_MOVE_FOLLOW_FRIENDLY, vLoc, true);
 				}
 			}
 		}
@@ -408,14 +477,12 @@ int CBotAiCondition_SkillUse::OnUpdate(DWORD dwTickDiff, float fMultiple)
 										sVECTOR3 vFollow; pLeader->GetCurLoc().CopyTo(vFollow);
 										GetBot()->SendCharStateFollowing(pLeader->GetID(), 1.5f, DBO_MOVE_FOLLOW_FRIENDLY, vFollow, true);
 									}
-									// Nudge assist if allowed
-									if (GetHelperNpcManager()->GetConfig().bAssistLeaderTarget)
+									// Nudge assist across party: prefer leader when configured, otherwise any member
 									{
-										HOBJECT hVictim = pLeader->GetTargetHandle();
-										if (hVictim != INVALID_HOBJECT)
-										{
-											if (GetBot()->GetTargetHandle() != hVictim) GetBot()->SetTargetHandle(hVictim);
-										}
+										bool preferLeader = GetHelperNpcManager()->GetConfig().bAssistLeaderTarget;
+										HOBJECT hVictim = ResolvePartyAssistTarget(pLeader, GetBot(), preferLeader);
+										if (hVictim != INVALID_HOBJECT && GetBot()->GetTargetHandle() != hVictim)
+											GetBot()->SetTargetHandle(hVictim);
 									}
 									m_dwSinceLastSkillTryMs = 0;
 								}
@@ -443,13 +510,11 @@ int CBotAiCondition_SkillUse::OnUpdate(DWORD dwTickDiff, float fMultiple)
 										sVECTOR3 vFollow; pLeader->GetCurLoc().CopyTo(vFollow);
 										GetBot()->SendCharStateFollowing(pLeader->GetID(), 1.5f, DBO_MOVE_FOLLOW_FRIENDLY, vFollow, true);
 									}
-									if (GetHelperNpcManager()->GetConfig().bAssistLeaderTarget)
 									{
-										HOBJECT hVictim = pLeader->GetTargetHandle();
-										if (hVictim != INVALID_HOBJECT)
-										{
-											if (GetBot()->GetTargetHandle() != hVictim) GetBot()->SetTargetHandle(hVictim);
-										}
+										bool preferLeader = GetHelperNpcManager()->GetConfig().bAssistLeaderTarget;
+										HOBJECT hVictim = ResolvePartyAssistTarget(pLeader, GetBot(), preferLeader);
+										if (hVictim != INVALID_HOBJECT && GetBot()->GetTargetHandle() != hVictim)
+											GetBot()->SetTargetHandle(hVictim);
 									}
 									m_dwSinceLastSkillTryMs = 0;
 								}
@@ -487,13 +552,11 @@ int CBotAiCondition_SkillUse::OnUpdate(DWORD dwTickDiff, float fMultiple)
 											sVECTOR3 vFollow; pLeader->GetCurLoc().CopyTo(vFollow);
 											GetBot()->SendCharStateFollowing(pLeader->GetID(), 1.5f, DBO_MOVE_FOLLOW_FRIENDLY, vFollow, true);
 										}
-										if (GetHelperNpcManager()->GetConfig().bAssistLeaderTarget)
 										{
-											HOBJECT hVictim = pLeader->GetTargetHandle();
-											if (hVictim != INVALID_HOBJECT)
-											{
-												if (GetBot()->GetTargetHandle() != hVictim) GetBot()->SetTargetHandle(hVictim);
-											}
+											bool preferLeader = GetHelperNpcManager()->GetConfig().bAssistLeaderTarget;
+											HOBJECT hVictim = ResolvePartyAssistTarget(pLeader, GetBot(), preferLeader);
+											if (hVictim != INVALID_HOBJECT && GetBot()->GetTargetHandle() != hVictim)
+												GetBot()->SetTargetHandle(hVictim);
 										}
 										m_dwSinceLastSkillTryMs = 0;
 									}
@@ -556,13 +619,11 @@ int CBotAiCondition_SkillUse::OnUpdate(DWORD dwTickDiff, float fMultiple)
 											sVECTOR3 vFollow; pLeader->GetCurLoc().CopyTo(vFollow);
 											GetBot()->SendCharStateFollowing(pLeader->GetID(), 1.5f, DBO_MOVE_FOLLOW_FRIENDLY, vFollow, true);
 										}
-										if (GetHelperNpcManager()->GetConfig().bAssistLeaderTarget)
 										{
-											HOBJECT hVictim = pLeader->GetTargetHandle();
-											if (hVictim != INVALID_HOBJECT)
-											{
-												if (GetBot()->GetTargetHandle() != hVictim) GetBot()->SetTargetHandle(hVictim);
-											}
+											bool preferLeader = GetHelperNpcManager()->GetConfig().bAssistLeaderTarget;
+											HOBJECT hVictim = ResolvePartyAssistTarget(pLeader, GetBot(), preferLeader);
+											if (hVictim != INVALID_HOBJECT && GetBot()->GetTargetHandle() != hVictim)
+												GetBot()->SetTargetHandle(hVictim);
 										}
 										m_dwNoFollowProgressMs = 0;
 										m_dwSinceLastFollowReassertMs = 0;
@@ -612,9 +673,10 @@ int CBotAiCondition_SkillUse::OnUpdate(DWORD dwTickDiff, float fMultiple)
 						const sHELPER_NPC_CONFIG* pCfgAssist = GetHelperNpcManager()->IsRegisteredHelper(GetBot())
 							? GetHelperNpcManager()->GetConfigForHelper(GetBot())
 							: &GetHelperNpcManager()->GetConfig();
-						if (!bPrioritizeHealing && pCfgAssist && pCfgAssist->bAssistLeaderTarget)
+						if (!bPrioritizeHealing && pCfgAssist)
 						{
-							HOBJECT hVictim = pLeader->GetTargetHandle();
+							bool preferLeader = pCfgAssist->bAssistLeaderTarget;
+							HOBJECT hVictim = ResolvePartyAssistTarget(pLeader, GetBot(), preferLeader);
 							if (hVictim != INVALID_HOBJECT)
 							{
 								CCharacter* pVictim = g_pObjectManager->GetChar(hVictim);
@@ -639,7 +701,7 @@ int CBotAiCondition_SkillUse::OnUpdate(DWORD dwTickDiff, float fMultiple)
 											}
 										}
 									}
-									// Otherwise assist the leader's current target
+									// Otherwise assist the party-resolved current target
 									if (GetBot()->IsTargetAttackble(pVictim, GetBot()->GetTbldat()->wSight_Range))
 									{
 										if (GetBot()->GetTargetHandle() != hVictim)
