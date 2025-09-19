@@ -379,7 +379,7 @@ void CGameServer::Run()
 
 		float fDur = ((float)(rEnd.QuadPart - rStart.QuadPart)) * 1000.f / ((float)m_freq.QuadPart);
 
-		/*if (fDur > 200.f)
+		if (fDur > 200.f)
 		{
 			NTL_PRINT(PRINT_APP, "dwLastLoop %u - m_dwCurTickCount %u = %u > 200.", m_dwCurTickCount, dwLastLoop, dwLastLoop - m_dwCurTickCount);
 			ERR_LOG(LOG_SYSTEM, "MainLoop: Total %f, LoadReport %f, MemoryUsage %f, GameProcess %f",
@@ -388,7 +388,7 @@ void CGameServer::Run()
 				((float)(rMemoryUsage.QuadPart - rLoadReport.QuadPart)) * 1000.f / ((float)m_freq.QuadPart),
 				((float)(rEnd.QuadPart - rMemoryUsage.QuadPart)) * 1000.f / ((float)m_freq.QuadPart)
 			);
-		}*/
+		}
 
 		Wait(1);
 	}

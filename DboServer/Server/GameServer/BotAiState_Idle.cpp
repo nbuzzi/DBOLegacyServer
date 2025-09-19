@@ -12,6 +12,8 @@
 #include "BotAiAction_Follow.h"
 #include "BotAiCondition_Speech.h"
 #include "BotAiCondition_SkillUse.h"
+// Helper NPC verbose logging control
+#include "HelperNpcManager.h"
 
 
 CBotAiState_Idle::CBotAiState_Idle(CNpc* pBot)
@@ -146,7 +148,12 @@ void CBotAiState_Idle::OnEnter()
 					m_status = CControlStateComposite::SYSTEMERROR;
 					return;
 				}
-				ERR_LOG(LOG_GENERAL, "HelperNPC: idle skill-use armed (no NPC party required)");
+				// Verbose only: helper idle skill-use armed
+				const sHELPER_NPC_CONFIG* pCfg = GetHelperNpcManager()->IsRegisteredHelper(pBot)
+					? GetHelperNpcManager()->GetConfigForHelper(pBot)
+					: &GetHelperNpcManager()->GetConfig();
+				if (pCfg && pCfg->bVerboseLogs)
+					ERR_LOG(LOG_GENERAL, "HelperNPC: idle skill-use armed (no NPC party required)");
 			}
 		}
 

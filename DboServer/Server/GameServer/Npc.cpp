@@ -7,6 +7,8 @@
 #include "GameServer.h"
 #include "GameMain.h"
 #include "NtlNavi.h"
+// Helper NPC config access for gated logging
+#include "HelperNpcManager.h"
 
 #include "BusSystem.h" // HERE: #include "Npc.h" #include "NtlPacketGU.h"
 
@@ -1140,12 +1142,18 @@ void CNpc::LoadSkillTable(TBLIDX tblidxOnlyOneSkillUse)
 			sSKILL_TBLDAT* pSkillTbldat = (sSKILL_TBLDAT*)g_pTableContainer->GetSkillTable()->FindData(pTbldat->use_Skill_Tblidx[i]);
 			if (pSkillTbldat)
 			{
-				// For helper NPCs (linked to a PC), log skills and basis to diagnose healing capability
+				// For helper NPCs (linked to a PC), log skills and basis to diagnose healing capability (verbose only)
 				if (GetLinkPc() != INVALID_HOBJECT)
 				{
-					ERR_LOG(LOG_GENERAL, "HelperNPC: skill[%u] basis=%u applyTarget=%u requireEP=%u use_LP=%u use_Time=%u",
-						pTbldat->use_Skill_Tblidx[i], pTbldat->byUse_Skill_Basis[i], pSkillTbldat->byApply_Target,
-						pSkillTbldat->wRequire_EP, pTbldat->wUse_Skill_LP[i], pTbldat->wUse_Skill_Time[i]);
+					const sHELPER_NPC_CONFIG* pCfg = GetHelperNpcManager()->IsRegisteredHelper(this)
+						? GetHelperNpcManager()->GetConfigForHelper(this)
+						: &GetHelperNpcManager()->GetConfig();
+					if (pCfg && pCfg->bVerboseLogs)
+					{
+						ERR_LOG(LOG_GENERAL, "HelperNPC: skill[%u] basis=%u applyTarget=%u requireEP=%u use_LP=%u use_Time=%u",
+							pTbldat->use_Skill_Tblidx[i], pTbldat->byUse_Skill_Basis[i], pSkillTbldat->byApply_Target,
+							pSkillTbldat->wRequire_EP, pTbldat->wUse_Skill_LP[i], pTbldat->wUse_Skill_Time[i]);
+					}
 				}
 
 				if (pSkill->Create(pSkillTbldat, this, INVALID_BYTE))
@@ -1155,8 +1163,14 @@ void CNpc::LoadSkillTable(TBLIDX tblidxOnlyOneSkillUse)
 						pSkillManager->AddSkill(i, this, pSkill, pTbldat->use_Skill_Tblidx[i], pTbldat->byUse_Skill_Basis[i], pTbldat->wUse_Skill_LP[i], pTbldat->wUse_Skill_Time[i]);
 						if (GetLinkPc() != INVALID_HOBJECT)
 						{
-							ERR_LOG(LOG_GENERAL, "HelperNPC: registered skill[%u] basis=%u (3=LP,4=Give,5=Time,6=Ring,7=OnlyLP)",
-								pTbldat->use_Skill_Tblidx[i], pTbldat->byUse_Skill_Basis[i]);
+							const sHELPER_NPC_CONFIG* pCfg = GetHelperNpcManager()->IsRegisteredHelper(this)
+								? GetHelperNpcManager()->GetConfigForHelper(this)
+								: &GetHelperNpcManager()->GetConfig();
+							if (pCfg && pCfg->bVerboseLogs)
+							{
+								ERR_LOG(LOG_GENERAL, "HelperNPC: registered skill[%u] basis=%u (3=LP,4=Give,5=Time,6=Ring,7=OnlyLP)",
+									pTbldat->use_Skill_Tblidx[i], pTbldat->byUse_Skill_Basis[i]);
+							}
 						}
 					}
 					else
@@ -1924,7 +1938,7 @@ HOBJECT CNpc::ConsiderScanTarget(WORD wRange)
 						}
 					}
 				}
-				break; // TEMP !! FIND OUT WHY INFINITE LOOP
+				// continue iteration; do not force-break here which prevents scanning more entries
 				pTarget = (CCharacter*)pWorldCellSibling->GetObjectList()->GetNext(pTarget->GetWorldCellObjectLinker());
 			}
 		}
@@ -1966,6 +1980,7 @@ HOBJECT CNpc::ConsiderScanObject(TBLIDX tblidx, WORD wRange)
 				if (nLoopCount > 5000)
 				{
 					ERR_LOG(LOG_GENERAL, "INFINITE LOOP FOUND");
+					break; // safety
 				}
 
 				if (pTarget->GetTblidx() == tblidx)
@@ -1988,6 +2003,7 @@ HOBJECT CNpc::ConsiderScanObject(TBLIDX tblidx, WORD wRange)
 				if (nLoopCount2 > 5000)
 				{
 					ERR_LOG(LOG_GENERAL, "INFINITE LOOP FOUND");
+					break; // safety
 				}
 
 				if (pTarget->GetTblidx() == tblidx)

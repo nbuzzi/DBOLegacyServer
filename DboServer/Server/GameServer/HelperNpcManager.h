@@ -145,6 +145,9 @@ public:
     // True if this NPC is a registered helper we spawned and track
     bool IsRegisteredHelper(class CNpc* pNpc) const;
 
+    // True if registered helper and currently linked to a valid PC handle (active association)
+    bool IsActiveLinkedHelper(class CNpc* pNpc) const;
+
     // Returns per-helper config snapshot if this NPC is a registered helper; otherwise nullptr
     const sHELPER_NPC_CONFIG* GetConfigForHelper(class CNpc* pNpc) const;
 

@@ -2266,6 +2266,18 @@ void CClientSession::RecvCharTargetSelect(CNtlPacket* pPacket)
 		{
 			if (pTarget->GetStateManager()->IsCharCondition(CHARCOND_CANT_BE_TARGETTED))
 				return;
+
+			// Prevent players from selecting helper NPCs/MOBs (keep them targetable by mobs only)
+			CNpc* pNpcTarget = dynamic_cast<CNpc*>(pTarget);
+			if (pNpcTarget)
+			{
+				if (GetHelperNpcManager()->IsRegisteredHelper(pNpcTarget) || pNpcTarget->GetStandAlone())
+				{
+					// Clear target selection on client by switching to INVALID
+					cPlayer->ChangeTarget(INVALID_HOBJECT);
+					return;
+				}
+			}
 		}
 
 		//	printf("RecvCharTargetSelect: req->hTarget: %u \n", req->hTarget);

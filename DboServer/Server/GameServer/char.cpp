@@ -453,6 +453,7 @@ void CCharacter::EnterConfusedState(HOBJECT hCaster)
 					if (nLoopCount > 5000)
 					{
 						ERR_LOG(LOG_GENERAL, "INFINITE LOOP FOUND");
+						break; // safety: avoid CPU hogging on malformed lists
 					}
 
 					if (IsInRange(pTarget, DBO_CONFUSE_SCAN_DISTANCE_PC))
@@ -473,6 +474,7 @@ void CCharacter::EnterConfusedState(HOBJECT hCaster)
 					if (nLoopCount2 > 5000)
 					{
 						ERR_LOG(LOG_GENERAL, "INFINITE LOOP FOUND");
+						break; // safety: avoid CPU hogging on malformed lists
 					}
 
 					if (IsInRange(pMob, DBO_CONFUSE_SCAN_DISTANCE_PC))
@@ -876,6 +878,20 @@ bool CCharacter::IsTargetAttackble(CCharacter* pTarget, WORD wRange)
 			{
 				// Only block if this NPC is a registered helper managed by HelperNpcManager
 				if (GetHelperNpcManager()->IsRegisteredHelper(pSelfNpc))
+					return false;
+			}
+		}
+
+		// Prevent helper-on-helper targeting/attacks
+		if ((IsNPC() || IsMonster()) && (pTarget->IsNPC() || pTarget->IsMonster()))
+		{
+			CNpc* pSelfNpc2 = dynamic_cast<CNpc*>(this);
+			CNpc* pOtherNpc = dynamic_cast<CNpc*>(pTarget);
+			if (pSelfNpc2 && pOtherNpc)
+			{
+				const bool selfIsHelper = GetHelperNpcManager()->IsRegisteredHelper(pSelfNpc2) || pSelfNpc2->GetStandAlone();
+				const bool otherIsHelper = GetHelperNpcManager()->IsRegisteredHelper(pOtherNpc) || pOtherNpc->GetStandAlone();
+				if (selfIsHelper && otherIsHelper)
 					return false;
 			}
 		}

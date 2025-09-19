@@ -8,6 +8,7 @@
 #include "ObjectManager.h"
 #include "CPlayer.h"
 #include <unordered_set>
+#include <unordered_map>
 #include "SafeObjectResolve.h"
 
 
@@ -57,6 +58,7 @@ int CBotAiCondition_SkillUse::OnUpdate(DWORD dwTickDiff, float fMultiple)
 	}
 
 	const bool isHelper = GetHelperNpcManager()->IsRegisteredHelper(GetBot());
+	const bool isActiveLinkedHelper = GetHelperNpcManager()->IsActiveLinkedHelper(GetBot());
 	const sHELPER_NPC_CONFIG* pHelperCfg = isHelper ? GetHelperNpcManager()->GetConfigForHelper(GetBot()) : nullptr;
 
 	// Advance timers for responsiveness
@@ -112,7 +114,7 @@ int CBotAiCondition_SkillUse::OnUpdate(DWORD dwTickDiff, float fMultiple)
 		}
 
 		// Pending resurrect retry housekeeping (runs every tick pre logic)
-		if (isHelper && m_hPendingResurrectTarget != INVALID_HOBJECT)
+	if (isActiveLinkedHelper && m_hPendingResurrectTarget != INVALID_HOBJECT)
 		{
 			CPlayer* pPend = (CPlayer*)g_pObjectManager->GetChar(m_hPendingResurrectTarget);
 			bool bClear = false;
@@ -203,7 +205,7 @@ int CBotAiCondition_SkillUse::OnUpdate(DWORD dwTickDiff, float fMultiple)
 		}
 
 		bool bPrioritizeHealing = false;
-		if (GetBot()->GetLinkPc() != INVALID_HOBJECT && isHelper)
+	if (isActiveLinkedHelper)
 		{
 			// Use per-helper config and only apply healing priority if helper is actually a healer (has resurrect skill)
 			const sHELPER_NPC_CONFIG* pRoleCfg = pHelperCfg ? pHelperCfg : &GetHelperNpcManager()->GetConfig();
@@ -243,7 +245,7 @@ int CBotAiCondition_SkillUse::OnUpdate(DWORD dwTickDiff, float fMultiple)
 		}
 
 		// Random follow behavior when FollowLeader is disabled
-		if (GetBot()->GetLinkPc() != INVALID_HOBJECT && isHelper)
+	if (isActiveLinkedHelper)
 		{
 			const sHELPER_NPC_CONFIG* pCfg = GetHelperNpcManager()->IsRegisteredHelper(GetBot())
 				? GetHelperNpcManager()->GetConfigForHelper(GetBot())
@@ -351,7 +353,7 @@ int CBotAiCondition_SkillUse::OnUpdate(DWORD dwTickDiff, float fMultiple)
 		}
 
 		// Follow watchdog
-		if (GetBot()->GetLinkPc() != INVALID_HOBJECT && isHelper && GetHelperNpcManager()->GetConfig().bFollowLeader)
+	if (isActiveLinkedHelper && GetHelperNpcManager()->GetConfig().bFollowLeader)
 		{
 			if (GetBot()->GetTargetListManager()->GetAggroCount() == 0)
 			{
@@ -878,17 +880,20 @@ int CBotAiCondition_SkillUse::OnUpdate(DWORD dwTickDiff, float fMultiple)
 				CPlayer* pLeader = (CPlayer*)g_pObjectManager->GetChar(GetBot()->GetLinkPc());
 				if (pLeader && pLeader->IsInitialized())
 				{
+					CSkillManagerBot* pSM = (CSkillManagerBot*)GetBot()->GetSkillManager();
+					if (!pSM) return m_status;
+					BYTE buffsQueuedThisAudit = 0;
+					std::unordered_map<HOBJECT, BYTE> perTargetCount;
+
 					auto tryBuffOn = [&](CPlayer* pTarget) {
 						if (!pTarget || !pTarget->IsInitialized() || pTarget->IsFainting() || pTarget->GetCurWorld() != GetBot()->GetCurWorld()) return false;
-						CSkillManagerBot* pSM = (CSkillManagerBot*)GetBot()->GetSkillManager(); if (!pSM) return false;
+						BYTE& targetCount = perTargetCount[pTarget->GetID()];
+						if (targetCount >= (pCfg->byMaxBuffsPerTargetPerAudit ? pCfg->byMaxBuffsPerTargetPerAudit : 1)) return false;
 						for (TBLIDX buffId : pCfg->vBuffSkills)
 						{
-							// Heuristic: if target already has any buff with the same tblidx active and with enough time left, skip
+							if (buffsQueuedThisAudit >= (pCfg->byMaxBuffsPerAudit ? pCfg->byMaxBuffsPerAudit : 1)) return true; // stop auditing further
 							CBuff* pExisting = pTarget->GetBuffManager()->FindBuff(buffId);
-							if (pExisting)
-							{
-								if (pExisting->GetRemainTime(0) > pCfg->dwRebuffMinRemainingMs) continue;
-							}
+							if (pExisting && pExisting->GetRemainTime(0) > pCfg->dwRebuffMinRemainingMs) continue;
 							CSkillCondition* pCond = pSM->FindSkillCondition(buffId);
 							if (pCond && !pSM->IsSkillUseLock())
 							{
@@ -898,10 +903,13 @@ int CBotAiCondition_SkillUse::OnUpdate(DWORD dwTickDiff, float fMultiple)
 									CBotAiAction_SkillUse* pSkillUse = new CBotAiAction_SkillUse(GetBot(), pCond->GetSkillConditionIdx());
 									if (pCurState->AddSubControlQueue(pSkillUse, true))
 									{
-											GetBot()->SetTargetHandle(pTarget ? pTarget->GetID() : INVALID_HOBJECT);
-											if (pCfg->bVerboseLogs)
-												ERR_LOG(LOG_BOTAI, "HelperNPC: rebuff queued skill=%u on %u", buffId, SAFE_ID(pTarget));
-										return true; // queue one buff per tick
+										GetBot()->SetTargetHandle(pTarget->GetID());
+										++buffsQueuedThisAudit;
+										++targetCount;
+										if (pCfg->bVerboseLogs)
+											ERR_LOG(LOG_BOTAI, "HelperNPC: rebuff queued skill=%u on %u (audit %u/%u, per-target %u/%u)", buffId, SAFE_ID(pTarget),
+												(unsigned)buffsQueuedThisAudit, (unsigned)(pCfg->byMaxBuffsPerAudit ? pCfg->byMaxBuffsPerAudit : 1), (unsigned)targetCount, (unsigned)(pCfg->byMaxBuffsPerTargetPerAudit ? pCfg->byMaxBuffsPerTargetPerAudit : 1));
+										return true;
 									}
 								}
 							}
@@ -909,20 +917,21 @@ int CBotAiCondition_SkillUse::OnUpdate(DWORD dwTickDiff, float fMultiple)
 						return false;
 					};
 
-					// Try leader first
-					if (tryBuffOn(pLeader)) return m_status;
-					// Then other party members
+					// Leader first, then entire party
+					tryBuffOn(pLeader);
 					if (pLeader->GetParty())
 					{
 						BYTE cnt = pLeader->GetParty()->GetPartyMemberCount();
 						for (BYTE i = 0; i < cnt; ++i)
 						{
+							if (buffsQueuedThisAudit >= (pCfg->byMaxBuffsPerAudit ? pCfg->byMaxBuffsPerAudit : 1)) break;
 							const sPARTY_MEMBER_INFO& mi = pLeader->GetParty()->GetMemberInfo(i);
 							CPlayer* pMem = g_pObjectManager->GetPC(mi.hHandle);
-							if (pMem == pLeader) continue;
-							if (tryBuffOn(pMem)) return m_status;
+							if (!pMem || pMem == pLeader) continue;
+							tryBuffOn(pMem);
 						}
 					}
+					if (buffsQueuedThisAudit > 0) return m_status; // we queued something; exit to allow cast
 				}
 			}
 		}

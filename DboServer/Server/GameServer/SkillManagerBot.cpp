@@ -402,8 +402,14 @@ void CSkillManagerBot::FinishCasting()
 			CNpc* pNpcOwner = dynamic_cast<CNpc*>(m_pOwnerRef);
 			if (pNpcOwner && pNpcOwner->GetLinkPc() != INVALID_HOBJECT)
 			{
-				ERR_LOG(LOG_BOTAI, "HelperNPC: casting skill %u on %u (targets=%u)",
-					pSkillCond->GetSkillTblidx(), hTarget, targetList.byTargetCount);
+				const sHELPER_NPC_CONFIG* pCfg = GetHelperNpcManager()->IsRegisteredHelper(pNpcOwner)
+					? GetHelperNpcManager()->GetConfigForHelper(pNpcOwner)
+					: &GetHelperNpcManager()->GetConfig();
+				if (pCfg && pCfg->bVerboseLogs)
+				{
+					ERR_LOG(LOG_BOTAI, "HelperNPC: casting skill %u on %u (targets=%u)",
+						pSkillCond->GetSkillTblidx(), hTarget, targetList.byTargetCount);
+				}
 			}
 			pSkillCond->GetSkill()->CastSkill(hTarget, targetList.byTargetCount, targetList.ahTarget);
 		}

@@ -309,6 +309,12 @@ void CSkillCondition::GetTargetApplyRange_Cell(eOBJTYPE byObjType, CWorldCell *p
 	{
 		if (cSpellAreaChecker.IsObjectInApplyRange(pObject, NULL))
 		{
+			// If the caster is a registered helper, never include PCs as AoE targets
+			if (GetHelperNpcManager()->IsRegisteredHelper(GetBot()))
+			{
+				if (pObject->GetObjType() == OBJTYPE_PC)
+					continue;
+			}
 			if (!rTargetList.IsExist(pObject->GetID()))
 			{
 				rTargetList.AddTarget(pObject->GetID());

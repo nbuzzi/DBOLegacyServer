@@ -4285,12 +4285,12 @@ bool CPlayer::IsAttackable(CCharacterObject* pTarget)
 
 			return false;
 		}
-		// Block attacking allied helper (NPC/MOB) linked to a PC
+		// Block attacking any helper (registered or standalone helper) regardless of alliance
 		{
 			CNpc* pNpcTarget = dynamic_cast<CNpc*>(pTarget);
 			if (pNpcTarget)
 			{
-				if (pNpcTarget->GetLinkPc() != INVALID_HOBJECT && pNpcTarget->GetPcRelation() == RELATION_TYPE_ALLIENCE)
+				if (GetHelperNpcManager()->IsRegisteredHelper(pNpcTarget) || pNpcTarget->GetStandAlone() || (pNpcTarget->GetLinkPc() != INVALID_HOBJECT && pNpcTarget->GetPcRelation() == RELATION_TYPE_ALLIENCE))
 					return false;
 			}
 		}
