@@ -4,6 +4,8 @@
 #include "Npc.h"
 #include "ObjectManager.h"
 #include "HelperNpcManager.h"
+#include "Party.h"
+#include "CPlayer.h"
 
 #include "SkillCondition_Give.h"
 #include "SkillCondition_LP.h"
@@ -257,40 +259,64 @@ CSkillCondition* CSkillManagerBot::GetSkill(DWORD dwTickTime)
 		if (!GetHelperNpcManager()->IsRegisteredHelper(pNpcOwner))
 			break;
 
-		// Prioritize Give/heal skills when linked PC is below configured threshold
-		do
-		{
-			HOBJECT hLink = pNpcOwner->GetLinkPc();
-			if (hLink == INVALID_HOBJECT)
-				break;
-			const sHELPER_NPC_CONFIG& cfg = GetHelperNpcManager()->GetConfig();
-			if (cfg.wHealLpThresholdOverride == 0)
-				break;
-			CCharacter* pLinked = g_pObjectManager->GetChar(hLink);
-			if (!pLinked || !pLinked->IsInitialized())
-				break;
-			if (!pLinked->ConsiderLPLow((float)cfg.wHealLpThresholdOverride))
-				break;
-			pSkill = GetSkill(m_apSkillCondition_Give, m_bySkillCondition_Give, dwTickTime);
-			if (pSkill)
-				return pSkill;
-		} while (0);
+		HOBJECT hLink = pNpcOwner->GetLinkPc();
+		if (hLink == INVALID_HOBJECT)
+			break;
+		CPlayer* pLeader = reinterpret_cast<CPlayer*>(g_pObjectManager->GetChar(hLink));
+		if (!pLeader || !pLeader->IsInitialized())
+			break;
 
-		// If linked PC is missing any LP, attempt Give skills
-		do
+		const sHELPER_NPC_CONFIG& cfg = GetHelperNpcManager()->GetConfig();
+
+		// Check all party members for healing needs (including leader)
+		auto checkPartyMemberForHealing = [&](CPlayer* pPlayer) -> bool {
+			if (!pPlayer || !pPlayer->IsInitialized())
+				return false;
+			if (pPlayer->GetCurWorld()->GetID() != pNpcOwner->GetCurWorld()->GetID())
+				return false;
+			
+			// Priority healing threshold check
+			if (cfg.wHealLpThresholdOverride > 0 && pPlayer->ConsiderLPLow((float)cfg.wHealLpThresholdOverride))
+				return true;
+			
+			// Any missing LP check
+			if (pPlayer->GetCurLP() < pPlayer->GetMaxLP())
+				return true;
+			
+			return false;
+		};
+
+		bool needsHealing = false;
+
+		// Check leader first
+		if (checkPartyMemberForHealing(pLeader))
 		{
-			HOBJECT hLink = pNpcOwner->GetLinkPc();
-			if (hLink == INVALID_HOBJECT)
-				break;
-			CCharacter* pLinked = g_pObjectManager->GetChar(hLink);
-			if (!pLinked || !pLinked->IsInitialized())
-				break;
-			if (pLinked->GetCurLP() >= pLinked->GetMaxLP())
-				break;
+			needsHealing = true;
+		}
+		// Check party members
+		else if (pLeader->GetParty() && pLeader->GetParty()->GetPartyMemberCount() > 0)
+		{
+			CParty* pParty = pLeader->GetParty();
+			BYTE memberCount = pParty->GetPartyMemberCount();
+			for (BYTE i = 0; i < memberCount && !needsHealing; ++i)
+			{
+				const sPARTY_MEMBER_INFO& mi = pParty->GetMemberInfo(i);
+				if (mi.hHandle == hLink) // Skip leader, already checked
+					continue;
+				CPlayer* pMember = reinterpret_cast<CPlayer*>(g_pObjectManager->GetChar(mi.hHandle));
+				if (checkPartyMemberForHealing(pMember))
+				{
+					needsHealing = true;
+				}
+			}
+		}
+
+		if (needsHealing)
+		{
 			pSkill = GetSkill(m_apSkillCondition_Give, m_bySkillCondition_Give, dwTickTime);
 			if (pSkill)
 				return pSkill;
-		} while (0);
+		}
 
 	} while (0);
 

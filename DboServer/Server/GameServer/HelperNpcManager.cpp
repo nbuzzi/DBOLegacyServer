@@ -100,6 +100,9 @@ bool CHelperNpcManager::LoadConfig(CNtlIniFile& file)
 		if (file.Read("HELPER_NPC", "VerboseLogs", v)) m_config.bVerboseLogs = (v != 0);
 		file.Read("HELPER_NPC", "HealUseRangeBonusMeters", m_config.fHealUseRangeBonusMeters);
 		file.Read("HELPER_NPC", "HealApplyAreaBonusMeters", m_config.fHealApplyAreaBonusMeters);
+		// Buff reach tuning
+		if (file.Read("HELPER_NPC", "BuffPartyWide", v)) m_config.bBuffPartyWide = (v != 0);
+		file.Read("HELPER_NPC", "BuffApplyAreaMeters", m_config.fBuffApplyAreaMeters);
 	}
 	file.Read("HELPER_NPC", "AttackScanRange", m_config.wAttackScanRange);
 	file.Read("HELPER_NPC", "AttackScanCooldownMs", m_config.dwAttackScanCooldownMs);
@@ -143,10 +146,10 @@ bool CHelperNpcManager::LoadConfig(CNtlIniFile& file)
 		int attempts = m_config.byResurrectMaxAttempts; if (file.Read("HELPER_NPC", "ResurrectMaxAttempts", attempts)) m_config.byResurrectMaxAttempts = (BYTE)attempts;
 	}
 	{
-		int n = m_config.byMaxBuffsPerAudit; if (file.Read("HELPER_NPC", "MaxBuffsPerAudit", n)) { if (n < 1) n = 1; else if (n > 10) n = 10; m_config.byMaxBuffsPerAudit = (BYTE)n; }
+		int n = m_config.byMaxBuffsPerAudit; if (file.Read("HELPER_NPC", "MaxBuffsPerAudit", n)) { if (n < 1) n = 1; else if (n > 15) n = 15; m_config.byMaxBuffsPerAudit = (BYTE)n; }
 	}
 	{
-		int n = m_config.byMaxBuffsPerTargetPerAudit; if (file.Read("HELPER_NPC", "MaxBuffsPerTargetPerAudit", n)) { if (n < 1) n = 1; else if (n > 10) n = 10; m_config.byMaxBuffsPerTargetPerAudit = (BYTE)n; }
+		int n = m_config.byMaxBuffsPerTargetPerAudit; if (file.Read("HELPER_NPC", "MaxBuffsPerTargetPerAudit", n)) { if (n < 1) n = 1; else if (n > 15) n = 15; m_config.byMaxBuffsPerTargetPerAudit = (BYTE)n; }
 	}
 
 	// Optional global base modifiers section
@@ -499,6 +502,32 @@ bool CHelperNpcManager::LoadRoleSection(CNtlIniFile& file, const char* sectionNa
 	// Load role behavior config using existing section loader
 	outRole.cfg = m_config;
 	LoadConfigSection(file, sectionName, outRole.cfg);
+
+	// Special handling for BUFFER role to increase buff coverage
+	if (strcmp(sectionName, "BUFFER") == 0)
+	{
+		// BUFFER needs higher caps to buff entire party effectively
+		if (outRole.cfg.byMaxBuffsPerAudit <= 1)
+			outRole.cfg.byMaxBuffsPerAudit = 10; // Allow up to 10 buffs per audit (covers 5-person party)
+		if (outRole.cfg.byMaxBuffsPerTargetPerAudit <= 1)
+			outRole.cfg.byMaxBuffsPerTargetPerAudit = 5; // Allow multiple buffs per person
+		// Ensure rebuff is enabled for BUFFERs
+		if (outRole.cfg.dwRebuffCooldownMs == 0)
+			outRole.cfg.dwRebuffCooldownMs = 5000; // Check every 5 seconds
+	}
+
+	// Special handling for HEALER role to increase healing coverage
+	if (strcmp(sectionName, "HEALER") == 0)
+	{
+		// HEALER needs higher caps to heal entire party effectively
+		if (outRole.cfg.byMaxBuffsPerAudit <= 1)
+			outRole.cfg.byMaxBuffsPerAudit = 6; // Allow up to 6 heals per audit (covers 6-person party)
+		if (outRole.cfg.byMaxBuffsPerTargetPerAudit <= 1)
+			outRole.cfg.byMaxBuffsPerTargetPerAudit = 2; // Allow multiple heals per person
+		// Ensure rebuff is enabled for HEALERs (healing skills use same system)
+		if (outRole.cfg.dwRebuffCooldownMs == 0)
+			outRole.cfg.dwRebuffCooldownMs = 1000; // Check every 1 second for faster healing response
+	}
 
 	// Parse covered class IDs
 	CNtlString cs;
@@ -1736,26 +1765,31 @@ void CHelperNpcManager::OnPartyMemberJoined(CParty* pParty, CPlayer* pNewMember)
 	// Determine the role coverage impact of the new member
 	BYTE cls = pNewMember->GetClass();
 	bool hasHealerNow = false;
-	bool hasBufferTankNow = false;
+	bool hasTankNow = false;
+	bool hasBufferNow = false;
 	bool hasSpeedNow = false;
 
-	// Healer: explicit class id 15 as requested
-	if (cls == 15)
-		hasHealerNow = true;
+	// Healer: explicit class id 15
+	if (cls == 15) hasHealerNow = true;
 
-	// Buffer/Tank: Ultimate Majin or Grand Chef (IDs depend on server; use examples provided)
-	// From earlier defaults: GrandChef=17, UltimateMajin=18. Treat either as tank+buffer coverage.
-	if (cls == 17 || cls == 18)
-		hasBufferTankNow = true;
+	// Tank coverage: GrandChef=17, UltimateMajin=18
+	if (cls == 17 || cls == 18) hasTankNow = true;
+
+	// Buffer coverage: keep conservative — PlasmaMajin=21, DendePriest=11
+	if (cls == 21 || cls == 11) hasBufferNow = true;
+
 	// Speed buffer classes: Poko=16, Karma=20
-	if (cls == 16 || cls == 20)
-		hasSpeedNow = true;
+	if (cls == 16 || cls == 20) hasSpeedNow = true;
 
-	if (!hasHealerNow && !hasBufferTankNow && !hasSpeedNow)
+	if (!hasHealerNow && !hasTankNow && !hasBufferNow && !hasSpeedNow)
 		return;
 
-	// Remove appropriate role helpers
-	RemoveRoleHelpersForLeader(pLeader, pWorld, /*removeHealer*/hasHealerNow, /*removeTank*/hasBufferTankNow, /*removeBuffer*/hasBufferTankNow, /*removeSpeed*/hasSpeedNow);
+	// Remove appropriate role helpers (do NOT remove BUFFER due to UM/GC tank presence)
+	RemoveRoleHelpersForLeader(pLeader, pWorld,
+		/*removeHealer*/ hasHealerNow,
+		/*removeTank*/   hasTankNow,
+		/*removeBuffer*/ hasBufferNow,
+		/*removeSpeed*/  hasSpeedNow);
 }
 void CHelperNpcManager::OnPartyLeaderChanged(HOBJECT oldLeader, HOBJECT newLeader)
 {

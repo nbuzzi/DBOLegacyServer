@@ -59,6 +59,10 @@ struct sHELPER_NPC_CONFIG
     float  fHealUseRangeBonusMeters = 0.0f;     // add to skill use range for non-enemy skills
     float  fHealApplyAreaBonusMeters = 0.0f;    // add to apply area sizes for party/alliance targeting
 
+    // Buff reach tuning (helpers can buff entire party even when spread out)
+    bool   bBuffPartyWide = true;               // when true, helper's non-enemy buffs target the full party
+    float  fBuffApplyAreaMeters = 60.0f;        // override apply area for buffs to cover typical party spread
+
     // Optional: list of buff skills to add at spawn (comma-separated in INI)
     std::vector<TBLIDX> vBuffSkills;       // e.g., 420141,420142
     BYTE   buffBasis = 5;                  // default TIME basis

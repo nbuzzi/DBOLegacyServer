@@ -7,6 +7,7 @@
 // Added for PC party access when helper is a MOB/NPC
 #include "CPlayer.h"
 #include "Party.h"
+#include <algorithm>
 
 
 
@@ -63,11 +64,24 @@ CSkillBot* CSkillCondition::OnUpdate(DWORD dwTickTime)
 
 bool CSkillCondition::GetTarget(HOBJECT & hTarget, sSKILL_TARGET_LIST & rTargetList)
 {
+	if (!m_pSkill || !GetBot())
+	{
+		ERR_LOG(LOG_BOTAI, "fail : NULL skill/bot in GetTarget");
+		rTargetList.Init();
+		return false;
+	}
 	switch (m_pSkill->GetOriginalTableData()->byAppoint_Target)
 	{
 		case DBO_SKILL_APPOINT_TARGET_SELF:
 		{
-			hTarget = GetBot()->GetID();
+			HOBJECT self = GetBot()->GetID();
+			if (self == INVALID_HOBJECT)
+			{
+				ERR_LOG(LOG_BOTAI, "fail : INVALID_HOBJECT self in GetTarget");
+				rTargetList.Init();
+				return false;
+			}
+			hTarget = self;
 			SkillAppointTargetSelf(rTargetList);
 		}
 		break;
@@ -111,7 +125,14 @@ void CSkillCondition::SkillAppointTargetSelf(sSKILL_TARGET_LIST & rTargetList)
 		}
 		break;
 
-		case DBO_SKILL_APPLY_TARGET_ANY: break;
+		case DBO_SKILL_APPLY_TARGET_ANY:
+		{
+			if (GetBot() && m_pSkill && GetHelperNpcManager()->IsRegisteredHelper(GetBot()))
+			{
+				GetTarget_ApplyRange_Party(GetBot(), rTargetList, GetTargetMaxCount());
+			}
+		}
+		break;
 
 		case DBO_SKILL_APPLY_TARGET_SUMMON:
 		{
@@ -169,7 +190,15 @@ void CSkillCondition::SkillAppointTargetTarget(HOBJECT & hTarget, sSKILL_TARGET_
 	}
 	break;
 
-	case DBO_SKILL_APPLY_TARGET_ANY: break;
+	case DBO_SKILL_APPLY_TARGET_ANY:
+	{
+		if (GetBot() && m_pSkill && GetHelperNpcManager()->IsRegisteredHelper(GetBot()))
+		{
+			GetTarget_ApplyRange_Party(GetBot(), rTargetList, GetTargetMaxCount());
+		}
+	}
+	break;
+
 
 	case DBO_SKILL_APPLY_TARGET_SUMMON:
 	{
@@ -213,14 +242,34 @@ void CSkillCondition::AppointTargetSelf_ApplyTargetSelf(sSKILL_TARGET_LIST & rTa
 	}
 	else
 	{
-		rTargetList.AddTarget(GetBot()->GetID());
+		// Helper enhancement: if this is a helper casting a non-enemy skill, expand to party
+		bool handled = false;
+		if (GetBot() && m_pSkill && GetHelperNpcManager()->IsRegisteredHelper(GetBot()))
+		{
+			BYTE applyTarget = m_pSkill->GetOriginalTableData()->byApply_Target;
+			bool nonEnemy = (applyTarget != DBO_SKILL_APPLY_TARGET_ENEMY);
+			if (nonEnemy)
+			{
+				GetTarget_ApplyRange_Party(GetBot(), rTargetList, GetTargetMaxCount());
+				handled = true;
+			}
+		}
+		if (!handled && GetBot())
+		{
+			HOBJECT self = GetBot()->GetID();
+			if (self != INVALID_HOBJECT)
+				rTargetList.AddTarget(self);
+		}
 	}
 }
 
 
 void CSkillCondition::AppointTargetSelf_ApplyTargetEnemy(sSKILL_TARGET_LIST & rTargetList)
 {
-	rTargetList.AddTarget(GetBot()->GetTargetHandle());
+	if (!GetBot()) { rTargetList.Init(); return; }
+	HOBJECT hT = GetBot()->GetTargetHandle();
+	if (hT != INVALID_HOBJECT)
+		rTargetList.AddTarget(hT);
 
 	if (GetApplyRangeType())
 	{
@@ -247,6 +296,7 @@ void CSkillCondition::AppointTargetSelf_ApplyTargetParty(sSKILL_TARGET_LIST & rT
 
 void CSkillCondition::AppointTargetTarget_ApplyTargetSelf(HOBJECT & hTarget, sSKILL_TARGET_LIST & rTargetList)
 {
+	if (!GetBot()) { rTargetList.Init(); return; }
 	hTarget = GetBot()->GetID();
 	if (IsApplyNotMe())
 	{
@@ -255,15 +305,29 @@ void CSkillCondition::AppointTargetTarget_ApplyTargetSelf(HOBJECT & hTarget, sSK
 	}
 	else
 	{
-		rTargetList.AddTarget(hTarget);
+		bool handled = false;
+		if (m_pSkill && GetHelperNpcManager()->IsRegisteredHelper(GetBot()))
+		{
+			BYTE applyTarget = m_pSkill->GetOriginalTableData()->byApply_Target;
+			bool nonEnemy = (applyTarget != DBO_SKILL_APPLY_TARGET_ENEMY);
+			if (nonEnemy)
+			{
+				GetTarget_ApplyRange_Party(GetBot(), rTargetList, GetTargetMaxCount());
+				handled = true;
+			}
+		}
+		if (!handled && hTarget != INVALID_HOBJECT)
+			rTargetList.AddTarget(hTarget);
 	}
 }
 
 
 void CSkillCondition::AppointTargetTarget_ApplyTargetEnemy(HOBJECT & hTarget, sSKILL_TARGET_LIST & rTargetList)
 {
+	if (!GetBot()) { rTargetList.Init(); return; }
 	hTarget = GetBot()->GetTargetHandle();
-	rTargetList.AddTarget(hTarget);
+	if (hTarget != INVALID_HOBJECT)
+		rTargetList.AddTarget(hTarget);
 
 	if (GetApplyRangeType())
 	{
@@ -277,6 +341,7 @@ void CSkillCondition::AppointTargetTarget_ApplyTargetEnemy(HOBJECT & hTarget, sS
 
 void CSkillCondition::AppointTargetTarget_ApplyTargetParty(HOBJECT & hTarget, sSKILL_TARGET_LIST & rTargetList)
 {
+	if (!GetBot()) { rTargetList.Init(); return; }
 	hTarget = GetBot()->GetID();
 
 	if (GetApplyRangeType())
@@ -292,6 +357,8 @@ void CSkillCondition::AppointTargetTarget_ApplyTargetParty(HOBJECT & hTarget, sS
 
 HOBJECT CSkillCondition::IsObjectInApplyRingRange()
 {
+	if (!GetBot())
+		return INVALID_HOBJECT;
 	if (GetBot()->GetObjType() == OBJTYPE_NPC)
 		return (GetBot())->ConsiderScanTargetRingRange(m_wUse_Skill_LP);
 	else if (GetBot()->GetObjType() == OBJTYPE_MOB)
@@ -309,15 +376,21 @@ void CSkillCondition::GetTargetApplyRange_Cell(eOBJTYPE byObjType, CWorldCell *p
 	{
 		if (cSpellAreaChecker.IsObjectInApplyRange(pObject, NULL))
 		{
-			// If the caster is a registered helper, never include PCs as AoE targets
+			// If the caster is a registered helper and this is an ENEMY skill, exclude PCs from AoE.
+			// For non-enemy (heal/buff) skills, allow PCs so party-wide effects can include players.
 			if (GetHelperNpcManager()->IsRegisteredHelper(GetBot()))
 			{
 				if (pObject->GetObjType() == OBJTYPE_PC)
-					continue;
+				{
+					if (m_pSkill && m_pSkill->GetOriginalTableData()->byApply_Target == DBO_SKILL_APPLY_TARGET_ENEMY)
+						continue;
+				}
 			}
 			if (!rTargetList.IsExist(pObject->GetID()))
 			{
-				rTargetList.AddTarget(pObject->GetID());
+				HOBJECT hid = pObject->GetID();
+				if (hid != INVALID_HOBJECT)
+					rTargetList.AddTarget(hid);
 			}
 		}
 	}
@@ -335,7 +408,11 @@ void CSkillCondition::GetTargetApplyRange_Cell(CWorldCell *pCell, CSpellAreaChec
 			if (!rTargetList.IsExist(pObject->GetID()))
 			{
 				if (pObject->HasFunction(NPC_FUNC_FLAG_SCAN_BY_MOB))
-					rTargetList.AddTarget(pObject->GetID());
+				{
+					HOBJECT hid = pObject->GetID();
+					if (hid != INVALID_HOBJECT)
+						rTargetList.AddTarget(hid);
+				}
 			}
 		}
 	}
@@ -344,6 +421,7 @@ void CSkillCondition::GetTargetApplyRange_Cell(CWorldCell *pCell, CSpellAreaChec
 
 void CSkillCondition::GetTarget_ApplyRange_PCandNPC(CCharacter *pAppointTarget, sSKILL_TARGET_LIST& rTargetList)
 {
+	if (!GetBot()) { rTargetList.Init(); return; }
 	CSpellAreaChecker rSpellAreaChecker;
 	rSpellAreaChecker.Create();
 
@@ -410,6 +488,7 @@ void CSkillCondition::GetTarget_ApplyRange_PCandNPC(CCharacter *pAppointTarget, 
 
 void CSkillCondition::GetTarget_ApplyRange_Bot(CCharacter *pAppointTarget, sSKILL_TARGET_LIST& rTargetList)
 {
+	if (!GetBot()) { rTargetList.Init(); return; }
 	CSpellAreaChecker rSpellAreaChecker;
 	rSpellAreaChecker.Create();
 
@@ -449,26 +528,39 @@ void CSkillCondition::GetTarget_ApplyRange_Bot(CCharacter *pAppointTarget, sSKIL
 
 void CSkillCondition::GetTarget_ApplyRange_Party(CCharacter *pAppointTarget, sSKILL_TARGET_LIST& rTargetList, BYTE byMaxTargetCount)
 {
+	if (!GetBot()) { rTargetList.Init(); return; }
 	CSpellAreaChecker rSpellAreaChecker;
 	rSpellAreaChecker.Create();
 
 	{
 		float a1 = (float)GetApplyAreaSize1();
 		float a2 = (float)GetApplyAreaSize2();
-		// If not enemy-targeting, extend apply area by config bonus (helpers only)
-		if (m_pSkill && m_pSkill->GetOriginalTableData()->byApply_Target != DBO_SKILL_APPLY_TARGET_ENEMY)
+		bool nonEnemy = m_pSkill && (m_pSkill->GetOriginalTableData()->byApply_Target != DBO_SKILL_APPLY_TARGET_ENEMY);
+		bool partyWide = false;
+		if (nonEnemy && GetHelperNpcManager()->IsRegisteredHelper(GetBot()))
 		{
-			if (GetHelperNpcManager()->IsRegisteredHelper(GetBot()))
+			const sHELPER_NPC_CONFIG* pcfg = GetHelperNpcManager()->GetConfigForHelper(GetBot());
+			if (pcfg)
 			{
-				const sHELPER_NPC_CONFIG* pcfg = GetHelperNpcManager()->GetConfigForHelper(GetBot());
-				if (pcfg)
+				partyWide = pcfg->bBuffPartyWide;
+				// Prefer buff-wide override for party coverage, else add heal bonus
+				if (pcfg->fBuffApplyAreaMeters > 0.0f)
 				{
-					a1 += pcfg->fHealApplyAreaBonusMeters;
-					a2 += pcfg->fHealApplyAreaBonusMeters;
+					a1 = (a1 > pcfg->fBuffApplyAreaMeters) ? a1 : pcfg->fBuffApplyAreaMeters;
+					a2 = (a2 > pcfg->fBuffApplyAreaMeters) ? a2 : pcfg->fBuffApplyAreaMeters;
+				}
+				a1 += pcfg->fHealApplyAreaBonusMeters;
+				a2 += pcfg->fHealApplyAreaBonusMeters;
+				// When party-wide buffs are enabled, lift the target cap to include the whole party
+				if (pcfg->bBuffPartyWide)
+				{
+					byMaxTargetCount = 36; // generous upper bound for party + npc allies
 				}
 			}
 		}
 		rSpellAreaChecker.PrepareForSelection(GetBot(), pAppointTarget, GetApplyRangeType(), (int)a1, (int)a2);
+		// When party-wide buffing is enabled, we won't rely on area checks below
+		// We'll still keep byMaxTargetCount as adjusted, and same-world filtering.
 	}
 
 	std::map<HOBJECT, HOBJECT> mapCandidate;
@@ -491,21 +583,27 @@ void CSkillCondition::GetTarget_ApplyRange_Party(CCharacter *pAppointTarget, sSK
 							pSpawnObject;
 							pSpawnObject = pSibling->GetObjectList()->GetNext(pSpawnObject->GetWorldCellObjectLinker()))
 						{
-							mapCandidate.insert(std::make_pair(pSpawnObject->GetID(), pSpawnObject->GetID()));
+							HOBJECT hid = pSpawnObject->GetID();
+							if (hid != INVALID_HOBJECT)
+								mapCandidate.insert(std::make_pair(hid, hid));
 						}
 
 						for (pSpawnObject = pSibling->GetObjectList()->GetFirst(OBJTYPE_NPC);
 							pSpawnObject;
 							pSpawnObject = pSibling->GetObjectList()->GetNext(pSpawnObject->GetWorldCellObjectLinker()))
 						{
-							mapCandidate.insert(std::make_pair(pSpawnObject->GetID(), pSpawnObject->GetID()));
+							HOBJECT hid2 = pSpawnObject->GetID();
+							if (hid2 != INVALID_HOBJECT)
+								mapCandidate.insert(std::make_pair(hid2, hid2));
 						}
 
 						for (pSpawnObject = pSibling->GetObjectList()->GetFirst(OBJTYPE_SUMMON_PET);
 							pSpawnObject;
 							pSpawnObject = pSibling->GetObjectList()->GetNext(pSpawnObject->GetWorldCellObjectLinker()))
 						{
-							mapCandidate.insert(std::make_pair(pSpawnObject->GetID(), pSpawnObject->GetID()));
+							HOBJECT hid3 = pSpawnObject->GetID();
+							if (hid3 != INVALID_HOBJECT)
+								mapCandidate.insert(std::make_pair(hid3, hid3));
 						}
 					}
 				}
@@ -520,7 +618,8 @@ void CSkillCondition::GetTarget_ApplyRange_Party(CCharacter *pAppointTarget, sSK
 		{
 			for (CNpcParty::MEMBER_MAP::iterator it = pParty->Begin(); it != pParty->End(); it++)
 			{
-				mapCandidate.insert(std::make_pair(it->first, it->first));
+				if (it->first != INVALID_HOBJECT)
+					mapCandidate.insert(std::make_pair(it->first, it->first));
 			}
 		}
 
@@ -535,7 +634,8 @@ void CSkillCondition::GetTarget_ApplyRange_Party(CCharacter *pAppointTarget, sSK
 				for (BYTE i = 0; i < pPcParty->GetPartyMemberCount(); i++)
 				{
 					const sPARTY_MEMBER_INFO& mi = pPcParty->GetMemberInfo(i);
-					mapCandidate.insert(std::make_pair(mi.hHandle, mi.hHandle));
+					if (mi.hHandle != INVALID_HOBJECT)
+						mapCandidate.insert(std::make_pair(mi.hHandle, mi.hHandle));
 				}
 			}
 		}
@@ -543,7 +643,9 @@ void CSkillCondition::GetTarget_ApplyRange_Party(CCharacter *pAppointTarget, sSK
 		// If still no candidates, fallback to self so the skill has a legal target
 		if (mapCandidate.empty())
 		{
-			mapCandidate.insert(std::make_pair(GetBot()->GetID(), GetBot()->GetID()));
+			HOBJECT self = GetBot()->GetID();
+			if (self != INVALID_HOBJECT)
+				mapCandidate.insert(std::make_pair(self, self));
 		}
 	}
 
@@ -553,25 +655,37 @@ void CSkillCondition::GetTarget_ApplyRange_Party(CCharacter *pAppointTarget, sSK
 	for (std::map<HOBJECT, HOBJECT>::iterator it = mapCandidate.begin(); it != mapCandidate.end(); it++)
 	{
 		CCharacter* pObject = g_pObjectManager->GetChar(it->first);
-		if (pObject)
+		if (pObject && pObject->IsInitialized() && pObject->GetCurWorld() == GetBot()->GetCurWorld())
 		{
-			if (rSpellAreaChecker.IsObjectInApplyRange(pObject, &pfSquaredLength))
+			// If party-wide is enabled for helper non-enemy buffs, include all candidates without area checks
+			bool nonEnemy = m_pSkill && (m_pSkill->GetOriginalTableData()->byApply_Target != DBO_SKILL_APPLY_TARGET_ENEMY);
+			bool isHelper = GetHelperNpcManager()->IsRegisteredHelper(GetBot());
+			const sHELPER_NPC_CONFIG* pcfg = isHelper ? GetHelperNpcManager()->GetConfigForHelper(GetBot()) : NULL;
+			bool partyWide = (nonEnemy && pcfg && pcfg->bBuffPartyWide);
+			if (partyWide)
 			{
 				if (GetBot()->GetID() != pObject->GetID() || IsApplyNotMe() != true)
-				{
 					mapSelectedBot.insert(it->second);
-				}
+			}
+			else if (rSpellAreaChecker.IsObjectInApplyRange(pObject, &pfSquaredLength))
+			{
+				if (GetBot()->GetID() != pObject->GetID() || IsApplyNotMe() != true)
+					mapSelectedBot.insert(it->second);
 			}
 		}
 		else
-			ERR_LOG(LOG_GENERAL, "NULL == pBot");
+		{
+			if (GetHelperNpcManager()->GetConfig().bVerboseLogs)
+				ERR_LOG(LOG_GENERAL, "LP_LOW: invalid candidate handle=%u (null/uninit or diff world)", it->first);
+		}
 	}
 
 	for (std::set<HOBJECT>::iterator it = mapSelectedBot.begin(); it != mapSelectedBot.end(); it++)
 	{
 		if (rTargetList.byTargetCount < byMaxTargetCount)
 		{
-			rTargetList.AddTarget(*it);
+			if (*it != INVALID_HOBJECT)
+				rTargetList.AddTarget(*it);
 		}
 		else
 			break;
@@ -581,6 +695,7 @@ void CSkillCondition::GetTarget_ApplyRange_Party(CCharacter *pAppointTarget, sSK
 
 void CSkillCondition::GetTarget_ApplyRange_Party_LPLow(CCharacter *pAppointTarget, sSKILL_TARGET_LIST& rTargetList, BYTE byMaxTargetCount)
 {
+	if (!GetBot()) { rTargetList.Init(); return; }
 	CSpellAreaChecker rSpellAreaChecker;
 	rSpellAreaChecker.Create();
 	// Resolve a non-null appoint target for area checks: prefer provided, then linked PC, then self
@@ -604,20 +719,29 @@ void CSkillCondition::GetTarget_ApplyRange_Party_LPLow(CCharacter *pAppointTarge
 	{
 		float a1 = (float)GetApplyAreaSize1();
 		float a2 = (float)GetApplyAreaSize2();
-		// If not enemy-targeting, extend apply area by config bonus (helpers only)
-		if (m_pSkill && m_pSkill->GetOriginalTableData()->byApply_Target != DBO_SKILL_APPLY_TARGET_ENEMY)
+		bool nonEnemy = m_pSkill && (m_pSkill->GetOriginalTableData()->byApply_Target != DBO_SKILL_APPLY_TARGET_ENEMY);
+		bool partyWide = false;
+		if (nonEnemy && GetHelperNpcManager()->IsRegisteredHelper(GetBot()))
 		{
-			if (GetHelperNpcManager()->IsRegisteredHelper(GetBot()))
+			const sHELPER_NPC_CONFIG* pcfg = GetHelperNpcManager()->GetConfigForHelper(GetBot());
+			if (pcfg)
 			{
-				const sHELPER_NPC_CONFIG* pcfg = GetHelperNpcManager()->GetConfigForHelper(GetBot());
-				if (pcfg)
+				partyWide = pcfg->bBuffPartyWide;
+				if (pcfg->fBuffApplyAreaMeters > 0.0f)
 				{
-					a1 += pcfg->fHealApplyAreaBonusMeters;
-					a2 += pcfg->fHealApplyAreaBonusMeters;
+					a1 = (a1 > pcfg->fBuffApplyAreaMeters) ? a1 : pcfg->fBuffApplyAreaMeters;
+					a2 = (a2 > pcfg->fBuffApplyAreaMeters) ? a2 : pcfg->fBuffApplyAreaMeters;
+				}
+				a1 += pcfg->fHealApplyAreaBonusMeters;
+				a2 += pcfg->fHealApplyAreaBonusMeters;
+				if (pcfg->bBuffPartyWide)
+				{
+					byMaxTargetCount = 36;
 				}
 			}
 		}
 		rSpellAreaChecker.PrepareForSelection(GetBot(), pResolvedAppoint, GetApplyRangeType(), (int)a1, (int)a2);
+		// Party-wide mode skips area checks below when selecting candidates
 	}
 
 	std::map<int, HOBJECT> mapCandidate;
@@ -625,7 +749,7 @@ void CSkillCondition::GetTarget_ApplyRange_Party_LPLow(CCharacter *pAppointTarge
 	// Determine LP threshold, allowing helper override when linked to a PC
 	WORD wThreshold = m_wUse_Skill_LP;
 	bool bMissingLpMode = false; // when override==0 heal anyone missing LP
-	if (GetBot()->GetLinkPc() != INVALID_HOBJECT)
+	if (GetBot() && GetBot()->GetLinkPc() != INVALID_HOBJECT)
 	{
 		const sHELPER_NPC_CONFIG& cfg = GetHelperNpcManager()->GetConfig();
 		if (cfg.wHealLpThresholdOverride > 0)
@@ -635,7 +759,7 @@ void CSkillCondition::GetTarget_ApplyRange_Party_LPLow(CCharacter *pAppointTarge
 	}
 
 	// First, if an appointed target was provided/resolved (e.g., linked PC), consider it as a candidate
-	if (pResolvedAppoint)
+	if (pResolvedAppoint && pResolvedAppoint->IsInitialized() && GetBot() && pResolvedAppoint->GetCurWorld() == GetBot()->GetCurWorld())
 	{
 		if (rSpellAreaChecker.IsObjectInApplyRange(pResolvedAppoint, NULL))
 		{
@@ -644,7 +768,9 @@ void CSkillCondition::GetTarget_ApplyRange_Party_LPLow(CCharacter *pAppointTarge
 			{
 				if (GetBot()->GetID() != pResolvedAppoint->GetID() || IsApplyNotMe() != true)
 				{
-					mapCandidate.insert(std::make_pair(pResolvedAppoint->GetCurLP(), pResolvedAppoint->GetID()));
+					HOBJECT hid = pResolvedAppoint->GetID();
+					if (hid != INVALID_HOBJECT)
+						mapCandidate.insert(std::make_pair(pResolvedAppoint->GetCurLP(), hid));
 				}
 			}
 		}
@@ -659,7 +785,7 @@ void CSkillCondition::GetTarget_ApplyRange_Party_LPLow(CCharacter *pAppointTarge
 			for (CNpcParty::MEMBER_MAP::iterator it = pParty->Begin(); it != pParty->End(); it++)
 			{
 				CNpc* pObject = g_pObjectManager->GetNpc(it->first);
-				if (pObject)
+				if (pObject && pObject->IsInitialized() && GetBot() && pObject->GetCurWorld() == GetBot()->GetCurWorld())
 				{
 					if (rSpellAreaChecker.IsObjectInApplyRange(pObject, NULL))
 					{
@@ -668,7 +794,8 @@ void CSkillCondition::GetTarget_ApplyRange_Party_LPLow(CCharacter *pAppointTarge
 						{
 							if (GetBot()->GetID() != pObject->GetID() || IsApplyNotMe() != true)
 							{
-								mapCandidate.insert(std::make_pair(pObject->GetCurLP(), it->first));
+								if (it->first != INVALID_HOBJECT)
+									mapCandidate.insert(std::make_pair(pObject->GetCurLP(), it->first));
 							}
 						}
 					}
@@ -681,14 +808,14 @@ void CSkillCondition::GetTarget_ApplyRange_Party_LPLow(CCharacter *pAppointTarge
 		if (hLink != INVALID_HOBJECT)
 		{
 			CPlayer* pLeader = g_pObjectManager->GetPC(hLink);
-			if (pLeader && pLeader->GetParty())
+			if (pLeader && pLeader->IsInitialized() && pLeader->GetParty())
 			{
 				CParty* pPcParty = pLeader->GetParty();
 				for (BYTE i = 0; i < pPcParty->GetPartyMemberCount(); i++)
 				{
 					const sPARTY_MEMBER_INFO& mi = pPcParty->GetMemberInfo(i);
 					CPlayer* pMember = g_pObjectManager->GetPC(mi.hHandle);
-					if (pMember && pMember->IsInitialized())
+					if (pMember && pMember->IsInitialized() && GetBot() && pMember->GetCurWorld() == GetBot()->GetCurWorld())
 					{
 						if (rSpellAreaChecker.IsObjectInApplyRange(pMember, NULL))
 						{
@@ -697,7 +824,9 @@ void CSkillCondition::GetTarget_ApplyRange_Party_LPLow(CCharacter *pAppointTarge
 							{
 								if (GetBot()->GetID() != pMember->GetID() || IsApplyNotMe() != true)
 								{
-									mapCandidate.insert(std::make_pair(pMember->GetCurLP(), pMember->GetID()));
+									HOBJECT hid = pMember->GetID();
+									if (hid != INVALID_HOBJECT)
+										mapCandidate.insert(std::make_pair(pMember->GetCurLP(), hid));
 								}
 							}
 						}
@@ -712,7 +841,8 @@ void CSkillCondition::GetTarget_ApplyRange_Party_LPLow(CCharacter *pAppointTarge
 	{
 		if (rTargetList.byTargetCount < byMaxTargetCount)
 		{
-			rTargetList.AddTarget(it->second);
+			if (it->second != INVALID_HOBJECT)
+				rTargetList.AddTarget(it->second);
 		}
 		else
 			break;
