@@ -268,50 +268,58 @@ CSkillCondition* CSkillManagerBot::GetSkill(DWORD dwTickTime)
 
 		const sHELPER_NPC_CONFIG& cfg = GetHelperNpcManager()->GetConfig();
 
-		// Check all party members for healing needs (including leader)
-		auto checkPartyMemberForHealing = [&](CPlayer* pPlayer) -> bool {
+		// Check all party members for healing/resurrection needs (including leader)
+		auto checkPartyMemberForHealing = [&](CPlayer* pPlayer) -> int {
 			if (!pPlayer || !pPlayer->IsInitialized())
-				return false;
+				return 0; // No need
 			if (pPlayer->GetCurWorld()->GetID() != pNpcOwner->GetCurWorld()->GetID())
-				return false;
+				return 0; // Not in same world
 			
-			// Priority healing threshold check
+			// Check if player is dead/fainted - HIGHEST PRIORITY
+			if (pPlayer->IsFainting())
+				return 3; // Resurrection priority
+			
+			// Priority healing threshold check - more aggressive healing
 			if (cfg.wHealLpThresholdOverride > 0 && pPlayer->ConsiderLPLow((float)cfg.wHealLpThresholdOverride))
-				return true;
+				return 2; // Critical healing priority
+			
+			// More aggressive: heal anyone missing more than 5% LP
+			if ((pPlayer->GetCurLP() * 100 / pPlayer->GetMaxLP()) < 95)
+				return 2; // Treat as critical healing priority
 			
 			// Any missing LP check
 			if (pPlayer->GetCurLP() < pPlayer->GetMaxLP())
-				return true;
+				return 1; // Normal healing priority
 			
-			return false;
+			return 0; // No healing needed
 		};
 
-		bool needsHealing = false;
+		int highestPriority = 0;
 
 		// Check leader first
-		if (checkPartyMemberForHealing(pLeader))
-		{
-			needsHealing = true;
-		}
+		int leaderPriority = checkPartyMemberForHealing(pLeader);
+		if (leaderPriority > highestPriority)
+			highestPriority = leaderPriority;
+		
 		// Check party members
-		else if (pLeader->GetParty() && pLeader->GetParty()->GetPartyMemberCount() > 0)
+		if (pLeader->GetParty() && pLeader->GetParty()->GetPartyMemberCount() > 0)
 		{
 			CParty* pParty = pLeader->GetParty();
 			BYTE memberCount = pParty->GetPartyMemberCount();
-			for (BYTE i = 0; i < memberCount && !needsHealing; ++i)
+			for (BYTE i = 0; i < memberCount; ++i)
 			{
 				const sPARTY_MEMBER_INFO& mi = pParty->GetMemberInfo(i);
 				if (mi.hHandle == hLink) // Skip leader, already checked
 					continue;
 				CPlayer* pMember = reinterpret_cast<CPlayer*>(g_pObjectManager->GetChar(mi.hHandle));
-				if (checkPartyMemberForHealing(pMember))
-				{
-					needsHealing = true;
-				}
+				int memberPriority = checkPartyMemberForHealing(pMember);
+				if (memberPriority > highestPriority)
+					highestPriority = memberPriority;
 			}
 		}
 
-		if (needsHealing)
+		// If anyone needs healing or resurrection, try Give skills
+		if (highestPriority > 0)
 		{
 			pSkill = GetSkill(m_apSkillCondition_Give, m_bySkillCondition_Give, dwTickTime);
 			if (pSkill)

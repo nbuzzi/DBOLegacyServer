@@ -33,6 +33,7 @@
 #include "Fairy Event.h"
 #include "CustomDropEvent.h"
 #include "HelperNpcManager.h"
+#include "BudokaiManager.h"
 
 void gm_read_command(sUG_SERVER_COMMAND* sPacket, CPlayer* pPlayer)
 {
@@ -82,6 +83,10 @@ ACMD(do_addmob);
 ACMD(do_addmobgroup);
 ACMD(do_addnpc);
 ACMD(do_additem);
+ACMD(do_additem_group);
+ACMD(do_sessioninfo);
+ACMD(do_sessioncleanup);
+ACMD(do_budokaiinfo);
 ACMD(do_addmasteritem); // this function will give
 ACMD(do_addskill);
 ACMD(do_addskill2); // this function add missing master class passive. Example.. if player is swordsman and dont have swordsman masterclass skill, then this can be used.
@@ -187,6 +192,10 @@ struct command_info cmd_info[] =
 	{ L"@addmobgroup", do_addmobgroup, ADMIN_LEVEL_ADMIN },
 	{ L"@addnpc", do_addnpc, ADMIN_LEVEL_ADMIN },
 	{ L"@additem", do_additem, ADMIN_LEVEL_ADMIN },
+	{ L"@additem_group", do_additem_group, ADMIN_LEVEL_ADMIN },
+	{ L"@sessioninfo", do_sessioninfo, ADMIN_LEVEL_ADMIN },
+	{ L"@sessioncleanup", do_sessioncleanup, ADMIN_LEVEL_ADMIN },
+	{ L"@budokaiinfo", do_budokaiinfo, ADMIN_LEVEL_ADMIN },
 	{ L"@addskill", do_addskill, ADMIN_LEVEL_ADMIN },
 	{ L"@heal", do_r, ADMIN_LEVEL_ADMIN },
 	{ L"@setzenny", do_setzenny, ADMIN_LEVEL_ADMIN },
@@ -909,6 +918,302 @@ ACMD(do_additem)
 		}
 		//else NTL_PRINT(PRINT_APP, "GmAddItem(TBLIDX itemid) item not found %u", ItemId);
 	}
+}
+
+ACMD(do_additem_group)
+{
+	/*
+		@additem_group ITEM_ID AMOUNT RANGE [TARGET_NAME]
+		- Gives the specified item to all players within the specified range (in meters)
+		- If TARGET_NAME is specified, uses that player as the center point
+		- If TARGET_NAME is omitted, uses the command issuer as the center point
+		- RANGE can be 0 to give only to the target/issuer
+	*/
+	pToken->PopToPeek();
+	std::wstring strToken = pToken->PeekNextToken(NULL, &iLine);
+	TBLIDX ItemId = (TBLIDX)atof(ws2s(strToken).c_str());
+
+	pToken->PopToPeek();
+	strToken = pToken->PeekNextToken(NULL, &iLine);
+	BYTE amount = (BYTE)atof(ws2s(strToken).c_str());
+
+	if (amount == 0 || amount == INVALID_BYTE)
+		amount = 1;
+
+	pToken->PopToPeek();
+	strToken = pToken->PeekNextToken(NULL, &iLine);
+	float fRange = (float)atof(ws2s(strToken).c_str());
+
+	if (fRange < 0.0f)
+		fRange = 0.0f;
+
+	pToken->PopToPeek();
+	strToken = pToken->PeekNextToken(NULL, &iLine);
+
+	CPlayer* pTarget = pPlayer;
+
+	if (!strToken.empty())
+	{
+		std::wstring name = std::wstring(strToken.begin(), strToken.end());
+		const wchar_t* wname = name.c_str();
+
+		pTarget = g_pObjectManager->FindByName(wname);
+		if (!pTarget || !pTarget->IsInitialized())
+		{
+			pTarget = pPlayer; // if target not found, use self
+		}
+	}
+
+	// Validate item exists and is valid
+	sITEM_TBLDAT* pTblData = (sITEM_TBLDAT*)g_pTableContainer->GetItemTable()->FindData(ItemId);
+	if (!pTblData)
+		return; // invalid item ID
+
+	if (pTblData->bValidity_Able == false || pTblData->byItem_Type == eITEM_TYPE::ITEM_TYPE_RECIPE)
+		return; // item not valid or is a recipe
+
+	// Ensure amount doesn't exceed max stack
+	if (amount > pTblData->byMax_Stack)
+		amount = pTblData->byMax_Stack;
+
+	// Helper lambda to give item to one player
+	auto giveItemTo = [&](CPlayer* target)
+	{
+		if (!target || !target->IsInitialized()) return;
+		if (target->GetPlayerItemContainer()->CountEmptyInventory() >= 1)
+		{
+			g_pItemManager->CreateItem(target, ItemId, amount, INVALID_BYTE, INVALID_BYTE, pTblData->Item_Option_Tblidx == INVALID_TBLIDX);
+		}
+	};
+
+	if (fRange > 0.0f && pTarget->GetCurWorldCell())
+	{
+		// Give to all players within range
+		CWorldCell* pCell = pTarget->GetCurWorldCell();
+		CWorldCell::QUADPAGE page = pCell->GetCellQuadPage(pTarget->GetCurLoc());
+		for (int dir = CWorldCell::QUADDIR_SELF; dir <= CWorldCell::QUADDIR_VERTICAL; dir++)
+		{
+			CWorldCell* pSibling = pCell->GetQuadSibling(page, (CWorldCell::QUADDIR)dir);
+			if (!pSibling) continue;
+			CPlayer* pPlr = (CPlayer*)pSibling->GetObjectList()->GetFirst(OBJTYPE_PC);
+			while (pPlr && pPlr->IsInitialized())
+			{
+				if (pTarget->IsInRange(pPlr, fRange))
+					giveItemTo(pPlr);
+				pPlr = (CPlayer*)pSibling->GetObjectList()->GetNext(pPlr->GetWorldCellObjectLinker());
+			}
+		}
+	}
+	else
+	{
+		// Give only to the target player
+		giveItemTo(pTarget);
+	}
+}
+
+ACMD(do_sessioninfo)
+{
+	/*
+		@sessioninfo - Shows current session statistics for connection debugging
+		Displays current vs max sessions, memory usage, and connection statistics
+	*/
+	CGameServer* app = (CGameServer*)g_pApp;
+	
+	// Get current session counts from the network
+	int currentSessions = app->GetNetwork()->GetSessionList()->GetCurCount();
+	int maxSessions = app->GetNetwork()->GetSessionList()->GetMaxCount();
+	int configMaxSessions = app->m_config.nMaxConnection;
+	
+	// Get current player count from ObjectManager
+	size_t playerCount = g_pObjectManager->GetPlayerCount();
+	
+	// Identify server instance by port/config
+	WORD serverPort = app->m_config.wClientAcceptPort;
+	const char* instanceType = "Unknown";
+	if (serverPort == 30000) instanceType = "Channel 0";
+	else if (serverPort == 30001) instanceType = "Channel 1"; 
+	else if (serverPort == 30009) instanceType = "Budokai Tournament";
+	
+	// Format the response message with multi-instance awareness
+	char szMessage[1500];
+	sprintf_s(szMessage, sizeof(szMessage), 
+		"[SESSION INFO - %s (Port: %d)]\n"
+		"Current Sessions: %d\n"
+		"Max Session Capacity: %d\n"
+		"Config Max Connections: %d\n"
+		"Session Utilization: %.1f%%\n"
+		"Available Slots: %d\n"
+		"Player Objects: %zu\n"
+		"Session Overhead: %d\n"
+		"\n[INSTANCE ANALYSIS]\n"
+		"%s"
+		"\n[LEAK DETECTION]\n"
+		"%s",
+		instanceType, serverPort,
+		currentSessions,
+		maxSessions,
+		configMaxSessions,
+		configMaxSessions > 0 ? (float)currentSessions / configMaxSessions * 100.0f : 0.0f,
+		configMaxSessions - currentSessions,
+		playerCount,
+		currentSessions - (int)playerCount,
+		(serverPort == 30009) ? "BUDOKAI SERVER - Monitor tournament session cleanup!" : "Regular game channel",
+		(currentSessions > (int)playerCount + 15) ? "HIGH SESSION OVERHEAD - Investigate cleanup!" :
+		(currentSessions > (int)playerCount + 10) ? "MODERATE SESSION OVERHEAD - Monitor closely" : 
+		(currentSessions >= configMaxSessions) ? "CRITICAL: Session limit reached!" :
+		"Session levels appear normal"
+	);
+	
+	// Send system message to the GM
+	CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+	sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+	res->wOpCode = GU_SYSTEM_DISPLAY_TEXT;
+	res->byDisplayType = SERVER_TEXT_SYSTEM;
+	
+	// Convert to wide string
+	std::string message(szMessage);
+	std::wstring wideMessage(message.begin(), message.end());
+	wcscpy_s(res->awchMessage, NTL_MAX_LENGTH_OF_CHAT_MESSAGE + 1, wideMessage.c_str());
+	
+	packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+	app->Send(pPlayer->GetClientSessionID(), &packet);
+	
+	// Also log to console for server admin
+	NTL_PRINT(PRINT_APP, "GM %u requested session info: %d/%d sessions active (%.1f%% utilization)", 
+		pPlayer->GetCharID(), currentSessions, configMaxSessions, 
+		configMaxSessions > 0 ? (float)currentSessions / configMaxSessions * 100.0f : 0.0f);
+}
+
+ACMD(do_sessioncleanup)
+{
+	/*
+		@sessioncleanup - Forces cleanup of dead/invalid sessions
+		This command can help resolve connection issues by forcing cleanup
+		of sessions that may be stuck or not properly removed
+	*/
+	CGameServer* app = (CGameServer*)g_pApp;
+	
+	// Get session counts before cleanup
+	int sessionsBefore = app->GetNetwork()->GetSessionList()->GetCurCount();
+	
+	// Force session list validation/cleanup
+	DWORD currentTime = GetTickCount();
+	app->GetNetwork()->GetSessionList()->ValidCheck(currentTime);
+	
+	// Get session counts after cleanup
+	int sessionsAfter = app->GetNetwork()->GetSessionList()->GetCurCount();
+	int sessionsRemoved = sessionsBefore - sessionsAfter;
+	
+	// Format the response message
+	char szMessage[512];
+	sprintf_s(szMessage, sizeof(szMessage), 
+		"[SESSION CLEANUP COMPLETE]\n"
+		"Sessions before cleanup: %d\n"
+		"Sessions after cleanup: %d\n"
+		"Sessions removed: %d\n"
+		"Available slots now: %d",
+		sessionsBefore,
+		sessionsAfter,
+		sessionsRemoved,
+		app->GetNetwork()->GetSessionList()->GetMaxCount() - sessionsAfter
+	);
+	
+	// Send system message to the GM
+	CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+	sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+	res->wOpCode = GU_SYSTEM_DISPLAY_TEXT;
+	res->byDisplayType = SERVER_TEXT_SYSTEM;
+	
+	// Convert to wide string
+	std::string message(szMessage);
+	std::wstring wideMessage(message.begin(), message.end());
+	wcscpy_s(res->awchMessage, NTL_MAX_LENGTH_OF_CHAT_MESSAGE + 1, wideMessage.c_str());
+	
+	packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+	app->Send(pPlayer->GetClientSessionID(), &packet);
+	
+	// Also log to console for server admin
+	NTL_PRINT(PRINT_APP, "GM %u forced session cleanup: %d sessions removed (%d -> %d)", 
+		pPlayer->GetCharID(), sessionsRemoved, sessionsBefore, sessionsAfter);
+}
+
+ACMD(do_budokaiinfo)
+{
+	/*
+		@budokaiinfo - Specialized monitoring for Budokai tournament server
+		Provides detailed analysis specifically for the tournament server instance
+		including session leak detection related to tournament events
+	*/
+	CGameServer* app = (CGameServer*)g_pApp;
+	
+	// Identify server instance
+	WORD serverPort = app->m_config.wClientAcceptPort;
+	bool isBudokaiServer = (serverPort == 30009);
+	
+	char szMessage[1500];
+	if (!isBudokaiServer) {
+		sprintf_s(szMessage, sizeof(szMessage), 
+			"[BUDOKAI INFO]\n"
+			"Current server port: %d\n"
+			"This is NOT the Budokai server instance\n"
+			"Expected Budokai port: 30009\n"
+			"Use this command on the tournament server",
+			serverPort
+		);
+	} else {
+		// Get session information
+		int currentSessions = app->GetNetwork()->GetSessionList()->GetCurCount();
+		int maxSessions = app->GetNetwork()->GetSessionList()->GetMaxCount();
+		int configMaxSessions = app->m_config.nMaxConnection;
+		size_t playerCount = g_pObjectManager->GetPlayerCount();
+		int sessionOverhead = currentSessions - (int)playerCount;
+		
+		sprintf_s(szMessage, sizeof(szMessage), 
+			"[BUDOKAI TOURNAMENT SERVER]\n"
+			"Server Port: %d (Confirmed)\n"
+			"Current Sessions: %d\n"
+			"Current Players: %zu\n"
+			"Session Overhead: %d\n"
+			"Max Capacity: %d\n"
+			"Available Slots: %d\n"
+			"\n[BUDOKAI STATUS]\n"
+			"%s"
+			"\n[LEAK ANALYSIS]\n"
+			"%s"
+			"\n[MONITORING TIPS]\n"
+			"- Use before/after tournaments\n"
+			"- Watch for session buildup\n"
+			"- Use @sessioncleanup if needed",
+			serverPort,
+			currentSessions,
+			playerCount,
+			sessionOverhead,
+			configMaxSessions,
+			configMaxSessions - currentSessions,
+			(g_pBudokaiManager) ? "Budokai Manager: ACTIVE" : "Budokai Manager: NULL (Issue?)",
+			(sessionOverhead > 20) ? "CRITICAL: High session overhead!" :
+			(sessionOverhead > 15) ? "WARNING: Elevated session overhead" :
+			(sessionOverhead > 10) ? "MODERATE: Monitor session cleanup" :
+			"NORMAL: Session levels appear healthy"
+		);
+	}
+	
+	// Send system message to the GM
+	CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+	sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+	res->wOpCode = GU_SYSTEM_DISPLAY_TEXT;
+	res->byDisplayType = SERVER_TEXT_SYSTEM;
+	
+	// Convert to wide string
+	std::string message(szMessage);
+	std::wstring wideMessage(message.begin(), message.end());
+	wcscpy_s(res->awchMessage, NTL_MAX_LENGTH_OF_CHAT_MESSAGE + 1, wideMessage.c_str());
+	
+	packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+	app->Send(pPlayer->GetClientSessionID(), &packet);
+	
+	// Also log to console
+	NTL_PRINT(PRINT_APP, "GM %u requested Budokai info on port %d", pPlayer->GetCharID(), serverPort);
 }
 
 ACMD(do_addmasteritem)

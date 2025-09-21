@@ -30,6 +30,7 @@ private:
 	DWORD			m_dwLastTimePerformanceLogged;
 	DWORD			m_dwLastTimeLoadReported;
 	DWORD			m_dwLastTimeMemoryUseLogged;
+	DWORD			m_dwLastTimeSessionLogged;
 
 	time_t			m_tmCurrentTime;
 
@@ -54,6 +55,7 @@ private:
 	void			DoUpdatePerformanceLog(DWORD dwNow);
 	void			DoReportLoad(DWORD dwNow);
 	void			DoUpdateMemoryUseLog(DWORD dwNow);
+	void			DoUpdateSessionLog(DWORD dwNow);
 
 public:
 

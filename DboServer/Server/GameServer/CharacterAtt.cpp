@@ -4,6 +4,8 @@
 #include "GameServer.h"
 #include "char.h"
 #include "SystemEffectTable.h"
+#include "CustomDropEvent.h"
+#include "Monster.h"
 
 #include "calcs.h"
 
@@ -53,6 +55,16 @@ void CCharacterAtt::CalculateAll()
 
 	//calculate the stats
 	CalculateAtt();
+	
+	// Reapply custom event modifications after CalculateAll to preserve them
+	if (m_pOwnerRef->IsMonster() && g_pCustomDropEvent && g_pCustomDropEvent->m_bOn)
+	{
+		CMonster* pMob = static_cast<CMonster*>(m_pOwnerRef);
+		if (pMob && pMob->IsEventDebuffImmune()) // Only for event-modified mobs
+		{
+			g_pCustomDropEvent->ApplyModifiers(pMob);
+		}
+	}
 
 
 	//check if our LP changed

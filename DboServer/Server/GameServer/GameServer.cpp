@@ -1,5 +1,8 @@
 ﻿#include "stdafx.h"
 #include "GameServer.h"
+#include "MasterServerSession.h"
+#include "ChatServerSession.h"
+#include "QueryServerSession.h"
 #include "NtlRandom.h"
 
 #include "SubNeighborServerInfoManager.h"
@@ -369,6 +372,7 @@ void CGameServer::Run()
 		QueryPerformanceCounter(&rLoadReport);
 
 		DoUpdateMemoryUseLog(dwNow);
+		DoUpdateSessionLog(dwNow);
 		QueryPerformanceCounter(&rMemoryUsage);
 
 		if (GetMasterServerSession())		//master server is the last one we connect.. So only loop when we are connected to master server
@@ -377,23 +381,23 @@ void CGameServer::Run()
 		dwLastLoop = GetTickCount();
 		QueryPerformanceCounter(&rEnd);
 
-		float fDur = ((float)(rEnd.QuadPart - rStart.QuadPart)) * 1000.f / ((float)m_freq.QuadPart);
+		// float fDur = ((float)(rEnd.QuadPart - rStart.QuadPart)) * 1000.f / ((float)m_freq.QuadPart);
 
-		if (fDur > 200.f)
-		{
-			NTL_PRINT(PRINT_APP, "dwLastLoop %u - m_dwCurTickCount %u = %u > 200.", m_dwCurTickCount, dwLastLoop, dwLastLoop - m_dwCurTickCount);
-			ERR_LOG(LOG_SYSTEM, "MainLoop: Total %f, LoadReport %f, MemoryUsage %f, GameProcess %f",
-				fDur,
-				((float)(rLoadReport.QuadPart - rStart.QuadPart)) * 1000.f / ((float)m_freq.QuadPart),
-				((float)(rMemoryUsage.QuadPart - rLoadReport.QuadPart)) * 1000.f / ((float)m_freq.QuadPart),
-				((float)(rEnd.QuadPart - rMemoryUsage.QuadPart)) * 1000.f / ((float)m_freq.QuadPart)
-			);
-		}
+		// if (fDur > 200.f)
+		// {
+		// 	NTL_PRINT(PRINT_APP, "dwLastLoop %u - m_dwCurTickCount %u = %u > 200.", m_dwCurTickCount, dwLastLoop, dwLastLoop - m_dwCurTickCount);
+		// 	ERR_LOG(LOG_SYSTEM, "MainLoop: Total %f, LoadReport %f, MemoryUsage %f, GameProcess %f",
+		// 		fDur,
+		// 		((float)(rLoadReport.QuadPart - rStart.QuadPart)) * 1000.f / ((float)m_freq.QuadPart),
+		// 		((float)(rMemoryUsage.QuadPart - rLoadReport.QuadPart)) * 1000.f / ((float)m_freq.QuadPart),
+		// 		((float)(rEnd.QuadPart - rMemoryUsage.QuadPart)) * 1000.f / ((float)m_freq.QuadPart)
+		// 	);
+		// }
 
 		Wait(1);
 	}
 
-	ERR_LOG(LOG_SYSTEM, "CGameServer::Run(): IsRunnable() == false");
+	ERR_LOG(LOG_SYSTEM, "%s", "CGameServer::Run(): IsRunnable() == false");
 }
 
 
@@ -655,6 +659,7 @@ BOOL CGameServer::OnCommandInput(std::string& sCmd)
 	if (args[0] == "help") {
 		printf("shutdown - Shutdown the server after 30 seconds \n");
 		printf("playercount - return amount of players online\n");
+		printf("sessioninfo - display detailed session and connection information\n");
 		printf("startdbhunt - start dragonball hunt event\n");
 		printf("stopdbhunt - stop dragonball hunt event\n");
 		printf("startbossspawnevent - start boss spawn event\n");
@@ -745,6 +750,114 @@ BOOL CGameServer::OnCommandInput(std::string& sCmd)
 	else if (sCmd == "playercount") {
 		printf("Currently %zu players online \n", g_pObjectManager->GetPlayerCount());
 	}
+	else if (sCmd == "sessioninfo") {
+		// Display comprehensive session information with multi-instance awareness
+		int currentSessions = GetNetwork()->GetSessionList()->GetCurCount();
+		int maxSessions = GetNetwork()->GetSessionList()->GetMaxCount();
+		int configMaxSessions = m_config.nMaxConnection;
+		
+		// Get current player count from ObjectManager
+		size_t playerCount = g_pObjectManager->GetPlayerCount();
+		
+		// Identify server instance by port/config
+		WORD serverPort = m_config.wClientAcceptPort;
+		const char* instanceType = "Unknown";
+		if (serverPort == 30000) instanceType = "Channel 0";
+		else if (serverPort == 30001) instanceType = "Channel 1"; 
+		else if (serverPort == 30009) instanceType = "Budokai Tournament";
+		
+		printf("[SESSION INFO - %s (Port: %d)]\n", instanceType, serverPort);
+		printf("Current Sessions: %d\n", currentSessions);
+		printf("Max Session Capacity: %d\n", maxSessions);
+		printf("Config Max Connections: %d\n", configMaxSessions);
+		printf("Session Utilization: %.1f%%\n", 
+			configMaxSessions > 0 ? (float)currentSessions / configMaxSessions * 100.0f : 0.0f);
+		printf("Available Slots: %d\n", configMaxSessions - currentSessions);
+		printf("Current Players: %zu\n", playerCount);
+		
+		// Multi-instance specific warnings
+		bool isBudokaiServer = (serverPort == 30009);
+		if (isBudokaiServer) {
+			printf("\n[BUDOKAI SERVER MONITORING]\n");
+			printf("*** This is the Budokai Tournament server instance ***\n");
+			if (g_pBudokaiManager) {
+				printf("Budokai Manager Status: Active\n");
+			} else {
+				printf("Budokai Manager Status: NULL\n");
+			}
+		}
+		
+		// Basic leak detection warnings
+		if (currentSessions > (int)playerCount + 10) { // Allow tolerance for server connections and connecting players
+			printf("\n*** POTENTIAL LEAK: %d total sessions vs %zu players ***\n", currentSessions, playerCount);
+			printf("*** Sessions may not be cleaned up properly on disconnect ***\n");
+			if (isBudokaiServer) {
+				printf("*** BUDOKAI SERVER LEAK: Check tournament event cleanup! ***\n");
+			}
+		}
+		
+		if (currentSessions >= configMaxSessions) {
+			printf("\n*** SESSION LIMIT REACHED: Server may refuse new connections! ***\n");
+			if (isBudokaiServer) {
+				printf("*** CRITICAL: Budokai server cannot accept tournament participants! ***\n");
+			}
+		}
+		else if (currentSessions >= (configMaxSessions * 0.9)) { // 90% threshold
+			printf("\n*** WARNING: Session usage at %.1f%% - approaching limit ***\n", 
+				(float)currentSessions / configMaxSessions * 100.0f);
+		}
+		
+		// Session lifecycle monitoring for leak investigation
+		printf("\n[SESSION ANALYSIS]\n");
+		printf("Session overhead (sessions - players): %d\n", currentSessions - (int)playerCount);
+		printf("Server connection slots (estimated): ~3-5\n");
+		if ((currentSessions - (int)playerCount) > 15) {
+			printf("*** HIGH OVERHEAD: Investigate session cleanup mechanisms ***\n");
+		}
+	}
+	else if (sCmd == "budokaiinfo") {
+		// Special command for Budokai server monitoring
+		WORD serverPort = m_config.wClientAcceptPort;
+		bool isBudokaiServer = (serverPort == 30009);
+		
+		if (!isBudokaiServer) {
+			printf("This is not the Budokai server instance (Port: %d)\n", serverPort);
+			printf("Use this command on the Budokai server (typically port 30009)\n");
+			return TRUE;
+		}
+		
+		printf("[BUDOKAI SERVER DIAGNOSTICS]\n");
+		printf("Server Port: %d (Budokai Tournament Instance)\n", serverPort);
+		
+		// Session information
+		int currentSessions = GetNetwork()->GetSessionList()->GetCurCount();
+		int configMaxSessions = m_config.nMaxConnection;
+		size_t playerCount = g_pObjectManager->GetPlayerCount();
+		
+		printf("Current Sessions: %d\n", currentSessions);
+		printf("Current Players: %zu\n", playerCount);
+		printf("Session Overhead: %d\n", currentSessions - (int)playerCount);
+		
+		// Budokai-specific checks
+		if (g_pBudokaiManager) {
+			printf("Budokai Manager: Active\n");
+			printf("Check tournament state and participant cleanup\n");
+		} else {
+			printf("Budokai Manager: NULL (This may be an issue)\n");
+		}
+		
+		// Leak detection specific to tournament server
+		if (currentSessions > (int)playerCount + 20) {
+			printf("\n*** BUDOKAI SESSION LEAK SUSPECTED ***\n");
+			printf("*** Tournament participants may not be cleaning up properly ***\n");
+			printf("*** Consider restarting Budokai server if persistent ***\n");
+		}
+		
+		printf("\n[RECOMMENDATIONS]\n");
+		printf("- Monitor this instance during tournament events\n");
+		printf("- Check session counts before/after tournaments\n");
+		printf("- Use @sessioncleanup if session overhead grows\n");
+	}
 	else if (sCmd == "logwpsscript") {
 		g_pScriptAlgoManager->LogAllActiveScripts();
 	}
@@ -765,7 +878,8 @@ BOOL CGameServer::OnCommandInput(std::string& sCmd)
 		NTL_PRINT(PRINT_APP, "Dojo Event Stopped (manual)");
 	}
 	else if (sCmd == "dumpthreads") {
-		tThreadFactory::Instance().AllThreadDump();
+		// tThreadFactory::Instance().AllThreadDump();
+		printf("Thread dump functionality is not available\n");
 	}
 	else if (sCmd == "StartAdultSolo") {
 		g_pBudokaiManager->StartSoloAdultBudokai();
@@ -866,6 +980,7 @@ void CGameServer::Init()
 	m_dwLastTimePerformanceLogged = 0;
 	m_dwLastTimeLoadReported = 0;
 	m_dwLastTimeMemoryUseLogged = 0;
+	m_dwLastTimeSessionLogged = 0;
 	m_pChatServerSession = NULL;
 	m_pMasterServerSession = NULL;
 	m_pQueryServerSession = NULL;
@@ -926,6 +1041,34 @@ void CGameServer::DoUpdateMemoryUseLog(DWORD dwNow)
 
 
 		m_dwLastTimeMemoryUseLogged = dwNow;
+	}
+}
+
+void CGameServer::DoUpdateSessionLog(DWORD dwNow)
+{
+	// Log session information every 5 minutes to help track connection issues
+	if (dwNow - m_dwLastTimeSessionLogged >= 300000) // 5 minutes = 300,000 ms
+	{
+		int currentSessions = GetNetwork()->GetSessionList()->GetCurCount();
+		int maxSessions = GetNetwork()->GetSessionList()->GetMaxCount();
+		float utilization = maxSessions > 0 ? (float)currentSessions / maxSessions * 100.0f : 0.0f;
+		
+		NTL_PRINT(PRINT_APP, "[SESSION MONITOR] Current: %d/%d sessions (%.1f%% utilization) - Available slots: %d", 
+			currentSessions, maxSessions, utilization, maxSessions - currentSessions);
+		
+		// Warn if utilization is getting high
+		if (utilization >= 80.0f)
+		{
+			NTL_PRINT(PRINT_APP, "WARNING: High session utilization detected! May start refusing connections soon.");
+		}
+		
+		// Error if we're at capacity
+		if (currentSessions >= maxSessions)
+		{
+			ERR_LOG(LOG_SYSTEM, "CRITICAL: Session capacity reached! Server will refuse new connections!");
+		}
+		
+		m_dwLastTimeSessionLogged = dwNow;
 	}
 }
 

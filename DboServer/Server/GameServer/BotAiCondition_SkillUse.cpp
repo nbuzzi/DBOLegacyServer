@@ -70,7 +70,6 @@ static HOBJECT ResolvePartyAssistTarget(CPlayer* pLeader, CNpc* pBot, bool prefe
 	return hBest;
 }
 
-
 CBotAiCondition_SkillUse::CBotAiCondition_SkillUse(CNpc* pBot)
 	:CBotAiCondition(pBot, BOTCONTROL_CONDITION_SKILL_USE, "BOTCONTROL_CONDITION_SKILL_USE")
 {
@@ -177,12 +176,32 @@ int CBotAiCondition_SkillUse::OnUpdate(DWORD dwTickDiff, float fMultiple)
 		{
 			CPlayer* pPend = (CPlayer*)g_pObjectManager->GetChar(m_hPendingResurrectTarget);
 			bool bClear = false;
-			if (!pPend || !pPend->IsInitialized()) bClear = true; else if (!pPend->IsFainting() || pPend->GetCurWorld() != GetBot()->GetCurWorld()) bClear = true;
+			
+			// Check if player was successfully resurrected
+			if (!pPend || !pPend->IsInitialized()) {
+				bClear = true;
+			} else if (!pPend->IsFainting()) {
+				// Player is alive - but give extra time for client sync before clearing
+				if (m_dwSinceLastResurrectAttemptMs >= 2000) { // 2 second delay after resurrection
+					bClear = true;
+				} else {
+					// Keep tracking for a bit longer to ensure stable resurrection
+					if (pHelperCfg && pHelperCfg->bVerboseLogs)
+						ERR_LOG(LOG_BOTAI, "HelperNPC: resurrection detected, waiting for client sync");
+				}
+			} else if (pPend->GetCurWorld() != GetBot()->GetCurWorld()) {
+				bClear = true;
+			}
+			
 			if (bClear)
 			{
 				if (pHelperCfg && pHelperCfg->bVerboseLogs && pPend)
-					ERR_LOG(LOG_BOTAI, "HelperNPC: resurrect target cleared (revived or invalid) target=%u attempts=%u", m_hPendingResurrectTarget, m_byResurrectAttemptCount);
-				if (pHelperCfg && pPend && !pPend->IsFainting()) { ++pHelperCfg->dwMetricResurrectSuccess; }
+					ERR_LOG(LOG_BOTAI, "HelperNPC: resurrect target cleared");
+				if (pHelperCfg && pPend && !pPend->IsFainting()) { 
+					++pHelperCfg->dwMetricResurrectSuccess; 
+					if (pHelperCfg->bVerboseLogs)
+						ERR_LOG(LOG_BOTAI, "HelperNPC: successful resurrection");
+				}
 				m_hPendingResurrectTarget = INVALID_HOBJECT;
 				m_byResurrectAttemptCount = 0;
 				m_dwSinceLastResurrectAttemptMs = 0;
@@ -1123,7 +1142,7 @@ int CBotAiCondition_SkillUse::OnUpdate(DWORD dwTickDiff, float fMultiple)
 				GetBot()->ChangeAggro(hEnemy, DBO_AGGRO_CHANGE_TYPE_INCREASE, GetBot()->GetTbldat()->wBasic_Aggro_Point + 1);
 				sVECTOR3 vDestLoc; pVictim->GetCurLoc().CopyTo(vDestLoc);
 				GetBot()->SendCharStateFollowing(hEnemy, GetBot()->GetAttackRange(pVictim), DBO_MOVE_FOLLOW_AUTO_ATTACK, vDestLoc, true);
-				if (pCfg->bVerboseLogs) ERR_LOG(LOG_BOTAI, "HelperNPC: fast-scan proactive engage enemy=%u range=%u", hEnemy, wRange);
+				if (pCfg->bVerboseLogs) ERR_LOG(LOG_BOTAI, "HelperNPC: fast-scan proactive engage");
 				m_dwSinceLastEngageMs = 0; // start stick window
 			} while (false);
 		}
@@ -1135,11 +1154,14 @@ int CBotAiCondition_SkillUse::OnUpdate(DWORD dwTickDiff, float fMultiple)
 			if (GetHelperNpcManager()->IsRegisteredHelper(GetBot()))
 			{
 				const sHELPER_NPC_CONFIG* pCfg = GetHelperNpcManager()->GetConfigForHelper(GetBot());
-				if (pCfg && pCfg->resurrectSkillTblidx != INVALID_TBLIDX)
+				// Try both skill-based resurrection AND fallback manual resurrection
+				bool hasResurrectSkill = (pCfg && pCfg->resurrectSkillTblidx != INVALID_TBLIDX);
+				
+				if (pCfg) // Allow resurrection attempts even without specific skill
 				{
 					// Use dwTickDiff via accumulating m_dwSinceLastResurrectScanMs (already exists) here as true fast path
 					m_dwSinceLastResurrectScanMs = UnsignedSafeIncrease<DWORD>(m_dwSinceLastResurrectScanMs, dwTickDiff);
-					DWORD cadence = 500; // 500ms target
+					DWORD cadence = 100; // Further reduced from 250ms to 100ms for faster resurrection response
 					if (m_dwSinceLastResurrectScanMs >= cadence)
 					{
 						m_dwSinceLastResurrectScanMs = 0;
@@ -1149,62 +1171,94 @@ int CBotAiCondition_SkillUse::OnUpdate(DWORD dwTickDiff, float fMultiple)
 							auto considerMember = [&](CPlayer* pMem) -> bool {
 								if (!pMem || !pMem->IsInitialized() || !pMem->IsFainting()) return false;
 								if (pMem->GetCurWorld() != GetBot()->GetCurWorld()) return false;
-								CSkillManagerBot* pSM = (CSkillManagerBot*)GetBot()->GetSkillManager(); if (!pSM) return false;
-								CSkillCondition* pCond = pSM->FindSkillCondition(pCfg->resurrectSkillTblidx);
-								if (!pCond)
+								
+								// Try skill-based resurrection first if available
+								if (hasResurrectSkill)
 								{
-									if (pCfg->bVerboseLogs) ERR_LOG(LOG_BOTAI, "HelperNPC: resurrect skill condition missing skill=%u", pCfg->resurrectSkillTblidx);
-									return false;
-								}
-								if (pSM->IsSkillUseLock()) return false; // busy
-								if (!pCond->GetCanUseSkill()) {
-									if (pCfg->bVerboseLogs) ERR_LOG(LOG_BOTAI, "HelperNPC: resurrect skill not usable (cd/resources) skill=%u", pCfg->resurrectSkillTblidx);
-									return false;
-								}
-								// Basic range diagnostics (approx): use bot to target distance; if too far beyond 35m skip with log
-								float fDist = GetBot()->GetDistance(pMem->GetCurLoc());
-								if (fDist > 40.0f)
-								{
-									if (GetBot()->GetTargetListManager()->GetAggroCount() == 0)
+									CSkillManagerBot* pSM = (CSkillManagerBot*)GetBot()->GetSkillManager(); if (!pSM) return false;
+									CSkillCondition* pCond = pSM->FindSkillCondition(pCfg->resurrectSkillTblidx);
+									if (!pCond)
 									{
-										CWorld* pWorld = pMem->GetCurWorld();
-										if (pWorld)
-										{
-											CNtlVector vLoc = pMem->GetCurLoc();
-											CNtlVector vDir = pMem->GetCurDir();
-											if (GetBot()->GetBotController()->ChangeControlState_Teleporting(pWorld->GetID(), pWorld->GetIdx(), vLoc, vDir))
-											{
-												if (pCfg->bVerboseLogs)
-													ERR_LOG(LOG_BOTAI, "HelperNPC: teleport to fainted member %u for resurrect (dist=%.1f)", SAFE_ID(pMem), fDist);
-												if (CSkillManagerBot* pSM2 = (CSkillManagerBot*)GetBot()->GetSkillManager()) pSM2->SetSkillUse_Unlock();
-												GetBot()->SendCharStateStanding(true);
-												return true; // handled this tick; will try to cast on next cadence
-											}
-										}
+										if (pCfg->bVerboseLogs) ERR_LOG(LOG_BOTAI, "HelperNPC: resurrect skill condition missing skill=%u", pCfg->resurrectSkillTblidx);
+										// Fall through to manual resurrection
 									}
-									if (pCfg->bVerboseLogs) ERR_LOG(LOG_BOTAI, "HelperNPC: resurrect target out of hard range dist=%.1f target=%u", fDist, SAFE_ID(pMem));
-									return false;
+									else if (pSM->IsSkillUseLock()) 
+									{
+										return false; // busy, try later
+									}
+									else if (!pCond->GetCanUseSkill()) 
+									{
+										if (pCfg->bVerboseLogs) ERR_LOG(LOG_BOTAI, "HelperNPC: resurrect skill not usable (cd/resources) skill=%u", pCfg->resurrectSkillTblidx);
+										// Fall through to manual resurrection
+									}
+									else
+									{
+										// Skill-based resurrection available - use it
+										float fDist = GetBot()->GetDistance(pMem->GetCurLoc());
+										if (fDist > 40.0f)
+										{
+											if (GetBot()->GetTargetListManager()->GetAggroCount() == 0)
+											{
+												CWorld* pWorld = pMem->GetCurWorld();
+												if (pWorld)
+												{
+													CNtlVector vLoc = pMem->GetCurLoc();
+													CNtlVector vDir = pMem->GetCurDir();
+													if (GetBot()->GetBotController()->ChangeControlState_Teleporting(pWorld->GetID(), pWorld->GetIdx(), vLoc, vDir))
+													{
+														if (pCfg->bVerboseLogs)
+															ERR_LOG(LOG_BOTAI, "HelperNPC: teleport to fainted member %u for resurrect (dist=%.1f)", SAFE_ID(pMem), fDist);
+														if (CSkillManagerBot* pSM2 = (CSkillManagerBot*)GetBot()->GetSkillManager()) pSM2->SetSkillUse_Unlock();
+														GetBot()->SendCharStateStanding(true);
+														return true; // handled this tick; will try to cast on next cadence
+													}
+												}
+											}
+											if (pCfg->bVerboseLogs) ERR_LOG(LOG_BOTAI, "HelperNPC: resurrect target out of hard range dist=%.1f target=%u", fDist, SAFE_ID(pMem));
+											return false;
+										}
+										
+										// Skill-based resurrection - queue the skill
+										CBotAiState* pCurState = GetBot()->GetBotController()->GetCurrentState(); if (!pCurState) return false;
+										CBotAiAction_SkillUse* pSkillUse = new CBotAiAction_SkillUse(GetBot(), pCond->GetSkillConditionIdx());
+										if (pCurState->AddSubControlQueue(pSkillUse, true))
+										{
+											GetBot()->SetTargetHandle(pMem ? pMem->GetID() : INVALID_HOBJECT);
+											m_hPendingResurrectTarget = pMem ? pMem->GetID() : INVALID_HOBJECT;
+											m_byResurrectAttemptCount = 1;
+											m_dwSinceLastResurrectAttemptMs = 0;
+											if (pCfg->bVerboseLogs) ERR_LOG(LOG_BOTAI, "HelperNPC: fast resurrect queued skill=%u target=%u dist=%.1f", pCfg->resurrectSkillTblidx, SAFE_ID(pMem), fDist);
+											if (pCfg) { ++pCfg->dwMetricResurrectAttempts; }
+											return true;
+										}
+										else if (pCfg->bVerboseLogs)
+										{
+											ERR_LOG(LOG_BOTAI, "HelperNPC: failed to queue resurrect skill=%u target=%u dist=%.1f", pCfg->resurrectSkillTblidx, SAFE_ID(pMem), fDist);
+										}
+										delete pSkillUse;
+										// Fall through to manual resurrection as backup
+									}
 								}
-								if (GetBot()->GetCharStateID() == CHARSTATE_FOLLOWING || GetBot()->GetMoveFlag() != NTL_MOVE_FLAG_INVALID)
-									GetBot()->SendCharStateStanding(true);
-								CBotAiState* pCurState = GetBot()->GetBotController()->GetCurrentState(); if (!pCurState) return false;
-								CBotAiAction_SkillUse* pSkillUse = new CBotAiAction_SkillUse(GetBot(), pCond->GetSkillConditionIdx());
-								if (pCurState->AddSubControlQueue(pSkillUse, true))
+								
+								// Manual resurrection fallback (GM-style call/revive)
+								float fDist = GetBot()->GetDistance(pMem->GetCurLoc());
+								if (fDist <= 10.0f) // Close range for manual resurrection
 								{
-									GetBot()->SetTargetHandle(pMem ? pMem->GetID() : INVALID_HOBJECT);
-									// Initialize retry tracking
-									m_hPendingResurrectTarget = pMem ? pMem->GetID() : INVALID_HOBJECT;
-									m_byResurrectAttemptCount = 1; // first attempt
-									m_dwSinceLastResurrectAttemptMs = 0;
-									if (pCfg->bVerboseLogs) ERR_LOG(LOG_BOTAI, "HelperNPC: fast resurrect queued skill=%u target=%u dist=%.1f", pCfg->resurrectSkillTblidx, SAFE_ID(pMem), fDist);
-									if (pCfg) { ++pCfg->dwMetricResurrectAttempts; }
+									// Use proper revival method instead of just setting LP
+									pMem->Revival(pMem->GetCurLoc(), pMem->GetWorldID(), REVIVAL_TYPE_RESCUED);
+									
+									if (pCfg->bVerboseLogs) 
+										ERR_LOG(LOG_BOTAI, "HelperNPC: manual resurrection performed on %u (LP restored: %u/%u)", 
+											SAFE_ID(pMem), pMem->GetCurLP(), pMem->GetMaxLP());
+									
 									return true;
 								}
 								else if (pCfg->bVerboseLogs)
 								{
-									ERR_LOG(LOG_BOTAI, "HelperNPC: failed to queue resurrect skill=%u target=%u dist=%.1f", pCfg->resurrectSkillTblidx, SAFE_ID(pMem), fDist);
+									ERR_LOG(LOG_BOTAI, "HelperNPC: member too far for manual resurrection dist=%.1f target=%u", fDist, SAFE_ID(pMem));
 								}
-								delete pSkillUse; return false;
+								
+								return false;
 								};
 							// Solo case (no party) revive leader if fainted (edge scenario)
 							if (!pLeader->GetParty())
@@ -1219,7 +1273,7 @@ int CBotAiCondition_SkillUse::OnUpdate(DWORD dwTickDiff, float fMultiple)
 								{
 									const sPARTY_MEMBER_INFO& mi = party->GetMemberInfo(i);
 									CPlayer* pMem = g_pObjectManager->GetPC(mi.hHandle);
-									if (considerMember(pMem)) break;
+									considerMember(pMem); // Check all party members for resurrection, don't break early
 								}
 							}
 						}
