@@ -13,6 +13,35 @@
 #include "SkillCondition_RingRange.h"
 #include "SkillCondition_Time.h"
 
+//-----------------------------------------------------------------------------------
+// Validates if a skill can be used by this bot
+// Returns true for helpers (can use any skill) or if skill is in bot's skill list
+//-----------------------------------------------------------------------------------
+bool IsSkillValidForBot(CNpc* pBot, TBLIDX skillTblidx)
+{
+	if (!pBot || skillTblidx == INVALID_TBLIDX)
+		return false;
+		
+	// Allow helpers to use any skills (they have special skill sets)
+	if (GetHelperNpcManager()->IsRegisteredHelper(pBot))
+		return true;
+		
+	// For regular MOBs/NPCs, check if skill is in their allowed skill list
+	sBOT_TBLDAT* pTbldata = pBot->GetTbldat();
+	if (!pTbldata)
+		return false;
+		
+	// Check all skill slots in the bot's table data
+	for (int i = 0; i < NTL_MAX_NPC_HAVE_SKILL; i++)
+	{
+		if (pTbldata->use_Skill_Tblidx[i] == skillTblidx)
+			return true;
+	}
+	
+	// Skill not found in allowed list
+	return false;
+}
+
 
 
 CSkillManagerBot::CSkillManagerBot()
@@ -218,10 +247,22 @@ CSkillCondition* CSkillManagerBot::GetSkill(CSkillCondition **apSkillCondition, 
 		int nTSkill = 0;
 		CSkillCondition* apSkillConditionBuf[NTL_MAX_NPC_HAVE_SKILL];
 
+		// Get bot reference for skill validation
+		CNpc* pBot = dynamic_cast<CNpc*>(m_pOwnerRef);
+
 		for (int j = 0; j < nSkillConditionCount && apSkillCondition[j]; j++)
 		{
 			if (apSkillCondition[j]->OnUpdate(dwTickTime))
 			{
+				// Validate skill usage - only allow skills that are in the bot's skill list (except helpers)
+				TBLIDX skillTblidx = apSkillCondition[j]->GetSkillTblidx();
+				
+				if (!IsSkillValidForBot(pBot, skillTblidx))
+				{
+					// Skip this skill - not allowed for this bot
+					continue;
+				}
+				
 				apSkillConditionBuf[nTSkill++] = apSkillCondition[j];
 			}
 		}
@@ -424,6 +465,22 @@ void CSkillManagerBot::FinishCasting()
 	CSkillCondition* pSkillCond = GetCurSkillCondition();
 	if (pSkillCond)
 	{
+		// Final validation before casting - prevent unauthorized skill usage
+		CNpc* pBot = dynamic_cast<CNpc*>(m_pOwnerRef);
+		TBLIDX skillTblidx = pSkillCond->GetSkillTblidx();
+		
+		if (!IsSkillValidForBot(pBot, skillTblidx))
+		{
+			// Log the prevention and cancel casting
+			if (pBot)
+			{
+				ERR_LOG(LOG_BOTAI, "SKILL VALIDATION: Prevented bot %u (tblidx=%u) from using unauthorized skill %u", 
+					pBot->GetID(), pBot->GetTblidx(), skillTblidx);
+			}
+			CancelCasting();
+			return;
+		}
+		
 		HOBJECT hTarget = INVALID_HOBJECT;
 		sSKILL_TARGET_LIST targetList;
 

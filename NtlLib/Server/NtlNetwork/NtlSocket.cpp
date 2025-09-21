@@ -4,7 +4,7 @@
 //
 //	Begin		:	2005-12-13
 //
-//	Copyright	:	¨Ï NTL-Inc Co., Ltd
+//	Copyright	:	ï¿½ï¿½ NTL-Inc Co., Ltd
 //
 //	Author		:	Hyun Woo, Koo   ( zeroera@ntl-inc.com )
 //
@@ -57,11 +57,11 @@ int CNtlSocket::StartUp()
 
 	if ( 0 != WSAStartup( MAKEWORD( 2, 2 ), &wsaData ) )
 	{
-		// Winsock DLL ¸ø Ã£À½
+		// Winsock DLL ï¿½ï¿½ Ã£ï¿½ï¿½
 		return WSAGetLastError();
 	}
 
-	// WinsockÀÌ 2.2¸¦ Áö¿øÇÏ´ÂÁö È®ÀÎ
+	// Winsockï¿½ï¿½ 2.2ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½ï¿½ï¿½ È®ï¿½ï¿½
 	if ( LOBYTE( wsaData.wVersion ) != 2 ||	HIBYTE( wsaData.wVersion ) != 2 )
 	{
 		WSACleanup();
@@ -214,6 +214,12 @@ int CNtlSocket::Listen(int nBackLog)
 //-----------------------------------------------------------------------------------
 int CNtlSocket::Close()
 {
+	// Null pointer protection - this should not happen but prevents crashes
+	if (this == nullptr)
+	{
+		return NTL_SUCCESS;
+	}
+
 	if( INVALID_SOCKET == m_socket )
 	{
 		return NTL_SUCCESS;
@@ -434,10 +440,10 @@ int CNtlSocket::SetKeepAlive(DWORD dwKeepAliveTime, DWORD dwKeepAliveInterval)
 //		Purpose	:
 //		Return	:
 //-----------------------------------------------------------------------------------
-//  [1/5/2007 zeroera] : ¼³¸í : Accept°¡ ½ÇÁ¦·Î ÀÏ¾î³ªÁö ¾ÊÀ¸¸é Å¬¶óÀÌ¾ðÆ®¿¡ ACK + SYN°¡ °¡Áö ¾Ê°ÔµÇ¾î
-// BackLog·Î ÀÎÇÑ ¼±Çà Connect°¡ ÀÏ¾î³ªÁö ¾Ê´Â´Ù.
-// ÀÏÁ¤ ½Ã°£ÀÌ³»¿¡ Accept°¡ È£ÃâµÇÁö ¾ÊÀ¸¸é Å¬¶óÀÌ¾ðÆ®´Â TIMEOUT µÈ´Ù
-// performance decrease °¡ ÀÖ¾úÀ½ : ÇöÀç´Â À©µµ¿ì ÆÐÄ¡·Î ¼öÁ¤ ‰Î
+//  [1/5/2007 zeroera] : ï¿½ï¿½ï¿½ï¿½ : Acceptï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ï¾î³ªï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Å¬ï¿½ï¿½ï¿½Ì¾ï¿½Æ®ï¿½ï¿½ ACK + SYNï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ê°ÔµÇ¾ï¿½
+// BackLogï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ Connectï¿½ï¿½ ï¿½Ï¾î³ªï¿½ï¿½ ï¿½Ê´Â´ï¿½.
+// ï¿½ï¿½ï¿½ï¿½ ï¿½Ã°ï¿½ï¿½Ì³ï¿½ï¿½ï¿½ Acceptï¿½ï¿½ È£ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Å¬ï¿½ï¿½ï¿½Ì¾ï¿½Æ®ï¿½ï¿½ TIMEOUT ï¿½È´ï¿½
+// performance decrease ï¿½ï¿½ ï¿½Ö¾ï¿½ï¿½ï¿½ : ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ä¡ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½
 //-----------------------------------------------------------------------------------
 int CNtlSocket::SetConditionalAccept(BOOL bActive)
 {

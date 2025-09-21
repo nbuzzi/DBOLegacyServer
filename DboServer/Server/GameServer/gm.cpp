@@ -1875,7 +1875,7 @@ ACMD(do_warp)
 	const wchar_t* wname = name.c_str();
 
 	CCharacter* target = g_pObjectManager->FindByName(wname);
-	if (target)
+	if (target && target->IsInitialized())
 	{
 		pPlayer->StartTeleport(target->GetCurLoc(), target->GetCurDir(), target->GetWorldID(), TELEPORT_TYPE_COMMAND);
 	}
@@ -1900,16 +1900,18 @@ ACMD(do_call)
 		std::wstring name = std::wstring(strToken.begin(), strToken.end());
 		const wchar_t* wname = name.c_str();
 
-		pPlayerTarget = g_pObjectManager->FindByName(wname);
-		if (pPlayerTarget && pPlayerTarget->IsInitialized())
+		CCharacter* pFoundTarget = g_pObjectManager->FindByName(wname);
+		if (pFoundTarget && pFoundTarget->IsInitialized())
 		{
-			pPlayerTarget = pPlayerTarget;
+			pPlayerTarget = pFoundTarget;
 		}
 	}
 
 	//if (target && target->GetCurWorld()) //avoid teleporting by gm code into dungeon
-	if (target)
+	if (target && pPlayerTarget && pPlayerTarget->IsInitialized())
+	{
 		target->StartTeleport(pPlayerTarget->GetCurLoc(), pPlayerTarget->GetCurDir(), pPlayerTarget->GetWorldID(), TELEPORT_TYPE_COMMAND);
+	}
 }
 ACMD(do_TeleportAll)
 {

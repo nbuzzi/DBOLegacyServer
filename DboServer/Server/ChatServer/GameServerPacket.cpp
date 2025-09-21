@@ -1757,16 +1757,26 @@ void CServerPassiveSession::RecvDojoScrambleReq(CNtlPacket* pPacket)
 				CPlayer* pDojoOwner = g_pPlayerManager->FindPlayerWithCharID(pDojo->GetGuild()->GetInfo()->guildMaster);
 				if (pDojoOwner && pDojoOwner->GetPcInitState())
 				{
-					pDojo->SetWarRequest(true); //only do this if the owner is online.. otherwise we wont be able to receive another request if the first one has been rejected
-					g_pEventMgr->AddEvent(pDojo, &CDojo::OnEvent_WarRequestTimer, EVENT_DOJO_WAR_REQUEST, DBO_DOJO_SCRAMBLE_MAX_WAIT_TICK, 1, 0); //start timer
+					// Additional check to prevent Dojo War timer if disabled
+					CChatServer* appCfg = (CChatServer*)g_pApp;
+					if (appCfg && appCfg->m_config.bDisableDojoWar)
+					{
+						NTL_PRINT(PRINT_APP, "[Dojo] War request blocked - DojoWar is disabled in config");
+						resulcode = GAME_FAIL;
+					}
+					else
+					{
+						pDojo->SetWarRequest(true); //only do this if the owner is online.. otherwise we wont be able to receive another request if the first one has been rejected
+						g_pEventMgr->AddEvent(pDojo, &CDojo::OnEvent_WarRequestTimer, EVENT_DOJO_WAR_REQUEST, DBO_DOJO_SCRAMBLE_MAX_WAIT_TICK, 1, 0); //start timer
 
-					//send nfy to dojo owner that guild requested war. This will pop-up a request window wether if he want to accept or not.
-					CNtlPacket packet2(sizeof(sTU_DOJO_SCRAMBLE_NFY));
-					sTU_DOJO_SCRAMBLE_NFY* res2 = (sTU_DOJO_SCRAMBLE_NFY*)packet2.GetPacketData();
-					res2->wOpCode = TU_DOJO_SCRAMBLE_NFY;
-					NTL_SAFE_WCSCPY(res2->wszName, pPlayer->GetGuild()->GetInfo()->wszName);
-					packet2.SetPacketLen(sizeof(sTU_DOJO_SCRAMBLE_NFY));
-					pDojoOwner->SendPacket(&packet2);
+						//send nfy to dojo owner that guild requested war. This will pop-up a request window wether if he want to accept or not.
+						CNtlPacket packet2(sizeof(sTU_DOJO_SCRAMBLE_NFY));
+						sTU_DOJO_SCRAMBLE_NFY* res2 = (sTU_DOJO_SCRAMBLE_NFY*)packet2.GetPacketData();
+						res2->wOpCode = TU_DOJO_SCRAMBLE_NFY;
+						NTL_SAFE_WCSCPY(res2->wszName, pPlayer->GetGuild()->GetInfo()->wszName);
+						packet2.SetPacketLen(sizeof(sTU_DOJO_SCRAMBLE_NFY));
+						pDojoOwner->SendPacket(&packet2);
+					}
 				}
 				else
 				{

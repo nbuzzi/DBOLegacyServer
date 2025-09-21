@@ -815,6 +815,40 @@ BOOL CGameServer::OnCommandInput(std::string& sCmd)
 			printf("*** HIGH OVERHEAD: Investigate session cleanup mechanisms ***\n");
 		}
 	}
+	else if (sCmd == "sessioncleanup") {
+		// Forces cleanup of dead/invalid sessions
+		printf("Starting session cleanup...\n");
+		
+		// Get session counts before cleanup
+		int sessionsBefore = GetNetwork()->GetSessionList()->GetCurCount();
+		int maxSessions = GetNetwork()->GetSessionList()->GetMaxCount();
+		
+		// Force session list validation/cleanup
+		DWORD currentTime = GetTickCount();
+		GetNetwork()->GetSessionList()->ValidCheck(currentTime);
+		
+		// Get session counts after cleanup
+		int sessionsAfter = GetNetwork()->GetSessionList()->GetCurCount();
+		int sessionsRemoved = sessionsBefore - sessionsAfter;
+		
+		// Get current player count
+		size_t playerCount = g_pObjectManager->GetPlayerCount();
+		
+		// Display results
+		printf("[SESSION CLEANUP COMPLETE]\n");
+		printf("Sessions before cleanup: %d\n", sessionsBefore);
+		printf("Sessions after cleanup: %d\n", sessionsAfter);
+		printf("Sessions removed: %d\n", sessionsRemoved);
+		printf("Available slots now: %d\n", maxSessions - sessionsAfter);
+		printf("Current players: %zu\n", playerCount);
+		printf("Session overhead: %d\n", sessionsAfter - (int)playerCount);
+		
+		if (sessionsRemoved > 0) {
+			printf("*** Session cleanup successful - %d dead sessions removed ***\n", sessionsRemoved);
+		} else {
+			printf("No dead sessions found - session list is clean\n");
+		}
+	}
 	else if (sCmd == "budokaiinfo") {
 		// Special command for Budokai server monitoring
 		WORD serverPort = m_config.wClientAcceptPort;
