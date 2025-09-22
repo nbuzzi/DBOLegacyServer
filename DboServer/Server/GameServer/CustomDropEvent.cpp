@@ -848,7 +848,14 @@ void CCustomDropEvent::TickProcess(DWORD dwTick)
 void CCustomDropEvent::Update(CMonster* pMob, CCharacter* pPlayer)
 {
 	if (!pPlayer->GetCurWorld()) { m_eventSpawned.erase(pMob->GetID()); return; }
-	if (pPlayer->GetCurWorld()->GetRuleType() != GAMERULE_NORMAL) { m_eventSpawned.erase(pMob->GetID()); return; }
+	
+	// Allow CustomDropEvent in dungeons and normal worlds, but exclude competitive/PvP areas
+	eGAMERULE_TYPE ruleType = pPlayer->GetCurWorld()->GetRuleType();
+	if (ruleType != GAMERULE_NORMAL && ruleType != GAMERULE_TIMEQUEST && ruleType != GAMERULE_HUNT && 
+	    ruleType != GAMERULE_CCBATTLEDUNGEON && ruleType != GAMERULE_SKD && ruleType != GAMERULE_RAID) {
+		m_eventSpawned.erase(pMob->GetID()); 
+		return; 
+	}
 
 	if (!m_bOn) { m_eventSpawned.erase(pMob->GetID()); return; }
 

@@ -64,7 +64,7 @@ void CQueryServerSession::RecvItemMoveRes(CNtlPacket* pPacket)
 			pOwner->GetPlayerItemContainer()->MoveItem(
 				pSrcItem, req->bySrcPlace, req->byDstPlace, req->bySrcPos, req->byDstPos);
 
-			// swap (si hay ítem destino)
+			// swap (si hay ï¿½tem destino)
 			if (CItem* pDestItem = pOwner->GetPlayerItemContainer()->GetItem(req->hDstItem))
 			{
 				pOwner->GetPlayerItemContainer()->MoveItem(
@@ -129,7 +129,7 @@ void CQueryServerSession::RecvItemMoveStackRes(CNtlPacket* pPacket)
 
 	if (req->wResultCode == GAME_SUCCESS)
 	{
-		if (hDestItem == INVALID_HOBJECT) // UNSTACK ? ítem nuevo
+		if (hDestItem == INVALID_HOBJECT) // UNSTACK ? ï¿½tem nuevo
 		{
 			pDestItem = new CItem;
 			pDestItem->SetTbldat(pSrcItem->GetTbldat());
@@ -306,7 +306,7 @@ void CQueryServerSession::RecvBankMoveRes(CNtlPacket* pPacket)
 
 	if (req->wResultCode == GAME_SUCCESS)
 	{
-		// ac?se busca por place/pos (como tu código original)
+		// ac?se busca por place/pos (como tu cï¿½digo original)
 		CItem* pSrcItem = pOwner->GetPlayerItemContainer()->GetItem(req->bySrcPlace, req->bySrcPos);
 		if (!pSrcItem)
 		{
@@ -1928,10 +1928,11 @@ void CQueryServerSession::RecvCashitemBuyRes(CNtlPacket* pPacket)
 
 	ERR_LOG(LOG_USER, "Account %u Char %u bought %u from cash shop. Price %u, Old Cash %u, New Cash %u", req->accountId, req->characterId, req->HLSitemTblidx, req->dwPrice, pOwner->GetItemShopCash(), req->dwRemainAmount);
 
+	// Always sync in-memory cash balance with authoritative value from QueryServer
+	pOwner->SetItemShopCash(req->dwRemainAmount);
+
 	if (req->wResultCode == GAME_SUCCESS)
 	{
-		pOwner->SetItemShopCash(req->dwRemainAmount);
-
 		CNtlPacket packet(sizeof(sGU_CASHITEM_ADD_NFY));
 		sGU_CASHITEM_ADD_NFY * res = (sGU_CASHITEM_ADD_NFY *)packet.GetPacketData();
 		res->wOpCode = GU_CASHITEM_ADD_NFY;

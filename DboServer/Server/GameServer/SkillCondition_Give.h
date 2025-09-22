@@ -26,6 +26,7 @@ private:
 
 inline CSkillBot* CSkillCondition_Give::OnUpdate(DWORD dwTickTime)
 {
+	if (!GetBot()) return NULL;
 	CSkillBot* pSkill = CSkillCondition::OnUpdate(dwTickTime);
 	if (pSkill)
 	{
@@ -87,6 +88,7 @@ inline CSkillBot* CSkillCondition_Give::OnUpdate(DWORD dwTickTime)
 
 inline void CSkillCondition_Give::AppointTargetSelf_ApplyTargetParty(sSKILL_TARGET_LIST& rTargetList)
 {
+	if (!GetBot()) { rTargetList.Init(); return; }
 	if (GetApplyRangeType() && GetTargetMaxCount() != 1)
 	{
 		// Prefer party-based selection when an NPC party exists
@@ -96,19 +98,26 @@ inline void CSkillCondition_Give::AppointTargetSelf_ApplyTargetParty(sSKILL_TARG
 		if (rTargetList.byTargetCount == 0 && m_pPartyMemberLowLP)
 		{
 			rTargetList.Init();
-			rTargetList.AddTarget(m_pPartyMemberLowLP->GetID());
+			HOBJECT hid = m_pPartyMemberLowLP->GetID();
+			if (hid != INVALID_HOBJECT)
+				rTargetList.AddTarget(hid);
 		}
 	}
 	else
 	{
 		rTargetList.Init();
 		if (m_pPartyMemberLowLP)
-			rTargetList.AddTarget(m_pPartyMemberLowLP->GetID());
+		{
+			HOBJECT hid = m_pPartyMemberLowLP->GetID();
+			if (hid != INVALID_HOBJECT)
+				rTargetList.AddTarget(hid);
+		}
 	}
 }
 
 inline void CSkillCondition_Give::AppointTargetTarget_ApplyTargetParty(HOBJECT& hTarget, sSKILL_TARGET_LIST& rTargetList)
 {
+	if (!GetBot()) { rTargetList.Init(); return; }
 	hTarget = m_pPartyMemberLowLP ? m_pPartyMemberLowLP->GetID() : GetBot()->GetID();
 
 	if (GetApplyRangeType() && GetTargetMaxCount() != 1)
@@ -120,14 +129,20 @@ inline void CSkillCondition_Give::AppointTargetTarget_ApplyTargetParty(HOBJECT& 
 		if (rTargetList.byTargetCount == 0 && m_pPartyMemberLowLP)
 		{
 			rTargetList.Init();
-			rTargetList.AddTarget(m_pPartyMemberLowLP->GetID());
+			HOBJECT hid = m_pPartyMemberLowLP->GetID();
+			if (hid != INVALID_HOBJECT)
+				rTargetList.AddTarget(hid);
 		}
 	}
 	else
 	{
 		rTargetList.Init();
 		if (m_pPartyMemberLowLP)
-			rTargetList.AddTarget(m_pPartyMemberLowLP->GetID());
+		{
+			HOBJECT hid = m_pPartyMemberLowLP->GetID();
+			if (hid != INVALID_HOBJECT)
+				rTargetList.AddTarget(hid);
+		}
 	}
 }
 

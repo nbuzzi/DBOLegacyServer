@@ -21,6 +21,7 @@
 #include "Fairy Event.h"
 #include "StoneDropEvent.h"
 #include "CustomDropEvent.h"
+#include "HelperNpcManager.h"
 
 
 CGameProcessor::CGameProcessor()
@@ -129,6 +130,9 @@ void CGameProcessor::Run(DWORD dwTickCount)
 			g_pFairyEvent->TickProcess(m_dwTickCount);
 			g_pStoneDropEvent->TickProcess(m_dwTickCount);
 			g_pCustomDropEvent->TickProcess(m_dwTickCount);
+
+			// Periodic helper-NPC watchdog to repair spawns after floor transitions
+			GetHelperNpcManager()->TickWatchdog(m_dwTickCount);
 		}
 
 		g_pPartyManager->TickProcess(dwTickDiff);

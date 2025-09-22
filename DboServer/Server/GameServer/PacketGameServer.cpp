@@ -8773,6 +8773,17 @@ void CClientSession::RecvCashItemHlsStartReq(CNtlPacket* pPacket)
 	res->dwRemainAmount = cPlayer->GetItemShopCash();
 	packet.SetPacketLen(sizeof(sGU_CASHITEM_HLSHOP_START_RES));
 	g_pApp->Send(GetHandle(), &packet);
+
+	// Proactively refresh cash balance from DB so UI updates if changed on web
+	CGameServer* app = (CGameServer*)g_pApp;
+	CNtlPacket packetQry(sizeof(sGQ_CASHITEM_HLSHOP_REFRESH_REQ));
+	sGQ_CASHITEM_HLSHOP_REFRESH_REQ* q = (sGQ_CASHITEM_HLSHOP_REFRESH_REQ*)packetQry.GetPacketData();
+	q->wOpCode = GQ_CASHITEM_HLSHOP_REFRESH_REQ;
+	q->accountId = cPlayer->GetAccountID();
+	q->charId = cPlayer->GetCharID();
+	q->handle = cPlayer->GetID();
+	packetQry.SetPacketLen(sizeof(sGQ_CASHITEM_HLSHOP_REFRESH_REQ));
+	app->SendTo(app->GetQueryServerSession(), &packetQry);
 }
 //--------------------------------------------------------------------------------------//
 //	cashitem HLS Shop end

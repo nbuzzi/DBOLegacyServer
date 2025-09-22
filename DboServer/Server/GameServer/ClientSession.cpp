@@ -12,6 +12,15 @@
 int CClientSession::OnAccept()
 {
 	CGameServer * app = (CGameServer*) NtlSfxGetApp();
+	
+	// Check session capacity and log current status for debugging
+	int currentSessions = app->GetNetwork()->GetSessionList()->GetCurCount();
+	int maxSessions = app->GetNetwork()->GetSessionList()->GetMaxCount();
+	
+	NTL_PRINT(PRINT_APP, "CClientSession::OnAccept() - Session %u connecting. Current sessions: %d/%d (%.1f%% utilization)", 
+		GetHandle(), currentSessions, maxSessions, 
+		maxSessions > 0 ? (float)currentSessions / maxSessions * 100.0f : 0.0f);
+	
 	//NTL_PRINT(PRINT_APP, "CClientSession::OnAccept() \n");
 	cPlayer = NULL;
 
@@ -31,6 +40,12 @@ int CClientSession::OnAccept()
 void CClientSession::OnClose()
 {
 	CGameServer * app = (CGameServer*)g_pApp;
+
+	// Log session closure for debugging connection issues
+	NTL_PRINT(PRINT_APP, "ClientSession::OnClose() - Session %u closing. UserState: %d, Player: %s", 
+		GetHandle(), 
+		m_eUserState, 
+		cPlayer ? Ntl_WC2MB(cPlayer->GetCharName()) : "NULL");
 
 	m_eUserState = NTL_USER_STATE_NONE;
 	//NTL_PRINT(PRINT_APP, "CClientSession::OnClose() \n");
@@ -57,6 +72,9 @@ void CClientSession::OnClose()
 	}
 
 	cPlayer = NULL;
+	
+	// Log successful session cleanup
+	NTL_PRINT(PRINT_APP, "ClientSession::OnClose() - Session %u cleanup completed", GetHandle());
 }
 
 int CClientSession::OnDispatch(CNtlPacket * pPacket)

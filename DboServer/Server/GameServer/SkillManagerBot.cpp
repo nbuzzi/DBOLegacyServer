@@ -4,12 +4,43 @@
 #include "Npc.h"
 #include "ObjectManager.h"
 #include "HelperNpcManager.h"
+#include "Party.h"
+#include "CPlayer.h"
 
 #include "SkillCondition_Give.h"
 #include "SkillCondition_LP.h"
 #include "SkillCondition_OnlyLP.h"
 #include "SkillCondition_RingRange.h"
 #include "SkillCondition_Time.h"
+
+//-----------------------------------------------------------------------------------
+// Validates if a skill can be used by this bot
+// Returns true for helpers (can use any skill) or if skill is in bot's skill list
+//-----------------------------------------------------------------------------------
+bool IsSkillValidForBot(CNpc* pBot, TBLIDX skillTblidx)
+{
+	if (!pBot || skillTblidx == INVALID_TBLIDX)
+		return false;
+		
+	// Allow helpers to use any skills (they have special skill sets)
+	if (GetHelperNpcManager()->IsRegisteredHelper(pBot))
+		return true;
+		
+	// For regular MOBs/NPCs, check if skill is in their allowed skill list
+	sBOT_TBLDAT* pTbldata = pBot->GetTbldat();
+	if (!pTbldata)
+		return false;
+		
+	// Check all skill slots in the bot's table data
+	for (int i = 0; i < NTL_MAX_NPC_HAVE_SKILL; i++)
+	{
+		if (pTbldata->use_Skill_Tblidx[i] == skillTblidx)
+			return true;
+	}
+	
+	// Skill not found in allowed list
+	return false;
+}
 
 
 
@@ -216,10 +247,22 @@ CSkillCondition* CSkillManagerBot::GetSkill(CSkillCondition **apSkillCondition, 
 		int nTSkill = 0;
 		CSkillCondition* apSkillConditionBuf[NTL_MAX_NPC_HAVE_SKILL];
 
+		// Get bot reference for skill validation
+		CNpc* pBot = dynamic_cast<CNpc*>(m_pOwnerRef);
+
 		for (int j = 0; j < nSkillConditionCount && apSkillCondition[j]; j++)
 		{
 			if (apSkillCondition[j]->OnUpdate(dwTickTime))
 			{
+				// Validate skill usage - only allow skills that are in the bot's skill list (except helpers)
+				TBLIDX skillTblidx = apSkillCondition[j]->GetSkillTblidx();
+				
+				if (!IsSkillValidForBot(pBot, skillTblidx))
+				{
+					// Skip this skill - not allowed for this bot
+					continue;
+				}
+				
 				apSkillConditionBuf[nTSkill++] = apSkillCondition[j];
 			}
 		}
@@ -249,47 +292,81 @@ CSkillCondition* CSkillManagerBot::GetSkill(DWORD dwTickTime)
 {
 	CSkillCondition* pSkill = NULL;
 
-	// If this bot is a helper linked to a PC and that PC is low on LP according to override,
-	// try healing/buff (Give) skills first to prioritize support behavior.
-	do
-	{
+	// Helper-only gating for Give/heal prioritization
+	do {
 		CNpc* pNpcOwner = dynamic_cast<CNpc*>(m_pOwnerRef);
 		if (!pNpcOwner)
 			break;
-		HOBJECT hLink = pNpcOwner->GetLinkPc();
-		if (hLink == INVALID_HOBJECT)
+		if (!GetHelperNpcManager()->IsRegisteredHelper(pNpcOwner))
 			break;
-		const sHELPER_NPC_CONFIG& cfg = GetHelperNpcManager()->GetConfig();
-		if (cfg.wHealLpThresholdOverride == 0)
-			break;
-		CCharacter* pLinked = g_pObjectManager->GetChar(hLink);
-		if (!pLinked || !pLinked->IsInitialized())
-			break;
-		if (!pLinked->ConsiderLPLow((float)cfg.wHealLpThresholdOverride))
-			break;
-		// Linked PC is low: attempt Give skills first
-		pSkill = GetSkill(m_apSkillCondition_Give, m_bySkillCondition_Give, dwTickTime);
-		if (pSkill)
-			return pSkill;
-	} while (0);
 
-	// If linked PC exists and has any missing LP, attempt Give skills proactively (healing)
-	do
-	{
-		CNpc* pNpcOwner = dynamic_cast<CNpc*>(m_pOwnerRef);
-		if (!pNpcOwner)
-			break;
 		HOBJECT hLink = pNpcOwner->GetLinkPc();
 		if (hLink == INVALID_HOBJECT)
 			break;
-		CCharacter* pLinked = g_pObjectManager->GetChar(hLink);
-		if (!pLinked || !pLinked->IsInitialized())
+		CPlayer* pLeader = reinterpret_cast<CPlayer*>(g_pObjectManager->GetChar(hLink));
+		if (!pLeader || !pLeader->IsInitialized())
 			break;
-		if (pLinked->GetCurLP() >= pLinked->GetMaxLP())
-			break;
-		pSkill = GetSkill(m_apSkillCondition_Give, m_bySkillCondition_Give, dwTickTime);
-		if (pSkill)
-			return pSkill;
+
+		const sHELPER_NPC_CONFIG& cfg = GetHelperNpcManager()->GetConfig();
+
+		// Check all party members for healing/resurrection needs (including leader)
+		auto checkPartyMemberForHealing = [&](CPlayer* pPlayer) -> int {
+			if (!pPlayer || !pPlayer->IsInitialized())
+				return 0; // No need
+			if (pPlayer->GetCurWorld()->GetID() != pNpcOwner->GetCurWorld()->GetID())
+				return 0; // Not in same world
+			
+			// Check if player is dead/fainted - HIGHEST PRIORITY
+			if (pPlayer->IsFainting())
+				return 3; // Resurrection priority
+			
+			// Priority healing threshold check - more aggressive healing
+			if (cfg.wHealLpThresholdOverride > 0 && pPlayer->ConsiderLPLow((float)cfg.wHealLpThresholdOverride))
+				return 2; // Critical healing priority
+			
+			// More aggressive: heal anyone missing more than 5% LP
+			if ((pPlayer->GetCurLP() * 100 / pPlayer->GetMaxLP()) < 95)
+				return 2; // Treat as critical healing priority
+			
+			// Any missing LP check
+			if (pPlayer->GetCurLP() < pPlayer->GetMaxLP())
+				return 1; // Normal healing priority
+			
+			return 0; // No healing needed
+		};
+
+		int highestPriority = 0;
+
+		// Check leader first
+		int leaderPriority = checkPartyMemberForHealing(pLeader);
+		if (leaderPriority > highestPriority)
+			highestPriority = leaderPriority;
+		
+		// Check party members
+		if (pLeader->GetParty() && pLeader->GetParty()->GetPartyMemberCount() > 0)
+		{
+			CParty* pParty = pLeader->GetParty();
+			BYTE memberCount = pParty->GetPartyMemberCount();
+			for (BYTE i = 0; i < memberCount; ++i)
+			{
+				const sPARTY_MEMBER_INFO& mi = pParty->GetMemberInfo(i);
+				if (mi.hHandle == hLink) // Skip leader, already checked
+					continue;
+				CPlayer* pMember = reinterpret_cast<CPlayer*>(g_pObjectManager->GetChar(mi.hHandle));
+				int memberPriority = checkPartyMemberForHealing(pMember);
+				if (memberPriority > highestPriority)
+					highestPriority = memberPriority;
+			}
+		}
+
+		// If anyone needs healing or resurrection, try Give skills
+		if (highestPriority > 0)
+		{
+			pSkill = GetSkill(m_apSkillCondition_Give, m_bySkillCondition_Give, dwTickTime);
+			if (pSkill)
+				return pSkill;
+		}
+
 	} while (0);
 
 	pSkill = GetSkill(m_apSkillCondition_LP, m_bySkillCondition_LP, dwTickTime);
@@ -388,19 +465,42 @@ void CSkillManagerBot::FinishCasting()
 	CSkillCondition* pSkillCond = GetCurSkillCondition();
 	if (pSkillCond)
 	{
+		// Final validation before casting - prevent unauthorized skill usage
+		CNpc* pBot = dynamic_cast<CNpc*>(m_pOwnerRef);
+		TBLIDX skillTblidx = pSkillCond->GetSkillTblidx();
+		
+		if (!IsSkillValidForBot(pBot, skillTblidx))
+		{
+			// Log the prevention and cancel casting
+			if (pBot)
+			{
+				ERR_LOG(LOG_BOTAI, "SKILL VALIDATION: Prevented bot %u (tblidx=%u) from using unauthorized skill %u", 
+					pBot->GetID(), pBot->GetTblidx(), skillTblidx);
+			}
+			CancelCasting();
+			return;
+		}
+		
 		HOBJECT hTarget = INVALID_HOBJECT;
 		sSKILL_TARGET_LIST targetList;
 
-		pSkillCond->GetTarget(hTarget, targetList); //refetch target because some might moved out/in
+		pSkillCond->GetTarget(hTarget, targetList); // refetch target because some might moved out/in
 
-		if (hTarget != INVALID_HOBJECT && targetList.byTargetCount > 0)
+		// Allow self-cast skills to proceed when target list is valid even if hTarget is INVALID
+		if (targetList.byTargetCount > 0)
 		{
 			// Diagnostics: log actual casting details for helper bots
 			CNpc* pNpcOwner = dynamic_cast<CNpc*>(m_pOwnerRef);
 			if (pNpcOwner && pNpcOwner->GetLinkPc() != INVALID_HOBJECT)
 			{
-				ERR_LOG(LOG_BOTAI, "HelperNPC: casting skill %u on %u (targets=%u)",
-					pSkillCond->GetSkillTblidx(), hTarget, targetList.byTargetCount);
+				const sHELPER_NPC_CONFIG* pCfg = GetHelperNpcManager()->IsRegisteredHelper(pNpcOwner)
+					? GetHelperNpcManager()->GetConfigForHelper(pNpcOwner)
+					: &GetHelperNpcManager()->GetConfig();
+				if (pCfg && pCfg->bVerboseLogs)
+				{
+					ERR_LOG(LOG_BOTAI, "HelperNPC: casting skill %u on %u (targets=%u)",
+						pSkillCond->GetSkillTblidx(), hTarget, targetList.byTargetCount);
+				}
 			}
 			pSkillCond->GetSkill()->CastSkill(hTarget, targetList.byTargetCount, targetList.ahTarget);
 		}

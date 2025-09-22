@@ -11,6 +11,55 @@
 #include "NtlRandom.h"
 #include "NtlPacketGQ.h"
 
+#include <unordered_map>
+#include <unordered_set>
+#include <mutex>
+
+// Throttled logging + cache for missing SetItem table rows to prevent log floods
+namespace {
+	std::unordered_set<TBLIDX> g_knownMissingSetIds;
+	std::unordered_map<TBLIDX, DWORD> g_lastLogTickBySetId;
+	std::mutex g_missingSetMtx;
+	const DWORD kMissingSetLogIntervalMs = 60 * 1000; // once per minute per set id
+
+	inline void LogMissingSetThrottled(TBLIDX setIdx, TBLIDX itemTblidx, bool includeItem)
+	{
+		DWORD now = GetTickCount();
+		std::lock_guard<std::mutex> lock(g_missingSetMtx);
+		DWORD& last = g_lastLogTickBySetId[setIdx];
+		if (last == 0 || now - last >= kMissingSetLogIntervalMs)
+		{
+			last = now;
+			if (includeItem && itemTblidx != INVALID_TBLIDX)
+				ERR_LOG(LOG_GENERAL, "ERROR: Could not find sSET_ITEM_TBLDAT. SetTblidx %u, ItemTblidx %u", setIdx, itemTblidx);
+			else
+				ERR_LOG(LOG_GENERAL, "ERROR: Could not find sSET_ITEM_TBLDAT. SetTblidx %u", setIdx);
+		}
+	}
+
+	inline sSET_ITEM_TBLDAT* GetSetItemTbldatSafe(TBLIDX setIdx, TBLIDX contextItemTblidx = INVALID_TBLIDX)
+	{
+		if (setIdx == INVALID_TBLIDX || setIdx == 0)
+			return nullptr;
+		{
+			std::lock_guard<std::mutex> lock(g_missingSetMtx);
+			if (g_knownMissingSetIds.find(setIdx) != g_knownMissingSetIds.end())
+				return nullptr;
+		}
+		sSET_ITEM_TBLDAT* p = (sSET_ITEM_TBLDAT*)g_pTableContainer->GetSetItemTable()->FindData(setIdx);
+		if (!p)
+		{
+			// remember and throttle log
+			{
+				std::lock_guard<std::mutex> lock(g_missingSetMtx);
+				g_knownMissingSetIds.insert(setIdx);
+			}
+			LogMissingSetThrottled(setIdx, contextItemTblidx, /*includeItem*/ contextItemTblidx != INVALID_TBLIDX);
+		}
+		return p;
+	}
+}
+
 
 CPlayerItemContainer::CPlayerItemContainer()
 {
@@ -969,12 +1018,17 @@ void CPlayerItemContainer::CopyItemAttributesTo(CCharacterAtt* pCharAtt)
 
 			if (nFoundCount >= NTL_SET_ITEM_SEMI_COUNT) //check if 2 or more. Because if we have full set, then the semi set will be calculated too
 			{
-				sSET_ITEM_TBLDAT* pSetItemTbldat = (sSET_ITEM_TBLDAT*)g_pTableContainer->GetSetItemTable()->FindData(setIdx);
+				sSET_ITEM_TBLDAT* pSetItemTbldat = GetSetItemTbldatSafe(setIdx);
+				if (!pSetItemTbldat)
+					break;
 				sITEM_OPTION_TBLDAT* optionTbldat = (sITEM_OPTION_TBLDAT*)g_pTableContainer->GetItemOptionTable()->FindData(pSetItemTbldat->semiSetOption);
-
+				if (!optionTbldat)
+				{
+					ERR_LOG(LOG_GENERAL, "ERROR: Could not find sITEM_OPTION_TBLDAT. Tblidx %u", pSetItemTbldat->semiSetOption);
+					break;
+				}
 				//always only have 1 effect code
 				Dbo_SetAvatarAttributeValue(pCharAtt, g_pTableContainer->GetSystemEffectTable()->GetEffectCodeWithTblidx(optionTbldat->system_Effect[0]), (float)optionTbldat->nValue[0], (BYTE)optionTbldat->bAppliedInPercent[0]);
-
 				break;
 			}
 		}
@@ -1000,10 +1054,9 @@ void CPlayerItemContainer::CopyItemAttributesTo(CCharacterAtt* pCharAtt)
 			{
 				bSemi = true;
 
-				sSET_ITEM_TBLDAT* pSetItemTbldat = (sSET_ITEM_TBLDAT*)g_pTableContainer->GetSetItemTable()->FindData(setIdx);
+				sSET_ITEM_TBLDAT* pSetItemTbldat = GetSetItemTbldatSafe(setIdx);
 				if (pSetItemTbldat == NULL)
 				{
-					ERR_LOG(LOG_GENERAL, "ERROR: Could not find sSET_ITEM_TBLDAT. SetTblidx %u", setIdx);
 					continue;
 				}
 
@@ -1023,11 +1076,9 @@ void CPlayerItemContainer::CopyItemAttributesTo(CCharacterAtt* pCharAtt)
 			{
 				bFull = true;
 
-				sSET_ITEM_TBLDAT* pSetItemTbldat = (sSET_ITEM_TBLDAT*)g_pTableContainer->GetSetItemTable()->FindData(setIdx);
-
+				sSET_ITEM_TBLDAT* pSetItemTbldat = GetSetItemTbldatSafe(setIdx);
 				if (pSetItemTbldat == NULL)
 				{
-					ERR_LOG(LOG_GENERAL, "ERROR: Could not find sSET_ITEM_TBLDAT. SetTblidx %u", setIdx);
 					continue;
 				}
 
@@ -1052,7 +1103,7 @@ void CPlayerItemContainer::CopyItemAttributesTo(CCharacterAtt* pCharAtt)
 	{
 		if (setEarringIdx[0] && setEarringIdx[1] && (setEarringIdx[0]->tblidx != setEarringIdx[1]->tblidx) && (setEarringIdx[0]->set_Item_Tblidx == setEarringIdx[1]->set_Item_Tblidx)) //check if earring set complete && check if both not the same item
 		{
-			sSET_ITEM_TBLDAT* pSetItemTbldat = (sSET_ITEM_TBLDAT*)g_pTableContainer->GetSetItemTable()->FindData(setEarringIdx[0]->set_Item_Tblidx);
+			sSET_ITEM_TBLDAT* pSetItemTbldat = GetSetItemTbldatSafe(setEarringIdx[0]->set_Item_Tblidx, setEarringIdx[0]->tblidx);
 			if (pSetItemTbldat)
 			{
 				sITEM_OPTION_TBLDAT* optionTbldat = (sITEM_OPTION_TBLDAT*)g_pTableContainer->GetItemOptionTable()->FindData(pSetItemTbldat->semiSetOption);
@@ -1063,7 +1114,7 @@ void CPlayerItemContainer::CopyItemAttributesTo(CCharacterAtt* pCharAtt)
 				}
 				else ERR_LOG(LOG_GENERAL, "ERROR: Could not find sITEM_OPTION_TBLDAT. Tblidx %u, Item Tblidx %u", pSetItemTbldat->semiSetOption, setEarringIdx[0]->tblidx);
 			}
-			else ERR_LOG(LOG_GENERAL, "ERROR: Could not find sSET_ITEM_TBLDAT. SetTblidx %u, ItemTblidx %u", setEarringIdx[0]->set_Item_Tblidx, setEarringIdx[0]->tblidx);
+			else LogMissingSetThrottled(setEarringIdx[0]->set_Item_Tblidx, setEarringIdx[0]->tblidx, true);
 		}
 	}
 
@@ -1072,7 +1123,7 @@ void CPlayerItemContainer::CopyItemAttributesTo(CCharacterAtt* pCharAtt)
 	{
 		if (setRingIdx[0] && setRingIdx[1] && (setRingIdx[0]->tblidx != setRingIdx[1]->tblidx) && (setRingIdx[0]->set_Item_Tblidx == setRingIdx[1]->set_Item_Tblidx)) //check if earring set complete && check if both not the same item
 		{
-			sSET_ITEM_TBLDAT* pSetItemTbldat = (sSET_ITEM_TBLDAT*)g_pTableContainer->GetSetItemTable()->FindData(setRingIdx[0]->set_Item_Tblidx);
+			sSET_ITEM_TBLDAT* pSetItemTbldat = GetSetItemTbldatSafe(setRingIdx[0]->set_Item_Tblidx, setRingIdx[0]->tblidx);
 			if (pSetItemTbldat)
 			{
 				sITEM_OPTION_TBLDAT* optionTbldat = (sITEM_OPTION_TBLDAT*)g_pTableContainer->GetItemOptionTable()->FindData(pSetItemTbldat->semiSetOption);
@@ -1085,7 +1136,7 @@ void CPlayerItemContainer::CopyItemAttributesTo(CCharacterAtt* pCharAtt)
 
 
 			}
-			else ERR_LOG(LOG_GENERAL, "ERROR: Could not find sSET_ITEM_TBLDAT. SetTblidx %u, ItemTblidx %u", setRingIdx[0]->set_Item_Tblidx, setRingIdx[0]->tblidx);
+			else LogMissingSetThrottled(setRingIdx[0]->set_Item_Tblidx, setRingIdx[0]->tblidx, true);
 		}
 	}
 }
