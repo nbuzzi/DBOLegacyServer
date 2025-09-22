@@ -75,7 +75,7 @@ void CClientSession::SendCharLoadReq(CNtlPacket * pPacket)
 
 	if (req->accountId != GetPlayer()->GetAccountID())
 	{
-		ERR_LOG(LOG_USER, "req->accountId != this->accountID. Can not load characters.", req->accountId, GetPlayer()->GetAccountID());
+		ERR_LOG(LOG_USER, "Account mismatch: req->accountId=%u expected=%u. Cannot load characters.", req->accountId, GetPlayer()->GetAccountID());
 		this->Disconnect(false);
 		return;
 	}
@@ -119,8 +119,34 @@ void CClientSession::SendCharCreateReq(CNtlPacket * pPacket)
 	//DO SOME CHECKS FIRST
 	sNEWBIE_TBLDAT* NewbieTblData = NULL;
 	WORD resultcode = CHARACTER_SUCCESS;
-	char* chname = Ntl_WC2MB(req->awchCharName);
-	std::string charname = chname;
+    
+	// Helper: Unicode-aware name validation (allow letters/digits across scripts, '_' and '-')
+	auto IsValidUnicodeName = [](const WCHAR* wname, size_t minLen, size_t maxLen) -> bool
+	{
+		if (!wname)
+			return false;
+		size_t wlen = wcslen(wname);
+		if (wlen < minLen || wlen > maxLen)
+			return false;
+
+		for (size_t i = 0; i < wlen; ++i)
+		{
+			WCHAR ch = wname[i];
+			if (ch == L'_' || ch == L'-')
+				continue;
+
+			WORD ctype = 0;
+			if (!GetStringTypeW(CT_CTYPE1, &ch, 1, &ctype))
+				return false; // unable to classify -> reject
+
+			if ((ctype & C1_CNTRL) || (ctype & C1_SPACE))
+				return false; // no control or whitespace
+
+			if (((ctype & C1_ALPHA) == 0) && ((ctype & C1_DIGIT) == 0))
+				return false; // only letters/digits (any script), '_' and '-'
+		}
+		return true;
+	};
 	//printf("byRace:%u,byClass:%u,byFace:%u,byGender:%u,byHair:%u,byHairColor:%u,bySkinColor:%u \n", req->byRace, req->byClass, req->byFace, req->byGender, req->byHair, req->byHairColor, req->bySkinColor);
 	if(req->byRace > RACE_LAST || req->byClass > PC_CLASS_1_LAST)
 		resultcode = CHARACTER_FAIL;
@@ -163,11 +189,7 @@ void CClientSession::SendCharCreateReq(CNtlPacket * pPacket)
 		NewbieTblData = (sNEWBIE_TBLDAT*)app->g_pTableContainer->GetNewbieTable()->GetNewbieTbldat(req->byRace, req->byClass);
 		if (NewbieTblData == NULL)
 			resultcode = CHARACTER_RACE_NOT_ALLOWED;
-		else if (charname.length() < NTL_MIN_SIZE_CHAR_NAME)
-			resultcode = CHARACTER_TOO_SHORT_NAME;
-		else if (charname.length() > NTL_MAX_SIZE_CHAR_NAME)
-			resultcode = CHARACTER_TOO_LONG_NAME;
-		else if (charname.find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890") != std::string::npos)
+		else if (!IsValidUnicodeName(req->awchCharName, NTL_MIN_SIZE_CHAR_NAME, NTL_MAX_SIZE_CHAR_NAME))
 			resultcode = CHARACTER_BLOCK_STRING_INCLUDED;
 		else if (GetPlayer()->GetCharCount() > NTL_MAX_COUNT_USER_CHAR_SLOT)
 			resultcode = CHARACTER_COUNT_OVER;
@@ -277,7 +299,6 @@ void CClientSession::SendCharCreateReq(CNtlPacket * pPacket)
 		app->Send(GetHandle(), &packet);
 	}
 
-	Ntl_CleanUpHeapString(chname);
 }
 
 //--------------------------------------------------------------------------------------//
@@ -462,6 +483,33 @@ void CClientSession::SendCharRenameReq(CNtlPacket * pPacket)
 	char* chname = Ntl_WC2MB(req->awchCharName);
 	std::string charname = chname;
 
+	auto IsValidUnicodeName = [](const WCHAR* wname, size_t minLen, size_t maxLen) -> bool
+	{
+		if (!wname)
+			return false;
+		size_t wlen = wcslen(wname);
+		if (wlen < minLen || wlen > maxLen)
+			return false;
+
+		for (size_t i = 0; i < wlen; ++i)
+		{
+			WCHAR ch = wname[i];
+			if (ch == L'_' || ch == L'-')
+				continue;
+
+			WORD ctype = 0;
+			if (!GetStringTypeW(CT_CTYPE1, &ch, 1, &ctype))
+				return false;
+
+			if ((ctype & C1_CNTRL) || (ctype & C1_SPACE))
+				return false;
+
+			if (((ctype & C1_ALPHA) == 0) && ((ctype & C1_DIGIT) == 0))
+				return false;
+		}
+		return true;
+	};
+
 	if (!GetPlayer()->IsCharsLoaded())
 		res->wResultCode = CHARACTER_FAIL;
 	else if (GetPlayer()->HasCharacter(req->charId) == false)
@@ -469,11 +517,7 @@ void CClientSession::SendCharRenameReq(CNtlPacket * pPacket)
 		ERR_LOG(LOG_USER, "Account: %u tried to rename character %u that he dont own !!", GetPlayer()->GetAccountID(), req->charId);
 		res->wResultCode = CHARACTER_FAIL;
 	}
-	else if (charname.length() < NTL_MIN_SIZE_CHAR_NAME)
-		res->wResultCode = CHARACTER_TOO_SHORT_NAME;
-	else if (charname.length() > NTL_MAX_SIZE_CHAR_NAME)
-		res->wResultCode = CHARACTER_TOO_LONG_NAME;
-	else if (charname.find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890") != std::string::npos)
+	else if (!IsValidUnicodeName(req->awchCharName, NTL_MIN_SIZE_CHAR_NAME, NTL_MAX_SIZE_CHAR_NAME))
 		res->wResultCode = CHARACTER_BLOCK_STRING_INCLUDED;
 	else
 	{
@@ -800,7 +844,7 @@ void CClientSession::LoadServerFarmInfo()
 	{
 		g_pServerInfoManager->LoadServerList(GetHandle());
 
-		ERR_LOG(LOG_USER, "GetPlayer()->GetServerFarmID() == INVALID_SERVERFARMID. Load all server info..");
+		ERR_LOG(LOG_USER, "%s", "GetPlayer()->GetServerFarmID() == INVALID_SERVERFARMID. Load all server info..");
 		return;
 	}
 

@@ -178,6 +178,30 @@ private:
     // Optional filter: if non-empty, only debuff effects in this set are blocked; otherwise all curse-type debuffs are blocked
     std::unordered_set<int> m_blockDebuffEffects;
 
+    // Mob replacement mapping: when event is ON, replace original mob tblidx with target tblidx for spawn-table spawns
+    std::unordered_map<unsigned int, unsigned int> m_replaceMob; // from -> to
+    std::unordered_set<unsigned int> m_exceptReplace;            // exceptions for global replaces
+
+public:
+    // Returns replacement mob tblidx for given source, or 0 if none configured or exempted
+    unsigned int GetMobReplacement(unsigned int srcTblidx) const
+    {
+        if (srcTblidx == 0) return 0;
+        // honor exception list
+        if (m_exceptReplace.find(srcTblidx) != m_exceptReplace.end())
+            return 0;
+        auto it = m_replaceMob.find(srcTblidx);
+        if (it != m_replaceMob.end()) {
+            unsigned int to = it->second; return (to != srcTblidx ? to : 0);
+        }
+        // global default mapping (id=0) applies to all unless excepted
+        auto itAll = m_replaceMob.find(0);
+        if (itAll != m_replaceMob.end()) {
+            unsigned int to = itAll->second; return (to != srcTblidx ? to : 0);
+        }
+        return 0;
+    }
+
 private:
     bool LoadLevelsSidecar(const char* cfgPath);
 };

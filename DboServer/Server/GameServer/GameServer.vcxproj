@@ -330,6 +330,8 @@
     <ClCompile Include="ExpEvent.cpp" />
     <ClCompile Include="Fairy Event.cpp" />
   <ClCompile Include="CustomDropEvent.cpp" />
+  <ClInclude Include="PlayerModifiers.h" />
+  <ClCompile Include="PlayerModifiers.cpp" />
     <ClCompile Include="Guild.cpp" />
     <ClCompile Include="HoneyBeeEvent.cpp" />
     <ClCompile Include="HtbSkill.cpp" />

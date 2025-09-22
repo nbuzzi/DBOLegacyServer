@@ -34,6 +34,7 @@
 #include "CustomDropEvent.h"
 #include "HelperNpcManager.h"
 #include "BudokaiManager.h"
+#include "PlayerModifiers.h"
 
 void gm_read_command(sUG_SERVER_COMMAND* sPacket, CPlayer* pPlayer)
 {
@@ -155,6 +156,8 @@ ACMD(do_reload_customdrop_cfg);
 ACMD(do_customdrop_chainspawns);
 ACMD(do_customdrop_healmul);
 ACMD(do_customdrop_buffduration);
+ACMD(do_reload_playermods_cfg);
+ACMD(do_playermods_toggle);
 ACMD(do_reload_helpernpc_cfg);
 ACMD(do_helpernpc_metrics);
 ACMD(do_helpernpc_resetmetrics);
@@ -250,6 +253,8 @@ struct command_info cmd_info[] =
 	{ L"@customdrop_chainspawns", do_customdrop_chainspawns, ADMIN_LEVEL_GAME_MASTER },
     { L"@customdrop_healmul", do_customdrop_healmul, ADMIN_LEVEL_GAME_MASTER },
     { L"@customdrop_buffduration", do_customdrop_buffduration, ADMIN_LEVEL_GAME_MASTER },
+	{ L"@reload_playermods", do_reload_playermods_cfg, ADMIN_LEVEL_GAME_MASTER },
+	{ L"@playermods", do_playermods_toggle, ADMIN_LEVEL_GAME_MASTER },
 
 	{ L"@qwasawedsadas", NULL, ADMIN_LEVEL_ADMIN }
 };
@@ -504,6 +509,49 @@ ACMD(do_customdrop_buffduration)
 	else
 	{
 		NTL_PRINT(PRINT_APP, "CustomDropEvent: totem buff duration override = %u ms", g_pCustomDropEvent->GetTotemBuffDurationOverrideMs());
+	}
+}
+
+ACMD(do_reload_playermods_cfg)
+{
+	// optional path parameter
+	pToken->PopToPeek();
+	std::wstring strToken = pToken->PeekNextToken(NULL, &iLine);
+	std::string arg = ws2s(strToken);
+	std::string path;
+	if (arg.empty())
+		path = ".\\config\\PlayerModifiers.cfg";
+	else
+	{
+		bool hasBackslash = arg.find('\\') != std::string::npos || arg.find('/') != std::string::npos;
+		bool hasExt = arg.rfind('.') != std::string::npos;
+		if (!hasBackslash && !hasExt)
+			path = ".\\config\\" + arg + ".cfg";
+		else
+			path = arg;
+	}
+	if (g_pPlayerModifiers->ReloadConfig(path.c_str()))
+		NTL_PRINT(PRINT_APP, "PlayerModifiers: config reloaded from %s", path.c_str());
+	else
+		NTL_PRINT(PRINT_APP, "PlayerModifiers: failed to reload config from %s", path.c_str());
+}
+
+ACMD(do_playermods_toggle)
+{
+	// usage: @playermods on|off (no arg prints state)
+	pToken->PopToPeek();
+	std::wstring strToken = pToken->PeekNextToken(NULL, &iLine);
+	std::string arg = ws2s(strToken);
+	if (!arg.empty())
+	{
+		bool on = (_stricmp(arg.c_str(), "on") == 0 || _stricmp(arg.c_str(), "1") == 0 || _stricmp(arg.c_str(), "true") == 0);
+		g_pPlayerModifiers->SetEnabled(on);
+		size_t n = g_pObjectManager->RecalculateAllPlayers();
+		NTL_PRINT(PRINT_APP, "PlayerModifiers: %s; recalculated %zu players", on ? "ENABLED" : "DISABLED", n);
+	}
+	else
+	{
+		NTL_PRINT(PRINT_APP, "PlayerModifiers: currently %s (cfg=%s)", g_pPlayerModifiers->IsEnabled() ? "ENABLED" : "DISABLED", g_pPlayerModifiers->GetCfgPath());
 	}
 }
 

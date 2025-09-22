@@ -11,6 +11,7 @@
 #include "CommonConfigTable.h"
 #include "FormulaTable.h"
 #include "GameServer.h"
+#include "PlayerModifiers.h"
 
 
 CCharacterAttPC::CCharacterAttPC()
@@ -247,6 +248,12 @@ void CCharacterAttPC::CalculateAtt()
 	CalcSecondWeaponOffence();
 
 	//m_pAttribute.fCoolTimeChangePercent = -100.f; // TEMP
+
+	// Apply global player modifiers if enabled
+	if (g_pPlayerModifiers && g_pPlayerModifiers->IsEnabled())
+	{
+		g_pPlayerModifiers->ApplyTo(this);
+	}
 
 	CCharacterAtt::CalculateAtt();
 }

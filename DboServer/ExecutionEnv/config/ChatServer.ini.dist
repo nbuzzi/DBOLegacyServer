@@ -1,6 +1,6 @@
 [Chat Server]
-Address = 127.0.0.1
-PublicAddress = 127.0.0.1
+Address = 26.45.249.194
+PublicAddress = 26.45.249.194
 Port = 20400
 server_accept_limit = 5
 Server_Accept_Address = 127.0.0.1
@@ -35,8 +35,3 @@ MaxConnection = 400
 LoadTableFormat = 1
 ; 0 = XML, 1 = Binary(rdf), 2 = Secured Binary(edf)
 Path = resource/server_data/table/rdf
-
-[GAMECONFIG]
-; Dojo wars are disabled by default (if key omitted or true).
-; Set DisableDojoWar = false to allow dojo wars.
-;DisableDojoWar = true

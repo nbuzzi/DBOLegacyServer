@@ -75,6 +75,9 @@ public:
 
 	void								SendToAllInZone(ZONEID zoneId, CNtlPacket * pPacket);
 
+	// Recalculate attributes for all online players; returns number updated
+	size_t                             RecalculateAllPlayers();
+
 private:
 
 	typedef boost::unordered_map<HOBJECT, CGameObject*> OBJECTMAP;

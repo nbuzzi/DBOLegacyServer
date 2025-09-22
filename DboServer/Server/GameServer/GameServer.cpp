@@ -44,6 +44,7 @@
 #include "StoneDropEvent.h"
 #include "Fairy Event.h"
 #include "CustomDropEvent.h"
+#include "PlayerModifiers.h"
 #include "HelperNpcManager.h"
 #include "SkillTable.h"
 // --- INICIO SOCKET COMANDOS ---
@@ -272,6 +273,10 @@ int CGameServer::OnInitApp()
 	NTL_PRINT(PRINT_APP, "Custom Drop System");
 	CCustomDropEvent* pCustomDrop = new CCustomDropEvent;
 	UNREFERENCED_PARAMETER(pScs);
+
+	NTL_PRINT(PRINT_APP, "Player Modifiers System");
+	CPlayerModifiers* pPlayerMods = new CPlayerModifiers;
+	UNREFERENCED_PARAMETER(pPlayerMods);
 	if (!m_pGameMain->PrepareWorldAndObject())
 	{
 		NTL_PRINT(PRINT_APP, "m_pGameMain->PrepareWorldAndObject() == FALSE");
@@ -542,6 +547,15 @@ int	CGameServer::OnConfiguration(const char* lpszConfigFile)
 		return NTL_ERR_SYS_CONFIG_FILE_READ_FAIL;
 	if (!file.Read("SETTINGS", "TsPath", m_config.strTsPath))
 		return NTL_ERR_SYS_CONFIG_FILE_READ_FAIL;
+
+	// Optional GM-only mode (defaults to 0/false)
+	{
+		int gmOnly = 0;
+		if (file.Read("SETTINGS", "AllowOnlyGMs", gmOnly))
+			m_bGmOnlyMode = (gmOnly != 0);
+		else
+			m_bGmOnlyMode = false;
+	}
 
 
 	if (!file.Read("Play Script", "DataPath", m_config.strPlayScriptPath))
@@ -1022,6 +1036,9 @@ void CGameServer::Init()
 	m_pGameMain = NULL;
 	m_pGameData = NULL;
 	m_pActionPatternSystem = NULL;
+
+	// default: GM-only mode disabled
+	m_bGmOnlyMode = false;
 }
 
 
@@ -1087,13 +1104,22 @@ void CGameServer::DoUpdateSessionLog(DWORD dwNow)
 		int maxSessions = GetNetwork()->GetSessionList()->GetMaxCount();
 		float utilization = maxSessions > 0 ? (float)currentSessions / maxSessions * 100.0f : 0.0f;
 		
-		NTL_PRINT(PRINT_APP, "[SESSION MONITOR] Current: %d/%d sessions (%.1f%% utilization) - Available slots: %d", 
-			currentSessions, maxSessions, utilization, maxSessions - currentSessions);
+		// Include acceptor counters for deeper diagnostics
+		int accAccepting = m_clientAcceptor.GetAcceptingCount();
+		int accAccepted = m_clientAcceptor.GetAcceptedCount();
+		// Accepted-client utilization relative to configured client capacity
+		int cfgMaxClients = m_config.nMaxConnection;
+		float clientUtil = cfgMaxClients > 0 ? (float)accAccepted / (float)cfgMaxClients * 100.0f : 0.0f;
+		NTL_PRINT(PRINT_APP, "[SESSION MONITOR] Sessions: %d/%d (%.1f%%) | Clients(accepted): %d/%d (%.1f%%) | Avail(Sessions): %d | Acceptor accepting:%d accepted:%d total:%lu",
+			currentSessions, maxSessions, utilization,
+			accAccepted, cfgMaxClients, clientUtil,
+			maxSessions - currentSessions,
+			accAccepting, accAccepted, m_clientAcceptor.GetTotalAcceptCount());
 		
-		// Warn if utilization is getting high
-		if (utilization >= 80.0f)
+		// Warn if accepted-client utilization is getting high
+		if (clientUtil >= 80.0f)
 		{
-			NTL_PRINT(PRINT_APP, "WARNING: High session utilization detected! May start refusing connections soon.");
+			NTL_PRINT(PRINT_APP, "WARNING: High client utilization detected! May start refusing connections soon.");
 		}
 		
 		// Error if we're at capacity

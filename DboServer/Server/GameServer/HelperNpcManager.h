@@ -86,6 +86,11 @@ struct sHELPER_NPC_CONFIG
     DWORD  dwRebuffCooldownMs = 0;          // 0 = disabled
     DWORD  dwRebuffMinRemainingMs = 3000;   // reapply if remaining below this
 
+    // Healer responsiveness (cadence tuning)
+    DWORD  dwHealScanCooldownMs = 150;      // how often to evaluate party HP for heals (ms)
+    DWORD  dwResurrectScanCooldownMs = 150; // how often to scan for fainted members (ms)
+    DWORD  dwSkillTryCooldownMs = 100;      // minimum delay between queued skill attempts (ms)
+
     // AI preference: if true, attempt forced skills first when choosing an offensive ability
     bool   bPrioritizeForcedSkills = false;
 

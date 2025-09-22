@@ -1981,7 +1981,11 @@ void CQueryServerSession::RecvPcDataLoadRes(CNtlPacket * pPacket)
 
 		return;
 	}
-
+	{
+		char* logName = Ntl_WC2MB(req->sPcData.awchName);
+		NTL_PRINT(PRINT_APP, "RecvPcDataLoadRes: charId=%u name=%s", req->sPcData.charId, logName ? logName : "<null>");
+		Ntl_CleanUpHeapString(logName);
+	}
 	pOwner->RecvLoadPcDataRes(&req->sPcData, &req->serverChangeInfo, req->bTutorialFlag, &req->sWarFogInfo, &req->sMailBrief, &req->sRankBattleScore, req->TitleIndexFlag, req->wWaguCoins, req->wEventCoins);
 }
 

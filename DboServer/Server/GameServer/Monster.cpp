@@ -111,6 +111,20 @@ bool CMonster::CreateDataAndSpawn(WORLDID worldId, sMOB_TBLDAT* mobTbldat, sSPAW
 {
 	SetWorldID(worldId);
 
+	// Optional: apply CustomDropEvent mob replacement for spawn-table spawns
+	if (g_pCustomDropEvent && g_pCustomDropEvent->m_bOn && mobTbldat)
+	{
+		unsigned int repl = g_pCustomDropEvent->GetMobReplacement(mobTbldat->tblidx);
+		if (repl != 0 && repl != mobTbldat->tblidx)
+		{
+			sMOB_TBLDAT* pRepl = (sMOB_TBLDAT*)g_pTableContainer->GetMobTable()->FindData(repl);
+			if (pRepl)
+			{
+				mobTbldat = pRepl;
+			}
+		}
+	}
+
 	m_pTbldat = mobTbldat;
 
 	m_SpawnGroupID = spawnTbldat->spawnGroupId;

@@ -4,7 +4,7 @@
 //
 //	Begin		:	2005-12-19
 //
-//	Copyright	:	╗о NTL-Inc Co., Ltd
+//	Copyright	:	О©╫О©╫ NTL-Inc Co., Ltd
 //
 //	Author		:	Hyun Woo, Koo   ( zeroera@ntl-inc.com )
 //
@@ -63,14 +63,14 @@ public:
 
 	enum eSTATUS					
 	{
-		STATUS_INIT = 0,			// цй╠Б╩Себ
-		STATUS_CREATE,				// ╩Щ╪╨╩Себ
-		STATUS_ACCEPT,				// Accept ╢К╠Б ╩Себ
-		STATUS_CONNECT,				// Connect ╢К╠Б ╩Себ ( AcceptEx, ConnectEx ©║╪╜ ╩Г©К )
-		STATUS_ACTIVE,				// х╟╣©╩Себ
-		STATUS_CLOSE,				// ╢щхЫ ╩Себ
-		STATUS_SHUTDOWN,			// а╬╥А ╩Себ
-		STATUS_DESTROY,				// ╪р╦Й ╩Себ
+		STATUS_INIT = 0,			// О©╫й╠О©╫О©╫О©╫О©╫
+		STATUS_CREATE,				// О©╫О©╫О©╫О©╫О©╫О©╫О©╫О©╫
+		STATUS_ACCEPT,				// Accept О©╫О©╫О©╫ О©╫О©╫О©╫О©╫
+		STATUS_CONNECT,				// Connect О©╫О©╫О©╫ О©╫О©╫О©╫О©╫ ( AcceptEx, ConnectEx О©╫О©╫О©╫О©╫ О©╫О©╫О©╫ )
+		STATUS_ACTIVE,				// х╟О©╫О©╫О©╫О©╫О©╫О©╫
+		STATUS_CLOSE,				// О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫
+		STATUS_SHUTDOWN,			// О©╫О©╫О©╫О©╫ О©╫О©╫О©╫О©╫
+		STATUS_DESTROY,				// О©╫р╦О©╫ О©╫О©╫О©╫О©╫
 		STATUS_CHANGE_PORT,
 
 		MAX_STATUS
@@ -125,9 +125,13 @@ public:
 	bool								PacketLogTime(DWORD dwTickDiff);
 
 	bool								IsShutdownable();
+	
+	// Ensure acceptor counters are decremented exactly once when a session closes
+	void										NotifyAcceptorDisconnected();
 
 	bool								CanbeDestroy() { return IsStatus(STATUS_DESTROY); }
 
+	bool										m_bAcceptorDisconnectNotified;
 	int									Shutdown();
 
 

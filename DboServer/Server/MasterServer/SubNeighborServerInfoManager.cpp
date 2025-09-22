@@ -882,7 +882,7 @@ void CSubNeighborServerInfoManager::UpdatePlayerCount(BYTE byServerType, SERVERI
 			{
 				pFarm->dwLoad = UnsignedSafeDecrease<DWORD>(pFarm->dwLoad, dwCount);
 				pChannel->dwLoad = UnsignedSafeDecrease<DWORD>(pChannel->dwLoad, dwCount);
-				pServerInfo->dwLoad = UnsignedSafeIncrease<DWORD>(pServerInfo->dwLoad, dwCount);
+				pServerInfo->dwLoad = UnsignedSafeDecrease<DWORD>(pServerInfo->dwLoad, dwCount);
 			}
 		}
 		break;

@@ -87,9 +87,15 @@ void CCharacter::TickProcess(DWORD dwTickDiff, float fMultiple)
 {
 	CCharacterObject::TickProcess(dwTickDiff, fMultiple);
 
+	// Skip processing if object is no longer initialized (destroying/despawned)
+	if (!IsInitialized())
+		return;
+
 	Recover(dwTickDiff);
 
-	m_pTargetListManager->TickProcess(dwTickDiff, fMultiple);
+	// Defensive: target list manager can be null during teardown; guard before use
+	if (m_pTargetListManager)
+		m_pTargetListManager->TickProcess(dwTickDiff, fMultiple);
 }
 
 void CCharacter::LeaveGame()

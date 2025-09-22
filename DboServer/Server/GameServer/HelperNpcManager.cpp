@@ -122,6 +122,10 @@ bool CHelperNpcManager::LoadConfig(CNtlIniFile& file)
 	file.Read("HELPER_NPC", "ResurrectSkillTblidx", m_config.resurrectSkillTblidx);
 	file.Read("HELPER_NPC", "RebuffCooldownMs", m_config.dwRebuffCooldownMs);
 	file.Read("HELPER_NPC", "RebuffMinRemainingMs", m_config.dwRebuffMinRemainingMs);
+	// Healer responsiveness
+	file.Read("HELPER_NPC", "HealScanCooldownMs", m_config.dwHealScanCooldownMs);
+	file.Read("HELPER_NPC", "ResurrectScanCooldownMs", m_config.dwResurrectScanCooldownMs);
+	file.Read("HELPER_NPC", "SkillTryCooldownMs", m_config.dwSkillTryCooldownMs);
 	// Tank aggro enforcement (global defaults)
 	{
 		int v = m_config.bEnforceTankAggro ? 1 : 0;
@@ -592,6 +596,9 @@ int CHelperNpcManager::LoadConfigSection(CNtlIniFile& file, const char* sectionN
 	if (file.Read(sectionName, "ResurrectSkillTblidx", out.resurrectSkillTblidx)) ++readCount;
 	if (file.Read(sectionName, "RebuffCooldownMs", out.dwRebuffCooldownMs)) ++readCount;
 	if (file.Read(sectionName, "RebuffMinRemainingMs", out.dwRebuffMinRemainingMs)) ++readCount;
+	if (file.Read(sectionName, "HealScanCooldownMs", out.dwHealScanCooldownMs)) ++readCount;
+	if (file.Read(sectionName, "ResurrectScanCooldownMs", out.dwResurrectScanCooldownMs)) ++readCount;
+	if (file.Read(sectionName, "SkillTryCooldownMs", out.dwSkillTryCooldownMs)) ++readCount;
 	{ int v = out.bPrioritizeForcedSkills ? 1 : 0; if (file.Read(sectionName, "PrioritizeForcedSkills", v)) { out.bPrioritizeForcedSkills = (v != 0); ++readCount; } }
 	// Tank aggro enforcement overrides
 	{ int v = out.bEnforceTankAggro ? 1 : 0; if (file.Read(sectionName, "EnforceTankAggro", v)) { out.bEnforceTankAggro = (v != 0); ++readCount; } }
@@ -1226,7 +1233,7 @@ void CHelperNpcManager::OnLeaderAttackEnd(CPlayer* pLeader)
 		return;
 
 	// If helper has no aggro and no current target, resume following leader
-	if (pHelper->GetTargetListManager()->GetAggroCount() == 0 && pHelper->GetTargetHandle() == INVALID_HOBJECT)
+	if (pHelper->GetTargetListManager() && pHelper->GetTargetListManager()->GetAggroCount() == 0 && pHelper->GetTargetHandle() == INVALID_HOBJECT)
 	{
 		sVECTOR3 vLeaderLoc;
 		pLeader->GetCurLoc().CopyTo(vLeaderLoc);
@@ -1761,6 +1768,13 @@ void CHelperNpcManager::OnPartyMemberJoined(CParty* pParty, CPlayer* pNewMember)
 	if (!pLeader || !pLeader->IsInitialized()) return;
 	CWorld* pWorld = pLeader->GetCurWorld();
 	if (!pWorld) return;
+	// Ensure we are in an instance-like world (UD/BD/TMQ or allowlisted extras)
+	eGAMERULE_TYPE rule = pWorld->GetRuleType();
+	WORLDID wid = pWorld->GetID();
+	bool bUD = (rule == GAMERULE_HUNT) || (this->m_extraUDWorldIDs.find(wid) != this->m_extraUDWorldIDs.end());
+	bool bBD = (rule == GAMERULE_CCBATTLEDUNGEON) || (this->m_extraBDWorldIDs.find(wid) != this->m_extraBDWorldIDs.end());
+	bool bTMQ = (rule == GAMERULE_TIMEQUEST) || (this->m_extraTMQWorldIDs.find(wid) != this->m_extraTMQWorldIDs.end());
+	if (!bUD && !bBD && !bTMQ) return;
 
 	// Determine the role coverage impact of the new member
 	BYTE cls = pNewMember->GetClass();

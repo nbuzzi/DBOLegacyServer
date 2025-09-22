@@ -46,7 +46,12 @@ int CTqsAlgoAction_ChangeObjectState::OnUpdate(DWORD dwTickDiff, float fMultiple
 	CTriggerObject* pObj = GetOwner()->GetWorld()->FindStaticObjectByIdx(m_objectTblidx);
 	if (pObj == NULL)
 	{
-		ERR_LOG(LOG_SCRIPT, "World %u has no trigger object %u. Script ID %u", GetOwner()->GetWorld()->GetIdx(), m_objectTblidx, GetOwner()->GetScriptID());
+		// Fix to avoid spawn logs in Time Chamber World map
+		if (GetOwner()->GetWorld()->GetIdx() != 960003)
+		{
+			ERR_LOG(LOG_SCRIPT, "World %u has no trigger object %u. Script ID %u", GetOwner()->GetWorld()->GetIdx(), m_objectTblidx, GetOwner()->GetScriptID());
+		}
+
 		m_status = SYSTEMERROR;
 		return m_status;
 	}
@@ -70,7 +75,7 @@ int CTqsAlgoAction_ChangeObjectState::OnUpdate(DWORD dwTickDiff, float fMultiple
 		}
 	}
 
-	if(m_subStateSet)
+	if (m_subStateSet)
 	{
 		for (int i = 0; i < MAX_TOBJECT_SUBSTATE; i++)
 		{

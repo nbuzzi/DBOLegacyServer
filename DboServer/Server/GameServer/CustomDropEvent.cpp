@@ -70,6 +70,8 @@ void CCustomDropEvent::Init()
 	m_exceptTitles.clear();
 	m_exceptVisuals.clear();
 	m_exceptTotems.clear();
+	m_replaceMob.clear();
+	m_exceptReplace.clear();
 	m_eventSpawned.clear();
 	m_cfgPath = ".\\config\\CustomDropEvent.cfg";
 	m_allowChainSpawns = false; // default: prevent chain spawns
@@ -110,6 +112,8 @@ bool CCustomDropEvent::LoadConfigInternal(const char* path)
 	m_exceptTitles.clear();
 	m_exceptVisuals.clear();
 	m_exceptTotems.clear();
+	m_replaceMob.clear();
+	m_exceptReplace.clear();
 	// Preserve current immunity default; allow settings section to override
 	// but clear specific lists so reloading replaces them
 	m_blockDebuffEffects.clear();
@@ -142,6 +146,7 @@ bool CCustomDropEvent::LoadConfigInternal(const char* path)
 		const char* titlesKw = "titles";
 		const char* visualsKw = "visuals";
 		const char* totemKw = "totem";
+		const char* replaceKw = "replace";
 	const char* settingsKw = "settings"; // global settings for defaults
 		bool isMods = false;
 		bool isSpawn = false;
@@ -149,6 +154,7 @@ bool CCustomDropEvent::LoadConfigInternal(const char* path)
 		bool isTitles = false;
 		bool isVisuals = false;
 		bool isTotem = false;
+		bool isReplace = false;
 		bool isSettings = false;
 		bool isExcept = false;
 		char* colon = strchr(p, ':');
@@ -196,6 +202,8 @@ bool CCustomDropEvent::LoadConfigInternal(const char* path)
 					isVisuals = true;
 				else if (_stricmp(tail, totemKw) == 0)
 					isTotem = true;
+				else if (_stricmp(tail, replaceKw) == 0)
+					isReplace = true;
 				else if (_stricmp(tail, settingsKw) == 0)
 					isSettings = true;
 				else if (_stricmp(tail, "except") == 0)
@@ -232,8 +240,20 @@ bool CCustomDropEvent::LoadConfigInternal(const char* path)
 			else if (isVisuals)   parseExcept(m_exceptVisuals);
 			else if (isTotem)     parseExcept(m_exceptTotems);
 			else if (isMods)      parseExcept(m_exceptMods);
+			else if (isReplace)   parseExcept(m_exceptReplace);
 			else                  parseExcept(m_exceptDrops); // default (drops)
 			continue;
+		}
+		else if (isReplace)
+		{
+			// format: mobId replace: targetMobTblidx  (mobId can be 0/all for global)
+			char* rhs = colon + 1;
+			while (*rhs == ' ' || *rhs == '\t') ++rhs;
+			unsigned int target = (unsigned int)strtoul(rhs, nullptr, 10);
+			if (target != 0)
+			{
+				m_replaceMob[mobId] = target;
+			}
 		}
 
 		if (isMods)
@@ -849,12 +869,21 @@ void CCustomDropEvent::Update(CMonster* pMob, CCharacter* pPlayer)
 {
 	if (!pPlayer->GetCurWorld()) { m_eventSpawned.erase(pMob->GetID()); return; }
 	
-	// Allow CustomDropEvent in dungeons and normal worlds, but exclude competitive/PvP areas
+	// Allow CustomDropEvent in all worlds except competitive/PvP-only modes
 	eGAMERULE_TYPE ruleType = pPlayer->GetCurWorld()->GetRuleType();
-	if (ruleType != GAMERULE_NORMAL && ruleType != GAMERULE_TIMEQUEST && ruleType != GAMERULE_HUNT && 
-	    ruleType != GAMERULE_CCBATTLEDUNGEON && ruleType != GAMERULE_SKD && ruleType != GAMERULE_RAID) {
-		m_eventSpawned.erase(pMob->GetID()); 
-		return; 
+	switch (ruleType)
+	{
+	case GAMERULE_RANKBATTLE:
+	case GAMERULE_MUDOSA:
+	case GAMERULE_DOJO:
+	case GAMERULE_MINORMATCH:
+	case GAMERULE_MAJORMATCH:
+	case GAMERULE_FINALMATCH:
+	case GAMERULE_TEINKAICHIBUDOKAI:
+		m_eventSpawned.erase(pMob->GetID());
+		return; // skip PvP/competitive arenas entirely
+	default:
+		break; // all other rule types (normal, dungeons, raids, quests) are allowed
 	}
 
 	if (!m_bOn) { m_eventSpawned.erase(pMob->GetID()); return; }

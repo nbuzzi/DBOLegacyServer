@@ -1067,6 +1067,32 @@ void CPlayer::RecvLoadPcDataRes(sPC_DATA* pPcData, sDBO_SERVER_CHANGE_INFO* pser
 {
 	CGameServer* app = (CGameServer*)g_pApp;
 
+	// Enforce GM-only server access if configured
+	if (app->IsGmOnlyMode())
+	{
+		bool isGm = (pPcData->bIsGameMaster != 0) || (pPcData->byAdminLevel >= ADMIN_LEVEL_EARLY_ACCESS);
+		if (!isGm)
+		{
+			// Notify the client, then gracefully return to character select
+			CNtlPacket packetMsg(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+			sGU_SYSTEM_DISPLAY_TEXT* resMsg = (sGU_SYSTEM_DISPLAY_TEXT*)packetMsg.GetPacketData();
+			resMsg->wOpCode = GU_SYSTEM_DISPLAY_TEXT;
+			resMsg->byDisplayType = SERVER_TEXT_SYSTEM;
+			const wchar_t* kickMsg = L"Server is in GM-only mode. Access denied.";
+			wcscpy_s(resMsg->awchMessage, NTL_MAX_LENGTH_OF_CHAT_MESSAGE + 1, kickMsg);
+			packetMsg.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+			app->Send(GetClientSessionID(), &packetMsg);
+
+			CNtlPacket packetExit(sizeof(sGU_GAME_EXIT_RES));
+			sGU_GAME_EXIT_RES* resExit = (sGU_GAME_EXIT_RES*)packetExit.GetPacketData();
+			resExit->wOpCode = GU_GAME_EXIT_RES;
+			packetExit.SetPacketLen(sizeof(sGU_GAME_EXIT_RES));
+			app->Send(GetClientSessionID(), &packetExit);
+
+			return;
+		}
+	}
+
 	SetPrevChannelID(pserverChangeInfo->prevServerChannelId);
 
 	/*Did we teleport to another channel?*/
@@ -1223,7 +1249,9 @@ void CPlayer::RecvLoadPcDataRes(sPC_DATA* pPcData, sDBO_SERVER_CHANGE_INFO* pser
 	}
 	else
 	{
-		ERR_LOG(LOG_GENERAL, "Fail. Player Create failed");
+		char* nameLog = Ntl_WC2MB(pPcData->awchName);
+		ERR_LOG(LOG_GENERAL, "Fail. Player Create failed charId=%u name=%s", pPcData->charId, nameLog ? nameLog : "<null>");
+		Ntl_CleanUpHeapString(nameLog);
 	}
 }
 

@@ -324,8 +324,9 @@ CSkillCondition* CSkillManagerBot::GetSkill(DWORD dwTickTime)
 			if (cfg.wHealLpThresholdOverride > 0 && pPlayer->ConsiderLPLow((float)cfg.wHealLpThresholdOverride))
 				return 2; // Critical healing priority
 			
-			// More aggressive: heal anyone missing more than 5% LP
-			if ((pPlayer->GetCurLP() * 100 / pPlayer->GetMaxLP()) < 95)
+			// More aggressive: heal anyone missing more than X% LP (configurable)
+			WORD missingMin = cfg.wHealPriorityMinMissingPercent > 0 ? cfg.wHealPriorityMinMissingPercent : 5;
+			if ((pPlayer->GetCurLP() * 100 / pPlayer->GetMaxLP()) < (100 - missingMin))
 				return 2; // Treat as critical healing priority
 			
 			// Any missing LP check

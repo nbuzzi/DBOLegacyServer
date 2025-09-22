@@ -48,6 +48,9 @@ private:
 	// Half-second cadence resurrection scan timer
 	DWORD m_dwSinceLastResurrectScanMs = 0;
 
+	// Fast heal scan timer (prioritize heals on its own cadence)
+	DWORD m_dwSinceLastHealScanMs = 0;
+
 	// Tank aggro pulse timer
 	DWORD m_dwSinceLastTankAggroPulseMs = 0;
 

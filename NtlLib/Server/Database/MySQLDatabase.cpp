@@ -75,8 +75,8 @@ bool MySQLDatabase::Initialize(CNtlString Hostname, unsigned int port, CNtlStrin
 	///SYNC CONNECTION
 	temp = mysql_init(NULL);
 
-	if (mysql_options(temp, MYSQL_SET_CHARSET_NAME, "utf8"))
-		ERR_LOG(LOG_SYSTEM, "Could not set utf8 character set.\n");
+	if (mysql_options(temp, MYSQL_SET_CHARSET_NAME, "utf8mb4"))
+		ERR_LOG(LOG_SYSTEM, "Could not set utf8mb4 character set.\n");
 
 	if (mysql_options(temp, MYSQL_OPT_COMPRESS, &my_true))
 		ERR_LOG(LOG_SYSTEM, "MYSQL_OPT_COMPRESS, could not be set\n");
@@ -252,6 +252,12 @@ bool MySQLDatabase::_Reconnect(MySQLDatabaseConnection * conn)
 	MYSQL * temp, *temp2;
 
 	temp = mysql_init(NULL);
+	// Ensure utf8mb4 on reconnects too
+	my_bool my_true = true;
+	if (mysql_options(temp, MYSQL_SET_CHARSET_NAME, "utf8mb4"))
+		ERR_LOG(LOG_SYSTEM, "Could not set utf8mb4 character set on reconnect.");
+	if (mysql_options(temp, MYSQL_OPT_RECONNECT, &my_true))
+		ERR_LOG(LOG_SYSTEM, "MYSQL_OPT_RECONNECT could not be set on reconnect.");
 	temp2 = mysql_real_connect(temp, mHostname.c_str(), mUsername.c_str(), mPassword.c_str(), mDatabaseName.c_str(), mPort, NULL, 0);
 	if (temp2 == NULL)
 	{

@@ -9,6 +9,7 @@
 #include "TableContainerManager.h"
 #include "GameServer.h"
 #include "GameMain.h"
+#include "CharacterAtt.h"
 
 
 const DWORD TIME_DELETE_DELAY = 1000;
@@ -411,6 +412,24 @@ void CObjectManager::DestroyCharacter(CGameObject* ch)
 	m_objectArray[ch->GetID() - MAX_GAME_OBJECT] = NULL; //remove from array so we cant get it
 
 	m_map_DelayDelete.insert(std::make_pair(ch, GetTickCount()));
+}
+
+size_t CObjectManager::RecalculateAllPlayers()
+{
+	size_t updated = 0;
+	for (boost::unordered_map<CHARACTERID, CPlayer*>::iterator it = m_map_pkChrByPID.begin(); it != m_map_pkChrByPID.end(); ++it)
+	{
+		CPlayer* p = it->second;
+		if (p && p->IsInitialized() && p->GetClientSession())
+		{
+			if (p->GetCharAtt())
+			{
+				p->GetCharAtt()->CalculateAll();
+				++updated;
+			}
+		}
+	}
+	return updated;
 }
 
 

@@ -31,11 +31,15 @@ void CCharacterManager::Init()
 
 void CCharacterManager::CreateCharacter(ACCOUNTID accountId, sPC_SUMMARY& sSum, SERVERFARMID serverFarmId, bool isGM)
 {
-	UNREFERENCED_PARAMETER(serverFarmId);
+	// Convert wide name to UTF-8 and escape for safe SQL insertion
+	std::string utf8Name = ws2s(sSum.awchName);
+	std::string escName = GetCharDB.EscapeString(utf8Name);
 
-	GetCharDB.Execute("INSERT INTO characters (CharID,CharName,AccountID,Race,Class,Gender,Face,Hair,HairColor,SkinColor,CurLocX,CurLocY,CurLocZ,WorldID,WorldTable,MapInfoIndex,CreateTime,GameMaster)"
-		"VALUES (%u,'%ls',%u,%u,%u,%u,%u,%u,%u,%u,%f,%f,%f,%u,%u,%u,%I64u,%u)",
-		sSum.charId, sSum.awchName, accountId, sSum.byRace, sSum.byClass, sSum.byGender, sSum.sPcShape.byFace, sSum.sPcShape.byHair, sSum.sPcShape.byHairColor, sSum.sPcShape.bySkinColor,
+	// Persist SrvFarmID so subsequent reloads (which filter by SrvFarmID) include this character
+	GetCharDB.Execute(
+		"INSERT INTO characters (CharID,CharName,AccountID,Race,Class,Gender,Face,Hair,HairColor,SkinColor,CurLocX,CurLocY,CurLocZ,WorldID,WorldTable,MapInfoIndex,CreateTime,GameMaster,SrvFarmID)"
+		" VALUES (%u,'%s',%u,%u,%u,%u,%u,%u,%u,%u,%f,%f,%f,%u,%u,%u,%I64u,%u,%u)",
+		sSum.charId, escName.c_str(), accountId, sSum.byRace, sSum.byClass, sSum.byGender, sSum.sPcShape.byFace, sSum.sPcShape.byHair, sSum.sPcShape.byHairColor, sSum.sPcShape.bySkinColor,
 		sSum.fPositionX, sSum.fPositionY, sSum.fPositionZ,
-		sSum.worldId, sSum.worldTblidx, sSum.dwMapInfoIndex, time(0), isGM);
+		sSum.worldId, sSum.worldTblidx, sSum.dwMapInfoIndex, time(0), isGM, serverFarmId);
 }

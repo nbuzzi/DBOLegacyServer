@@ -8,7 +8,10 @@ class CPlayer;
 
 class CCharacterAttPC : public CCharacterAtt
 {
-
+public:
+public:
+	// Accessor for owner player (needed by systems that adjust per-player)
+	CPlayer*            GetPlayerRef() const { return m_pPlayerRef; }
 public:
 	CCharacterAttPC();
 	virtual	~CCharacterAttPC();
