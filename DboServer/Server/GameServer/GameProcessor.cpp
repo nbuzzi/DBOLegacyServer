@@ -22,6 +22,7 @@
 #include "StoneDropEvent.h"
 #include "CustomDropEvent.h"
 #include "HelperNpcManager.h"
+#include "ArenaManager.h"
 
 
 CGameProcessor::CGameProcessor()
@@ -101,6 +102,7 @@ void CGameProcessor::Run(DWORD dwTickCount)
 		{
 			g_pDojoManager->TickProcess(dwTickDiff);
 			g_pBudokaiManager->TickProcess(dwTickDiff);
+			g_pArenaManager->TickProcess(dwTickDiff);
 		}
 		else
 		{

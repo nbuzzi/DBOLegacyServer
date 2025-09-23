@@ -315,6 +315,10 @@ public:
 
 	bool								CanTeleportPrelim(CPlayer* pPlayer);
 	bool								CanTeleportMajorMatch(CPlayer* pPlayer);
+	// Rejoin support: attempt to bring a participant back into the ongoing Budokai context
+	// Teleports to the appropriate Budokai world (prelim/major/final) on the Dojo channel
+	// Returns true if a teleport was initiated.
+	bool								TryRejoinPlayer(CPlayer* pPlayer);
 
 private:
 

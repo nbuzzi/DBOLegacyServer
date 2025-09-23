@@ -6321,6 +6321,95 @@ void CBudokaiManager::LoadBudokaiStateInfo(CPlayer * pPlayer)
 	}
 }
 
+// Attempt to rejoin a player to the appropriate Budokai context (prelim/major/final)
+bool CBudokaiManager::TryRejoinPlayer(CPlayer* pPlayer)
+{
+	CGameServer* app = (CGameServer*)g_pApp;
+
+	if (!pPlayer)
+		return false;
+
+	if (pPlayer->GetJoinID() == INVALID_JOINID)
+		return false;
+
+	// Ensure we operate on dojo channel; if not, redirect there
+	if (!app->IsDojoChannel())
+	{
+		// send the player to dojo channel lobby; let normal login flow on dojo channel attach them
+		// Choose a safe lobby world: use individual minor match lobby as default
+		TBLIDX lobbyTbl = m_pTableInfo ? m_pTableInfo->sIndividualWorldTblidx.minorMatch : INVALID_TBLIDX;
+		if (lobbyTbl == INVALID_TBLIDX)
+			return false;
+
+		// Teleport with proposal=false to switch channel immediately
+		CWorld* pLobbyWorld = app->GetGameMain()->GetWorldManager()->GetDefaultWorld();
+		CNtlVector destLoc = pLobbyWorld ? pLobbyWorld->GetTbldat()->vStart1Loc : pPlayer->GetBindLoc();
+		CNtlVector destDir = pLobbyWorld ? pLobbyWorld->GetTbldat()->vStart1Dir : pPlayer->GetBindDir();
+		pPlayer->TeleportAnotherServer(destLoc, destDir, lobbyTbl, lobbyTbl, TELEPORT_TYPE_BUDOKAI, DOJO_CHANNEL_INDEX, 0, false);
+		return true;
+	}
+
+	// We are on dojo channel: decide target by current Budokai state
+	if (m_matchType == BUDOKAI_MATCH_TYPE_INDIVIDIAUL)
+	{
+		if (m_matchStateInfo[m_matchType].byState == BUDOKAI_MATCHSTATE_MINOR_MATCH)
+		{
+			// Prelim: find the world for player's prelim index
+			auto itInd = m_mapIndividual.find(pPlayer->GetJoinID());
+			if (itInd == m_mapIndividual.end()) return false;
+			auto itPre = m_mapPrelims.find(itInd->second.byMinorMatch_MatchIndex);
+			if (itPre == m_mapPrelims.end() || !itPre->second->m_pWorld) return false;
+
+			CNtlVector vLoc = itPre->second->m_pWorld->GetTbldat()->vStart1Loc;
+			CNtlVector vDir = itPre->second->m_pWorld->GetTbldat()->vStart1Dir;
+			pPlayer->StartTeleport(vLoc, vDir, itPre->second->m_pWorld->GetID(), TELEPORT_TYPE_MINORMATCH);
+			return true;
+		}
+		else if (m_matchStateInfo[m_matchType].byState > BUDOKAI_MATCHSTATE_MINOR_MATCH && m_matchStateInfo[m_matchType].byState != BUDOKAI_MATCHSTATE_MATCH_END)
+		{
+			// Major or Final: find current match world by joinId
+			BYTE byMatchIndex = GetMatchIndex(pPlayer->GetJoinID());
+			auto itMatch = m_aTournamentMatch[m_eMatchDepth].m_mapTournament.find(byMatchIndex);
+			if (itMatch == m_aTournamentMatch[m_eMatchDepth].m_mapTournament.end() || !itMatch->second->m_pWorld) return false;
+
+			CNtlVector vLoc = itMatch->second->m_pWorld->GetTbldat()->vStart1Loc;
+			CNtlVector vDir = itMatch->second->m_pWorld->GetTbldat()->vStart1Dir;
+			BYTE tp = (m_matchStateInfo[m_matchType].byState < BUDOKAI_MATCHSTATE_WAIT_SEMIFINAL_MATCH) ? TELEPORT_TYPE_MAJORMATCH : TELEPORT_TYPE_FINALMATCH;
+			pPlayer->StartTeleport(vLoc, vDir, itMatch->second->m_pWorld->GetID(), tp);
+			return true;
+		}
+	}
+	else if (m_matchType == BUDOKAI_MATCH_TYPE_TEAM)
+	{
+		if (m_matchStateInfo[m_matchType].byState == BUDOKAI_MATCHSTATE_MINOR_MATCH)
+		{
+			auto itTeam = m_mapTeam.find(pPlayer->GetJoinID());
+			if (itTeam == m_mapTeam.end()) return false;
+			auto itPre = m_mapPrelims.find(itTeam->second.byMinorMatch_MatchIndex);
+			if (itPre == m_mapPrelims.end() || !itPre->second->m_pWorld) return false;
+
+			CNtlVector vLoc = itPre->second->m_pWorld->GetTbldat()->vStart1Loc;
+			CNtlVector vDir = itPre->second->m_pWorld->GetTbldat()->vStart1Dir;
+			pPlayer->StartTeleport(vLoc, vDir, itPre->second->m_pWorld->GetID(), TELEPORT_TYPE_MINORMATCH);
+			return true;
+		}
+		else if (m_matchStateInfo[m_matchType].byState > BUDOKAI_MATCHSTATE_MINOR_MATCH && m_matchStateInfo[m_matchType].byState != BUDOKAI_MATCHSTATE_MATCH_END)
+		{
+			BYTE byMatchIndex = GetMatchIndex(pPlayer->GetJoinID());
+			auto itMatch = m_aTournamentMatch[m_eMatchDepth].m_mapTournament.find(byMatchIndex);
+			if (itMatch == m_aTournamentMatch[m_eMatchDepth].m_mapTournament.end() || !itMatch->second->m_pWorld) return false;
+
+			CNtlVector vLoc = itMatch->second->m_pWorld->GetTbldat()->vStart1Loc;
+			CNtlVector vDir = itMatch->second->m_pWorld->GetTbldat()->vStart1Dir;
+			BYTE tp = (m_matchStateInfo[m_matchType].byState < BUDOKAI_MATCHSTATE_WAIT_SEMIFINAL_MATCH) ? TELEPORT_TYPE_MAJORMATCH : TELEPORT_TYPE_FINALMATCH;
+			pPlayer->StartTeleport(vLoc, vDir, itMatch->second->m_pWorld->GetID(), tp);
+			return true;
+		}
+	}
+
+	return false;
+}
+
 void CBudokaiManager::JoinStateReq(CPlayer * pPlayer)
 {
 	CNtlPacket packet(sizeof(sGU_BUDOKAI_JOIN_STATE_RES));

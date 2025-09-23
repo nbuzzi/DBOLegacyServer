@@ -59,19 +59,19 @@ enum eOPCODE_GT
 	GT_BUDOKAI_TOURNAMENT_TEAM_LIST_RES,
 	GT_BUDOKAI_TOURNAMENT_TEAM_INFO_RES,
 
-	GT_BUDOKAI_MINOR_MATCH_INDIVIDUAL_LIST_NFY,			// ¿¹¼±Àü ÃâÀü ¸®½ºÆ®(ÃµÇÏÁ¦ÀÏ¹«µµÈ¸ ¼­¹ö -> ÀÏ¹Ý °ÔÀÓ¼­¹ö)
-	GT_BUDOKAI_MINOR_MATCH_TEAM_LIST_NFY,				// ¿¹¼±Àü ÃâÀü ¸®½ºÆ®(ÃµÇÏÁ¦ÀÏ¹«µµÈ¸ ¼­¹ö -> ÀÏ¹Ý °ÔÀÓ¼­¹ö)
+	GT_BUDOKAI_MINOR_MATCH_INDIVIDUAL_LIST_NFY,			// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Æ®(Ãµï¿½ï¿½ï¿½ï¿½ï¿½Ï¹ï¿½ï¿½ï¿½È¸ ï¿½ï¿½ï¿½ï¿½ -> ï¿½Ï¹ï¿½ ï¿½ï¿½ï¿½Ó¼ï¿½ï¿½ï¿½)
+	GT_BUDOKAI_MINOR_MATCH_TEAM_LIST_NFY,				// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Æ®(Ãµï¿½ï¿½ï¿½ï¿½ï¿½Ï¹ï¿½ï¿½ï¿½È¸ ï¿½ï¿½ï¿½ï¿½ -> ï¿½Ï¹ï¿½ ï¿½ï¿½ï¿½Ó¼ï¿½ï¿½ï¿½)
 
-	GT_BUDOKAI_MINOR_MATCH_TELEPORT_INFO_REQ,			// ¿¹¼±Àü ÅÚ·¹Æ÷Æ® Á¤º¸ (ÀÏ¹Ý °ÔÀÓ¼­¹ö -> ÃµÇÏÁ¦ÀÏ¹«µµÈ¸ ¼­¹ö)
-	GT_BUDOKAI_MINOR_MATCH_TELEPORT_INFO_RES,			// ¿¹¼±Àü ÅÚ·¹Æ÷Æ® Á¤º¸ (ÃµÇÏÁ¦ÀÏ¹«µµÈ¸ ¼­¹ö -> ÀÏ¹Ý °ÔÀÓ¼­¹ö)
-	GT_BUDOKAI_PROGRESS_MESSAGE_NFY,					// ÃµÇÏÁ¦ÀÏ¹«µµÈ¸ ÁøÇà ¾Ë¸², ¿¹¼±Âü°¡ÀÚ,(ÃµÇÏÁ¦ÀÏ¹«µµÈ¸ ¼­¹ö -> ÀÏ¹Ý °ÔÀÓ¼­¹ö)
+	GT_BUDOKAI_MINOR_MATCH_TELEPORT_INFO_REQ,			// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ú·ï¿½ï¿½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½ (ï¿½Ï¹ï¿½ ï¿½ï¿½ï¿½Ó¼ï¿½ï¿½ï¿½ -> Ãµï¿½ï¿½ï¿½ï¿½ï¿½Ï¹ï¿½ï¿½ï¿½È¸ ï¿½ï¿½ï¿½ï¿½)
+	GT_BUDOKAI_MINOR_MATCH_TELEPORT_INFO_RES,			// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ú·ï¿½ï¿½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½ (Ãµï¿½ï¿½ï¿½ï¿½ï¿½Ï¹ï¿½ï¿½ï¿½È¸ ï¿½ï¿½ï¿½ï¿½ -> ï¿½Ï¹ï¿½ ï¿½ï¿½ï¿½Ó¼ï¿½ï¿½ï¿½)
+	GT_BUDOKAI_PROGRESS_MESSAGE_NFY,					// Ãµï¿½ï¿½ï¿½ï¿½ï¿½Ï¹ï¿½ï¿½ï¿½È¸ ï¿½ï¿½ï¿½ï¿½ ï¿½Ë¸ï¿½, ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,(Ãµï¿½ï¿½ï¿½ï¿½ï¿½Ï¹ï¿½ï¿½ï¿½È¸ ï¿½ï¿½ï¿½ï¿½ -> ï¿½Ï¹ï¿½ ï¿½ï¿½ï¿½Ó¼ï¿½ï¿½ï¿½)
 
-	GT_BUDOKAI_GM_BUDOKAI_SERVER_ENTER_REQ,				// ÃµÇÏÁ¦ÀÏ¹«µµÈ¸ ¼­¹ö·Î ÅÚ·¹Æ÷Æ® ¿äÃ»
-	GT_BUDOKAI_GM_BUDOKAI_SERVER_ENTER_RES,				// ÃµÇÏÁ¦ÀÏ¹«µµÈ¸ ¼­¹ö·Î ÅÚ·¹Æ÷Æ® ¿äÃ»À» ÇÑ ÀÀ´ä.
+	GT_BUDOKAI_GM_BUDOKAI_SERVER_ENTER_REQ,				// Ãµï¿½ï¿½ï¿½ï¿½ï¿½Ï¹ï¿½ï¿½ï¿½È¸ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ú·ï¿½ï¿½ï¿½Æ® ï¿½ï¿½Ã»
+	GT_BUDOKAI_GM_BUDOKAI_SERVER_ENTER_RES,				// Ãµï¿½ï¿½ï¿½ï¿½ï¿½Ï¹ï¿½ï¿½ï¿½È¸ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ú·ï¿½ï¿½ï¿½Æ® ï¿½ï¿½Ã»ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 
-	GT_CHAR_MARKING_UPDATE,								// ¸ðµç °ÔÀÓ¼­¹ö·Î 
+	GT_CHAR_MARKING_UPDATE,								// ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ó¼ï¿½ï¿½ï¿½ï¿½ï¿½ 
 
-	GT_CHAR_SERVER_TELEPORT,							// Å¸ Ã¤³Î¿¡¼­ Player ÃÊ´ë(¼ÒÈ¯)
+	GT_CHAR_SERVER_TELEPORT,							// Å¸ Ã¤ï¿½Î¿ï¿½ï¿½ï¿½ Player ï¿½Ê´ï¿½(ï¿½ï¿½È¯)
 
 	GT_DOJO_CREATE_REQ,
 	GT_DOJO_DELETE_REQ,
@@ -81,9 +81,9 @@ enum eOPCODE_GT
 
 	GT_CONNECT_VALID_CHECK_REQ,
 
-	GT_DOJO_SCRAMBLE_REQ,								// ÀïÅ»Àü ½ÅÃ»
-	GT_DOJO_SCRAMBLE_RESPONSE,							// ÀïÅ»Àü¿¡ ÀÀ´ä
-	GT_DOJO_SCRAMBLE_STATE_CHANGE,						// ÀïÅ»Àü »óÅÂº¯°æ	
+	GT_DOJO_SCRAMBLE_REQ,								// ï¿½ï¿½Å»ï¿½ï¿½ ï¿½ï¿½Ã»
+	GT_DOJO_SCRAMBLE_RESPONSE,							// ï¿½ï¿½Å»ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+	GT_DOJO_SCRAMBLE_STATE_CHANGE,						// ï¿½ï¿½Å»ï¿½ï¿½ ï¿½ï¿½ï¿½Âºï¿½ï¿½ï¿½	
 	GT_DOJO_UPDATE_REQ,
 
 	GT_CONNECT_CHANNEL_CHANGE_REQ,
@@ -92,7 +92,7 @@ enum eOPCODE_GT
 	GT_DOJO_SCRAMBLE_POINT_NFY,
 	GT_DOJO_SCRAMBLE_SHIEFT_SEAL_STATE_NFY,
 
-	GT_SEND_SERVER_RELAY_DATA,							// ´Ù¸¥ °ÔÀÓ¼­¹ö·Î data Àü´Þ
+	GT_SEND_SERVER_RELAY_DATA,							// ï¿½Ù¸ï¿½ ï¿½ï¿½ï¿½Ó¼ï¿½ï¿½ï¿½ï¿½ï¿½ data ï¿½ï¿½ï¿½ï¿½
 
 	GT_DOJO_SCRAMBLE_REWARD_REQ,
 	GT_DOJO_NPC_INFO_REQ,
@@ -116,6 +116,10 @@ enum eOPCODE_GT
 
 	GT_WAGUCOIN_INCREASE_NFY,
 	GT_EVENTCOIN_INCREASE_NFY,
+
+	// Arena: cross-channel teleport coordination
+	GT_ARENA_TELEPORT_INFO_REQ,
+	GT_ARENA_TELEPORT_INFO_RES,
 
 	GT_OPCODE_END_DUMMY,
 	GT_OPCODE_END = GT_OPCODE_END_DUMMY - 1
@@ -264,12 +268,12 @@ END_PROTOCOL()
 BEGIN_PROTOCOL(GT_GUILD_FUNCTION_ADD_REQ)
 	CHARACTERID			masterCharId;
 	BYTE				byFunction;
-	DWORD				dwZenny;		// ÇÊ¿ä±Ý¾×	
+	DWORD				dwZenny;		// ï¿½Ê¿ï¿½Ý¾ï¿½	
 END_PROTOCOL()
 //------------------------------------------------------------------
 BEGIN_PROTOCOL(GT_GUILD_GIVE_ZENNY_REQ)
 	CHARACTERID			charId;
-	DWORD				dwZenny;		// ÇöÀç ¼ÒÁö±Ý
+	DWORD				dwZenny;		// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 END_PROTOCOL()
 //------------------------------------------------------------------
 BEGIN_PROTOCOL(GT_GUILD_BANK_START_REQ)
@@ -306,10 +310,10 @@ BEGIN_PROTOCOL(GT_BUDOKAI_NOTICE_NFY)
 
 	union
 	{
-		// byNoticeType == BUDOKAI_NOTICE_SYSTEM »ç¿ë
+		// byNoticeType == BUDOKAI_NOTICE_SYSTEM ï¿½ï¿½ï¿½
 		TBLIDX		tblidxNotice;		
 
-		// byNoticeType == BUDOKAI_NOTICE_GM »ç¿ë
+		// byNoticeType == BUDOKAI_NOTICE_GM ï¿½ï¿½ï¿½
 		struct sGM_NOTICE
 		{
 			BYTE		byNoticeLength;
@@ -451,7 +455,7 @@ END_PROTOCOL()
 BEGIN_PROTOCOL(GT_DOJO_FUNCTION_ADD_REQ)
 	CHARACTERID							masterCharId;
 	BYTE								byFunction;
-	DWORD								dwZenny;		// ÇÊ¿ä±Ý¾×	
+	DWORD								dwZenny;		// ï¿½Ê¿ï¿½Ý¾ï¿½	
 	BYTE								byPlace;
 	BYTE								byPos;
 	BYTE								byStack;
@@ -477,19 +481,19 @@ BEGIN_PROTOCOL( GT_CONNECT_VALID_CHECK_REQ )
 END_PROTOCOL()
 //------------------------------------------------------------------
 BEGIN_PROTOCOL( GT_DOJO_SCRAMBLE_REQ )
-	HOBJECT								charId;		// ½ÅÃ»ÀÚ
-	HOBJECT								dojoTblidx;	// µµÀå
+	HOBJECT								charId;		// ï¿½ï¿½Ã»ï¿½ï¿½
+	HOBJECT								dojoTblidx;	// ï¿½ï¿½ï¿½ï¿½
 	DWORD								dwReqZenny;
 END_PROTOCOL()
 //------------------------------------------------------------------
 BEGIN_PROTOCOL( GT_DOJO_SCRAMBLE_RESPONSE )
-	HOBJECT								charId;		// ½ÅÃ»ÀÚ
-	bool								bIsAccept;	// µµÀå
+	HOBJECT								charId;		// ï¿½ï¿½Ã»ï¿½ï¿½
+	bool								bIsAccept;	// ï¿½ï¿½ï¿½ï¿½
 END_PROTOCOL()
 //------------------------------------------------------------------
 BEGIN_PROTOCOL( GT_DOJO_SCRAMBLE_STATE_CHANGE )
 	TBLIDX								dojoTblidx;
-	BYTE								byState;	// µµÀåÀïÅ»Àü »óÅÂ
+	BYTE								byState;	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Å»ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	DOJOTIME							tmNextStepTime;
 END_PROTOCOL()
 //------------------------------------------------------------------
@@ -508,7 +512,7 @@ END_PROTOCOL()
 //------------------------------------------------------------------
 BEGIN_PROTOCOL( GT_DOJO_SCRAMBLE_RESET )
 	TBLIDX								dojoTblidx;
-	BYTE								byState;	// µµÀåÀïÅ»Àü »óÅÂ
+	BYTE								byState;	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Å»ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	DOJOTIME							tmNextStepTime;
 END_PROTOCOL()
 //------------------------------------------------------------------
@@ -646,6 +650,33 @@ BEGIN_PROTOCOL(GT_EVENTCOIN_INCREASE_NFY)
 CHARACTERID				charId;
 ACCOUNTID				accountId;
 DWORD					dwEventCoin;
+END_PROTOCOL()
+//------------------------------------------------------------------
+// Arena: request teleport info for a player (GameServer -> ChatServer)
+BEGIN_PROTOCOL( GT_ARENA_TELEPORT_INFO_REQ )
+HOBJECT                             handle;
+CHARACTERID                         charId;
+BYTE                                byRole; // 0 = participant, 1 = spectator
+TBLIDX                              worldTblidx; // desired world (source-provided)
+END_PROTOCOL()
+//------------------------------------------------------------------
+// Arena: response with teleport destination (Dojo GS -> Chat -> Source GS)
+BEGIN_PROTOCOL( GT_ARENA_TELEPORT_INFO_RES )
+BYTE                                byServerChannelId; // source channel id
+BYTE                                byServerIndex;
+HOBJECT                             handle;
+CHARACTERID                         charId;
+BYTE                                byRole; // 0 participant, 1 spectator
+
+WORD                                wResultCode;
+
+BYTE                                byTeleportType; // eTELEPORT_TYPE
+BYTE                                byDestServerChannelId; // destination channel (Dojo)
+BYTE                                byDestServerIndex;
+TBLIDX                              worldTblidx;
+WORLDID                             worldId;
+sVECTOR3                            vLoc;
+sVECTOR3                            vDir;
 END_PROTOCOL()
 //------------------------------------------------------------------
 

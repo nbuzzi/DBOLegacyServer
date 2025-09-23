@@ -16,6 +16,11 @@
 #include "SubNeighborServerInfoManager.h"
 #include "SummonPet.h"
 #include "freebattle.h"
+#include "NtlLog.h"
+#include "ArenaManager.h"
+#include "World.h"
+#include "WorldTable.h"
+#include "TableContainerManager.h"
 
 
 void CChatServerSession::OnInvalid(CNtlPacket * pPacket)
@@ -230,7 +235,7 @@ void	CChatServerSession::RecGuildGiveZenny(CNtlPacket * pPacket)
 			}
 			else
 			{
-				ERR_LOG(LOG_SYSTEM, "Hacker ! Player dont have enough zeni anymore.");
+				NTL_LOG(LOG_SYSTEM, "%s", "Hacker ! Player dont have enough zeni anymore.");
 			}
 		}
 
@@ -264,7 +269,7 @@ void	CChatServerSession::RecGuildFunctionAddRes(CNtlPacket * pPacket)
 			}
 			else
 			{
-				ERR_LOG(LOG_SYSTEM, "Hacker ! Player dont have enough zeni anymore.");
+				NTL_LOG(LOG_SYSTEM, "%s", "Hacker ! Player dont have enough zeni anymore.");
 			}
 		}
 
@@ -354,7 +359,7 @@ void	CChatServerSession::RecGuildChangeMarkRes(CNtlPacket * pPacket)
 			}
 			else
 			{
-				ERR_LOG(LOG_SYSTEM, "Hacker ! Player dont have enough zeni anymore.");
+				NTL_LOG(LOG_SYSTEM, "%s", "Hacker ! Player dont have enough zeni anymore.");
 			}
 		}
 
@@ -391,7 +396,7 @@ void CChatServerSession::RecGuildChangeNameRes(CNtlPacket * pPacket)
 			}
 			else
 			{
-				ERR_LOG(LOG_HACK, "HACKER: ChaneGuildName Item does not exist anymore. ItemID %I64u, Place %u, Pos %u, Char %u, GuildID %u", req->itemId, req->byPlace, req->byPos, req->charId, req->guildId);
+				NTL_LOG(LOG_HACK, "HACKER: ChaneGuildName Item does not exist anymore. ItemID %I64u, Place %u, Pos %u, Char %u, GuildID %u", req->itemId, req->byPlace, req->byPos, req->charId, req->guildId);
 			}
 		}
 	}
@@ -569,7 +574,11 @@ void CChatServerSession::RecvBudokaiMinorMatchTeleportInfoRes(CNtlPacket * pPack
 				g_pBudokaiManager->SetJoinResult(req->joinId, BUDOKAI_JOIN_RESULT_MINORMATCH);
 
 			if(req->wResultCode == GAME_SUCCESS)
-				pPlayer->TeleportAnotherServer(CNtlVector(req->vLoc), CNtlVector(req->vDir), req->worldTblidx, req->worldId, req->byTeleportType, req->byDestServerChannelId, 120); // 120 = 2 minutes
+			{
+				CNtlVector destLoc(req->vLoc);
+				CNtlVector destDir(req->vDir);
+				pPlayer->TeleportAnotherServer(destLoc, destDir, req->worldTblidx, req->worldId, req->byTeleportType, req->byDestServerChannelId, 120); // 120 = 2 minutes
+			}
 			else
 			{
 				CNtlPacket packet(sizeof(sGU_BUDOKAI_MUDOSA_TELEPORT_RES));
@@ -588,6 +597,139 @@ void CChatServerSession::RecvBudokaiProgressMessageNfy(CNtlPacket * pPacket)
 	sTG_BUDOKAI_PROGRESS_MESSAGE_NFY * req = (sTG_BUDOKAI_PROGRESS_MESSAGE_NFY*)pPacket->GetPacketData();
 
 
+}
+
+void CChatServerSession::RecvArenaTeleportInfoReq(CNtlPacket * pPacket)
+{
+	sTG_ARENA_TELEPORT_INFO_REQ* req = (sTG_ARENA_TELEPORT_INFO_REQ*)pPacket->GetPacketData();
+
+	CGameServer* app = (CGameServer*)g_pApp;
+	if (!app->IsDojoChannel())
+	{
+		NTL_PRINT(PRINT_APP, "[ARENA] TG_REQ ignored on non-Dojo GS");
+		return; // only dojo channel computes arena destinations
+	}
+
+	// Compute destination using ArenaManager (current world and spawn)
+	TBLIDX worldTblidx = req->worldTblidx != INVALID_TBLIDX ? req->worldTblidx : (g_pArenaManager ? (TBLIDX)g_pArenaManager->GetCurrentWorldTblidx() : INVALID_TBLIDX);
+	WORLDID worldId = INVALID_WORLDID;
+	CNtlVector vLoc, vDir;
+	WORD wResult = GAME_FAIL;
+
+	if (worldTblidx != INVALID_TBLIDX)
+	{
+		TBLIDX finalWorldTblidx = worldTblidx;
+		sWORLD_TBLDAT* pWorldTbldat = (sWORLD_TBLDAT*)g_pTableContainer->GetWorldTable()->FindData(worldTblidx);
+		if (pWorldTbldat)
+		{
+			// Determine spectator override world if needed
+			if (req->byRole != 0 && g_pArenaManager && !g_pArenaManager->SpectatorsUseSameWorld())
+			{
+				TBLIDX specTblidx = (TBLIDX)g_pArenaManager->GetSpectatorWorldTblidx();
+				if (specTblidx != INVALID_TBLIDX)
+				{
+					sWORLD_TBLDAT* pSpecTbldat = (sWORLD_TBLDAT*)g_pTableContainer->GetWorldTable()->FindData(specTblidx);
+					if (pSpecTbldat)
+					{
+						pWorldTbldat = pSpecTbldat;
+						finalWorldTblidx = specTblidx;
+					}
+				}
+			}
+
+			CWorld* pWorld = app->GetGameMain()->GetWorldManager()->FindWorld((WORLDID)finalWorldTblidx);
+			if (!pWorld)
+				pWorld = app->GetGameMain()->GetWorldManager()->CreateWorld(pWorldTbldat);
+			if (pWorld)
+			{
+				worldId = pWorld->GetID();
+
+				if (req->byRole == 0)
+				{
+					vLoc = pWorldTbldat->vStart1Loc;
+					vDir = pWorldTbldat->vStart1Dir;
+				}
+				else
+				{
+					if (g_pArenaManager && g_pArenaManager->SpectatorsUseSameWorld())
+					{
+						vLoc = pWorldTbldat->vDefaultLoc;
+						vDir = pWorldTbldat->vDefaultDir;
+					}
+					else if (g_pArenaManager)
+					{
+						vLoc = CNtlVector(g_pArenaManager->GetSpectatorPosX(), g_pArenaManager->GetSpectatorPosY(), g_pArenaManager->GetSpectatorPosZ());
+						vDir = pWorldTbldat->vDefaultDir;
+					}
+				}
+
+				worldTblidx = finalWorldTblidx;
+				wResult = GAME_SUCCESS;
+				NTL_PRINT(PRINT_APP, "[ARENA] Dojo compute OK: char=%u role=%u worldTblidx=%u worldId=%u", (unsigned)req->charId, (unsigned)req->byRole, (unsigned)worldTblidx, (unsigned)worldId);
+			}
+		}
+	}
+
+	CNtlPacket packet(sizeof(sGT_ARENA_TELEPORT_INFO_RES));
+	sGT_ARENA_TELEPORT_INFO_RES* res = (sGT_ARENA_TELEPORT_INFO_RES*)packet.GetPacketData();
+	res->wOpCode = GT_ARENA_TELEPORT_INFO_RES;
+	res->byServerChannelId = req->byServerChannelId;
+	res->byServerIndex = req->byServerIndex;
+	res->handle = req->handle;
+	res->charId = req->charId;
+	res->byRole = req->byRole;
+	res->wResultCode = wResult;
+	// Use Budokai-type for Dojo channel, aligns with client expectations
+	res->byTeleportType = TELEPORT_TYPE_BUDOKAI;
+	res->byDestServerChannelId = DOJO_CHANNEL_INDEX;
+	res->byDestServerIndex = 0;
+	res->worldTblidx = worldTblidx;
+	res->worldId = worldId;
+	vLoc.CopyTo(res->vLoc);
+	vDir.CopyTo(res->vDir);
+	packet.SetPacketLen(sizeof(sGT_ARENA_TELEPORT_INFO_RES));
+	NTL_PRINT(PRINT_APP, "[ARENA] Dojo -> Chat GT_RES: char=%u res=%u worldTblidx=%u worldId=%u", (unsigned)res->charId, (unsigned)res->wResultCode, (unsigned)res->worldTblidx, (unsigned)res->worldId);
+	app->SendTo(app->GetChatServerSession(), &packet);
+}
+
+void CChatServerSession::RecvArenaTeleportInfoRes(CNtlPacket * pPacket)
+{
+	sTG_ARENA_TELEPORT_INFO_RES* req = (sTG_ARENA_TELEPORT_INFO_RES*)pPacket->GetPacketData();
+
+	// Try to resolve the player first by handle, then by charId as a fallback.
+	CPlayer* pPlayer = g_pObjectManager->GetPC(req->handle);
+	if (!pPlayer)
+		pPlayer = g_pObjectManager->FindByChar(req->charId);
+
+	if (!pPlayer)
+	{
+		NTL_PRINT(PRINT_APP, "[ARENA] Source GS TG_RES: player not found (handle=%u char=%u)", (unsigned)req->handle, (unsigned)req->charId);
+		return;
+	}
+
+	if (!pPlayer->IsInitialized())
+	{
+		NTL_PRINT(PRINT_APP, "[ARENA] Source GS TG_RES: player not initialized (char=%u)", (unsigned)pPlayer->GetCharID());
+		return;
+	}
+
+	if (pPlayer->GetCharID() != req->charId)
+	{
+		NTL_PRINT(PRINT_APP, "[ARENA] Source GS TG_RES: charId mismatch handle=%u hasChar=%u resChar=%u", (unsigned)req->handle, (unsigned)pPlayer->GetCharID(), (unsigned)req->charId);
+		// continue anyway as long as we have a valid player
+	}
+
+	if (req->wResultCode != GAME_SUCCESS)
+	{
+		NTL_PRINT(PRINT_APP, "[ARENA] Source GS TG_RES: result=%u for char=%u", (unsigned)req->wResultCode, (unsigned)pPlayer->GetCharID());
+		return;
+	}
+
+	CNtlVector destLoc(req->vLoc);
+	CNtlVector destDir(req->vDir);
+	NTL_PRINT(PRINT_APP, "[ARENA] Source GS TeleportAnotherServer: char=%u ch=%u worldTblidx=%u worldId=%u type=%u", (unsigned)pPlayer->GetCharID(), (unsigned)req->byDestServerChannelId, (unsigned)req->worldTblidx, (unsigned)req->worldId, (unsigned)req->byTeleportType);
+	// Shorten wait to 3 seconds like Budokai proposal
+	pPlayer->TeleportAnotherServer(destLoc, destDir, req->worldTblidx, req->worldId, req->byTeleportType, req->byDestServerChannelId, 3);
 }
 
 
@@ -842,7 +984,7 @@ void CChatServerSession::RecvCharServerTeleport(CNtlPacket * pPacket)
 		if (req->sTeleportInfo.serverChannelId == app->GetGsChannel()) //if teleport fails
 		{
 			player->SendCharStateSpawning(TELEPORT_TYPE_DEFAULT);
-			ERR_LOG(LOG_USER, "Player %u failed to teleport to channel %u because its the same as current channel", req->sTeleportInfo.serverChannelId);
+			NTL_LOG(LOG_USER, "Player %u failed to teleport to channel %u because its the same as current channel", player->GetCharID(), req->sTeleportInfo.serverChannelId);
 		}
 		else
 		{
@@ -877,12 +1019,12 @@ void CChatServerSession::RecvCharServerTeleport(CNtlPacket * pPacket)
 				}
 				else
 				{
-					ERR_LOG(LOG_GENERAL, "pChannel->listGameServerInfoRef.size() == 0. ServerIndex: %u, serverChannelId: %u", req->sTeleportInfo.serverIndex, req->sTeleportInfo.serverChannelId);
+					NTL_LOG(LOG_GENERAL, "pChannel->listGameServerInfoRef.size() == 0. ServerIndex: %u, serverChannelId: %u", req->sTeleportInfo.serverIndex, req->sTeleportInfo.serverChannelId);
 				}
 			}
 			else
 			{
-				ERR_LOG(LOG_GENERAL, "Could not find channel info. ServerIndex: %u, serverChannelId: %u", req->sTeleportInfo.serverIndex, req->sTeleportInfo.serverChannelId);
+				NTL_LOG(LOG_GENERAL, "Could not find channel info. ServerIndex: %u, serverChannelId: %u", req->sTeleportInfo.serverIndex, req->sTeleportInfo.serverChannelId);
 			}
 		}
 
@@ -960,7 +1102,7 @@ void	CChatServerSession::RecvDojoFunctionAddRes(CNtlPacket * pPacket)
 			}
 			else
 			{
-				ERR_LOG(LOG_SYSTEM, "Hacker ! Player dont have enough zeni anymore.");
+				NTL_LOG(LOG_SYSTEM, "%s", "Hacker ! Player dont have enough zeni anymore.");
 			}
 
 			if (byNewDojoLevel > 0)
@@ -1037,7 +1179,7 @@ void CChatServerSession::RecvDojoSendAttGuildId(CNtlPacket * pPacket)
 		if (pDojo->GetDojoTblidx() == req->dojoTblidx)
 			pDojo->SetAttGuild(req->attGuildId);
 		else
-			ERR_LOG(LOG_GENERAL, "ERROR: Dojo tblidx does not match. ");
+			NTL_LOG(LOG_GENERAL, "%s", "ERROR: Dojo tblidx does not match. ");
 	}
 }
 
@@ -1117,11 +1259,11 @@ void CChatServerSession::RecvDojoScrambleRes(CNtlPacket * pPacket)
 			if (pPlayer->GetZeni() >= DBO_DOJO_SCRAMBLE_REQUEST_FARE)
 				pPlayer->UpdateZeni(ZENNY_CHANGE_TYPE_DOJO_SCRAMBLE_REQ, DBO_DOJO_SCRAMBLE_REQUEST_FARE, false, true);
 			else
-				ERR_LOG(LOG_USER, "ERROR: User %u does not have the required zeni anymore. Hacker..", pPlayer->GetCharID());
+				NTL_LOG(LOG_USER, "ERROR: User %u does not have the required zeni anymore. Hacker..", pPlayer->GetCharID());
 		}
 	}
 	else if (req->wResultCode == GAME_SUCCESS)
-		ERR_LOG(LOG_USER, "ERROR: User %u is not online anymore. Hacker..", pPlayer->GetCharID());
+	NTL_LOG(LOG_USER, "ERROR: User %u is not online anymore. Hacker..", pPlayer->GetCharID());
 }
 
 
@@ -1146,11 +1288,11 @@ void CChatServerSession::RecvDojoScrambleResponse(CNtlPacket * pPacket)
 			if (pPlayer->GetZeni() >= DBO_DOJO_SCRAMBLE_REJECT_FARE) //check if we still have the required zeni
 				pPlayer->UpdateZeni(ZENNY_CHANGE_TYPE_DOJO_ANTI_SCRAMBLE_DEL, DBO_DOJO_SCRAMBLE_REJECT_FARE, false, true);
 			else
-				ERR_LOG(LOG_USER, "ERROR: User %u does not have the required zeni anymore. Hacker..", pPlayer->GetCharID());
+				NTL_LOG(LOG_USER, "ERROR: User %u does not have the required zeni anymore. Hacker..", pPlayer->GetCharID());
 		}
 	}
 	else if (req->wResultCode != GAME_SUCCESS && req->bIsAccept == false)
-		ERR_LOG(LOG_USER, "ERROR: User %u is not online anymore. Hacker..", pPlayer->GetCharID());
+	NTL_LOG(LOG_USER, "ERROR: User %u is not online anymore. Hacker..", pPlayer->GetCharID());
 }
 
 void CChatServerSession::RecvDojoScrambleStateChange(CNtlPacket * pPacket)
@@ -1162,7 +1304,7 @@ void CChatServerSession::RecvDojoScrambleStateChange(CNtlPacket * pPacket)
 	{
 		pDojo->SetState(req->byState, req->tmNextStepTime);
 	}
-	else ERR_LOG(LOG_USER, "ERROR: Could not find dojo with tblidx %u", req->dojoTblidx);
+	else NTL_LOG(LOG_USER, "ERROR: Could not find dojo with tblidx %u", req->dojoTblidx);
 }
 
 

@@ -47,6 +47,7 @@
 #include "PlayerModifiers.h"
 #include "HelperNpcManager.h"
 #include "SkillTable.h"
+#include "ArenaManager.h"
 // --- INICIO SOCKET COMANDOS ---
 #include <thread>
 #include <atomic>
@@ -300,6 +301,17 @@ int CGameServer::OnAppStart()
 	NTL_PRINT(PRINT_APP, "Prepare Budokai System");
 	CBudokaiManager* pBudokaiManager = new CBudokaiManager;
 	UNREFERENCED_PARAMETER(pBudokaiManager);
+
+	NTL_PRINT(PRINT_APP, "Prepare Arena System");
+	CArenaManager* pArenaManager = new CArenaManager;
+	UNREFERENCED_PARAMETER(pArenaManager);
+
+	// Load Arena config now that the manager singleton exists
+	{
+		const char* arenaIni = ".\\config\\Arena.cfg";
+		bool ok = g_pArenaManager->LoadConfigFromIniPath(arenaIni);
+		NTL_PRINT(PRINT_APP, ok ? "[ARENA] Config loaded" : "[ARENA] Config not found or invalid");
+	}
 
 	int rc = NTL_SUCCESS;
 
@@ -650,6 +662,8 @@ int	CGameServer::OnConfiguration(const char* lpszConfigFile)
 		NTL_PRINT(PRINT_APP, "[HELPER_NPC] SpawnOffset=%.2f FollowLeader=%d AssistLeaderTarget=%d HealLpThresholdOverride=%u DamageMultiplier=%.2f HealPowerMultiplier=%.2f MoveSpeedMultiplier=%.2f AttackSpeedPercent=%u EpRegenPercent=%u InvincibleHelper=%d BuffCount=%zu",
 			cfg.fSpawnOffset, (int)cfg.bFollowLeader, (int)cfg.bAssistLeaderTarget, cfg.wHealLpThresholdOverride, cfg.fDamageMultiplier, cfg.fHealPowerMultiplier, cfg.fMoveSpeedMultiplier, cfg.wAttackSpeedPercent, cfg.wEpRegenPercent, (int)cfg.bInvincibleHelper, cfg.vBuffSkills.size());
 	}
+
+	// Arena config is loaded in OnAppStart after creating the manager
 
 	return NTL_SUCCESS;
 }

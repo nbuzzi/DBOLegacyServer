@@ -140,6 +140,80 @@ void	CServerPassiveSession::RecUserLeaveGame(CNtlPacket* pPacket)
 }
 
 //--------------------------------------------------------------------------------------//
+//
+//--------------------------------------------------------------------------------------//
+void CServerPassiveSession::RecvArenaTeleportInfoReq(CNtlPacket* pPacket)
+{
+	sGT_ARENA_TELEPORT_INFO_REQ* req = (sGT_ARENA_TELEPORT_INFO_REQ*)pPacket->GetPacketData();
+
+	CPlayer* pPlayer = g_pPlayerManager->FindPlayerWithCharID(req->charId);
+	if (pPlayer && pPlayer->GetPcInitState())
+	{
+		CNtlPacket packet(sizeof(sTG_ARENA_TELEPORT_INFO_REQ));
+		sTG_ARENA_TELEPORT_INFO_REQ* res = (sTG_ARENA_TELEPORT_INFO_REQ*)packet.GetPacketData();
+		res->wOpCode = TG_ARENA_TELEPORT_INFO_REQ;
+		res->handle = req->handle;
+		res->charId = req->charId;
+		res->byServerChannelId = pPlayer->GetChannel();
+		res->byServerIndex = 0;
+		res->byRole = req->byRole;
+		res->worldTblidx = req->worldTblidx;
+		packet.SetPacketLen(sizeof(sTG_ARENA_TELEPORT_INFO_REQ));
+		NTL_PRINT(PRINT_APP, "[ARENA] Chat GT->TG: char=%u role=%u srcCh=%u worldTblidx=%u", (unsigned)req->charId, (unsigned)req->byRole, (unsigned)pPlayer->GetChannel(), (unsigned)req->worldTblidx);
+		HSESSION hDojo = g_pServerInfoManager->GetGsSession(DOJO_CHANNEL_INDEX);
+		if (hDojo)
+		{
+			g_pApp->Send(hDojo, &packet);
+		}
+		else
+		{
+			NTL_PRINT(PRINT_APP, "[ARENA] Chat: Dojo GS session missing, broadcasting TG_REQ to channel=%u", (unsigned)DOJO_CHANNEL_INDEX);
+			g_pServerInfoManager->Broadcast(&packet, DOJO_CHANNEL_INDEX);
+		}
+	}
+}
+
+//--------------------------------------------------------------------------------------//
+//
+//--------------------------------------------------------------------------------------//
+void CServerPassiveSession::RecvArenaTeleportInfoRes(CNtlPacket* pPacket)
+{
+	sGT_ARENA_TELEPORT_INFO_RES* req = (sGT_ARENA_TELEPORT_INFO_RES*)pPacket->GetPacketData();
+
+	// Always relay back to the source GameServer using the recorded channel.
+	// Do not gate on Chat's player presence; GS will validate the handle/char.
+	CNtlPacket packet(sizeof(sTG_ARENA_TELEPORT_INFO_RES));
+	sTG_ARENA_TELEPORT_INFO_RES* res = (sTG_ARENA_TELEPORT_INFO_RES*)packet.GetPacketData();
+	res->wOpCode = TG_ARENA_TELEPORT_INFO_RES;
+	res->handle = req->handle;
+	res->charId = req->charId;
+	res->byServerChannelId = req->byServerChannelId;
+	res->byServerIndex = req->byServerIndex;
+	res->byRole = req->byRole;
+	res->wResultCode = req->wResultCode;
+	res->byTeleportType = req->byTeleportType;
+	res->byDestServerChannelId = req->byDestServerChannelId;
+	res->byDestServerIndex = req->byDestServerIndex;
+	res->worldTblidx = req->worldTblidx;
+	res->worldId = req->worldId;
+	res->vLoc = req->vLoc;
+	res->vDir = req->vDir;
+	packet.SetPacketLen(sizeof(sTG_ARENA_TELEPORT_INFO_RES));
+
+	// Diagnostic: if Chat cannot find the player, still forward and log.
+	CPlayer* pPlayer = g_pPlayerManager->FindPlayerWithCharID(req->charId);
+	if (!(pPlayer && pPlayer->GetPcInitState()))
+	{
+		NTL_PRINT(PRINT_APP, "[ARENA] Chat TG->GT (no Chat player): char=%u dstSrcCh=%u worldTblidx=%u res=%u", (unsigned)req->charId, (unsigned)req->byServerChannelId, (unsigned)req->worldTblidx, (unsigned)req->wResultCode);
+	}
+	else
+	{
+		NTL_PRINT(PRINT_APP, "[ARENA] Chat TG->GT: char=%u role=%u dstSrcCh=%u worldTblidx=%u worldId=%u res=%u", (unsigned)req->charId, (unsigned)req->byRole, (unsigned)req->byServerChannelId, (unsigned)req->worldTblidx, (unsigned)req->worldId, (unsigned)req->wResultCode);
+	}
+	g_pApp->Send(g_pServerInfoManager->GetGsSession(req->byServerChannelId), &packet);
+}
+
+//--------------------------------------------------------------------------------------//
 //		RECEIVE USER AUTH KEY GAME SERVER
 //--------------------------------------------------------------------------------------//
 void CServerPassiveSession::RecvUserAuthKeyCreatedNfy(CNtlPacket* pPacket)

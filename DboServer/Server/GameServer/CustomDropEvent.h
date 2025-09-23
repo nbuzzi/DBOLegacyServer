@@ -107,6 +107,7 @@ private:
     void CreateSingleDrop(CMonster *pMob, CCharacter *pPlayer, unsigned int dropId);
     void CreateStackedDrop(CMonster *pMob, CCharacter *pPlayer, unsigned int dropId, BYTE count);
     bool LoadConfigInternal(const char *path);
+    void ApplyAutoStartPolicy();
 
 public:
     bool m_bOn;
@@ -181,6 +182,15 @@ private:
     // Mob replacement mapping: when event is ON, replace original mob tblidx with target tblidx for spawn-table spawns
     std::unordered_map<unsigned int, unsigned int> m_replaceMob; // from -> to
     std::unordered_set<unsigned int> m_exceptReplace;            // exceptions for global replaces
+    // If true, use the target mob's stats on replacement; if false, keep original stats (visual/behavior may still change)
+    bool m_replaceUseTargetStats;
+
+    // Auto-start controls (parsed from settings):
+    bool m_autoStart;                    // if true, this channel may auto-start at server start
+    BYTE m_autoStartHours;               // duration to start with
+    bool m_autoStartAllChannels;         // if true, applies to all channels
+    std::unordered_set<BYTE> m_autoStartChannels; // specific channels which should auto-start
+    bool m_autoStartPending;             // schedule StartEvent() on the next TickProcess
 
 public:
     // Returns replacement mob tblidx for given source, or 0 if none configured or exempted
@@ -201,6 +211,9 @@ public:
         }
         return 0;
     }
+
+public:
+    bool IsReplaceUseTargetStats() const { return m_replaceUseTargetStats; }
 
 private:
     bool LoadLevelsSidecar(const char* cfgPath);

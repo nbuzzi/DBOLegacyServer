@@ -153,8 +153,11 @@ bool CRejoinManager::ResolveRejoinTarget(const sREJOIN_TICKET& t, sREJOIN_TARGET
 		}
 		break;
 	case REJOIN_BUDOKAI:
-		g_pBudokaiManager->CanTeleportMajorMatch(cPlayer);
-		break; // Budokai rejoin is handled separately
+		if (g_pBudokaiManager->TryRejoinPlayer(cPlayer))
+		{
+			return true;
+		}
+		break; // could not handle Budokai rejoin here
 	default: break;
 	}
 	return false;

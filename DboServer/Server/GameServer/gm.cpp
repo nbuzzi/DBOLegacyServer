@@ -35,6 +35,7 @@
 #include "HelperNpcManager.h"
 #include "BudokaiManager.h"
 #include "PlayerModifiers.h"
+#include "ArenaManager.h"
 
 void gm_read_command(sUG_SERVER_COMMAND* sPacket, CPlayer* pPlayer)
 {
@@ -162,6 +163,7 @@ ACMD(do_reload_helpernpc_cfg);
 ACMD(do_helpernpc_metrics);
 ACMD(do_helpernpc_resetmetrics);
 ACMD(do_helpernpc_refresh);
+ACMD(do_arena);
 
 struct command_info cmd_info[] =
 {
@@ -255,9 +257,126 @@ struct command_info cmd_info[] =
     { L"@customdrop_buffduration", do_customdrop_buffduration, ADMIN_LEVEL_GAME_MASTER },
 	{ L"@reload_playermods", do_reload_playermods_cfg, ADMIN_LEVEL_GAME_MASTER },
 	{ L"@playermods", do_playermods_toggle, ADMIN_LEVEL_GAME_MASTER },
+    { L"@arena", do_arena, ADMIN_LEVEL_GAME_MASTER },
 
 	{ L"@qwasawedsadas", NULL, ADMIN_LEVEL_ADMIN }
 };
+ACMD(do_arena)
+{
+	// Syntax:
+	// @arena start <mode>
+	// @arena stop [abort]
+	// @arena rotate
+	// @arena status
+	// @arena join [name]
+	// @arena spectate [name]
+	// @arena tp participants|spectators|all|here [participants|spectators|all]
+	// @arena win [name]
+	// @arena award winners|participants
+	// @arena map <worldTblidx>
+	pToken->PopToPeek();
+	std::wstring sub = pToken->PeekNextToken(NULL, &iLine);
+	if (sub.empty()) {
+		g_pArenaManager->StatusTo(pPlayer);
+		return;
+	}
+
+	std::string sc = ws2s(sub);
+	for (auto &c : sc) c = (char)tolower(c);
+
+	if (sc == "start") {
+		pToken->PopToPeek();
+		std::wstring wmode = pToken->PeekNextToken(NULL, &iLine);
+		std::string smode = ws2s(wmode);
+		for (auto &c : smode) c = (char)tolower(c);
+		CArenaManager::Mode mode = CArenaManager::Mode::OPEN;
+		if (smode == "gvg" || smode == "guild" || smode == "guild_vs_guild") mode = CArenaManager::Mode::GUILD_VS_GUILD;
+		else if (smode == "pvp" || smode == "party" || smode == "party_vs_party") mode = CArenaManager::Mode::PARTY_VS_PARTY;
+		else if (smode == "ffa" || smode == "free" || smode == "free_for_all") mode = CArenaManager::Mode::FREE_FOR_ALL;
+		else mode = CArenaManager::Mode::OPEN;
+		g_pArenaManager->Start(mode);
+	}
+	else if (sc == "stop") {
+		pToken->PopToPeek();
+		std::wstring warg = pToken->PeekNextToken(NULL, &iLine);
+		std::string sarg = ws2s(warg);
+		for (auto &c : sarg) c = (char)tolower(c);
+		bool abort = (sarg == "abort");
+		g_pArenaManager->Stop(abort);
+	}
+	else if (sc == "rotate") {
+		g_pArenaManager->RotateMapNow();
+	}
+	else if (sc == "status") {
+		g_pArenaManager->StatusTo(pPlayer);
+	}
+	else if (sc == "join") {
+		pToken->PopToPeek();
+		std::wstring wname = pToken->PeekNextToken(NULL, &iLine);
+		CPlayer* who = pPlayer;
+		if (!wname.empty()) {
+			CPlayer* found = g_pObjectManager->FindByName(wname.c_str());
+			if (found && found->IsInitialized()) who = found;
+		}
+		if (who) g_pArenaManager->AddParticipant(who);
+	}
+	else if (sc == "spectate") {
+		pToken->PopToPeek();
+		std::wstring wname = pToken->PeekNextToken(NULL, &iLine);
+		CPlayer* who = pPlayer;
+		if (!wname.empty()) {
+			CPlayer* found = g_pObjectManager->FindByName(wname.c_str());
+			if (found && found->IsInitialized()) who = found;
+		}
+		if (who) g_pArenaManager->AddSpectator(who);
+	}
+	else if (sc == "tp") {
+		pToken->PopToPeek();
+		std::wstring which = pToken->PeekNextToken(NULL, &iLine);
+		std::string swhich = ws2s(which);
+		for (auto &c : swhich) c = (char)tolower(c);
+		if (swhich == "participants") g_pArenaManager->TeleportParticipants();
+		else if (swhich == "spectators") g_pArenaManager->TeleportSpectators();
+		else if (swhich == "all") { g_pArenaManager->TeleportParticipants(); g_pArenaManager->TeleportSpectators(); }
+		else if (swhich == "here") {
+			pToken->PopToPeek();
+			std::wstring wsub = pToken->PeekNextToken(NULL, &iLine);
+			std::string subarg = ws2s(wsub);
+			for (auto &c : subarg) c = (char)tolower(c);
+			if (subarg == "participants") g_pArenaManager->TeleportParticipantsHere(pPlayer);
+			else if (subarg == "spectators") g_pArenaManager->TeleportSpectatorsHere(pPlayer);
+			else /* all or empty */ { g_pArenaManager->TeleportParticipantsHere(pPlayer); g_pArenaManager->TeleportSpectatorsHere(pPlayer); }
+		}
+	}
+	else if (sc == "win") {
+		pToken->PopToPeek();
+		std::wstring wname = pToken->PeekNextToken(NULL, &iLine);
+		CPlayer* who = pPlayer;
+		if (!wname.empty()) {
+			CPlayer* found = g_pObjectManager->FindByName(wname.c_str());
+			if (found && found->IsInitialized()) who = found;
+		}
+		if (who) g_pArenaManager->MarkWinner(who);
+	}
+	else if (sc == "award") {
+		pToken->PopToPeek();
+		std::wstring wset = pToken->PeekNextToken(NULL, &iLine);
+		std::string sset = ws2s(wset);
+		for (auto &c : sset) c = (char)tolower(c);
+		if (sset == "winners") g_pArenaManager->AwardRewards(true);
+		else if (sset == "participants") g_pArenaManager->AwardRewards(false);
+	}
+	else if (sc == "map") {
+		pToken->PopToPeek();
+		std::wstring wnum = pToken->PeekNextToken(NULL, &iLine);
+		unsigned int tbl = (unsigned int)atoi(ws2s(wnum).c_str());
+		if (tbl) g_pArenaManager->SetCurrentWorld(tbl);
+	}
+	else {
+		g_pArenaManager->StatusTo(pPlayer);
+	}
+}
+
 
 ACMD(do_big)
 {

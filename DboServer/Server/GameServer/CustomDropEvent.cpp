@@ -78,6 +78,13 @@ void CCustomDropEvent::Init()
 	// Debuff immunity defaults
 	m_debuffImmuneEnabled = true; // default ON as requested
 	m_blockDebuffEffects.clear();
+	m_replaceUseTargetStats = true; // default ON so replacements feel authentic
+	// Auto-start defaults
+	m_autoStart = false;
+	m_autoStartAllChannels = false;
+	m_autoStartHours = 3;
+	m_autoStartChannels.clear();
+	m_autoStartPending = false;
 	LoadConfigInternal(m_cfgPath.c_str());
 	LoadLevelsSidecar(m_cfgPath.c_str());
 }
@@ -117,6 +124,12 @@ bool CCustomDropEvent::LoadConfigInternal(const char* path)
 	// Preserve current immunity default; allow settings section to override
 	// but clear specific lists so reloading replaces them
 	m_blockDebuffEffects.clear();
+	// Reset auto-start flags; settings may re-enable
+	m_autoStart = false;
+	m_autoStartAllChannels = false;
+	m_autoStartHours = 3;
+	m_autoStartChannels.clear();
+	m_autoStartPending = false;
 
 	FILE* f = nullptr;
 	errno_t e = fopen_s(&f, path, "rt");
@@ -254,6 +267,8 @@ bool CCustomDropEvent::LoadConfigInternal(const char* path)
 			{
 				m_replaceMob[mobId] = target;
 			}
+			// Do not treat this line as a drop list
+			continue;
 		}
 
 		if (isMods)
@@ -398,7 +413,7 @@ bool CCustomDropEvent::LoadConfigInternal(const char* path)
 		}
 		else if (isSettings)
 		{
-			// format: all settings: radius=50 interval=2000 healMul=3.5 duration=60000 immuneDebuff=1 debuffEffects=EFFECT1|EFFECT2|...
+			// format: all settings: radius=50 interval=2000 healMul=3.5 duration=60000 immuneDebuff=1 debuffEffects=EFFECT1|EFFECT2|... replaceUseTargetStats=1
 			// Only allowed with mobId 0/all
 			if (mobId != 0)
 				continue;
@@ -459,9 +474,49 @@ bool CCustomDropEvent::LoadConfigInternal(const char* path)
 							tok = strtok(nullptr, "|, ");
 						}
 					}
+					else if (_stricmp(key, "replaceUseTargetStats") == 0 || _stricmp(key, "replaceStats") == 0)
+					{
+						m_replaceUseTargetStats = (atoi(val) != 0);
+					}
+					else if (_stricmp(key, "autoStart") == 0)
+					{
+						m_autoStart = (atoi(val) != 0);
+					}
+					else if (_stricmp(key, "autoStartHours") == 0 || _stricmp(key, "autoHours") == 0)
+					{
+						int h = atoi(val); if (h <= 0) h = 1; if (h > 168) h = 168; m_autoStartHours = (BYTE)h;
+					}
+					else if (_stricmp(key, "autoStartChannels") == 0 || _stricmp(key, "autoChannels") == 0)
+					{
+						// parse CSV or '|' separated list of channel indices; special token 'all'
+						m_autoStartChannels.clear();
+						m_autoStartAllChannels = false;
+						char buf[256]; strncpy_s(buf, sizeof(buf), val, _TRUNCATE);
+						char* tok = strtok(buf, ",| ");
+						while (tok)
+						{
+							while (*tok == ' ' || *tok == '\t') ++tok;
+							if (*tok)
+							{
+								if (_stricmp(tok, "all") == 0)
+								{
+									m_autoStartAllChannels = true;
+									m_autoStartChannels.clear();
+									break;
+								}
+								int ch = atoi(tok);
+								if (ch >= 0 && ch <= 50)
+									m_autoStartChannels.insert((BYTE)ch);
+							}
+							tok = strtok(nullptr, ",| ");
+						}
+					}
 				}
 				t = strtok(nullptr, " \t\n\r");
 			}
+			// If autoStart is on, schedule StartEvent on next tick to avoid init-order issues
+			if (m_autoStart)
+				m_autoStartPending = true;
 		}
 		else if (isTotem)
 		{
@@ -721,6 +776,12 @@ void CCustomDropEvent::TickProcess(DWORD dwTick)
 	if (dwTick < m_dwNextUpdateTick)
 		return;
 
+	// If auto-start was requested by config, apply it once
+	if (m_autoStartPending && !m_bOn)
+	{
+		ApplyAutoStartPolicy();
+	}
+
 	if (m_bOn)
 	{
 		if (app->GetTime() >= m_timeEnd)
@@ -863,6 +924,23 @@ void CCustomDropEvent::TickProcess(DWORD dwTick)
 		}
 		m_dwNextTotemTick = dwTick + 200; // check totems every 200ms
 	}
+}
+
+void CCustomDropEvent::ApplyAutoStartPolicy()
+{
+	if (!m_autoStart || m_bOn)
+	{
+		m_autoStartPending = false;
+		return;
+	}
+	CGameServer* app = (CGameServer*)g_pApp;
+	BYTE ch = app->m_config.byChannel; // channel index configured for this GameServer instance
+	bool allowed = m_autoStartAllChannels || m_autoStartChannels.empty() || (m_autoStartChannels.find(ch) != m_autoStartChannels.end());
+	if (allowed)
+	{
+		StartEvent(m_autoStartHours);
+	}
+	m_autoStartPending = false;
 }
 
 void CCustomDropEvent::Update(CMonster* pMob, CCharacter* pPlayer)

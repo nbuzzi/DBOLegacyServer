@@ -404,6 +404,11 @@ void CPlayer::LeaveGame()
 
 		if (app->IsDojoChannel() && GetMatchIndex() != INVALID_BYTE)
 		{
+			// Issue a Budokai rejoin ticket so the player can return
+			sRejoinTicket.dungeonType = eREJOIN_DUNGEON_TYPE::REJOIN_BUDOKAI;
+			sRejoinTicket.worldId = GetWorldID();
+			g_Rejoin.Put(sRejoinTicket);
+
 			SetBudokaiPcState(MATCH_MEMBER_STATE_GIVEUP);
 			g_pBudokaiManager->PlayerDisconnect(GetCharID(), GetID(), GetJoinID(), GetMatchIndex(), GetBudokaiTeamType());
 		}

@@ -115,6 +115,10 @@ public:
 	void						RecvWaguCoinIncreaseNfy(CNtlPacket * pPacket);
 	void						RecvEventCoinIncreaseNfy(CNtlPacket * pPacket);
 
+	// Arena
+	void						RecvArenaTeleportInfoReq(CNtlPacket* pPacket);
+	void						RecvArenaTeleportInfoRes(CNtlPacket* pPacket);
+
 
 
 private:
