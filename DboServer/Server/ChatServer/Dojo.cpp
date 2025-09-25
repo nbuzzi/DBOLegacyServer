@@ -204,7 +204,7 @@ void CDojo::BeginWarPreparation()
 
 	//send this packet to requestor that player has accepted the war
 	CPlayer* pRequestor = g_pPlayerManager->FindPlayerWithCharID(GetChallengerCharID());
-	if (pRequestor && pRequestor->GetPcInitState())
+	if (pRequestor && pRequestor->GetPcInitState() && m_pkGuild)
 	{
 		CNtlPacket packet2(sizeof(sTU_DOJO_SCRAMBLE_RECEIVE_NFY));
 		sTU_DOJO_SCRAMBLE_RECEIVE_NFY * res2 = (sTU_DOJO_SCRAMBLE_RECEIVE_NFY *)packet2.GetPacketData();
@@ -223,9 +223,11 @@ void CDojo::BeginWarPreparation()
 	res->byState = m_eDojoState;
 	res->tmNextStepTime = m_tmNextStepTime;
 	packet.SetPacketLen(sizeof(sTU_DOJO_SCRAMBLE_INFORM_NFY));
-	GetGuild()->Broadcast(&packet);
+	if (GetGuild())
+		GetGuild()->Broadcast(&packet);
 
-	g_pGuildManager->GetGuild(dojoData.challengeGuildId)->Broadcast(&packet);
+	if (CGuild* pOpp0 = g_pGuildManager->GetGuild(dojoData.challengeGuildId))
+		pOpp0->Broadcast(&packet);
 
 
 	//
@@ -249,6 +251,71 @@ void CDojo::BeginWarPreparation()
 	g_pServerInfoManager->Broadcast(&packetSrv2);
 }
 
+void CDojo::BeginWarPreparationManual()
+{
+	// Manual version: identical to BeginWarPreparation but without DisableDojoWar guard
+	m_lastDojoWar = std::time(NULL);
+	m_byRejectCount = 0;
+	m_bHasWarRequest = false;
+
+	m_bWarInProgress = true;
+
+	m_eDojoState = eDBO_DOJO_STATUS_STANDBY;
+
+	m_tmNextStepTime = m_lastDojoWar + 10; // 10 seconds preparation for manual start
+
+	// notify requestor if present
+	CPlayer* pRequestor = g_pPlayerManager->FindPlayerWithCharID(GetChallengerCharID());
+	if (pRequestor && pRequestor->GetPcInitState() && m_pkGuild)
+	{
+		CNtlPacket packet2(sizeof(sTU_DOJO_SCRAMBLE_RECEIVE_NFY));
+		sTU_DOJO_SCRAMBLE_RECEIVE_NFY * res2 = (sTU_DOJO_SCRAMBLE_RECEIVE_NFY *)packet2.GetPacketData();
+		res2->wOpCode = TU_DOJO_SCRAMBLE_RECEIVE_NFY;
+		res2->dojoTblidx = dojoData.dojoTblidx;
+		res2->guildId = m_pkGuild->GetInfo()->guildId;
+		packet2.SetPacketLen(sizeof(sTU_DOJO_SCRAMBLE_RECEIVE_NFY));
+		pRequestor->SendPacket(&packet2);
+	}
+
+	//send nfy to dojo-channel
+	CNtlPacket packet(sizeof(sTU_DOJO_SCRAMBLE_INFORM_NFY));
+	sTU_DOJO_SCRAMBLE_INFORM_NFY * res = (sTU_DOJO_SCRAMBLE_INFORM_NFY *)packet.GetPacketData();
+	res->wOpCode = TU_DOJO_SCRAMBLE_INFORM_NFY;
+	res->dojoTblidx = dojoData.dojoTblidx;
+	res->byState = m_eDojoState;
+	res->tmNextStepTime = m_tmNextStepTime;
+	packet.SetPacketLen(sizeof(sTU_DOJO_SCRAMBLE_INFORM_NFY));
+	if (GetGuild())
+		GetGuild()->Broadcast(&packet);
+	{
+		CGuild* pOpp = g_pGuildManager->GetGuild(dojoData.challengeGuildId);
+		if (pOpp)
+			pOpp->Broadcast(&packet);
+	}
+
+	// server broadcasts
+	{
+		CNtlPacket packetSrv(sizeof(sTG_DOJO_SEND_ATT_GUILD_ID));
+		sTG_DOJO_SEND_ATT_GUILD_ID * resSrv = (sTG_DOJO_SEND_ATT_GUILD_ID *)packetSrv.GetPacketData();
+		resSrv->wOpCode = TG_DOJO_SEND_ATT_GUILD_ID;
+		resSrv->dojoTblidx = dojoData.dojoTblidx;
+		resSrv->defGuildId = dojoData.guildId;
+		resSrv->attGuildId = dojoData.challengeGuildId;
+		packetSrv.SetPacketLen(sizeof(sTG_DOJO_SEND_ATT_GUILD_ID));
+		g_pServerInfoManager->Broadcast(&packetSrv);
+	}
+	{
+		CNtlPacket packetSrv2(sizeof(sTG_DOJO_SCRAMBLE_STATE_CHANGE));
+		sTG_DOJO_SCRAMBLE_STATE_CHANGE * resSrv2 = (sTG_DOJO_SCRAMBLE_STATE_CHANGE *)packetSrv2.GetPacketData();
+		resSrv2->wOpCode = TG_DOJO_SCRAMBLE_STATE_CHANGE;
+		resSrv2->dojoTblidx = dojoData.dojoTblidx;
+		resSrv2->byState = m_eDojoState;
+		resSrv2->tmNextStepTime = m_tmNextStepTime;
+		packetSrv2.SetPacketLen(sizeof(sTG_DOJO_SCRAMBLE_STATE_CHANGE));
+		g_pServerInfoManager->Broadcast(&packetSrv2);
+	}
+}
+
 void CDojo::UpdateState(BYTE byState, DOJOTIME tmNextStepTime)
 {
 	m_eDojoState = (eDBO_DOJO_STATUS)byState;
@@ -258,20 +325,22 @@ void CDojo::UpdateState(BYTE byState, DOJOTIME tmNextStepTime)
 	if (m_eDojoState == eDBO_DOJO_STATUS_READY)
 	{
 		CGuild* pOpponent = g_pGuildManager->GetGuild(dojoData.challengeGuildId);
-
-		CNtlPacket packet2(sizeof(sTU_DOJO_SCRAMBLE_RECEIVE_INFO_NFY));
-		sTU_DOJO_SCRAMBLE_RECEIVE_INFO_NFY * res2 = (sTU_DOJO_SCRAMBLE_RECEIVE_INFO_NFY *)packet2.GetPacketData();
-		res2->wOpCode = TU_DOJO_SCRAMBLE_RECEIVE_INFO_NFY;
-		res2->dojoTblidx = dojoData.dojoTblidx;
-		res2->defGuildId = dojoData.guildId;
-		res2->attGuildId = dojoData.challengeGuildId;
-		NTL_SAFE_WCSCPY(res2->wszDefGuildName, m_pkGuild->GetInfo()->wszName);
-		NTL_SAFE_WCSCPY(res2->wszAttGuildName, pOpponent->GetInfo()->wszName);
-		memcpy(&res2->sDefMark, &m_pkGuild->GetInfo()->sMark, sizeof(sDBO_GUILD_MARK));
-		memcpy(&res2->sAttMark, &pOpponent->GetInfo()->sMark, sizeof(sDBO_GUILD_MARK));
-		packet2.SetPacketLen(sizeof(sTU_DOJO_SCRAMBLE_RECEIVE_INFO_NFY));
-		m_pkGuild->Broadcast(&packet2);
-		pOpponent->Broadcast(&packet2);
+		if (m_pkGuild && pOpponent)
+		{
+			CNtlPacket packet2(sizeof(sTU_DOJO_SCRAMBLE_RECEIVE_INFO_NFY));
+			sTU_DOJO_SCRAMBLE_RECEIVE_INFO_NFY * res2 = (sTU_DOJO_SCRAMBLE_RECEIVE_INFO_NFY *)packet2.GetPacketData();
+			res2->wOpCode = TU_DOJO_SCRAMBLE_RECEIVE_INFO_NFY;
+			res2->dojoTblidx = dojoData.dojoTblidx;
+			res2->defGuildId = dojoData.guildId;
+			res2->attGuildId = dojoData.challengeGuildId;
+			NTL_SAFE_WCSCPY(res2->wszDefGuildName, m_pkGuild->GetInfo()->wszName);
+			NTL_SAFE_WCSCPY(res2->wszAttGuildName, pOpponent->GetInfo()->wszName);
+			memcpy(&res2->sDefMark, &m_pkGuild->GetInfo()->sMark, sizeof(sDBO_GUILD_MARK));
+			memcpy(&res2->sAttMark, &pOpponent->GetInfo()->sMark, sizeof(sDBO_GUILD_MARK));
+			packet2.SetPacketLen(sizeof(sTU_DOJO_SCRAMBLE_RECEIVE_INFO_NFY));
+			m_pkGuild->Broadcast(&packet2);
+			pOpponent->Broadcast(&packet2);
+		}
 	}
 
 	CNtlPacket packet(sizeof(sTU_DOJO_SCRAMBLE_INFORM_NFY));
@@ -282,21 +351,43 @@ void CDojo::UpdateState(BYTE byState, DOJOTIME tmNextStepTime)
 	res->tmNextStepTime = tmNextStepTime;
 	packet.SetPacketLen(sizeof(sTU_DOJO_SCRAMBLE_INFORM_NFY));
 
+	// Safety: if guild pointers are missing, prefer global notify to avoid crashes
+	if (m_eDojoState != eDBO_DOJO_STATUS_RECEIVE)
+	{
+		CGuild* pDef = GetGuild();
+		CGuild* pOpp = g_pGuildManager->GetGuild(dojoData.challengeGuildId);
+		if (!pDef || !pOpp)
+		{
+			g_pPlayerManager->SendMsgToAll(&packet);
+			// proceed with state-specific cleanup below without guild broadcasts
+		}
+	}
+
 	switch (m_eDojoState)
 	{
-		case eDBO_DOJO_STATUS_RECEIVE: 
+		case eDBO_DOJO_STATUS_RECEIVE:
 		{
 			g_pDojoWarManager->AddDojo(this);
-			g_pPlayerManager->SendMsgToAll(&packet); //send to all to inform that dojo can receive war request
+			g_pPlayerManager->SendMsgToAll(&packet);
+		}
+		break;
+
+		case eDBO_DOJO_STATUS_END:
+		case eDBO_DOJO_STATUS_NORMAL:
+		{
+			g_pPlayerManager->SendMsgToAll(&packet);
 		}
 		break;
 
 		default:
 		{
-			GetGuild()->Broadcast(&packet);
+			CGuild* pDef = GetGuild();
+			if (pDef)
+				pDef->Broadcast(&packet);
 
 			CGuild* pOpponent = g_pGuildManager->GetGuild(dojoData.challengeGuildId);
-			pOpponent->Broadcast(&packet);
+			if (pOpponent)
+				pOpponent->Broadcast(&packet);
 		}
 		break;
 	}
@@ -309,7 +400,8 @@ void CDojo::UpdateState(BYTE byState, DOJOTIME tmNextStepTime)
 			pGuild->SetDojoTblidxWarRequest(INVALID_TBLIDX);
 		}
 
-		GetGuild()->SetDojoTblidxWarRequest(INVALID_TBLIDX);
+		if (GetGuild())
+			GetGuild()->SetDojoTblidxWarRequest(INVALID_TBLIDX);
 
 		m_bHasWarRequest = false;
 		m_bWarInProgress = false;
@@ -356,13 +448,14 @@ void CDojo::Reset(BYTE byState, DOJOTIME tmNextStepTime)
 	res->byState = byState;
 	res->tmNextStepTime = tmNextStepTime;
 	packet.SetPacketLen(sizeof(sTU_DOJO_SCRAMBLE_INFORM_NFY));
-	GetGuild()->Broadcast(&packet);
+	if (GetGuild())
+		GetGuild()->Broadcast(&packet);
 
 	CNtlPacket packetSrv(sizeof(sTG_DOJO_SCRAMBLE_STATE_CHANGE));
 	sTG_DOJO_SCRAMBLE_STATE_CHANGE * resSrv = (sTG_DOJO_SCRAMBLE_STATE_CHANGE *)packetSrv.GetPacketData();
 	resSrv->wOpCode = TG_DOJO_SCRAMBLE_STATE_CHANGE;
 	resSrv->dojoTblidx = dojoData.dojoTblidx;
-	resSrv->byState = eDBO_DOJO_STATUS_NORMAL;
+	resSrv->byState = byState; // propagate the requested state (e.g., END)
 	resSrv->tmNextStepTime = tmNextStepTime;
 	packetSrv.SetPacketLen(sizeof(sTG_DOJO_SCRAMBLE_STATE_CHANGE));
 	g_pServerInfoManager->Broadcast(&packetSrv);
@@ -404,19 +497,21 @@ void CDojo::SendDojoState(HSESSION hSession)
 	if (m_eDojoState == eDBO_DOJO_STATUS_READY || m_eDojoState == eDBO_DOJO_STATUS_START)
 	{
 		CGuild* pOpponent = g_pGuildManager->GetGuild(dojoData.challengeGuildId);
-
-		CNtlPacket packet2(sizeof(sTU_DOJO_SCRAMBLE_RECEIVE_INFO_NFY));
-		sTU_DOJO_SCRAMBLE_RECEIVE_INFO_NFY * res2 = (sTU_DOJO_SCRAMBLE_RECEIVE_INFO_NFY *)packet2.GetPacketData();
-		res2->wOpCode = TU_DOJO_SCRAMBLE_RECEIVE_INFO_NFY;
-		res2->dojoTblidx = dojoData.dojoTblidx;
-		res2->defGuildId = dojoData.guildId;
-		res2->attGuildId = dojoData.challengeGuildId;
-		NTL_SAFE_WCSCPY(res2->wszDefGuildName, m_pkGuild->GetInfo()->wszName);
-		NTL_SAFE_WCSCPY(res2->wszAttGuildName, pOpponent->GetInfo()->wszName);
-		memcpy(&res2->sDefMark, &m_pkGuild->GetInfo()->sMark, sizeof(sDBO_GUILD_MARK));
-		memcpy(&res2->sAttMark, &pOpponent->GetInfo()->sMark, sizeof(sDBO_GUILD_MARK));
-		packet2.SetPacketLen(sizeof(sTU_DOJO_SCRAMBLE_RECEIVE_INFO_NFY));
-		g_pApp->Send(hSession, &packet2);
+		if (m_pkGuild && pOpponent)
+		{
+			CNtlPacket packet2(sizeof(sTU_DOJO_SCRAMBLE_RECEIVE_INFO_NFY));
+			sTU_DOJO_SCRAMBLE_RECEIVE_INFO_NFY * res2 = (sTU_DOJO_SCRAMBLE_RECEIVE_INFO_NFY *)packet2.GetPacketData();
+			res2->wOpCode = TU_DOJO_SCRAMBLE_RECEIVE_INFO_NFY;
+			res2->dojoTblidx = dojoData.dojoTblidx;
+			res2->defGuildId = dojoData.guildId;
+			res2->attGuildId = dojoData.challengeGuildId;
+			NTL_SAFE_WCSCPY(res2->wszDefGuildName, m_pkGuild->GetInfo()->wszName);
+			NTL_SAFE_WCSCPY(res2->wszAttGuildName, pOpponent->GetInfo()->wszName);
+			memcpy(&res2->sDefMark, &m_pkGuild->GetInfo()->sMark, sizeof(sDBO_GUILD_MARK));
+			memcpy(&res2->sAttMark, &pOpponent->GetInfo()->sMark, sizeof(sDBO_GUILD_MARK));
+			packet2.SetPacketLen(sizeof(sTU_DOJO_SCRAMBLE_RECEIVE_INFO_NFY));
+			g_pApp->Send(hSession, &packet2);
+		}
 	}
 
 	CNtlPacket packet(sizeof(sTU_DOJO_SCRAMBLE_INFORM_NFY));
@@ -440,10 +535,12 @@ void CDojo::UpdateWarPoints(sDOJO_SCRAMBLE_POINT & warPoint)
 	res->sData = warPoint;
 	packet.SetPacketLen(sizeof(sTU_DOJO_SCRAMBLE_POINT_NFY));
 
-	GetGuild()->Broadcast(&packet);
+	if (GetGuild())
+		GetGuild()->Broadcast(&packet);
 
 	CGuild* pOpponent = g_pGuildManager->GetGuild(dojoData.challengeGuildId);
-	pOpponent->Broadcast(&packet);
+	if (pOpponent)
+		pOpponent->Broadcast(&packet);
 }
 
 void CDojo::UpdatePlayerCount(GUILDID guildId, CHARACTERID charId, bool bPlus)
@@ -502,10 +599,12 @@ void CDojo::UpdateSeal(GUILDID guildId, TBLIDX objectTblidx)
 	res->objectTblidx = objectTblidx;
 	packet.SetPacketLen(sizeof(sTU_DOJO_SCRAMBLE_SHIEFT_SEAL_STATE_NFY));
 
-	GetGuild()->Broadcast(&packet);
+	if (GetGuild())
+		GetGuild()->Broadcast(&packet);
 
 	CGuild* pOpponent = g_pGuildManager->GetGuild(dojoData.challengeGuildId);
-	pOpponent->Broadcast(&packet);
+	if (pOpponent)
+		pOpponent->Broadcast(&packet);
 }
 
 bool CDojo::CanEnterDojo(GUILDID guildId)

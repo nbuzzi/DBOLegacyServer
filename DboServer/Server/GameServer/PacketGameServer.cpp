@@ -866,19 +866,25 @@ void CClientSession::RecvCharReady(CNtlPacket* pPacket)
 	cPlayer->SetTeleportDir(CNtlVector::ZERO);
 	cPlayer->SetTeleportWorldID(INVALID_WORLDID);
 
-	// REJOIN: Consume rejoin ticket if available
+	// REJOIN: Attempt rejoin if ticket exists; log attempts, erase only when successful or expired
 	if (auto* t = g_Rejoin.Find(cPlayer->GetCharID()))
 	{
 		const DWORD now = GetTickCount();
 		if (now <= t->expireAtMs)
 		{
 			sREJOIN_TARGET tgt{};
-
-			g_Rejoin.ResolveRejoinTarget(*t, tgt, cPlayer);
-			g_Rejoin.Erase(cPlayer->GetCharID());
+			ERR_LOG(LOG_GENERAL, "[REJOIN] Attempting resolve: char=%u type=%u channel=%u expiresInMs=%u", (unsigned)cPlayer->GetCharID(), (unsigned)t->dungeonType, (unsigned)((CGameServer*)g_pApp)->GetGsChannel(), (unsigned)(t->expireAtMs - now));
+			const bool ok = g_Rejoin.ResolveRejoinTarget(*t, tgt, cPlayer);
+			if (ok)
+			{
+				ERR_LOG(LOG_GENERAL, "[REJOIN] Resolve succeeded: char=%u type=%u worldId=%u", (unsigned)cPlayer->GetCharID(), (unsigned)t->dungeonType, (unsigned)t->worldId);
+				g_Rejoin.Erase(cPlayer->GetCharID());
+			}
+			// else: keep ticket for later attempts within expiry window
 		}
 		else
 		{
+			ERR_LOG(LOG_GENERAL, "[REJOIN] Ticket expired: char=%u type=%u", (unsigned)cPlayer->GetCharID(), (unsigned)t->dungeonType);
 			g_Rejoin.Erase(cPlayer->GetCharID()); // expired ticket
 		}
 	}
@@ -12567,6 +12573,19 @@ void CClientSession::RecvTeleportConfirmationReq(CNtlPacket* pPacket)
 	{
 		if (req->bTeleport) // check if agree to teleport
 		{
+			// If accepting a Budokai teleport proposal, create a short-lived rejoin ticket
+			const BYTE tp = cPlayer->GetTeleportProposalType();
+			if (tp == TELEPORT_TYPE_MINORMATCH || tp == TELEPORT_TYPE_MAJORMATCH || tp == TELEPORT_TYPE_FINALMATCH)
+			{
+				sREJOIN_TICKET t{};
+				t.charId = cPlayer->GetCharID();
+				t.dungeonType = eREJOIN_DUNGEON_TYPE::REJOIN_BUDOKAI;
+				t.worldId = cPlayer->GetTeleportProposalWorldID();
+				// Budokai rejoin: short-lived ticket (2 minutes max)
+				t.expireAtMs = GetTickCount() + 60 * 2000;
+				g_Rejoin.Put(t);
+				ERR_LOG(LOG_GENERAL, "[REJOIN] Ticket created on accept: char=%u type=BUDOKAI worldId=%u expiresInMs=%u", (unsigned)cPlayer->GetCharID(), (unsigned)t.worldId, (unsigned)(60 * 1000));
+			}
 			cPlayer->StartTeleport(cPlayer->GetTeleportProposalLoc(), cPlayer->GetTeleportProposalDir(), cPlayer->GetTeleportProposalWorldID(), cPlayer->GetTeleportProposalType(), INVALID_TBLIDX, false, cPlayer->GetTeleportAnotherServer());
 		}
 		else

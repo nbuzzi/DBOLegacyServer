@@ -1714,9 +1714,20 @@ void CQueryServerSession::RecvSkillInitRes(CNtlPacket* pPacket)
 
 		pOwner->GetSkillManager()->InitSkills(); //remove all and learn default skills
 
+		// If a pending class change was requested via GM command, apply it now
+		if (pOwner->HasPendingClassChange())
+		{
+			BYTE byClass = pOwner->ConsumePendingClassChange();
+			pOwner->UpdateClass(byClass);
+		}
+
 
 		if (req->bySkillResetMethod == 0)
-			pOwner->UpdateZeni(ZENNY_CHANGE_TYPE_INIT_SKILL, req->dwZeni, false, false);
+		{
+			// Do not charge when GM initiated a class change that used a reset
+			if (!pOwner->ConsumeSkipNextSkillResetCost())
+				pOwner->UpdateZeni(ZENNY_CHANGE_TYPE_INIT_SKILL, req->dwZeni, false, false);
+		}
 		else if (req->bySkillResetMethod == 1)
 		{
 			CItem* pItem = pOwner->GetPlayerItemContainer()->GetItem(req->itemId);

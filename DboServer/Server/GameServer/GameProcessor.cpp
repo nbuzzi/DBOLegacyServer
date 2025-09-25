@@ -102,7 +102,7 @@ void CGameProcessor::Run(DWORD dwTickCount)
 		{
 			g_pDojoManager->TickProcess(dwTickDiff);
 			g_pBudokaiManager->TickProcess(dwTickDiff);
-			g_pArenaManager->TickProcess(dwTickDiff);
+			// g_pArenaManager->TickProcess(dwTickDiff);
 		}
 		else
 		{
@@ -135,6 +135,8 @@ void CGameProcessor::Run(DWORD dwTickCount)
 
 			// Periodic helper-NPC watchdog to repair spawns after floor transitions
 			GetHelperNpcManager()->TickWatchdog(m_dwTickCount);
+
+			g_pArenaManager->TickProcess(dwTickDiff);
 		}
 
 		g_pPartyManager->TickProcess(dwTickDiff);

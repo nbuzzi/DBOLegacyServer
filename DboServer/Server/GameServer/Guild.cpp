@@ -187,3 +187,18 @@ void CGuildManager::Broadcast(GUILDID guildId, CNtlPacket * pPacket)
 	}
 }
 
+void CGuildManager::ForEachOnlineMember(GUILDID guildId, std::vector<HOBJECT>& outMembers)
+{
+	outMembers.clear();
+	std::multimap<GUILDID, HOBJECT>::iterator beg = m_mapGuildMembers.lower_bound(guildId);
+	std::multimap<GUILDID, HOBJECT>::iterator end = m_mapGuildMembers.upper_bound(guildId);
+	for (; beg != end; beg++)
+	{
+		CPlayer* pMember = g_pObjectManager->GetPC(beg->second);
+		if (pMember && pMember->IsInitialized() && pMember->IsPC() && pMember->GetGuildID() == guildId)
+		{
+			outMembers.push_back(beg->second);
+		}
+	}
+}
+

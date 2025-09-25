@@ -78,7 +78,7 @@ bool CRejoinManager::ResolveRejoinTarget(const sREJOIN_TICKET& t, sREJOIN_TARGET
 
 			if (!pPlayerTarget || !pPlayerTarget->IsInitialized())
 			{
-				ERR_LOG(LOG_GENERAL, "Party member %ls not found for rejoin", memberName);
+				ERR_LOG(LOG_GENERAL, "[REJOIN] Party member %ls not found or not initialized for rejoin (char=%u)", memberName, (unsigned)cPlayer->GetCharID());
 				return false; // no target found, cannot rejoin
 			}
 
@@ -89,15 +89,16 @@ bool CRejoinManager::ResolveRejoinTarget(const sREJOIN_TICKET& t, sREJOIN_TARGET
 				{
 				case GAMERULE_NORMAL:
 				case GAMERULE_RANKBATTLE:
-				case GAMERULE_MUDOSA:
-				case GAMERULE_DOJO:
-				case GAMERULE_HUNT:
+				// case GAMERULE_MUDOSA:
+				// case GAMERULE_DOJO:
+				//case GAMERULE_HUNT:
 				case GAMERULE_TUTORIAL:
-				case GAMERULE_MINORMATCH:
-				case GAMERULE_MAJORMATCH:
-				case GAMERULE_FINALMATCH:
-				case GAMERULE_TEINKAICHIBUDOKAI:
+				// case GAMERULE_MINORMATCH:
+				// case GAMERULE_MAJORMATCH:
+				// case GAMERULE_FINALMATCH:
+				// case GAMERULE_TEINKAICHIBUDOKAI:
 				case INVALID_GAMERULE:
+					ERR_LOG(LOG_GENERAL, "[REJOIN] Target world rule type not eligible for rejoin (rule=%u char=%u)", (unsigned)pWorld->GetRuleType(), (unsigned)cPlayer->GetCharID());
 					return false; // cannot rejoin in normal world or other game rules
 					break;
 				}
@@ -107,13 +108,16 @@ bool CRejoinManager::ResolveRejoinTarget(const sREJOIN_TICKET& t, sREJOIN_TARGET
 			cPlayer->SetParty(pParty);
 			cPlayer->SetPartyID(t.partyId);
 			pParty->AddPartyMember(cPlayer);
+			ERR_LOG(LOG_GENERAL, "[REJOIN] Party attached for rejoin: char=%u partyId=%u", (unsigned)cPlayer->GetCharID(), (unsigned)t.partyId);
 		}
 	} else {
 		// if we already have a party, we can rejoin dungeon with the party leader
+	ERR_LOG(LOG_GENERAL, "[REJOIN] Player already has party; skipping party attach (char=%u)", (unsigned)cPlayer->GetCharID());
 		return false;
 	}
 
 	// if we don't have a party, we cannot rejoin any dungeon
+	ERR_LOG(LOG_GENERAL, "[REJOIN] Resolve route: char=%u type=%u", (unsigned)cPlayer->GetCharID(), (unsigned)t.dungeonType);
 	switch (t.dungeonType)
 	{
 	case REJOIN_TMQ:
@@ -122,6 +126,7 @@ bool CRejoinManager::ResolveRejoinTarget(const sREJOIN_TICKET& t, sREJOIN_TARGET
 			cPlayer->StartTeleport(pPlayerTarget->GetCurLoc(), pPlayerTarget->GetCurDir(), pPlayerTarget->GetWorldID(), TELEPORT_TYPE_COMMAND);
 			pTQ->AddMember(cPlayer);
 			cPlayer->SetTMQ(pTQ);
+			ERR_LOG(LOG_GENERAL, "[REJOIN] TMQ rejoin success: char=%u worldId=%u", (unsigned)cPlayer->GetCharID(), (unsigned)pPlayerTarget->GetWorldID());
 			return true;
 		}
 		break;
@@ -130,7 +135,7 @@ bool CRejoinManager::ResolveRejoinTarget(const sREJOIN_TICKET& t, sREJOIN_TARGET
 		{
 			cPlayer->StartTeleport(pPlayerTarget->GetCurLoc(), pPlayerTarget->GetCurDir(), pPlayerTarget->GetWorldID(), TELEPORT_TYPE_COMMAND);
 			cPlayer->SetTLQ(pTL);
-
+			ERR_LOG(LOG_GENERAL, "[REJOIN] TLQ rejoin success: char=%u worldId=%u", (unsigned)cPlayer->GetCharID(), (unsigned)pPlayerTarget->GetWorldID());
 			return true;
 		}
 		break;
@@ -140,6 +145,7 @@ bool CRejoinManager::ResolveRejoinTarget(const sREJOIN_TICKET& t, sREJOIN_TARGET
 			cPlayer->StartTeleport(pPlayerTarget->GetCurLoc(), pPlayerTarget->GetCurDir(), pPlayerTarget->GetWorldID(), TELEPORT_TYPE_COMMAND);
 			pUD->JoinDungeon(cPlayer);
 			cPlayer->SetUD(pUD);
+			ERR_LOG(LOG_GENERAL, "[REJOIN] UD rejoin success: char=%u worldId=%u", (unsigned)cPlayer->GetCharID(), (unsigned)pPlayerTarget->GetWorldID());
 			return true;
 		}
 		break;
@@ -149,16 +155,21 @@ bool CRejoinManager::ResolveRejoinTarget(const sREJOIN_TICKET& t, sREJOIN_TARGET
 			cPlayer->StartTeleport(pPlayerTarget->GetCurLoc(), pPlayerTarget->GetCurDir(), pPlayerTarget->GetWorldID(), TELEPORT_TYPE_COMMAND);
 			pBD->JoinDungeon(cPlayer);
 			cPlayer->SetCCBD(pBD);
+			ERR_LOG(LOG_GENERAL, "[REJOIN] CCBD rejoin success: char=%u worldId=%u", (unsigned)cPlayer->GetCharID(), (unsigned)pPlayerTarget->GetWorldID());
 			return true;
 		}
 		break;
 	case REJOIN_BUDOKAI:
+		ERR_LOG(LOG_GENERAL, "[REJOIN] Budokai rejoin attempt: char=%u joinId=%u channel=%u", (unsigned)cPlayer->GetCharID(), (unsigned)cPlayer->GetJoinID(), (unsigned)app->GetGsChannel());
 		if (g_pBudokaiManager->TryRejoinPlayer(cPlayer))
 		{
+			ERR_LOG(LOG_GENERAL, "[REJOIN] Budokai rejoin initiated: char=%u", (unsigned)cPlayer->GetCharID());
 			return true;
 		}
+		ERR_LOG(LOG_GENERAL, "[REJOIN] Budokai rejoin failed to initiate: char=%u", (unsigned)cPlayer->GetCharID());
 		break; // could not handle Budokai rejoin here
 	default: break;
 	}
+	ERR_LOG(LOG_GENERAL, "[REJOIN] Resolve failed: char=%u type=%u", (unsigned)cPlayer->GetCharID(), (unsigned)t.dungeonType);
 	return false;
 }

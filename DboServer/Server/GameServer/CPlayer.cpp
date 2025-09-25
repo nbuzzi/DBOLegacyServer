@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "CPlayer.h"
 #include "GameServer.h"
+#include "ArenaManager.h"
 #include "freebattle.h"
 #include "privateshop.h"
 #include "trade.h"
@@ -230,7 +231,8 @@ void CPlayer::LeaveGame()
 	sRejoinTicket.charId = GetCharID();
 	sRejoinTicket.partyId = GetPartyID();
 	sRejoinTicket.channelId = app->GetGsChannel();
-	sRejoinTicket.expireAtMs = GetTickCount() + 10 * 60 * 1000; // 10 minutes
+	// Default rejoin expiry: 10 minutes (overridden per-context below)
+	sRejoinTicket.expireAtMs = GetTickCount() + 10 * 60 * 1000;
 
 	sREJOIN_TARGET tgt{};
 	tgt.worldId = GetLastRejoinWorldId();
@@ -407,7 +409,11 @@ void CPlayer::LeaveGame()
 			// Issue a Budokai rejoin ticket so the player can return
 			sRejoinTicket.dungeonType = eREJOIN_DUNGEON_TYPE::REJOIN_BUDOKAI;
 			sRejoinTicket.worldId = GetWorldID();
+			// Budokai tickets are short-lived per policy: 1 minute
+			sRejoinTicket.expireAtMs = GetTickCount() + 60 * 1000;
 			g_Rejoin.Put(sRejoinTicket);
+
+			ERR_LOG(LOG_GENERAL, "[REJOIN] Ticket created: char=%u type=BUDOKAI joinId=%u matchIdx=%u worldId=%u expiresInMs=%u", (unsigned)GetCharID(), (unsigned)GetJoinID(), (unsigned)GetMatchIndex(), (unsigned)GetWorldID(), (unsigned)(60 * 1000));
 
 			SetBudokaiPcState(MATCH_MEMBER_STATE_GIVEUP);
 			g_pBudokaiManager->PlayerDisconnect(GetCharID(), GetID(), GetJoinID(), GetMatchIndex(), GetBudokaiTeamType());
@@ -560,6 +566,10 @@ void CPlayer::Initialize()
 
 	m_currentHtbSkill = INVALID_BYTE;
 	m_byHtbUseBalls = 0;
+
+	// no pending class change by default
+	m_byPendingClass = INVALID_BYTE;
+	m_bSkipNextSkillResetCost = false;
 
 	ZeroMemory(player_data.awchName, NTL_MAX_SIZE_CHAR_NAME + 1);
 	player_data.bEmergency = false;
@@ -1907,6 +1917,11 @@ void CPlayer::OnLeaveWorld(CWorld* pWorld)
 void CPlayer::OnEnterWorldComplete()
 {
 	CSpawnObject::OnEnterWorldComplete();
+	// Arena resync only for participants to avoid impacting non-participants login
+	if (g_pArenaManager->IsEnabled() && g_pArenaManager->IsParticipant(this))
+	{
+		g_pArenaManager->OnPlayerEnterWorld(this);
+	}
 }
 
 //--------------------------------------------------------------------------------------//
@@ -4066,6 +4081,16 @@ bool CPlayer::Faint(CCharacterObject* pkKiller, eFAINT_REASON byReason)
 				GetQuests()->PlayerDied(); //inform quests that player died. Some quests might fail.
 			}
 
+			// Arena scoring hook: register a point for killer when a participant faints
+			if (pkKiller)
+			{
+				CPlayer* pKillerPc = dynamic_cast<CPlayer*>(pkKiller);
+				if (pKillerPc)
+				{
+					g_pArenaManager->OnPlayerFaint((unsigned int)pKillerPc->GetCharID(), (unsigned int)GetCharID());
+				}
+			}
+
 			GetCharAtt()->CalculateAll();
 			return true;
 		}
@@ -4300,6 +4325,38 @@ bool CPlayer::IsAttackable(CCharacterObject* pTarget)
 
 			if (GetFreeBattleID() != INVALID_DWORD && GetFreeBattleID() == pPlayerTargt->GetFreeBattleID())
 				return true;
+
+			// Arena-friendly fire rules (apply for all harmful checks incl. AoE)
+			if (g_pArenaManager->IsEnabled())
+			{
+				const bool meParticipant = g_pArenaManager->IsParticipant(this);
+				const bool tgParticipant = g_pArenaManager->IsParticipant(pPlayerTargt);
+				const bool meSpectator = g_pArenaManager->IsSpectatorId((unsigned int)GetCharID());
+				const bool tgSpectator = g_pArenaManager->IsSpectatorId((unsigned int)pPlayerTargt->GetCharID());
+
+				// Spectators can’t be attacked and can’t attack
+				if (meSpectator || tgSpectator)
+					return false;
+
+				if (meParticipant && tgParticipant)
+				{
+					switch (g_pArenaManager->GetMode())
+					{
+					case CArenaManager::Mode::PARTY_VS_PARTY:
+						if (GetPartyID() != INVALID_PARTYID && GetPartyID() == pPlayerTargt->GetPartyID())
+							return false; // friendly like Dojo/Budokai team logic
+						return true;
+					case CArenaManager::Mode::GUILD_VS_GUILD:
+						if (GetGuildID() != 0 && GetGuildID() == pPlayerTargt->GetGuildID())
+							return false; // same-guild friendly like Dojo
+						return true;
+					case CArenaManager::Mode::FREE_FOR_ALL:
+					case CArenaManager::Mode::OPEN:
+					default:
+						return true;
+					}
+				}
+			}
 
 			if (IsPvpZone() == true && IsInBattleArena(pPlayerTargt->GetWorldTblidx(), pPlayerTargt->GetCurLoc(), DiePowerTournament) == true) //dont allow players attack players who are not in battle arena
 				return true;

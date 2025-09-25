@@ -3,6 +3,7 @@
 #include "NtlSingleton.h"
 #include "NtlGuild.h"
 #include <map>
+#include <vector>
 
 class CPlayer;
 class CNtlPacket;
@@ -65,6 +66,9 @@ public:
 	void							GuildTeleportProposal(CPlayer* pPlayer, GUILDID guildId);
 
 	void							Broadcast(GUILDID guildId, CNtlPacket* pPacket);
+
+	// Collect online guild members' handles into outMembers
+	void						ForEachOnlineMember(GUILDID guildId, std::vector<HOBJECT>& outMembers);
 
 
 private:

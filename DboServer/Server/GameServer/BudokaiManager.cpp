@@ -11,6 +11,7 @@
 #include "DojoManager.h"
 #include "GameMain.h"
 #include "DiceManager.h"
+#include "NtlIniFile.h"
 
 
 struct sprelim_sorting
@@ -116,6 +117,10 @@ void CBudokaiManager::Init()
 
 	m_type = INVALID_BUDOKAI_TYPE;
 
+	// Default caps
+	m_byMajorMatchMaxScore = 3;
+	m_byFinalMatchMaxScore = 4;
+
 	m_pTableInfo = g_pTableContainer->GetBudokaiTable()->GetBudokaiTblInfo();
 
 	/*printf("m_pTableInfo->byOpenTerm %u, m_pTableInfo->byOpenDayOfWeek %u, m_pTableInfo->byOpenHour %u, m_pTableInfo->byOpenMinute %u \n", 
@@ -149,8 +154,8 @@ void CBudokaiManager::Init()
 	// m_pTableInfo->dwMajorMatch_WaitTime = fightDuration;
 	// m_pTableInfo->dwFinalMatch_WaitTime = fightDuration;
 
-		// // Set Budokai end time to cover all rounds (sum all phases)
-		// m_pTableInfo->dwBudokaiEndTime = (minorRounds + majorRounds + finalRounds) * fightDuration;
+	// Attempt to load overrides from config (optional)
+	LoadConfigFromIniPath(".\\config\\GameServer9.ini");
 }
 
 void CBudokaiManager::Destroy()
@@ -3356,22 +3361,21 @@ bool CBudokaiManager::ProcessMajorMatch(sTOURNAMENT_MATCH * match, BYTE byMatchI
 	return true;
 }
 
-#define BUDOKAI_MAJOR_MATCH_MAX_SCORE 3
-#define BUDOKAI_FINAL_MATCH_MAX_SCORE 4
+// Max score caps are configurable via m_byMajorMatchMaxScore/m_byFinalMatchMaxScore
 
 void CBudokaiManager::UpdateMajorMatchScore(sTOURNAMENT_MATCH * match, BYTE byMatchIndex, BYTE byMatchResult, TEAMTYPE wMatchWinner, BYTE byWins/* = 1*/)
 {
 	if (wMatchWinner == MATCH_TEAM_TYPE_TEAM1)
 	{
 		match->data.byScore1 += byWins;
-		if (match->data.byScore1 > BUDOKAI_MAJOR_MATCH_MAX_SCORE)
-			match->data.byScore1 = BUDOKAI_MAJOR_MATCH_MAX_SCORE;
+		if (match->data.byScore1 > m_byMajorMatchMaxScore)
+			match->data.byScore1 = m_byMajorMatchMaxScore;
 	}
 	else
 	{
 		match->data.byScore2 += byWins;
-		if (match->data.byScore2 > BUDOKAI_MAJOR_MATCH_MAX_SCORE)
-			match->data.byScore2 = BUDOKAI_MAJOR_MATCH_MAX_SCORE;
+		if (match->data.byScore2 > m_byMajorMatchMaxScore)
+			match->data.byScore2 = m_byMajorMatchMaxScore;
 	}
 
 	CNtlPacket packet(sizeof(sGU_MATCH_MAJORMATCH_STAGE_FINISH_NFY));
@@ -3392,7 +3396,7 @@ void CBudokaiManager::UpdateMajorMatchScore(sTOURNAMENT_MATCH * match, BYTE byMa
 	MajorMatchUpdatePlayersState(match, byMatchIndex, MATCH_MEMBER_STATE_NONE);
 
 	//check if match finish
-	if (match->data.byScore1 >= BUDOKAI_MAJOR_MATCH_MAX_SCORE || match->data.byScore2 >= BUDOKAI_MAJOR_MATCH_MAX_SCORE)
+	if (match->data.byScore1 >= m_byMajorMatchMaxScore || match->data.byScore2 >= m_byMajorMatchMaxScore)
 	{
 		ERR_LOG(LOG_GENERAL, "BUDOKAI: Update Tournament Major Match. Index %u. Winner-Team = %u. Score1 = %u, Score2 = %u, byMatchResult = %u ",
 			byMatchIndex, wMatchWinner, match->data.byScore1, match->data.byScore2, byMatchResult);
@@ -4791,14 +4795,14 @@ void CBudokaiManager::UpdateFinalMatchScore(sTOURNAMENT_MATCH * match, BYTE byMa
 	if (wMatchWinner == MATCH_TEAM_TYPE_TEAM1)
 	{
 		match->data.byScore1 += byWins;
-		if (match->data.byScore1 > 3)
-			match->data.byScore1 = 3;
+		if (match->data.byScore1 > m_byFinalMatchMaxScore)
+			match->data.byScore1 = m_byFinalMatchMaxScore;
 	}
 	else
 	{
 		match->data.byScore2 += byWins;
-		if (match->data.byScore2 > 3)
-			match->data.byScore2 = 3;
+		if (match->data.byScore2 > m_byFinalMatchMaxScore)
+			match->data.byScore2 = m_byFinalMatchMaxScore;
 	}
 
 	CNtlPacket packet(sizeof(sGU_MATCH_FINALMATCH_STAGE_FINISH_NFY));
@@ -4820,7 +4824,7 @@ void CBudokaiManager::UpdateFinalMatchScore(sTOURNAMENT_MATCH * match, BYTE byMa
 
 	//check if match finish
 	//check if match finish
-	if (match->data.byScore1 >= 3 || match->data.byScore2 >= 3)
+	if (match->data.byScore1 >= m_byFinalMatchMaxScore || match->data.byScore2 >= m_byFinalMatchMaxScore)
 	{
 		ERR_LOG(LOG_GENERAL, "BUDOKAI: Update Tournament Final Match. Index %u. Winner-Team = %u. Score1 = %u, Score2 = %u, byMatchResult = %u ",
 			byMatchIndex, wMatchWinner, match->data.byScore1, match->data.byScore2, byMatchResult);
@@ -4841,6 +4845,54 @@ void CBudokaiManager::UpdateFinalMatchScore(sTOURNAMENT_MATCH * match, BYTE byMa
 	packet2.SetPacketLen(sizeof(sGU_MATCH_FINALMATCH_STATE_UPDATE_NFY));
 	match->m_pWorld->Broadcast(&packet2);
 }
+
+// ---- Config overrides ----
+
+bool CBudokaiManager::LoadConfigFromIniPath(const char* iniPath)
+{
+	CNtlIniFile file;
+	if (file.Create(iniPath) != NTL_SUCCESS)
+		return false;
+
+	int val = 0;
+	unsigned int u = 0;
+
+	if (file.Read("BUDOKAI", "DojoRecommendTime", u)) SetDojoRecommendTime(u);
+	if (file.Read("BUDOKAI", "OpenNoticeTime", u)) SetOpenNoticeTime(u);
+	if (file.Read("BUDOKAI", "RegisterTime", u)) SetRegisterTime(u);
+	if (file.Read("BUDOKAI", "EndingWaitTime", u)) SetEndingWaitTime(u);
+
+	if (file.Read("BUDOKAI", "MinorMatchWaitTime", u)) SetMinorMatchWaitTime(u);
+	if (file.Read("BUDOKAI", "MajorMatchWaitTime", u)) SetMajorMatchWaitTime(u);
+	if (file.Read("BUDOKAI", "FinalMatchWaitTime", u)) SetFinalMatchWaitTime(u);
+	if (file.Read("BUDOKAI", "BudokaiEndTime", u)) SetBudokaiEndTime(u);
+
+	if (file.Read("BUDOKAI", "MajorMatchMaxScore", val)) SetMajorMatchMaxScore((BYTE)val);
+	if (file.Read("BUDOKAI", "FinalMatchMaxScore", val)) SetFinalMatchMaxScore((BYTE)val);
+
+	return true;
+}
+
+void CBudokaiManager::SetDojoRecommendTime(DWORD seconds) { if (m_pTableInfo) m_pTableInfo->dwDojoRecommendTime = seconds; }
+void CBudokaiManager::SetOpenNoticeTime(DWORD seconds) { if (m_pTableInfo) m_pTableInfo->dwOpenNoticeTime = seconds; }
+void CBudokaiManager::SetRegisterTime(DWORD seconds) { if (m_pTableInfo) m_pTableInfo->dwRegisterTime = seconds; }
+void CBudokaiManager::SetEndingWaitTime(DWORD seconds) { if (m_pTableInfo) m_pTableInfo->dwEndingWaitTime = seconds; }
+void CBudokaiManager::SetMinorMatchWaitTime(DWORD seconds) { if (m_pTableInfo) m_pTableInfo->dwMinorMatch_WaitTime = seconds; }
+void CBudokaiManager::SetMajorMatchWaitTime(DWORD seconds) { if (m_pTableInfo) m_pTableInfo->dwMajorMatch_WaitTime = seconds; }
+void CBudokaiManager::SetFinalMatchWaitTime(DWORD seconds) { if (m_pTableInfo) m_pTableInfo->dwFinalMatch_WaitTime = seconds; }
+void CBudokaiManager::SetBudokaiEndTime(DWORD seconds) { if (m_pTableInfo) m_pTableInfo->dwBudokaiEndTime = seconds; }
+
+DWORD CBudokaiManager::GetDojoRecommendTime() const { return m_pTableInfo ? m_pTableInfo->dwDojoRecommendTime : 0; }
+DWORD CBudokaiManager::GetOpenNoticeTime() const { return m_pTableInfo ? m_pTableInfo->dwOpenNoticeTime : 0; }
+DWORD CBudokaiManager::GetRegisterTime() const { return m_pTableInfo ? m_pTableInfo->dwRegisterTime : 0; }
+DWORD CBudokaiManager::GetEndingWaitTime() const { return m_pTableInfo ? m_pTableInfo->dwEndingWaitTime : 0; }
+DWORD CBudokaiManager::GetMinorMatchWaitTime() const { return m_pTableInfo ? m_pTableInfo->dwMinorMatch_WaitTime : 0; }
+DWORD CBudokaiManager::GetMajorMatchWaitTime() const { return m_pTableInfo ? m_pTableInfo->dwMajorMatch_WaitTime : 0; }
+DWORD CBudokaiManager::GetFinalMatchWaitTime() const { return m_pTableInfo ? m_pTableInfo->dwFinalMatch_WaitTime : 0; }
+DWORD CBudokaiManager::GetBudokaiEndTime() const { return m_pTableInfo ? m_pTableInfo->dwBudokaiEndTime : 0; }
+
+void CBudokaiManager::SetMajorMatchMaxScore(BYTE v) { m_byMajorMatchMaxScore = v ? v : m_byMajorMatchMaxScore; }
+void CBudokaiManager::SetFinalMatchMaxScore(BYTE v) { m_byFinalMatchMaxScore = v ? v : m_byFinalMatchMaxScore; }
 
 void CBudokaiManager::FinalMatchMatchFinish(sTOURNAMENT_MATCH * match, BYTE byMatchIndex)
 {
@@ -6332,76 +6384,101 @@ bool CBudokaiManager::TryRejoinPlayer(CPlayer* pPlayer)
 	if (pPlayer->GetJoinID() == INVALID_JOINID)
 		return false;
 
-	// Ensure we operate on dojo channel; if not, redirect there
+	// If we're not on the Dojo channel, ask Chat to route us to Dojo GS
+	// The Dojo GS will compute the exact Budokai destination and we will
+	// receive a TG_RES back which triggers TeleportAnotherServer.
 	if (!app->IsDojoChannel())
 	{
-		// send the player to dojo channel lobby; let normal login flow on dojo channel attach them
-		// Choose a safe lobby world: use individual minor match lobby as default
-		TBLIDX lobbyTbl = m_pTableInfo ? m_pTableInfo->sIndividualWorldTblidx.minorMatch : INVALID_TBLIDX;
-		if (lobbyTbl == INVALID_TBLIDX)
-			return false;
-
-		// Teleport with proposal=false to switch channel immediately
-		CWorld* pLobbyWorld = app->GetGameMain()->GetWorldManager()->GetDefaultWorld();
-		CNtlVector destLoc = pLobbyWorld ? pLobbyWorld->GetTbldat()->vStart1Loc : pPlayer->GetBindLoc();
-		CNtlVector destDir = pLobbyWorld ? pLobbyWorld->GetTbldat()->vStart1Dir : pPlayer->GetBindDir();
-		pPlayer->TeleportAnotherServer(destLoc, destDir, lobbyTbl, lobbyTbl, TELEPORT_TYPE_BUDOKAI, DOJO_CHANNEL_INDEX, 0, false);
-		return true;
+		ERR_LOG(LOG_GENERAL, "[REJOIN] Budokai cross-channel request: char=%u ch=%u joinId=%u matchType=%u", (unsigned)pPlayer->GetCharID(), (unsigned)app->GetGsChannel(), (unsigned)pPlayer->GetJoinID(), (unsigned)m_matchType);
+		CNtlPacket packet(sizeof(sGT_BUDOKAI_MINOR_MATCH_TELEPORT_INFO_REQ));
+		sGT_BUDOKAI_MINOR_MATCH_TELEPORT_INFO_REQ* req = (sGT_BUDOKAI_MINOR_MATCH_TELEPORT_INFO_REQ*)packet.GetPacketData();
+		req->wOpCode = GT_BUDOKAI_MINOR_MATCH_TELEPORT_INFO_REQ;
+		req->charId = pPlayer->GetCharID();
+		req->handle = pPlayer->GetID();
+		req->joinId = pPlayer->GetJoinID();
+		req->byMatchType = m_matchType; // current Budokai match type (individual/team)
+		packet.SetPacketLen(sizeof(sGT_BUDOKAI_MINOR_MATCH_TELEPORT_INFO_REQ));
+		app->SendTo(app->GetChatServerSession(), &packet);
+		return true; // initiated cross-channel rejoin
 	}
 
 	// We are on dojo channel: decide target by current Budokai state
+	auto prelimDisallows = [](BYTE st) -> bool {
+		return st == BUDOKAI_MINORMATCH_STATE_STAGE_RUN || st == BUDOKAI_MINORMATCH_STATE_STAGE_FINISH || st == BUDOKAI_MINORMATCH_STATE_MATCH_FINISH || st == BUDOKAI_MINORMATCH_STATE_END;
+	};
+	auto majorDisallows = [](BYTE st) -> bool {
+		return st == BUDOKAI_MAJORMATCH_STATE_STAGE_RUN || st == BUDOKAI_MAJORMATCH_STATE_STAGE_FINISH || st == BUDOKAI_MAJORMATCH_STATE_MATCH_FINISH || st == BUDOKAI_MAJORMATCH_STATE_END;
+	};
+	auto finalDisallows = [](BYTE st) -> bool {
+		return st == BUDOKAI_FINALMATCH_STATE_STAGE_RUN || st == BUDOKAI_FINALMATCH_STATE_STAGE_FINISH || st == BUDOKAI_FINALMATCH_STATE_MATCH_FINISH || st == BUDOKAI_FINALMATCH_STATE_END;
+	};
+
+	const BYTE byGlobalMatchState = m_matchStateInfo[m_matchType].byState;
+
 	if (m_matchType == BUDOKAI_MATCH_TYPE_INDIVIDIAUL)
 	{
-		if (m_matchStateInfo[m_matchType].byState == BUDOKAI_MATCHSTATE_MINOR_MATCH)
+		if (byGlobalMatchState == BUDOKAI_MATCHSTATE_MINOR_MATCH)
 		{
-			// Prelim: find the world for player's prelim index
+			// Prelim
 			auto itInd = m_mapIndividual.find(pPlayer->GetJoinID());
 			if (itInd == m_mapIndividual.end()) return false;
 			auto itPre = m_mapPrelims.find(itInd->second.byMinorMatch_MatchIndex);
-			if (itPre == m_mapPrelims.end() || !itPre->second->m_pWorld) return false;
+			if (itPre == m_mapPrelims.end() || !itPre->second->m_pWorld) { ERR_LOG(LOG_GENERAL, "[REJOIN] Budokai prelim not found or no world (char=%u)", (unsigned)pPlayer->GetCharID()); return false; }
+			if (prelimDisallows(itPre->second->m_byMatchState)) { ERR_LOG(LOG_GENERAL, "[REJOIN] Budokai prelim disallowed state=%u (char=%u)", (unsigned)itPre->second->m_byMatchState, (unsigned)pPlayer->GetCharID()); return false; }
 
 			CNtlVector vLoc = itPre->second->m_pWorld->GetTbldat()->vStart1Loc;
 			CNtlVector vDir = itPre->second->m_pWorld->GetTbldat()->vStart1Dir;
 			pPlayer->StartTeleport(vLoc, vDir, itPre->second->m_pWorld->GetID(), TELEPORT_TYPE_MINORMATCH);
 			return true;
 		}
-		else if (m_matchStateInfo[m_matchType].byState > BUDOKAI_MATCHSTATE_MINOR_MATCH && m_matchStateInfo[m_matchType].byState != BUDOKAI_MATCHSTATE_MATCH_END)
+		else if (byGlobalMatchState > BUDOKAI_MATCHSTATE_MINOR_MATCH && byGlobalMatchState != BUDOKAI_MATCHSTATE_MATCH_END)
 		{
-			// Major or Final: find current match world by joinId
 			BYTE byMatchIndex = GetMatchIndex(pPlayer->GetJoinID());
 			auto itMatch = m_aTournamentMatch[m_eMatchDepth].m_mapTournament.find(byMatchIndex);
-			if (itMatch == m_aTournamentMatch[m_eMatchDepth].m_mapTournament.end() || !itMatch->second->m_pWorld) return false;
+			if (itMatch == m_aTournamentMatch[m_eMatchDepth].m_mapTournament.end() || !itMatch->second->m_pWorld) { ERR_LOG(LOG_GENERAL, "[REJOIN] Budokai major/final match not found or no world (char=%u)", (unsigned)pPlayer->GetCharID()); return false; }
+
+			// Disallow by tournament phase
+			const bool isFinalPhase = (byGlobalMatchState >= BUDOKAI_MATCHSTATE_WAIT_SEMIFINAL_MATCH);
+			if ((!isFinalPhase && majorDisallows(itMatch->second->m_byMatchState)) || (isFinalPhase && finalDisallows(itMatch->second->m_byMatchState))) {
+				ERR_LOG(LOG_GENERAL, "[REJOIN] Budokai major/final disallowed state=%u final=%u (char=%u)", (unsigned)itMatch->second->m_byMatchState, (unsigned)isFinalPhase, (unsigned)pPlayer->GetCharID());
+				return false;
+			}
 
 			CNtlVector vLoc = itMatch->second->m_pWorld->GetTbldat()->vStart1Loc;
 			CNtlVector vDir = itMatch->second->m_pWorld->GetTbldat()->vStart1Dir;
-			BYTE tp = (m_matchStateInfo[m_matchType].byState < BUDOKAI_MATCHSTATE_WAIT_SEMIFINAL_MATCH) ? TELEPORT_TYPE_MAJORMATCH : TELEPORT_TYPE_FINALMATCH;
+			BYTE tp = isFinalPhase ? TELEPORT_TYPE_FINALMATCH : TELEPORT_TYPE_MAJORMATCH;
 			pPlayer->StartTeleport(vLoc, vDir, itMatch->second->m_pWorld->GetID(), tp);
 			return true;
 		}
 	}
 	else if (m_matchType == BUDOKAI_MATCH_TYPE_TEAM)
 	{
-		if (m_matchStateInfo[m_matchType].byState == BUDOKAI_MATCHSTATE_MINOR_MATCH)
+		if (byGlobalMatchState == BUDOKAI_MATCHSTATE_MINOR_MATCH)
 		{
 			auto itTeam = m_mapTeam.find(pPlayer->GetJoinID());
 			if (itTeam == m_mapTeam.end()) return false;
 			auto itPre = m_mapPrelims.find(itTeam->second.byMinorMatch_MatchIndex);
-			if (itPre == m_mapPrelims.end() || !itPre->second->m_pWorld) return false;
+			if (itPre == m_mapPrelims.end() || !itPre->second->m_pWorld) { ERR_LOG(LOG_GENERAL, "[REJOIN] Budokai team prelim not found or no world (char=%u)", (unsigned)pPlayer->GetCharID()); return false; }
+			if (prelimDisallows(itPre->second->m_byMatchState)) { ERR_LOG(LOG_GENERAL, "[REJOIN] Budokai team prelim disallowed state=%u (char=%u)", (unsigned)itPre->second->m_byMatchState, (unsigned)pPlayer->GetCharID()); return false; }
 
 			CNtlVector vLoc = itPre->second->m_pWorld->GetTbldat()->vStart1Loc;
 			CNtlVector vDir = itPre->second->m_pWorld->GetTbldat()->vStart1Dir;
 			pPlayer->StartTeleport(vLoc, vDir, itPre->second->m_pWorld->GetID(), TELEPORT_TYPE_MINORMATCH);
 			return true;
 		}
-		else if (m_matchStateInfo[m_matchType].byState > BUDOKAI_MATCHSTATE_MINOR_MATCH && m_matchStateInfo[m_matchType].byState != BUDOKAI_MATCHSTATE_MATCH_END)
+		else if (byGlobalMatchState > BUDOKAI_MATCHSTATE_MINOR_MATCH && byGlobalMatchState != BUDOKAI_MATCHSTATE_MATCH_END)
 		{
 			BYTE byMatchIndex = GetMatchIndex(pPlayer->GetJoinID());
 			auto itMatch = m_aTournamentMatch[m_eMatchDepth].m_mapTournament.find(byMatchIndex);
 			if (itMatch == m_aTournamentMatch[m_eMatchDepth].m_mapTournament.end() || !itMatch->second->m_pWorld) return false;
 
+			const bool isFinalPhase = (byGlobalMatchState >= BUDOKAI_MATCHSTATE_WAIT_SEMIFINAL_MATCH);
+			if ((!isFinalPhase && majorDisallows(itMatch->second->m_byMatchState)) || (isFinalPhase && finalDisallows(itMatch->second->m_byMatchState)))
+				return false;
+
 			CNtlVector vLoc = itMatch->second->m_pWorld->GetTbldat()->vStart1Loc;
 			CNtlVector vDir = itMatch->second->m_pWorld->GetTbldat()->vStart1Dir;
-			BYTE tp = (m_matchStateInfo[m_matchType].byState < BUDOKAI_MATCHSTATE_WAIT_SEMIFINAL_MATCH) ? TELEPORT_TYPE_MAJORMATCH : TELEPORT_TYPE_FINALMATCH;
+			BYTE tp = isFinalPhase ? TELEPORT_TYPE_FINALMATCH : TELEPORT_TYPE_MAJORMATCH;
 			pPlayer->StartTeleport(vLoc, vDir, itMatch->second->m_pWorld->GetID(), tp);
 			return true;
 		}

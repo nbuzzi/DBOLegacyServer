@@ -10,6 +10,7 @@
 #include "NtlPacketTG.h"
 #include "NtlResultCode.h"
 #include "DojoWar.h"
+#include "NtlDojo.h"
 
 
 //--------------------------------------------------------------------------------------//
@@ -17,6 +18,44 @@
 //--------------------------------------------------------------------------------------//
 void	CServerPassiveSession::OnInvalid(CNtlPacket* pPacket)
 {
+}
+//--------------------------------------------------------------------------------------//
+//      MANUAL DOJO CONTROL FROM GAME SERVER (GM)
+//--------------------------------------------------------------------------------------//
+void CServerPassiveSession::RecvDojoCommand(CNtlPacket* pPacket)
+{
+	sGT_DOJO_COMMAND* req = (sGT_DOJO_COMMAND*)pPacket->GetPacketData();
+
+	CDojo* pDojo = g_pDojoManager->GetDojoByDojoTblidx(req->dojoTblidx);
+	if (!pDojo)
+	{
+		return;
+	}
+
+	switch (req->byCommand)
+	{
+	case eDBO_DOJO_COMMAND_TYPE_START:
+	{
+		// Manual START: force begin preparation regardless of DisableDojoWar auto gating
+		pDojo->BeginWarPreparationManual();
+		break;
+	}
+	case eDBO_DOJO_COMMAND_TYPE_CLEAR:
+	{
+		// CLEAR: reset to NORMAL and clear any pending requests
+		pDojo->Reset(eDBO_DOJO_STATUS_NORMAL, 0);
+		break;
+	}
+	case eDBO_DOJO_COMMAND_TYPE_NEXT:
+	{
+		// NEXT: advance to next logical state (if needed). Here re-broadcast current state as a nudge.
+		pDojo->SendDojoState(GetHandle());
+		break;
+	}
+	case eDBO_DOJO_COMMAND_TYPE_RESPONSE:
+	default:
+		break;
+	}
 }
 
 

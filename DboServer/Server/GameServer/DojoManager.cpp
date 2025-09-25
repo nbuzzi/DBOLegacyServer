@@ -597,7 +597,8 @@ void CDojoManager::StartDojoEvent()
 		CDojo* pDojo = it->second;
 		if (pDojo)
 		{
-			pDojo->SetState(eDBO_DOJO_STATUS_STANDBY, 0);
+			// Set to NORMAL so TickProcess drives NORMAL -> RECEIVE like the Sunday flow
+			pDojo->SetState(eDBO_DOJO_STATUS_NORMAL, 0);
 		}
 	}
 }

@@ -323,11 +323,25 @@ public:
 	void				UpdateAdult(bool bSetAdult);
 	void				UpdateClass(BYTE byClass);
 
+	// Pending class change support (used by @changeclass to reset skills first)
+	inline void			SetPendingClassChange(BYTE byClass) { m_byPendingClass = byClass; }
+	inline bool			HasPendingClassChange() const { return m_byPendingClass != INVALID_BYTE; }
+	inline BYTE			ConsumePendingClassChange() { BYTE b = m_byPendingClass; m_byPendingClass = INVALID_BYTE; return b; }
+
+	// Skip next skill reset cost (GM-driven resets)
+	inline void			SetSkipNextSkillResetCost(bool b) { m_bSkipNextSkillResetCost = b; }
+	inline bool			ConsumeSkipNextSkillResetCost() { bool b = m_bSkipNextSkillResetCost; m_bSkipNextSkillResetCost = false; return b; }
+
 	inline void			SetExpReceiveDisabled(bool bFlag) { m_bReceiveExpDisabled = bFlag; }
 	inline bool			IsReceiveExpDisabled() { return m_bReceiveExpDisabled; }
 
 	//
 	void				UpdatePvpZone(bool bStatus);
+	
+		// Pending class to apply after skills reset completes
+		BYTE				m_byPendingClass;
+		// Flag to skip zeni/item charge for next skill reset
+		bool				m_bSkipNextSkillResetCost;
 	inline void			SetPvpZone(bool bStatus){ player_data.bIsInFreePvpZone = bStatus; }
 	inline bool			IsPvpZone()	{ return player_data.bIsInFreePvpZone; }
 
