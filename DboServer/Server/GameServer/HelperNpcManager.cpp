@@ -720,6 +720,14 @@ bool CHelperNpcManager::SpawnIfAllowed(CPlayer* pLeader, CWorld* pWorld, const s
 		return false;
 	}
 
+	// Respect world suppression toggle
+	if (IsWorldSuppressed(pWorld->GetID()))
+	{
+		VLog(cfg.bVerboseLogs, "HelperNPC: suppressed in world %u", SAFE_ID(pWorld));
+		DespawnAllHelpersForLeaderInWorld(pLeader, pWorld);
+		return false;
+	}
+
 	// Only allow in dungeon-like worlds (UD/BD/TMQ or extra lists)
 	eGAMERULE_TYPE rule = pWorld->GetRuleType();
 	WORLDID wid = pWorld->GetID();
@@ -1341,6 +1349,13 @@ void CHelperNpcManager::TickWatchdog(DWORD dwNow)
 		if (!pWorld)
 			continue;
 
+		// World suppression check
+		if (IsWorldSuppressed(pWorld->GetID()))
+		{
+			DespawnAllHelpersForLeaderInWorld(pLeader, pWorld);
+			continue;
+		}
+
 		// Only allow helpers inside instance/dungeon-like worlds (HUNT/CCBATTLEDUNGEON/TIMEQUEST or extra lists)
 		eGAMERULE_TYPE rule = pWorld->GetRuleType();
 		WORLDID wid = pWorld->GetID();
@@ -1460,6 +1475,13 @@ void CHelperNpcManager::EnsureHelperForLeaderNow(CPlayer* pLeader)
 		}
 	}
 
+	// World suppression check
+	if (IsWorldSuppressed(pWorld->GetID()))
+	{
+		DespawnAllHelpersForLeaderInWorld(pLeader, pWorld);
+		return;
+	}
+
 	// Choose config by world rule type, with allowlists
 	const sHELPER_NPC_CONFIG* pCfg = &m_config;
 	eGAMERULE_TYPE rule = pWorld->GetRuleType();
@@ -1525,6 +1547,29 @@ void CHelperNpcManager::OnLeaderLeaveWorld(CPlayer* pLeader, CWorld* pWorld)
 	// Despawn helpers whenever the leader leaves a world. If it's a dungeon world, helpers should not persist once leader exits.
 	DespawnAllHelpersForLeaderInWorld(pLeader, pWorld);
 	VLog(m_config.bVerboseLogs, "HelperNPC: leader %u left world %u - despawned helpers in that world", SAFE_ID(pLeader), SAFE_ID(pWorld));
+}
+
+void CHelperNpcManager::SetWorldSuppressed(WORLDID worldId, bool suppressed)
+{
+	if (suppressed) m_suppressedWorlds.insert(worldId);
+	else m_suppressedWorlds.erase(worldId);
+}
+
+bool CHelperNpcManager::IsWorldSuppressed(WORLDID worldId) const
+{
+	return m_suppressedWorlds.find(worldId) != m_suppressedWorlds.end();
+}
+
+void CHelperNpcManager::DespawnAllHelpersInWorld(CWorld* pWorld)
+{
+	if (!pWorld) return;
+	// For each leader, despawn helpers in this world
+	for (const auto& kv : m_mapLeaderToHelper)
+	{
+		CPlayer* pLeader = (CPlayer*)g_pObjectManager->GetPC(kv.first);
+		if (pLeader)
+			DespawnAllHelpersForLeaderInWorld(pLeader, pWorld);
+	}
 }
 
 void CHelperNpcManager::EvaluateAndSpawnRoleHelpers(CPlayer* pLeader, CWorld* pWorld)

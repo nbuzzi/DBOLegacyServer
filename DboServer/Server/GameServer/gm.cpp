@@ -38,6 +38,7 @@
 #include "PlayerModifiers.h"
 #include "ArenaManager.h"
 #include "DojoManager.h"
+#include <algorithm>
 
 void gm_read_command(sUG_SERVER_COMMAND* sPacket, CPlayer* pPlayer)
 {
@@ -170,6 +171,7 @@ ACMD(do_arena);
 ACMD(do_arena_join_public);
 ACMD(do_arena_joinparty_public);
 ACMD(do_arena_joinguild_public);
+ACMD(do_world_fight);
 ACMD(do_budokai);
 ACMD(do_dojo);
 
@@ -270,7 +272,8 @@ struct command_info cmd_info[] =
     { L"@customdrop_buffduration", do_customdrop_buffduration, ADMIN_LEVEL_GAME_MASTER },
 	{ L"@reload_playermods", do_reload_playermods_cfg, ADMIN_LEVEL_GAME_MASTER },
 	{ L"@playermods", do_playermods_toggle, ADMIN_LEVEL_GAME_MASTER },
-    { L"@arena", do_arena, ADMIN_LEVEL_GAME_MASTER },
+	{ L"@arena", do_arena, ADMIN_LEVEL_GAME_MASTER },
+	{ L"@world_fight", do_world_fight, ADMIN_LEVEL_GAME_MASTER },
 	{ L"@dojo", do_dojo, ADMIN_LEVEL_GAME_MASTER },
 	{ L"@budokai", do_budokai, ADMIN_LEVEL_ADMIN },
 
@@ -290,6 +293,7 @@ ACMD(do_arena)
 	// @arena award winners|participants
 	// @arena map <worldTblidx>
 	// @arena spawn <mobTblidx> [count]
+	// @arena mobs on|off | perwave <n> | waveseconds <sec> | preset <name|none>
 	// @arena joinparty [name]  -- add entire party of player (or self)
 	// @arena joinguild [name]  -- add all online guild members of player (or self)
 	pToken->PopToPeek();
@@ -375,6 +379,46 @@ ACMD(do_arena)
 	}
 	else if (sc == "status") {
 		g_pArenaManager->StatusTo(pPlayer);
+	}
+	else if (sc == "mobs") {
+		pToken->PopToPeek();
+		std::wstring wopt = pToken->PeekNextToken(NULL, &iLine);
+		std::string opt = ws2s(wopt);
+		for (auto &c : opt) c = (char)tolower(c);
+		if (opt == "on") { g_pArenaManager->SetRandomMobsSpawn(true); }
+		else if (opt == "off") { g_pArenaManager->SetRandomMobsSpawn(false); }
+		else if (opt == "perwave") {
+			pToken->PopToPeek();
+			std::wstring wv = pToken->PeekNextToken(NULL, &iLine);
+			unsigned int n = (unsigned int)atoi(ws2s(wv).c_str());
+			if (n == 0) n = 1; g_pArenaManager->SetRandomMobsPerWave(n);
+		}
+		else if (opt == "waveseconds") {
+			pToken->PopToPeek();
+			std::wstring ws = pToken->PeekNextToken(NULL, &iLine);
+			unsigned int sec = (unsigned int)atoi(ws2s(ws).c_str());
+			if (sec == 0) sec = 1; g_pArenaManager->SetRandomMobsWaveSeconds(sec);
+		}
+		else if (opt == "preset") {
+			pToken->PopToPeek();
+			std::wstring wname = pToken->PeekNextToken(NULL, &iLine);
+			std::string name = ws2s(wname);
+			if (name == "none" || name == "") { g_pArenaManager->SetRandomMobsPreset(""); }
+			else {
+				if (!g_pArenaManager->SetRandomMobsPreset(name)) {
+					CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+					sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+					res->wOpCode = GU_SYSTEM_DISPLAY_TEXT;
+					res->byDisplayType = SERVER_TEXT_SYSTEM;
+					NTL_SAFE_WCSCPY(res->awchMessage, L"[Arena] Unknown preset name.");
+					packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+					pPlayer->SendPacket(&packet);
+				}
+			}
+		}
+		else {
+			g_pArenaManager->StatusTo(pPlayer);
+		}
 	}
 	else if (sc == "join") {
 		// Individual join - warn if inappropriate for team mode
@@ -558,6 +602,118 @@ ACMD(do_arena)
 	else {
 		g_pArenaManager->StatusTo(pPlayer);
 	}
+}
+
+ACMD(do_world_fight)
+{
+	// Syntax:
+	// @world_fight start score [worldTblidx] [ffa|party] [seconds]
+	// @world_fight start elimination [worldTblidx] [ffa|party]
+	// @world_fight stop
+	// Defaults: world=900043, mode=ffa, seconds=900 (15min)
+	const unsigned int DEFAULT_WORLD = 900043;
+	const unsigned int DEFAULT_SECONDS = 900;
+
+	pToken->PopToPeek();
+	std::wstring wsub = pToken->PeekNextToken(NULL, &iLine);
+	if (wsub.empty()) { ERR_LOG(LOG_SYSTEM, "@world_fight: missing subcommand"); return; }
+	std::string sub = ws2s(wsub); for (auto &c: sub) c = (char)tolower(c);
+
+	if (sub == "stop")
+	{
+		// Re-enable helpers for the active world and stop arena
+		unsigned int wid = g_pArenaManager->GetOrCreateCurrentWorldId();
+		if (wid)
+		{
+			// Unsuppress helpers and flush any lingering ones
+			CWorld* pWorld = ((CGameServer*)g_pApp)->GetGameMain()->GetWorldManager()->FindWorld((WORLDID)wid);
+			if (pWorld)
+			{
+				GetHelperNpcManager()->SetWorldSuppressed(pWorld->GetID(), false);
+				GetHelperNpcManager()->DespawnAllHelpersInWorld(pWorld);
+			}
+		}
+		g_pArenaManager->Stop(true);
+		g_pArenaManager->StatusTo(pPlayer);
+		return;
+	}
+
+	if (sub != "start") { ERR_LOG(LOG_SYSTEM, "@world_fight: unknown subcommand"); return; }
+
+	// mode token: score | elimination
+	pToken->PopToPeek();
+	std::wstring wmode = pToken->PeekNextToken(NULL, &iLine);
+	if (wmode.empty()) { ERR_LOG(LOG_SYSTEM, "@world_fight: missing mode (score|elimination)"); return; }
+	std::string smode = ws2s(wmode); for (auto &c: smode) c = (char)tolower(c);
+	bool scoreMode = (smode == "score");
+	if (!scoreMode && smode != "elimination") { ERR_LOG(LOG_SYSTEM, "@world_fight: mode must be 'score' or 'elimination'"); return; }
+
+	// optional world tblidx
+	unsigned int worldTblidx = DEFAULT_WORLD;
+	pToken->PopToPeek();
+	std::wstring wworld = pToken->PeekNextToken(NULL, &iLine);
+	if (!wworld.empty())
+	{
+		unsigned int t = (unsigned int)atoi(ws2s(wworld).c_str());
+		if (t != 0) worldTblidx = t;
+	}
+
+	// optional mode ffa|party
+	CArenaManager::Mode arenaMode = CArenaManager::Mode::FREE_FOR_ALL;
+	pToken->PopToPeek();
+	std::wstring wfight = pToken->PeekNextToken(NULL, &iLine);
+	if (!wfight.empty())
+	{
+		std::string s = ws2s(wfight); for (auto &c: s) c = (char)tolower(c);
+		if (s == "party") arenaMode = CArenaManager::Mode::PARTY_VS_PARTY;
+		else if (s == "ffa" || s == "all") arenaMode = CArenaManager::Mode::FREE_FOR_ALL;
+		else {
+			// push back one token if it's not a mode (so it can be seconds)
+		}
+	}
+
+	// optional seconds (score mode only)
+	unsigned int seconds = DEFAULT_SECONDS;
+	if (scoreMode)
+	{
+		pToken->PopToPeek();
+		std::wstring wsec = pToken->PeekNextToken(NULL, &iLine);
+		if (!wsec.empty())
+		{
+			unsigned int t = (unsigned int)atoi(ws2s(wsec).c_str());
+			if (t > 0) seconds = t;
+		}
+	}
+
+	// Force arena world and configure event
+	g_pArenaManager->ForceCurrentWorld(worldTblidx);
+	g_pArenaManager->SetupWorldFight(scoreMode, seconds, arenaMode);
+
+	// Prepare world instance and suppress helper NPCs there
+	unsigned int wid = g_pArenaManager->GetOrCreateCurrentWorldId();
+	if (wid)
+	{
+		CWorld* pWorld = ((CGameServer*)g_pApp)->GetGameMain()->GetWorldManager()->FindWorld((WORLDID)wid);
+		if (pWorld)
+		{
+			GetHelperNpcManager()->SetWorldSuppressed(pWorld->GetID(), true);
+			GetHelperNpcManager()->DespawnAllHelpersInWorld(pWorld);
+		}
+	}
+
+	// Start arena enrollment immediately for chosen mode
+	g_pArenaManager->Start(arenaMode);
+	wchar_t msg[256];
+	if (scoreMode)
+		swprintf_s(msg, _countof(msg), L"[WorldFight] Score mode in world %u for %u seconds (%s)", worldTblidx, seconds, (arenaMode == CArenaManager::Mode::PARTY_VS_PARTY) ? L"Party" : L"FFA");
+	else
+		swprintf_s(msg, _countof(msg), L"[WorldFight] Elimination mode in world %u (%s)", worldTblidx, (arenaMode == CArenaManager::Mode::PARTY_VS_PARTY) ? L"Party" : L"FFA");
+	CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+	sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+	res->wOpCode = GU_SYSTEM_DISPLAY_TEXT; res->byDisplayType = SERVER_TEXT_NOTICE;
+	NTL_SAFE_WCSCPY(res->awchMessage, msg);
+	packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+	pPlayer->SendPacket(&packet);
 }
 
 ACMD(do_budokai)
@@ -1052,25 +1208,25 @@ ACMD(do_start_dbhunt)
 	else
 		g_pDragonballHuntEvent->StartEvent(true, byHours);
 
-	NTL_PRINT(PRINT_APP, "Dragonball Hunt Event Started");
+	NTL_PRINT(PRINT_APP, _T("Dragonball Hunt Event Started"));
 }
 
 ACMD(do_stop_dbhunt)
 {
 	g_pDragonballHuntEvent->EndEvent();
-	NTL_PRINT(PRINT_APP, "Dragonball Hunt Event Stopped");
+	NTL_PRINT(PRINT_APP, _T("Dragonball Hunt Event Stopped"));
 }
 
 ACMD(do_start_dbscramble)
 {
 	g_pDragonballScramble->StartEvent();
-	NTL_PRINT(PRINT_APP, "Dragonball Scramble Event Started");
+	NTL_PRINT(PRINT_APP, _T("Dragonball Scramble Event Started"));
 }
 
 ACMD(do_stop_dbscramble)
 {
 	g_pDragonballScramble->EndEvent(true);
-	NTL_PRINT(PRINT_APP, "Dragonball Scramble Event Stopped");
+	NTL_PRINT(PRINT_APP, _T("Dragonball Scramble Event Stopped"));
 }
 
 ACMD(do_start_stonedrop)
@@ -1087,13 +1243,13 @@ ACMD(do_start_stonedrop)
 	else
 		g_pStoneDropEvent->StartEvent(byHours);
 
-	NTL_PRINT(PRINT_APP, "Double Stone Drop Event Started");
+	NTL_PRINT(PRINT_APP, _T("Double Stone Drop Event Started"));
 }
 
 ACMD(do_stop_stonedrop)
 {
 	g_pStoneDropEvent->EndEvent();
-	NTL_PRINT(PRINT_APP, "Double Stone Drop Event Stopped");
+	NTL_PRINT(PRINT_APP, _T("Double Stone Drop Event Stopped"));
 }
 
 ACMD(do_start_customdrop)
@@ -1110,13 +1266,13 @@ ACMD(do_start_customdrop)
 	else
 		g_pCustomDropEvent->StartEvent(byHours);
 
-	NTL_PRINT(PRINT_APP, "Custom Drop Event Started");
+	NTL_PRINT(PRINT_APP, _T("Custom Drop Event Started"));
 }
 
 ACMD(do_stop_customdrop)
 {
 	g_pCustomDropEvent->EndEvent();
-	NTL_PRINT(PRINT_APP, "Custom Drop Event Stopped");
+	NTL_PRINT(PRINT_APP, _T("Custom Drop Event Stopped"));
 }
 
 ACMD(do_reload_customdrop_cfg)
@@ -1146,9 +1302,9 @@ ACMD(do_reload_customdrop_cfg)
 	}
 
 	if (g_pCustomDropEvent->ReloadConfig(path.c_str()))
-		NTL_PRINT(PRINT_APP, "CustomDropEvent: config reloaded from %s", path.c_str());
+	NTL_PRINT(PRINT_APP, _T("CustomDropEvent: config reloaded from %s"), s2ws(path).c_str());
 	else
-		NTL_PRINT(PRINT_APP, "CustomDropEvent: failed to reload config from %s", path.c_str());
+	NTL_PRINT(PRINT_APP, _T("CustomDropEvent: failed to reload config from %s"), s2ws(path).c_str());
 }
 
 // Reload helper NPC configuration at runtime
@@ -1174,16 +1330,16 @@ ACMD(do_reload_helpernpc_cfg)
 	CNtlIniFile ini;
 	if (!ini.Create(path.c_str()))
 	{
-		NTL_PRINT(PRINT_APP, "HelperNPC: failed to open %s", path.c_str());
+	NTL_PRINT(PRINT_APP, _T("HelperNPC: failed to open %s"), s2ws(path).c_str());
 		return;
 	}
 	if (GetHelperNpcManager()->LoadConfig(ini))
 	{
-		NTL_PRINT(PRINT_APP, "HelperNPC: config reloaded from %s", path.c_str());
+	NTL_PRINT(PRINT_APP, _T("HelperNPC: config reloaded from %s"), s2ws(path).c_str());
 	}
 	else
 	{
-		NTL_PRINT(PRINT_APP, "HelperNPC: failed to reload config from %s", path.c_str());
+	NTL_PRINT(PRINT_APP, _T("HelperNPC: failed to reload config from %s"), s2ws(path).c_str());
 	}
 }
 
@@ -1224,12 +1380,12 @@ ACMD(do_customdrop_chainspawns)
 	{
 		bool on = (_stricmp(arg.c_str(), "on") == 0 || _stricmp(arg.c_str(), "1") == 0 || _stricmp(arg.c_str(), "true") == 0);
 		g_pCustomDropEvent->SetAllowChainSpawns(on);
-		NTL_PRINT(PRINT_APP, "CustomDropEvent: chain spawns %s", on ? "ENABLED" : "DISABLED");
+	NTL_PRINT(PRINT_APP, _T("CustomDropEvent: chain spawns %s"), (on ? L"ENABLED" : L"DISABLED"));
 	}
 	else
 	{
 		bool on = g_pCustomDropEvent->IsAllowChainSpawns();
-		NTL_PRINT(PRINT_APP, "CustomDropEvent: chain spawns currently %s", on ? "ENABLED" : "DISABLED");
+	NTL_PRINT(PRINT_APP, _T("CustomDropEvent: chain spawns currently %s"), (on ? L"ENABLED" : L"DISABLED"));
 	}
 }
 
@@ -1244,11 +1400,11 @@ ACMD(do_customdrop_healmul)
 		float mul = (float)atof(arg.c_str());
 		if (mul < 0.0f) mul = 0.0f;
 		g_pCustomDropEvent->SetTotemHealMultiplier(mul);
-		NTL_PRINT(PRINT_APP, "CustomDropEvent: totem heal multiplier set to %.2f", mul);
+	NTL_PRINT(PRINT_APP, _T("CustomDropEvent: totem heal multiplier set to %.2f"), mul);
 	}
 	else
 	{
-		NTL_PRINT(PRINT_APP, "CustomDropEvent: totem heal multiplier = %.2f", g_pCustomDropEvent->GetTotemHealMultiplier());
+	NTL_PRINT(PRINT_APP, _T("CustomDropEvent: totem heal multiplier = %.2f"), g_pCustomDropEvent->GetTotemHealMultiplier());
 	}
 }
 
@@ -1262,11 +1418,11 @@ ACMD(do_customdrop_buffduration)
 	{
 		DWORD ms = (DWORD)strtoul(arg.c_str(), nullptr, 10);
 		g_pCustomDropEvent->SetTotemBuffDurationOverrideMs(ms);
-		NTL_PRINT(PRINT_APP, "CustomDropEvent: totem buff duration override set to %u ms", ms);
+	NTL_PRINT(PRINT_APP, _T("CustomDropEvent: totem buff duration override set to %u ms"), ms);
 	}
 	else
 	{
-		NTL_PRINT(PRINT_APP, "CustomDropEvent: totem buff duration override = %u ms", g_pCustomDropEvent->GetTotemBuffDurationOverrideMs());
+	NTL_PRINT(PRINT_APP, _T("CustomDropEvent: totem buff duration override = %u ms"), g_pCustomDropEvent->GetTotemBuffDurationOverrideMs());
 	}
 }
 
@@ -1289,9 +1445,9 @@ ACMD(do_reload_playermods_cfg)
 			path = arg;
 	}
 	if (g_pPlayerModifiers->ReloadConfig(path.c_str()))
-		NTL_PRINT(PRINT_APP, "PlayerModifiers: config reloaded from %s", path.c_str());
+		NTL_PRINT(PRINT_APP, _T("PlayerModifiers: config reloaded from %s"), s2ws(path).c_str());
 	else
-		NTL_PRINT(PRINT_APP, "PlayerModifiers: failed to reload config from %s", path.c_str());
+		NTL_PRINT(PRINT_APP, _T("PlayerModifiers: failed to reload config from %s"), s2ws(path).c_str());
 }
 
 ACMD(do_playermods_toggle)
@@ -1305,11 +1461,11 @@ ACMD(do_playermods_toggle)
 		bool on = (_stricmp(arg.c_str(), "on") == 0 || _stricmp(arg.c_str(), "1") == 0 || _stricmp(arg.c_str(), "true") == 0);
 		g_pPlayerModifiers->SetEnabled(on);
 		size_t n = g_pObjectManager->RecalculateAllPlayers();
-		NTL_PRINT(PRINT_APP, "PlayerModifiers: %s; recalculated %zu players", on ? "ENABLED" : "DISABLED", n);
+	NTL_PRINT(PRINT_APP, _T("PlayerModifiers: %s; recalculated %zu players"), (on ? L"ENABLED" : L"DISABLED"), n);
 	}
 	else
 	{
-		NTL_PRINT(PRINT_APP, "PlayerModifiers: currently %s (cfg=%s)", g_pPlayerModifiers->IsEnabled() ? "ENABLED" : "DISABLED", g_pPlayerModifiers->GetCfgPath());
+	NTL_PRINT(PRINT_APP, _T("PlayerModifiers: currently %s (cfg=%s)"), (g_pPlayerModifiers->IsEnabled() ? L"ENABLED" : L"DISABLED"), s2ws(g_pPlayerModifiers->GetCfgPath()).c_str());
 	}
 }
 
@@ -1511,7 +1667,19 @@ ACMD(do_addmob)
 {
 	pToken->PopToPeek();
 	std::wstring strToken = pToken->PeekNextToken(NULL, &iLine);
-	TBLIDX MobId = (TBLIDX)atof(ws2s(strToken).c_str());
+	TBLIDX MobId = INVALID_TBLIDX;
+	// Try numeric first
+	{
+		std::string as = ws2s(strToken);
+		bool allDigits = !as.empty() && std::all_of(as.begin(), as.end(), [](unsigned char ch){ return isdigit(ch); });
+		if (allDigits) MobId = (TBLIDX)atoi(as.c_str());
+	}
+	// If not numeric, try resolve by name via ArenaManager
+	if (MobId == INVALID_TBLIDX)
+	{
+		unsigned int id = g_pArenaManager->ResolveMobIdByName(strToken);
+		if (id != 0) MobId = (TBLIDX)id;
+	}
 
 	sMOB_TBLDAT* pMOBTblData = (sMOB_TBLDAT*)g_pTableContainer->GetMobTable()->FindData(MobId);
 
@@ -1675,7 +1843,7 @@ ACMD(do_addnpc)
 			printf("npc not found in world\n");
 		}
 	}
-	else ERR_LOG(LOG_GENERAL, "npc not found %u. GM %u", npcid, pPlayer->GetCharID());
+	else { ERR_LOG(LOG_SYSTEM, _T("[GENERAL] npc not found %u. GM %u"), npcid, pPlayer->GetCharID()); }
 }
 
 ACMD(do_additem)
@@ -1885,7 +2053,7 @@ ACMD(do_sessioninfo)
 	app->Send(pPlayer->GetClientSessionID(), &packet);
 	
 	// Also log to console for server admin
-	NTL_PRINT(PRINT_APP, "GM %u requested session info: %d/%d sessions active (%.1f%% utilization)", 
+	NTL_PRINT(PRINT_APP, _T("GM %u requested session info: %d/%d sessions active (%.1f%% utilization)"),
 		pPlayer->GetCharID(), currentSessions, configMaxSessions, 
 		configMaxSessions > 0 ? (float)currentSessions / configMaxSessions * 100.0f : 0.0f);
 }
@@ -1939,7 +2107,7 @@ ACMD(do_sessioncleanup)
 	app->Send(pPlayer->GetClientSessionID(), &packet);
 	
 	// Also log to console for server admin
-	NTL_PRINT(PRINT_APP, "GM %u forced session cleanup: %d sessions removed (%d -> %d)", 
+	NTL_PRINT(PRINT_APP, _T("GM %u forced session cleanup: %d sessions removed (%d -> %d)"),
 		pPlayer->GetCharID(), sessionsRemoved, sessionsBefore, sessionsAfter);
 }
 
@@ -2019,7 +2187,7 @@ ACMD(do_budokaiinfo)
 	app->Send(pPlayer->GetClientSessionID(), &packet);
 	
 	// Also log to console
-	NTL_PRINT(PRINT_APP, "GM %u requested Budokai info on port %d", pPlayer->GetCharID(), serverPort);
+	NTL_PRINT(PRINT_APP, _T("GM %u requested Budokai info on port %d"), pPlayer->GetCharID(), serverPort);
 }
 
 ACMD(do_addmasteritem)
@@ -3732,12 +3900,12 @@ ACMD(do_startevent)
 	if (Type == 0)
 	{
 		g_pHoneyBeeEvent->StartEvent(Hours);
-		NTL_PRINT(PRINT_APP, "Honey Bee Event Started");
+		NTL_PRINT(PRINT_APP, _T("Honey Bee Event Started"));
 	}
 	if (Type == 1)
 	{
 		g_pFairyEvent->StartEvent(Hours);
-		NTL_PRINT(PRINT_APP, "Fairy Event Started");
+		NTL_PRINT(PRINT_APP, _T("Fairy Event Started"));
 	}
 }
 
@@ -3752,12 +3920,12 @@ ACMD(do_stophoneybee)
 	if (Type == 0)
 	{
 		g_pHoneyBeeEvent->EndEvent();
-		NTL_PRINT(PRINT_APP, "Honey Bee Event End");
+		NTL_PRINT(PRINT_APP, _T("Honey Bee Event End"));
 	}
 	if (Type == 1)
 	{
 		g_pFairyEvent->EndEvent();
-		NTL_PRINT(PRINT_APP, "Fairy Event End");
+		NTL_PRINT(PRINT_APP, _T("Fairy Event End"));
 	}
 }
 

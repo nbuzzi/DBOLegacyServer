@@ -4,12 +4,15 @@
 #include "NtlString.h"
 #include "NtlObject.h"
 #include <vector>
+#include <string>
 #include <utility>
 #include <unordered_set>
 #include <unordered_map>
 #include "NtlParty.h"
 #include "NtlGuild.h"
 #include "NtlRankBattle.h"
+// For Budokai enums/packets used on Budokai worlds
+#include "NtlBudokai.h"
 
 class CNtlIniFile;
 class CPlayer;
@@ -30,6 +33,10 @@ public:
 		bool enabled;
 		// comma-separated list of world tblidx values
 		std::vector<unsigned int> worldTblidxList;
+		// worlds that require Budokai-style match notifications instead of RankBattle ones
+		std::vector<unsigned int> budokaiWorldTblidxList;
+		// when false (default), exclude worlds that use Budokai rules from rotation/creation
+		bool allowBudokaiRuleWorlds;
 		unsigned int rotationSeconds;
 		unsigned int startDelaySeconds; // delay before starting round after teleport/invite accept
 		unsigned int roundTimerSeconds; // visible UI countdown duration
@@ -46,7 +53,13 @@ public:
 		unsigned int inviteWaitSeconds; // seconds to accept
 		// mobs
 		bool mobsAllowed;
-		std::vector<unsigned int> mobTblidxList; // list of mobs to spawn in arena world
+		std::vector<unsigned int> mobTblidxList; // static list of mobs to spawn in arena world
+		bool randomMobsSpawn; // when true, spawn random mobs periodically during IN_ROUND
+		unsigned int randomMobsPerWave; // how many per wave
+		unsigned int randomMobsWaveSeconds; // wave interval seconds
+		CNtlString mobListFile; // path to Mobs.txt containing name/id mapping
+		CNtlString mobPreset; // selected preset name
+		std::unordered_map<std::string, std::vector<unsigned int>> mobPresets; // preset name -> list of mob tblidx
 		// spectators
 		bool spectatorsEnabled;
 		bool spectatorsUseSameWorld;
@@ -58,6 +71,8 @@ public:
 		bool reviveOnFaint; // instantly revive fainted participants (100% LP/EP)
 		bool faintBecomeSpectator; // move fainted players to spectators if not revive
 		bool spectatorHide; // apply transparent condition to spectators
+		// scoring
+		bool scoreOnFaint; // when true, award points on faint regardless of revive mode
 		// notices
 		unsigned char noticeType; // default notice type to use (e.g., 3)
 		// telecast banner (CCBD style)
@@ -74,9 +89,18 @@ public:
 		float postFinishPosX;
 		float postFinishPosY;
 		float postFinishPosZ;
+		// Optional direction for post-finish teleport destination
+		float postFinishDirX;
+		float postFinishDirY;
+		float postFinishDirZ;
+		// Keep Rank UI visible after finish (avoid sending LEAVE)
+		bool keepRankUiAfterFinish;
+		// diagnostics
+		bool verboseLogs; // when true, emit detailed ERR_LOG traces for troubleshooting
 		// CC battle mode (like RankBattle)
 		bool ccBattleMode; // when true, use RankBattle logic for world creation and teleportation
 		bool allowCustomWorlds; // when true, allow GM commands and config to override worlds; when false, only use RankBattle table worlds
+		bool useOnlyCustomWorlds; // when true, ignore RankBattle table and use only worlds from WorldTblidxList
 		// rewards
 		bool rewardsEnabled;
 		// pair<itemTblidx,count>
@@ -89,14 +113,16 @@ public:
 			maxWaitAllArriveSeconds(10), rankSequenceStepMs(3000), enterReadyDelayMs(3000), postReadyDelayMs(5000),
 			randomizeMapOnStart(false), mapPerRound(false),
 			useInviteFlow(false), inviteWaitSeconds(15),
-			mobsAllowed(false),
+			mobsAllowed(false), randomMobsSpawn(false), randomMobsPerWave(2), randomMobsWaveSeconds(25),
 			spectatorsEnabled(false), spectatorsUseSameWorld(true),
 			spectatorWorldTblidx(0), spectatorPosX(0), spectatorPosY(0), spectatorPosZ(0),
-			reviveOnFaint(false), faintBecomeSpectator(true), spectatorHide(true), noticeType(3),
+			reviveOnFaint(false), faintBecomeSpectator(true), spectatorHide(true), scoreOnFaint(false), noticeType(3),
 			telecastEnabled(false), telecastType(3), telecastSpeechTblidx(0), telecastDisplayMs(5000),
 			rankUiEnabled(false), rankPacketsEnabled(false),
-			postFinishTeleport(false), postFinishWorldTblidx(0), postFinishPosX(0), postFinishPosY(0), postFinishPosZ(0),
-			ccBattleMode(false), allowCustomWorlds(false),
+			postFinishTeleport(true), postFinishWorldTblidx(1), postFinishPosX(4975.609863f), postFinishPosY(-48.869999f), postFinishPosZ(4012.609863f),
+			postFinishDirX(0.911100f), postFinishDirY(-0.412000f), postFinishDirZ(0.0f), keepRankUiAfterFinish(true),
+			verboseLogs(false),
+			ccBattleMode(false), allowCustomWorlds(false), useOnlyCustomWorlds(false), allowBudokaiRuleWorlds(false),
 			rewardsEnabled(false) {
 		}
 	};
@@ -127,6 +153,12 @@ public:
 	void RotateMapNow();
 	void StatusTo(CPlayer* pWho);
 	bool SetCurrentWorld(unsigned int worldTblidx);
+	// Force-set the current world tblidx, bypassing allowCustomWorlds guard (for GM events)
+	bool ForceCurrentWorld(unsigned int worldTblidx);
+	// Configure quick world-fight parameters
+	void SetupWorldFight(bool scoreMode, unsigned int roundSeconds, Mode mode);
+	// Ensure world instance exists and return its WORLDID (0 on failure)
+	unsigned int GetOrCreateCurrentWorldId();
 
 	// Enrollment
 	bool AddParticipant(CPlayer* pPlayer);
@@ -139,9 +171,6 @@ public:
 	void TeleportSpectatorsHere(CPlayer* pGm);
 	void MarkWinner(CPlayer* pPlayer);
 	void ClearWinners();
-	void AwardRewards(bool winnersOnly);
-	void FinishMatch(bool aborted);
-
 	// World management
 	void LoadAvailableWorlds(); // Load all valid worlds from RankBattle table
 	void FinishWithWinner(unsigned int winnerCharId);
@@ -164,6 +193,17 @@ public:
 	// GM utility: spawn a mob in the current arena world
 	bool SpawnMob(unsigned int mobTblidx, const CNtlVector* pAt = nullptr, const CNtlVector* pDir = nullptr);
 
+	// Random mob waves controls (GM-accessible)
+public:
+	void SetRandomMobsSpawn(bool on);
+	void SetRandomMobsPerWave(unsigned int n);
+	void SetRandomMobsWaveSeconds(unsigned int sec);
+	bool SetRandomMobsPreset(const std::string& name);
+	unsigned int ResolveMobIdByName(const std::wstring& name) const;
+
+	// GM utility: award configured rewards (true = winners only, false = all participants)
+	void AwardRewards(bool winnersOnly);
+
 	// Accessors
 	const Config& GetConfig() const { return m_cfg; }
 	State GetState() const { return m_state; }
@@ -181,6 +221,7 @@ private:
 	void ParseWorldListCsv(const CNtlString& csv);
 	void ParseMobListCsv(const CNtlString& csv);
 	void ParseRewardsCsv(const CNtlString& csv, std::vector<std::pair<unsigned int, unsigned int>>& out);
+	void FilterOutBudokaiRuleWorlds();
 	bool TeleportOneToWorldTblidx(CPlayer* pPlayer, unsigned int worldTblidx, float posX, float posY, float posZ);
 	void BroadcastRoundTimerStartToWorld(unsigned int worldId, unsigned int seconds);
 	void BroadcastRoundTimerEndToWorld(unsigned int worldId);
@@ -188,12 +229,20 @@ private:
 	void BroadcastCountdownToWorld(unsigned int worldId, bool bStart);
 	void BroadcastRankStateToWorld(unsigned int worldId, unsigned char byState, unsigned char byStage);
 	void BroadcastRankMatchStartToWorld(unsigned int worldId);
+	void BroadcastRankStageFinishToWorld(unsigned int worldId);
+	void BroadcastRankMatchFinishToWorld(unsigned int worldId);
+	// Budokai-like notifications (used only on Budokai worlds)
+	void BroadcastBudokaiMatchStateToWorld(unsigned int worldId, BYTE byMatchType, BYTE byState, BUDOKAITIME tmNextStepTime, BUDOKAITIME tmRemainTime);
+	void BroadcastBudokaiProgressMessageToWorld(unsigned int worldId, BYTE byMsgId);
 	void BroadcastRankJoinToWorld(unsigned int worldId);
 	void BroadcastRankLeaveToWorld(unsigned int worldId);
 	void BroadcastRankFullStartSequence(unsigned int worldId);
 	void BroadcastRankTeamInfoToWorld(unsigned int worldId);
 	void MakeParticipantsAttackable(unsigned int worldId);
 	void EnsureParticipantsStanding(unsigned int worldId);
+	// Combat permission toggles (enable PvP/FreeBattle during RUN, clear on finish)
+	void SetCombatPermittedForParticipants(bool enable);
+	void SetCombatPermittedFor(class CPlayer* pPlayer, bool enable);
 	// Team validation for team-based modes
 	bool ValidateTeamComposition();
 	// Single-recipient helpers to recover when a player enters late
@@ -214,10 +263,18 @@ private:
 	void ReviveParticipantsForNextRound();
 	void ResetParticipantsBetweenRounds();
 	bool IsPartyModeWorld(unsigned int worldTblidx) const;
+	bool IsBudokaiWorld(unsigned int worldTblidx) const;
+	bool IsRankBattleWorld(unsigned int worldTblidx) const;
 	void SpawnArenaMobs();
 	void DespawnArenaMobs();
+	// Random mob waves
+	void SpawnRandomMobWave(unsigned int count);
+	std::vector<unsigned int> GetPresetPool() const;
+	// Mob name/index helpers
+	void LoadMobListFile(const char* path);
 	unsigned int EnsureCurrentWorldId();
 	void BroadcastTelecastToWorld(unsigned int worldId);
+	bool TeleportOneToWorldTblidxDir(class CPlayer* pPlayer, unsigned int worldTblidx, float posX, float posY, float posZ, float dirX, float dirY, float dirZ);
 	void PostFinishTeleportAll();
 	void PostFinishTeleportDefault(); // fallback to previous location or bind
 	void TeleportToBind(CPlayer* pPlayer);
@@ -226,6 +283,9 @@ private:
 	void ComposeWinnerText(CPlayer* pWinner, wchar_t* outBuf, size_t cchBuf);
 	void ComposeWinnerTextTeam_Party(PARTYID partyId, wchar_t* outBuf, size_t cchBuf);
 	void ComposeWinnerTextTeam_Guild(GUILDID guildId, wchar_t* outBuf, size_t cchBuf);
+	void FinishMatch(bool aborted);
+	void ClearCombatRestrictionsFor(class CPlayer* pPlayer);
+	void ClearCombatRestrictionsForParticipants();
 	// System status helpers
 	void AnnounceRoundTimeRemaining(unsigned int secondsLeft);
 	void AnnounceRotationTimeRemaining(unsigned int secondsLeft);
@@ -270,6 +330,10 @@ private:
 
 	// Short grace window after entering RUN before we evaluate alive/faint logic
 	unsigned long m_runSettleMs = 0;
+    // Small delayed pulse to re-send ATTACKABLE shortly after RUN starts
+    unsigned long m_runUnlockPulseMs = 0;
+	// Watchdog to force-complete match if MATCH_FINISH stalls
+	unsigned long m_matchFinishWatchdogMs = 0;
 
 	// Battle state timers (similar to RankBattle)
 	unsigned long m_directionTimeMs = 0;    // Time for direction/intro phase
@@ -291,6 +355,11 @@ private:
 
 	struct PrevLoc { unsigned int worldId; CNtlVector loc; CNtlVector dir; };
 	std::unordered_map<unsigned int, PrevLoc> m_prevLoc; // charId -> previous location
+
+	// Random mob waves state
+	unsigned long m_randomWaveRemainMs = 0;
+	// Mob name -> id mapping loaded from file for @addmob by name
+	std::unordered_map<std::string, unsigned int> m_mobNameToId;
 };
 
 #define GetArenaManager() CArenaManager::GetInstance()

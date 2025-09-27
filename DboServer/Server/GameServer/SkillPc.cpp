@@ -8,6 +8,8 @@
 #include "NtlResultCode.h"
 #include "GameServer.h"
 #include "NtlNavi.h"
+// Arena runtime for custom PvP battles
+#include "ArenaManager.h"
 
 
 
@@ -137,6 +139,31 @@ void CSkillPc::CastSkill(HOBJECT hAppointTargetHandle, BYTE byApplyTargetCount, 
 						{
 							targetList.AddTarget(ahApplyTarget[i]);
 							continue;
+						}
+						// Arena: allow harmful skills vs other participants during RUN, honoring team modes
+						if (g_pArenaManager->IsEnabled() && g_pArenaManager->GetState() == CArenaManager::State::IN_ROUND
+							&& g_pArenaManager->IsParticipant(m_pPlayerRef) && g_pArenaManager->IsParticipant(pTargetPc))
+						{
+							bool allow = true;
+							switch (g_pArenaManager->GetMode())
+							{
+							case CArenaManager::Mode::PARTY_VS_PARTY:
+								allow = !(m_pPlayerRef->GetPartyID() != INVALID_PARTYID && m_pPlayerRef->GetPartyID() == pTargetPc->GetPartyID());
+								break;
+							case CArenaManager::Mode::GUILD_VS_GUILD:
+								allow = !(m_pPlayerRef->GetGuildID() != 0 && m_pPlayerRef->GetGuildID() == pTargetPc->GetGuildID());
+								break;
+							case CArenaManager::Mode::FREE_FOR_ALL:
+							case CArenaManager::Mode::OPEN:
+							default:
+								allow = true;
+								break;
+							}
+							if (allow)
+							{
+								targetList.AddTarget(ahApplyTarget[i]);
+								continue;
+							}
 						}
 						//check if both players are in freebattle
 						if (m_pPlayerRef->GetFreeBattleID() != INVALID_DWORD && m_pPlayerRef->GetFreeBattleID() == pTargetPc->GetFreeBattleID())

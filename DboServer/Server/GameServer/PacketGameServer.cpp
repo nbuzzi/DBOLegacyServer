@@ -63,6 +63,8 @@
 #include "BusSystem.h"
 #include "scsManager.h"
 #include "WPShopContainer.h"
+// Arena runtime (custom PvP flow)
+#include "ArenaManager.h"
 
 // Local helpers: detect Broly worlds by name instead of numeric IDs
 #include <string>
@@ -5362,7 +5364,17 @@ void CClientSession::RecvCharSkillReq(CNtlPacket* pPacket)
 
 					bool bIsHarmful = Dbo_IsHarmfulEffectType(pSkill->GetOriginalTableData()->bySkill_Active_Type) && pSkill->GetOriginalTableData()->byApply_Target != DBO_SKILL_APPLY_TARGET_PARTY;
 
-					if (bIsHarmful && cPlayer->IsPvpZone() == false && cPlayer->GetPcIsFreeBattle() == false && cPlayer->GetCurWorld()->GetTbldat()->bDynamic == false && GetNaviEngine()->IsBasicAttributeSet(cPlayer->GetCurWorld()->GetNaviInstanceHandle(), cPlayer->GetCurLoc().x, cPlayer->GetCurLoc().z, DBO_WORLD_ATTR_BASIC_FORBID_PC_BATTLE))
+					// In static worlds with FORBID_PC_BATTLE attribute, harmful skills are normally blocked unless the caster
+					// is in PvP zone or in a free battle. During Arena RUN we explicitly allow combat between participants;
+					// bypass this gate for Arena participants while the arena is active.
+					if (bIsHarmful
+						&& cPlayer->IsPvpZone() == false
+						&& cPlayer->GetPcIsFreeBattle() == false
+						&& cPlayer->GetCurWorld()->GetTbldat()->bDynamic == false
+						&& GetNaviEngine()->IsBasicAttributeSet(cPlayer->GetCurWorld()->GetNaviInstanceHandle(), cPlayer->GetCurLoc().x, cPlayer->GetCurLoc().z, DBO_WORLD_ATTR_BASIC_FORBID_PC_BATTLE)
+						&& !(g_pArenaManager->IsEnabled()
+							 && g_pArenaManager->IsParticipant(cPlayer)
+							 && g_pArenaManager->GetState() == CArenaManager::State::IN_ROUND))
 					{
 						resultcode = GAME_SKILL_INVALID_TARGET_APPOINTED;
 					}

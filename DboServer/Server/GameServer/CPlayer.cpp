@@ -196,7 +196,7 @@ void CPlayer::LoadData(sPC_PROFILE* pcdata, sPC_TBLDAT* pTbldat)
 
 			m_byCurRPBall = pcdata->byCurRPBall;
 			player_data.charTitle = pcdata->charTitle;
-			player_data.dwWaguWaguPoints = pcdata->dwWaguWaguPoints;		
+			player_data.dwWaguWaguPoints = pcdata->dwWaguWaguPoints;
 			player_data.mascotTblidx = pcdata->mascotTblidx;
 			player_data.bInvisibleCostume = pcdata->bInvisibleCostume; //if true then cant see costume
 			player_data.bInvisibleTitle = false;//Xanu pcdata->bInvisibleTitle; //if true, then cant see char title
@@ -719,7 +719,7 @@ void CPlayer::TickProcess(DWORD dwTickDiff, float fMultiple)
 		return;
 
 	CCharacter::TickProcess(dwTickDiff, fMultiple);
-	
+
 	// AFK CHECK
 	AfkCheck(dwTickDiff);
 
@@ -833,7 +833,7 @@ void CPlayer::UpdateFreePvpZone(DWORD dwTickDiff)
 						Revival(CNtlVector(GetBindLoc()), GetBindWorldID(), REVIVAL_TYPE_BIND_POINT, TELEPORT_TYPE_POPOSTONE);
 						/*Revival(CNtlVector(GetCurLoc()), GetWorldTblidx(), REVIVAL_TYPE_SPECIFIED_POSITION, TELEPORT_TYPE_POPOSTONE);
 						GetStateManager()->AddConditionState(CHARCOND_CANT_BE_TARGETTED, NULL, true);*/
-					}					
+					}
 				}
 			}
 		}
@@ -3290,7 +3290,7 @@ void CPlayer::FusionMascot(BYTE byItemPlace, BYTE byItemPos, BYTE byMascotLevelU
 	CItem* item = NULL;
 	CItemPet* mainMascot = NULL;
 	CItemPet* offeringMascot = NULL;
-		
+
 	mainMascot = GetMascot(byMascotLevelUpSlot);
 	offeringMascot = GetMascot(byMascotOfferingSlot);
 
@@ -3439,7 +3439,7 @@ void	CPlayer::UpdateBattleCombatMode(bool status)
 				ResetBuffReduction = 35000;
 				m_dwCombatModeTickCount = NTL_BATTLE_COMBAT_DISABLE;
 				return;
-			}			
+			}
 		}
 		else
 		{
@@ -3992,120 +3992,122 @@ bool CPlayer::Faint(CCharacterObject* pkKiller, eFAINT_REASON byReason)
 {
 	CGameServer* app = (CGameServer*)g_pApp;
 
-	if (m_pTransformTbldat) //if transformed then cancel
+	if (m_pTransformTbldat) // if transformed then cancel
 		CancelTransformation();
 
-	if (GetAspectStateId() == ASPECTSTATE_VEHICLE) //cancel vehicle when faint
+	if (GetAspectStateId() == ASPECTSTATE_VEHICLE) // cancel vehicle when faint
 		EndVehicle(GAME_VEHICLE_END_BY_HIT);
 
-	if (GetPcIsFreeBattle() == false)
+	// Real FreeBattle faint handling only when the player is actually in a FreeBattle
+	if (GetPcIsFreeBattle() && GetFreeBattleID() != INVALID_DWORD)
 	{
-		if (CCharacterObject::Faint(pkKiller, byReason))
-		{
-			CCharacter::Faint(pkKiller, byReason);
-
-			UpdateBattleCombatMode(false);
-
-			if (GetDragonballScrambleBallFlag() > 0)
-				g_pDragonballScramble->SpawnBall(this, true);
-
-			bool bApply = true;
-
-			if (GetCurrentPetId() != INVALID_HOBJECT)
-			{
-				if (CSummonPet* pPet = g_pObjectManager->GetSummonPet(GetCurrentPetId()))
-					pPet->Despawn(true);
-			}
-
-			if (GetCurWorld())
-			{
-				if (GetCurWorld()->GetRuleType() == GAMERULE_RANKBATTLE) //check if player in rank battle)
-				{
-					bApply = false;
-					g_pRankbattleManager->UpdatePlayerState(GetRankBattleRoomTblidx(), GetRankBattleRoomId(), this, RANKBATTLE_MEMBER_STATE_FAINT);
-				}
-				else if (GetCurWorld()->GetRuleType() == GAMERULE_DOJO) //check if player in rank battle)
-				{
-					bApply = false;
-
-					SetCurRP(0); //just set value is enough because client reset the rp by itself (DO NOT WHEN PLAYER DIE IN RANK BATTLE)
-					SetRPBall(0);//just set value is enough because client reset the rp ball by itself (DO NOT WHEN PLAYER DIE IN RANK BATTLE)
-				}
-				else if (GetCurWorld()->GetRuleType() == GAMERULE_MINORMATCH || GetCurWorld()->GetRuleType() == GAMERULE_MAJORMATCH || GetCurWorld()->GetRuleType() == GAMERULE_FINALMATCH)//check if die in budokaiif 
-				{
-					if (GetBudokaiPcState() != MATCH_MEMBER_STATE_FAINT && app->IsDojoChannel())
-					{
-						SetBudokaiPcState(MATCH_MEMBER_STATE_FAINT);
-
-						//update score etc
-						if (g_pBudokaiManager->GetMatchDepth() == INVALID_BUDOKAI_MATCH_DEPTH)
-						{
-							if (pkKiller)
-								g_pBudokaiManager->MinorMatchUpdateScore(GetMatchIndex(), ((CPlayer*)pkKiller)->GetBudokaiTeamType(), pkKiller->GetID(), GetID());
-							else
-								g_pBudokaiManager->MinorMatchUpdateScore(GetMatchIndex(), INVALID_TEAMTYPE, INVALID_HOBJECT, GetID());
-						}
-						else if (g_pBudokaiManager->GetMatchDepth() >= BUDOKAI_MATCH_DEPTH_8)
-							g_pBudokaiManager->MajorMatchUpdateScore(GetMatchIndex(), GetBudokaiTeamType(), GetID(), GetJoinID());
-						else if (g_pBudokaiManager->GetMatchDepth() <= BUDOKAI_MATCH_DEPTH_4)
-							g_pBudokaiManager->FinalMatchUpdateScore(GetMatchIndex(), GetBudokaiTeamType(), GetID(), GetJoinID());
-						else
-							ERR_LOG(LOG_SYSTEM, "BudokaiManager: MatchDepth %u not found", g_pBudokaiManager->GetMatchDepth());
-
-						bApply = false;
-					}
-
-					SetCurRP(0); //just set value is enough because client reset the rp by itself (DO NOT WHEN PLAYER DIE IN RANK BATTLE)
-					SetRPBall(0);//just set value is enough because client reset the rp ball by itself (DO NOT WHEN PLAYER DIE IN RANK BATTLE)
-				}
-				else
-				{
-					SetCurRP(0); //just set value is enough because client reset the rp by itself (DO NOT WHEN PLAYER DIE IN RANK BATTLE)
-					SetRPBall(0);//just set value is enough because client reset the rp ball by itself (DO NOT WHEN PLAYER DIE IN RANK BATTLE)
-				}
-			}
-
-			if (IsInBattleArena(GetWorldTblidx(), GetCurLoc(), DiePowerTournament) || GetWorldTblidx() == 510000) //check if player is in free pvp arena
-			{
-				bApply = false;
-			}
-
-			if (bApply)
-			{
-				if (GetCurWorld() && GetCurWorld()->GetTbldat()->bDynamic == false)
-					AddDeathQuickTeleport();
-
-				if (IsGameMaster() == false)		//do not decrease durability when player is a gm..
-					DecreaseEquipmentDurability();
-
-				GetQuests()->PlayerDied(); //inform quests that player died. Some quests might fail.
-			}
-
-			// Arena scoring hook: register a point for killer when a participant faints
-			if (pkKiller)
-			{
-				CPlayer* pKillerPc = dynamic_cast<CPlayer*>(pkKiller);
-				if (pKillerPc)
-				{
-					g_pArenaManager->OnPlayerFaint((unsigned int)pKillerPc->GetCharID(), (unsigned int)GetCharID());
-				}
-			}
-
-			GetCharAtt()->CalculateAll();
-			return true;
-		}
-	}
-	else
-	{
-		SetCurLP(1); //set current LP to 1 because client-side the lp dont go below 1 if battle ends
+		SetCurLP(1); // set current LP to 1 because client-side the LP doesn't go below 1 if freebattle ends
 		g_pFreeBattleManager->EndFreeBattle(GetFreeBattleID(), GetFreeBattleTarget());
-
 		return true;
 	}
 
-	return false;
-}
+	// Normal faint flow (Arena, PvP arenas, open world, etc.)
+	if (!CCharacterObject::Faint(pkKiller, byReason))
+		return false;
 
+	CCharacter::Faint(pkKiller, byReason);
+
+	UpdateBattleCombatMode(false);
+
+	if (GetDragonballScrambleBallFlag() > 0)
+		g_pDragonballScramble->SpawnBall(this, true);
+
+	bool bApply = true;
+
+	if (GetCurrentPetId() != INVALID_HOBJECT)
+	{
+		if (CSummonPet* pPet = g_pObjectManager->GetSummonPet(GetCurrentPetId()))
+			pPet->Despawn(true);
+	}
+
+	if (GetCurWorld())
+	{
+		switch (GetCurWorld()->GetRuleType())
+		{
+		case GAMERULE_RANKBATTLE:
+			bApply = false;
+			g_pRankbattleManager->UpdatePlayerState(GetRankBattleRoomTblidx(), GetRankBattleRoomId(), this, RANKBATTLE_MEMBER_STATE_FAINT);
+			break;
+		case GAMERULE_DOJO:
+			bApply = false;
+			SetCurRP(0);
+			SetRPBall(0);
+			break;
+		case GAMERULE_MINORMATCH:
+		case GAMERULE_MAJORMATCH:
+		case GAMERULE_FINALMATCH:
+			if (GetBudokaiPcState() != MATCH_MEMBER_STATE_FAINT && app->IsDojoChannel())
+			{
+				SetBudokaiPcState(MATCH_MEMBER_STATE_FAINT);
+
+				// update score etc
+				if (g_pBudokaiManager->GetMatchDepth() == INVALID_BUDOKAI_MATCH_DEPTH)
+				{
+					if (pkKiller)
+						g_pBudokaiManager->MinorMatchUpdateScore(GetMatchIndex(), ((CPlayer*)pkKiller)->GetBudokaiTeamType(), pkKiller->GetID(), GetID());
+					else
+						g_pBudokaiManager->MinorMatchUpdateScore(GetMatchIndex(), INVALID_TEAMTYPE, INVALID_HOBJECT, GetID());
+				}
+				else if (g_pBudokaiManager->GetMatchDepth() >= BUDOKAI_MATCH_DEPTH_8)
+				{
+					g_pBudokaiManager->MajorMatchUpdateScore(GetMatchIndex(), GetBudokaiTeamType(), GetID(), GetJoinID());
+				}
+				else if (g_pBudokaiManager->GetMatchDepth() <= BUDOKAI_MATCH_DEPTH_4)
+				{
+					g_pBudokaiManager->FinalMatchUpdateScore(GetMatchIndex(), GetBudokaiTeamType(), GetID(), GetJoinID());
+				}
+				else
+				{
+					ERR_LOG(LOG_SYSTEM, "BudokaiManager: MatchDepth %u not found", g_pBudokaiManager->GetMatchDepth());
+				}
+
+				bApply = false;
+			}
+
+			SetCurRP(0);
+			SetRPBall(0);
+			break;
+		default:
+			SetCurRP(0);
+			SetRPBall(0);
+			break;
+		}
+	}
+
+	if (IsInBattleArena(GetWorldTblidx(), GetCurLoc(), DiePowerTournament) || GetWorldTblidx() == 510000) // check if player is in free pvp arena
+	{
+		bApply = false;
+	}
+
+	if (bApply)
+	{
+		if (GetCurWorld() && GetCurWorld()->GetTbldat()->bDynamic == false)
+			AddDeathQuickTeleport();
+
+		if (IsGameMaster() == false) // do not decrease durability when player is a gm
+			DecreaseEquipmentDurability();
+
+		GetQuests()->PlayerDied(); // inform quests that player died. Some quests might fail.
+	}
+
+	// Arena scoring hook: register a point for killer when a participant faints
+	if (pkKiller)
+	{
+		CPlayer* pKillerPc = dynamic_cast<CPlayer*>(pkKiller);
+		if (pKillerPc)
+		{
+			g_pArenaManager->OnPlayerFaint((unsigned int)pKillerPc->GetCharID(), (unsigned int)GetCharID());
+		}
+	}
+
+	GetCharAtt()->CalculateAll();
+	return true;
+}
 
 //--------------------------------------------------------------------------------------//
 //		return true on death
@@ -4338,7 +4340,7 @@ bool CPlayer::IsAttackable(CCharacterObject* pTarget)
 				if (meSpectator || tgSpectator)
 					return false;
 
-				if (meParticipant && tgParticipant)
+				if (meParticipant && tgParticipant && g_pArenaManager->GetState() == CArenaManager::State::IN_ROUND)
 				{
 					switch (g_pArenaManager->GetMode())
 					{
@@ -4727,12 +4729,12 @@ void CPlayer::ChatServerCoordinateSync(DWORD dwTickDiff)
 		CGameServer* app = (CGameServer*)g_pApp;
 
 		CNtlPacket packet(sizeof(sGU_CHAR_COORDINATE_EACH_TICK_NFY));
-		sGU_CHAR_COORDINATE_EACH_TICK_NFY * res = (sGU_CHAR_COORDINATE_EACH_TICK_NFY *)packet.GetPacketData();
+		sGU_CHAR_COORDINATE_EACH_TICK_NFY* res = (sGU_CHAR_COORDINATE_EACH_TICK_NFY*)packet.GetPacketData();
 		res->wOpCode = GU_CHAR_COORDINATE_EACH_TICK_NFY;
 		res->hSubject = GetID();
 		NtlLocationCompress(&res->vCurLoc, GetCurLoc().x, GetCurLoc().y, GetCurLoc().z);
 		NtlDirectionCompress(&res->vCurDir, GetCurDir().x, GetCurDir().y, GetCurDir().z);
-		packet.SetPacketLen( sizeof(sGU_CHAR_COORDINATE_EACH_TICK_NFY) );
+		packet.SetPacketLen(sizeof(sGU_CHAR_COORDINATE_EACH_TICK_NFY));
 		app->Send(GetClientSessionID(), &packet);
 
 		//set map name tblidx

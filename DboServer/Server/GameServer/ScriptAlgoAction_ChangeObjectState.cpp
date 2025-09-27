@@ -60,6 +60,12 @@ int CWpsAlgoAction_ChangeObjectState::OnUpdate(DWORD dwTickDiff, float fMultiple
 			return m_status;
 		}
 
+		// broly test worlds
+		if(worldId == 960002 || worldId == 960003 || worldId == 960004) 
+		{
+			return m_status;
+		}
+
 		// log for other worlds
 		ERR_LOG(LOG_SCRIPT, "World %u has no trigger object %u. Script ID %u", worldId, m_objectTblidx, GetOwner()->GetScriptID());
 		return m_status;

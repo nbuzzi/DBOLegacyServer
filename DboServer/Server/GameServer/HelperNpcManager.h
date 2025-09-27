@@ -185,6 +185,12 @@ public:
     // Refresh existing helpers: despawn all current helpers and respawn according to current config (roles + base)
     void RefreshAllHelpers(bool bRespawn);
 
+    // World-level suppression: when true for a WORLDID, helpers will not spawn in that world
+    void SetWorldSuppressed(WORLDID worldId, bool suppressed);
+    bool IsWorldSuppressed(WORLDID worldId) const;
+    // Despawn all helpers present in a given world (used when turning suppression on mid-session)
+    void DespawnAllHelpersInWorld(class CWorld* pWorld);
+
 private:
     CHelperNpcManager() = default;
     // Common spawn path after mode-specific allow checks pass
@@ -238,6 +244,9 @@ private:
         }
     };
     std::unordered_set<SpawnKey, SpawnKeyHash> m_pendingSpawns;
+
+    // Worlds where helper spawns are suppressed
+    std::set<WORLDID> m_suppressedWorlds;
 
     // Role-based helper definitions
     struct sROLE_DEF {
