@@ -37,7 +37,7 @@ void CServerPassiveSession::RecvDojoCommand(CNtlPacket* pPacket)
 	case eDBO_DOJO_COMMAND_TYPE_START:
 	{
 		// Manual START: force begin preparation regardless of DisableDojoWar auto gating
-		pDojo->BeginWarPreparationManual();
+		//pDojo->BeginWarPreparationManual();
 		break;
 	}
 	case eDBO_DOJO_COMMAND_TYPE_CLEAR:

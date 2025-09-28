@@ -2514,6 +2514,30 @@ void CArenaManager::FinishMatch(bool aborted)
 				SendSystemTo(p, L"[Arena] Rewards granted.");
 			}
 		}
+
+		// Arena-world: announce winner to everyone and remind to check inventory, just before teleport
+		if (ArenaWorld::IsWorldTblidx(m_currentWorldTblidx))
+		{
+			wchar_t msg[320];
+			bool announced = false;
+			if (!m_winners.empty())
+			{
+				// Use first winner in the set for announcement text
+				CHARACTERID cid = (CHARACTERID)(*m_winners.begin());
+				if (CPlayer* pWin = g_pObjectManager->FindByChar(cid))
+				{
+					wchar_t wtxt[256];
+					ComposeWinnerText(pWin, wtxt, _countof(wtxt));
+					swprintf_s(msg, _countof(msg), L"%s — Check your inventory for rewards.", wtxt);
+					BroadcastSystem(msg);
+					announced = true;
+				}
+			}
+			if (!announced)
+			{
+				BroadcastSystem(L"[Arena] Finished — Check your inventory for rewards.");
+			}
+		}
 	}
 
 	// Skip scoreboard and final notices on arena worlds to avoid UI toggles before teleport
@@ -2815,6 +2839,25 @@ void CArenaManager::FinishWithWinner(unsigned int winnerCharId)
 	{
 		AwardRewards(true);
 		AwardRewards(false);
+		// Arena-world: announce winner + reward hint to everyone before teleport
+		if (ArenaWorld::IsWorldTblidx(m_currentWorldTblidx))
+		{
+			wchar_t msg[320];
+			if (winnerCharId)
+			{
+				if (CPlayer* pWin = g_pObjectManager->FindByChar((CHARACTERID)winnerCharId))
+				{
+					wchar_t wtxt[256];
+					ComposeWinnerText(pWin, wtxt, _countof(wtxt));
+					swprintf_s(msg, _countof(msg), L"%s — Check your inventory for rewards.", wtxt);
+					BroadcastSystem(msg);
+				}
+			}
+			else
+			{
+				BroadcastSystem(L"[Arena] Finished — Check your inventory for rewards.");
+			}
+		}
 	}
 	// Telecast at finish as well (skip on arena world for minimal UX)
 	if (m_cfg.telecastEnabled && !ArenaWorld::IsWorldTblidx(m_currentWorldTblidx))

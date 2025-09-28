@@ -46,7 +46,7 @@ public:
 
 	void								BeginWarPreparation();
 	// Manual path that bypasses DisableDojoWar auto-gating
-	void								BeginWarPreparationManual();
+	//void								BeginWarPreparationManual();
 
 	void								UpdateState(BYTE byState, DOJOTIME tmNextStepTime);
 
