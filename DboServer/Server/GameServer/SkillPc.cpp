@@ -3,6 +3,7 @@
 #include "CPlayer.h"
 #include "Npc.h"
 #include "SpellAreaChecker.h"
+#include "ArenaWorld.h"
 #include "NtlPacketGU.h"
 #include "NtlPacketGQ.h"
 #include "NtlResultCode.h"
@@ -142,8 +143,8 @@ void CSkillPc::CastSkill(HOBJECT hAppointTargetHandle, BYTE byApplyTargetCount, 
 				else if (pTarget->IsPC())
 				{
 					BYTE byWorldRuleType = m_pPlayerRef->GetCurWorld()->GetTbldat()->byWorldRuleType;
-					// Force treat world 900043 as RANKBATTLE for Arena combat
-					if (m_pPlayerRef->GetWorldID() == 900043) byWorldRuleType = GAMERULE_RANKBATTLE;
+					// Force treat Arena worlds as RANKBATTLE for Arena combat
+					if (ArenaWorld::IsWorldId(m_pPlayerRef->GetWorldID())) byWorldRuleType = GAMERULE_RANKBATTLE;
 					CPlayer* pTargetPc = (CPlayer*)pTarget;
 
 					if (byWorldRuleType == GAMERULE_NORMAL)
@@ -271,8 +272,8 @@ void CSkillPc::CastSkill(HOBJECT hAppointTargetHandle, BYTE byApplyTargetCount, 
 						}
 
 						BYTE byWorldRuleType = m_pPlayerRef->GetCurWorld()->GetTbldat()->byWorldRuleType;
-						// Force treat world 900043 as RANKBATTLE for Arena combat (ALLIANCE case)
-						if (m_pPlayerRef->GetWorldID() == 900043) byWorldRuleType = GAMERULE_RANKBATTLE;
+						// Force treat Arena worlds as RANKBATTLE for Arena combat (ALLIANCE case)
+						if (ArenaWorld::IsWorldId(m_pPlayerRef->GetWorldID())) byWorldRuleType = GAMERULE_RANKBATTLE;
 						CPlayer* pTargetPc = (CPlayer*)pTarget;
 
 						if (byWorldRuleType == GAMERULE_NORMAL)
@@ -351,8 +352,8 @@ void CSkillPc::CastSkill(HOBJECT hAppointTargetHandle, BYTE byApplyTargetCount, 
 						}
 
 						BYTE byWorldRuleType = m_pPlayerRef->GetCurWorld()->GetTbldat()->byWorldRuleType;
-						// Force treat world 900043 as RANKBATTLE for Arena combat (PARTY case)
-						if (m_pPlayerRef->GetWorldID() == 900043) byWorldRuleType = GAMERULE_RANKBATTLE;
+						// Force treat Arena worlds as RANKBATTLE for Arena combat (PARTY case)
+						if (ArenaWorld::IsWorldId(m_pPlayerRef->GetWorldID())) byWorldRuleType = GAMERULE_RANKBATTLE;
 						CPlayer* pTargetPc = (CPlayer*)pTarget;
 
 						if (byWorldRuleType == GAMERULE_NORMAL)

@@ -32,6 +32,7 @@
 #include "DragonballScramble.h"
 #include "BusSystem.h" // #include "NtlPacketGU.h"
 #include "HelperNpcManager.h"
+#include "ArenaWorld.h"
 
 
 bool DeleteItemUponLogin(TBLIDX itemIdx)
@@ -847,13 +848,18 @@ void CPlayer::UpdateFreePvpZone(DWORD dwTickDiff)
 			// Do not auto-toggle PvP zone while the Arena is actively running on the custom world,
 			// otherwise this periodic check may undo the PvP flag we set for participants/world during RUN.
 			bool blockAutoToggle = false;
-			if (GetWorldID() == 900043 && g_pArenaManager && g_pArenaManager->IsEnabled() && g_pArenaManager->GetState() == CArenaManager::State::IN_ROUND)
+			if (ArenaWorld::IsWorldId(GetWorldID()) && g_pArenaManager && g_pArenaManager->IsEnabled() && g_pArenaManager->GetState() == CArenaManager::State::IN_ROUND)
 			{
 				blockAutoToggle = true;
 			}
 
 			if (blockAutoToggle)
+			{
+				// Ensure the client always considers this map as PvP during Arena RUN
+				if (!IsPvpZone())
+					UpdatePvpZone(true);
 				return;
+			}
 
 			if (!IsPvpZone())
 			{
@@ -4348,6 +4354,48 @@ void CPlayer::CancelTeleportProposal(BYTE byTeleportIndex)
 //--------------------------------------------------------------------------------------//
 bool CPlayer::IsAttackable(CCharacterObject* pTarget)
 {
+			// Arena custom override: while an arena round is running on an Arena world,
+	// treat the entire map as PvP and only restrict by alliance (party/guild) for participants.
+	// This bypasses the base CCharacterObject::IsAttackable gate that may forbid PC vs PC in non-PvP maps.
+	if (pTarget && pTarget->IsPC())
+	{
+			CPlayer* pPlayerTargt = static_cast<CPlayer*>(pTarget);
+			const bool isArenaWorld = (ArenaWorld::IsWorldId(GetWorldID()) || ArenaWorld::IsWorldId(pPlayerTargt->GetWorldID()));
+		if (isArenaWorld && g_pArenaManager && g_pArenaManager->IsEnabled() &&
+			(g_pArenaManager->GetState() == CArenaManager::State::IN_ROUND ||
+			 g_pArenaManager->GetState() == CArenaManager::State::STAGE_READY ||
+			 g_pArenaManager->GetState() == CArenaManager::State::MATCH_READY))
+		{
+			const bool meSpectator = g_pArenaManager->IsSpectatorId((unsigned int)GetCharID());
+			const bool tgSpectator = g_pArenaManager->IsSpectatorId((unsigned int)pPlayerTargt->GetCharID());
+			if (meSpectator || tgSpectator)
+				return false; // spectators never engage
+
+			const bool meParticipant = g_pArenaManager->IsParticipant(this);
+			const bool tgParticipant = g_pArenaManager->IsParticipant(pPlayerTargt);
+			if (!(meParticipant && tgParticipant))
+				return false; // only participants can fight in the arena world during RUN
+
+			switch (g_pArenaManager->GetMode())
+			{
+			case CArenaManager::Mode::PARTY_VS_PARTY:
+				// Friendly fire off for same party; otherwise allowed
+				if (GetPartyID() != INVALID_PARTYID && GetPartyID() == pPlayerTargt->GetPartyID())
+					return false;
+				return true;
+			case CArenaManager::Mode::GUILD_VS_GUILD:
+				// Friendly fire off for same guild; otherwise allowed
+				if (GetGuildID() != 0 && GetGuildID() == pPlayerTargt->GetGuildID())
+					return false;
+				return true;
+			case CArenaManager::Mode::FREE_FOR_ALL:
+			case CArenaManager::Mode::OPEN:
+			default:
+				return true;
+			}
+		}
+	}
+
 	if (CCharacterObject::IsAttackable(pTarget))
 	{
 		if (pTarget->IsPC())
@@ -4357,10 +4405,10 @@ bool CPlayer::IsAttackable(CCharacterObject* pTarget)
 			if (GetCurWorld() == NULL || pPlayerTargt->GetCurWorld() == NULL)
 				return false;
 
-			// Arena world override for custom map 900043:
+			// Arena world override for Arena maps:
 			// Decide PC vs PC combat strictly by Arena participation and alliance during IN_ROUND
 			// This bypasses normal world-rule dependencies (RankBattle/Budokai/Dojo/PvP zones) on this map.
-			if (GetWorldID() == 900043 || pPlayerTargt->GetWorldID() == 900043)
+			if (ArenaWorld::IsWorldId(GetWorldID()) || ArenaWorld::IsWorldId(pPlayerTargt->GetWorldID()))
 			{
 				if (g_pArenaManager->IsEnabled())
 				{
@@ -4393,7 +4441,7 @@ bool CPlayer::IsAttackable(CCharacterObject* pTarget)
 					}
 				}
 
-				// On 900043, outside an active Arena round (or if one of them isn't a participant), disallow PC vs PC by default
+				// On Arena worlds, outside an active Arena round (or if one of them isn't a participant), disallow PC vs PC by default
 				// to prevent unintended PK on the custom map.
 				return false;
 			}

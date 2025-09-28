@@ -95,6 +95,9 @@ public:
 		float postFinishDirZ;
 		// Keep Rank UI visible after finish (avoid sending LEAVE)
 		bool keepRankUiAfterFinish;
+		// When true, do not send RankBattle finish/leave packets at the end of an arena match
+		// This avoids confusing the client HUD for non-Rank contexts (e.g., world_fight events)
+		bool suppressRankFinishUi;
 		// diagnostics
 		bool verboseLogs; // when true, emit detailed ERR_LOG traces for troubleshooting
 		// When enabled, set the entire arena world as PvP zone for all players while in RUN
@@ -125,7 +128,7 @@ public:
 			telecastEnabled(false), telecastType(3), telecastSpeechTblidx(0), telecastDisplayMs(5000),
 			rankUiEnabled(false), rankPacketsEnabled(false),
 			postFinishTeleport(true), postFinishWorldTblidx(1), postFinishPosX(4975.609863f), postFinishPosY(-48.869999f), postFinishPosZ(4012.609863f),
-			postFinishDirX(0.911100f), postFinishDirY(-0.412000f), postFinishDirZ(0.0f), keepRankUiAfterFinish(true),
+			postFinishDirX(0.911100f), postFinishDirY(-0.412000f), postFinishDirZ(0.0f), keepRankUiAfterFinish(true), suppressRankFinishUi(false),
 			verboseLogs(false), worldWidePvpDuringRun(false),
 			ccBattleMode(false), allowCustomWorlds(false), useOnlyCustomWorlds(false), allowBudokaiRuleWorlds(false), forceExactWorld(false),
 			rewardsEnabled(false) {
@@ -222,6 +225,7 @@ public:
 
 private:
 	void BroadcastSystem(const wchar_t* msg);
+	void SendSystemTo(CPlayer* pPlayer, const wchar_t* msg, unsigned char byType = 3);
 	void TryRotateByTime(unsigned long dwTickDiff);
 	void ParseWorldListCsv(const CNtlString& csv);
 	void ParseMobListCsv(const CNtlString& csv);
@@ -236,6 +240,8 @@ private:
 	void BroadcastRankMatchStartToWorld(unsigned int worldId);
 	void BroadcastRankStageFinishToWorld(unsigned int worldId);
 	void BroadcastRankMatchFinishToWorld(unsigned int worldId);
+	// Simple text-based scoreboard for participants (fallback when client has no point HUD)
+	void BroadcastScoreboardToWorld(unsigned int worldId);
 	// Budokai-like notifications (used only on Budokai worlds)
 	void BroadcastBudokaiMatchStateToWorld(unsigned int worldId, BYTE byMatchType, BYTE byState, BUDOKAITIME tmNextStepTime, BUDOKAITIME tmRemainTime);
 	void BroadcastBudokaiProgressMessageToWorld(unsigned int worldId, BYTE byMsgId);

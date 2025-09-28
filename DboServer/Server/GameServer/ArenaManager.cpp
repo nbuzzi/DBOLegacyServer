@@ -29,6 +29,7 @@
 #include <fstream>
 #include <sstream>
 #include <algorithm>
+#include "ArenaWorld.h"
 
 static unsigned long ToMs(unsigned int seconds) { return seconds * 1000UL; }
 
@@ -1228,8 +1229,8 @@ void CArenaManager::TickProcess(unsigned long dwTickDiff)
 					}
 				}
 
-				// Start WAIT state with proper timer before DIRECTION
-				UpdateRankBattleState(RANKBATTLE_BATTLESTATE_WAIT, 0, waitMs);
+				// Start WAIT state with proper timer before DIRECTION; preserve current stage index
+				UpdateRankBattleState(RANKBATTLE_BATTLESTATE_WAIT, m_rankBattleStage, waitMs);
 				ARENA_VLOG(m_cfg, LOG_GENERAL, "[ARENA] MATCH_READY: sent TeamInfo+WAIT waitMs=%u worldId=%u", (unsigned)waitMs, worldId);
 
 				wchar_t msg[128];
@@ -1453,9 +1454,16 @@ void CArenaManager::TickProcess(unsigned long dwTickDiff)
 				}
 				else
 				{
-					// Final round: stop timer, notify match finished
+					// Final round on arena world: only stop timer and finish immediately with rewards/teleport.
+					// Skip any Rank/Budokai state broadcasts to keep UI intact until teleport.
 					StopRoundTimerUI();
-					if (m_currentWorldId)
+					if (ArenaWorld::IsWorldTblidx(m_currentWorldTblidx))
+					{
+						FinishMatch(false);
+						break;
+					}
+					// Non-arena worlds: mirror RankBattle finish flow
+					if (m_currentWorldId && !m_cfg.suppressRankFinishUi)
 						BroadcastRankMatchFinishToWorld(m_currentWorldId);
 					UpdateRankBattleState(RANKBATTLE_BATTLESTATE_MATCH_FINISH, m_rankBattleStage, matchFinishMs);
 					// Arm watchdog slightly beyond matchFinishMs to guarantee completion
@@ -1473,6 +1481,9 @@ void CArenaManager::TickProcess(unsigned long dwTickDiff)
 				ARENA_VLOG(m_cfg, LOG_GENERAL, "[ARENA][RB] STAGE_FINISH: advancing to next stage (cur=%u)", (unsigned)m_rankBattleStage);
 				// Advance to next round
 				m_rankBattleStage = (BYTE)(m_rankBattleStage + 1);
+				// Immediately broadcast the updated stage so clients show the correct Round number
+				if (m_currentWorldId)
+					BroadcastDungeonStateToWorld(m_currentWorldId, m_rankBattleStage + 1);
 				// If configured, rotate map between rounds
 				if (m_cfg.mapPerRound && !m_cfg.worldTblidxList.empty())
 				{
@@ -1564,11 +1575,8 @@ void CArenaManager::TickProcess(unsigned long dwTickDiff)
 			{
 				// Cleanup like RankBattle end; always finalize when MATCH_FINISH elapses
 				// Clear any timer/countdown HUD first
-				StopRoundTimerUI();
-				if (m_currentWorldId)
-					BroadcastCountdownToWorld(m_currentWorldId, false);
 				ARENA_VLOG(m_cfg, LOG_GENERAL, "[ARENA][RB] MATCH_FINISH elapsed, calling FinishMatch");
-				FinishMatch(false);
+				Stop(false);
 				break;
 			}
 			default:
@@ -1737,6 +1745,8 @@ void CArenaManager::SetupWorldFight(bool scoreMode, unsigned int roundSeconds, M
 	m_cfg.useInviteFlow = false;
 	// Make the whole arena world PvP during RUN so players can attack freely (GM event expectation)
 	m_cfg.worldWidePvpDuringRun = true;
+	// This is not a true RankBattle: suppress Rank finish/leave UI at the end to avoid HUD bugs
+	m_cfg.suppressRankFinishUi = false;
 	if (m_currentWorldTblidx != 0)
 	{
 		m_cfg.worldTblidxList.clear();
@@ -1797,6 +1807,19 @@ void CArenaManager::BroadcastSystem(const wchar_t* msg)
 	wcscpy_s(res->awchMessage, NTL_MAX_LENGTH_OF_CHAT_MESSAGE + 1, msg);
 	packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
 	g_pObjectManager->SendPacketToAll(&packet);
+}
+
+void CArenaManager::SendSystemTo(CPlayer* pPlayer, const wchar_t* msg, unsigned char byType)
+{
+	if (!pPlayer || !msg) return;
+	CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+	sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+	res->wOpCode = GU_SYSTEM_DISPLAY_TEXT;
+	res->byDisplayType = byType;
+	res->wMessageLengthInUnicode = (WORD)wcslen(msg);
+	wcscpy_s(res->awchMessage, NTL_MAX_LENGTH_OF_CHAT_MESSAGE + 1, msg);
+	packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+	pPlayer->SendPacket(&packet);
 }
 
 void CArenaManager::AwardRewards(bool winnersOnly)
@@ -1955,8 +1978,8 @@ void CArenaManager::TeleportParticipants(bool forceDirect)
 				m_stageReadyTimeMs = 1000; // 1 second ready toast
 				if (m_cfg.rankUiEnabled)
 				{
-					BroadcastRankStateToWorld(existingWorldId, 2, 1); // PREPARE
-					BroadcastRankStateToWorld(existingWorldId, 3, 1); // READY
+					BroadcastRankStateToWorld(existingWorldId, RANKBATTLE_BATTLESTATE_STAGE_PREPARE, m_rankBattleStage);
+					BroadcastRankStateToWorld(existingWorldId, RANKBATTLE_BATTLESTATE_STAGE_READY, m_rankBattleStage);
 				}
 				SendNotice(L"Get ready for battle!", m_cfg.noticeType);
 				NTL_PRINT(PRINT_APP, _T("[ARENA] No configured world - using existing world, state: STAGE_READY"));
@@ -2269,6 +2292,7 @@ void CArenaManager::CheckFaintAndAliveLogic()
 
 	// Count alive participants in current world; handle faint according to config
 	unsigned aliveCount = 0;
+	unsigned aliveOwner = 0, aliveChallenger = 0; // track per-team alive in team modes
 	unsigned onlineParticipants = 0; // Track participants still online (including fainted)
 	unsigned lastAliveCharId = 0;
 	std::vector<CPlayer*> toSpectate;
@@ -2295,6 +2319,14 @@ void CArenaManager::CheckFaintAndAliveLogic()
 		{
 			++aliveCount;
 			lastAliveCharId = cid;
+			if (m_mode == Mode::PARTY_VS_PARTY || m_mode == Mode::GUILD_VS_GUILD)
+			{
+				if (sRANK_BATTLE_DATA* rd = p->GetRankBattleData())
+				{
+					if (rd->eTeamType == RANKBATTLE_TEAM_OWNER) ++aliveOwner;
+					else if (rd->eTeamType == RANKBATTLE_TEAM_CHALLENGER) ++aliveChallenger;
+				}
+			}
 		}
 	}
 	// Do not move fainted players to spectator mid-round in CC mode; leave them as-is
@@ -2307,7 +2339,15 @@ void CArenaManager::CheckFaintAndAliveLogic()
 		return;
 	}
 
-	if (aliveCount <= 1)
+	// End early if one team is fully eliminated in team modes
+	bool teamEliminated = false;
+	if (m_mode == Mode::PARTY_VS_PARTY || m_mode == Mode::GUILD_VS_GUILD)
+	{
+		if ((aliveOwner == 0 && aliveChallenger > 0) || (aliveChallenger == 0 && aliveOwner > 0))
+			teamEliminated = true;
+	}
+
+	if (aliveCount <= 1 || teamEliminated)
 	{
 		// Stop the round timer right away when the fight is effectively over
 		if (m_roundUiActive)
@@ -2356,7 +2396,14 @@ void CArenaManager::CheckFaintAndAliveLogic()
 					SendNotice(msg, m_cfg.noticeType);
 				}
 			}
-			// Avoid re-entering MATCH_FINISH if already there
+			// Minimal finalization on arena world: stop timer and finish immediately
+			if (ArenaWorld::IsWorldTblidx(m_currentWorldTblidx))
+			{
+				StopRoundTimerUI();
+				FinishMatch(false);
+				return;
+			}
+			// Avoid re-entering MATCH_FINISH if already there on non-arena worlds
 			if (m_rankBattleState != RANKBATTLE_BATTLESTATE_MATCH_FINISH)
 				UpdateRankBattleState(RANKBATTLE_BATTLESTATE_MATCH_FINISH, m_rankBattleStage, matchFinishMs);
 			return;
@@ -2377,38 +2424,49 @@ void CArenaManager::FinishMatch(bool aborted)
 	// Allow finishing unless already in a terminal state; this covers cases where state changed just before finishing
 	if ((m_state == State::COMPLETE || m_state == State::IDLE) && !aborted)
 		return;
+	// Always clear the round/countdown UI on finish (keep Rank HUD otherwise intact)
 	StopRoundTimerUI();
 	// Cancel any outstanding watchdog once we are finishing
 	m_matchFinishWatchdogMs = 0;
-	// Send MATCH_FINISH; optionally keep Rank UI visible (skip LEAVE) based on config
-	if (m_cfg.rankUiEnabled)
+	// Minimal finalization on arena worlds: do not send any Rank/Budokai finish/leave broadcasts
+	// to keep UI intact until teleport; we are not in a real Rank map context
+	if (!ArenaWorld::IsWorldTblidx(m_currentWorldTblidx))
 	{
-		unsigned int wid = m_currentWorldId ? m_currentWorldId : EnsureCurrentWorldId();
-		if (wid)
-			BroadcastRankStateToWorld(wid, RANKBATTLE_BATTLESTATE_MATCH_FINISH, 1);
-		if (!m_cfg.keepRankUiAfterFinish)
+		// Non-arena worlds: mirror RankBattle finish UX unless suppressed
+		if (m_cfg.rankUiEnabled && !m_cfg.suppressRankFinishUi)
 		{
-			if (m_currentWorldId)
-				BroadcastRankLeaveToWorld(m_currentWorldId);
+			unsigned int wid = m_currentWorldId ? m_currentWorldId : EnsureCurrentWorldId();
+			if (wid)
+				BroadcastRankStateToWorld(wid, RANKBATTLE_BATTLESTATE_MATCH_FINISH, 1);
+			if (!m_cfg.keepRankUiAfterFinish)
+			{
+				if (m_currentWorldId)
+					BroadcastRankLeaveToWorld(m_currentWorldId);
+			}
 		}
 	}
 	// Always clear combat permissions before any teleports/cleanup
 	SetCombatPermittedForParticipants(false);
-	// Revert any world-wide PvP toggles made during RUN
+	// Also clear any leftover combat-restricting conditions to avoid next-arena issues
+	ClearCombatRestrictionsForParticipants();
+	// Revert any world-wide PvP toggles made during RUN so subsequent arenas start clean
 	RevertWorldWidePvp();
 
 	// Determine and announce winner if not aborted
 	if (!aborted && m_winners.size() > 0)
 	{
-		// Announce the winner(s)
-		for (auto cid : m_winners)
+		// On arena worlds, skip notices to keep UI calm; otherwise announce
+		if (!ArenaWorld::IsWorldTblidx(m_currentWorldTblidx))
 		{
-			if (CPlayer* winner = g_pObjectManager->FindByChar((CHARACTERID)cid))
+			for (auto cid : m_winners)
 			{
-				wchar_t msg[256];
-				ComposeWinnerText(winner, msg, _countof(msg));
-				SendNotice(msg, 3);
-				break; // Only announce first winner to avoid spam
+				if (CPlayer* winner = g_pObjectManager->FindByChar((CHARACTERID)cid))
+				{
+					wchar_t msg[256];
+					ComposeWinnerText(winner, msg, _countof(msg));
+					SendNotice(msg, 3);
+					break; // Only announce first winner to avoid spam
+				}
 			}
 		}
 	}
@@ -2431,10 +2489,13 @@ void CArenaManager::FinishMatch(bool aborted)
 		{
 			if (CPlayer* winner = g_pObjectManager->FindByChar((CHARACTERID)lastAlive))
 			{
-				wchar_t msg[256];
-				ComposeWinnerText(winner, msg, _countof(msg));
-				SendNotice(msg, 3);
-				// Add to winners for rewards
+				// On arena worlds, avoid notices; still record winner for rewards
+				if (!ArenaWorld::IsWorldTblidx(m_currentWorldTblidx))
+				{
+					wchar_t msg[256];
+					ComposeWinnerText(winner, msg, _countof(msg));
+					SendNotice(msg, 3);
+				}
 				m_winners.insert(lastAlive);
 			}
 		}
@@ -2445,8 +2506,23 @@ void CArenaManager::FinishMatch(bool aborted)
 	{
 		AwardRewards(true);  // Winner rewards
 		AwardRewards(false); // Participant rewards
+		// Notify players that rewards were granted
+		for (auto cid : m_participants)
+		{
+			if (CPlayer* p = g_pObjectManager->FindByChar((CHARACTERID)cid))
+			{
+				SendSystemTo(p, L"[Arena] Rewards granted.");
+			}
+		}
 	}
-	SendNotice(aborted ? L"Arena stopped." : L"Arena finished.", 3);
+
+	// Skip scoreboard and final notices on arena worlds to avoid UI toggles before teleport
+	if (!ArenaWorld::IsWorldTblidx(m_currentWorldTblidx))
+	{
+		if (m_currentWorldId)
+			BroadcastScoreboardToWorld(m_currentWorldId);
+		SendNotice(aborted ? L"Arena stopped." : L"Arena finished.", 3);
+	}
 	// Despawn arena mobs
 	DespawnArenaMobs();
 	// Post-finish teleport everyone out regardless of aborted flag (user expectation for @arena stop)
@@ -2478,6 +2554,10 @@ void CArenaManager::Start(Mode mode)
 
 	// Reset state to a clean enrollment phase
 	StopRoundTimerUI();
+	// Safety resets from any previous run to prevent stuck PvP/attackability blocking next arena
+	SetCombatPermittedForParticipants(false);
+	ClearCombatRestrictionsForParticipants();
+	RevertWorldWidePvp();
 	m_mode = mode;
 	m_state = State::ENROLLMENT;
 	m_inviting = false;
@@ -2712,17 +2792,23 @@ void CArenaManager::FinishWithWinner(unsigned int winnerCharId)
 	// Skip only if already terminal
 	if (m_state == State::COMPLETE || m_state == State::IDLE)
 		return;
-	// Clear combat permissions first
+	// Clear combat permissions first and revert world PVP so next arena starts clean
 	SetCombatPermittedForParticipants(false);
+	ClearCombatRestrictionsForParticipants();
+	RevertWorldWidePvp();
+	// Always clear the round/countdown UI on finish (keep Rank HUD otherwise intact)
 	StopRoundTimerUI();
 	if (winnerCharId)
 	{
 		if (CPlayer* p = g_pObjectManager->FindByChar((CHARACTERID)winnerCharId))
 		{
 			MarkWinner(p);
-			wchar_t msg[256];
-			ComposeWinnerText(p, msg, _countof(msg));
-			SendNotice(msg, SERVER_TEXT_SYSNOTICE);
+			if (!ArenaWorld::IsWorldTblidx(m_currentWorldTblidx))
+			{
+				wchar_t msg[256];
+				ComposeWinnerText(p, msg, _countof(msg));
+				SendNotice(msg, SERVER_TEXT_SYSNOTICE);
+			}
 		}
 	}
 	if (m_cfg.rewardsEnabled)
@@ -2730,15 +2816,17 @@ void CArenaManager::FinishWithWinner(unsigned int winnerCharId)
 		AwardRewards(true);
 		AwardRewards(false);
 	}
-	// Telecast at finish as well
-	if (m_cfg.telecastEnabled)
+	// Telecast at finish as well (skip on arena world for minimal UX)
+	if (m_cfg.telecastEnabled && !ArenaWorld::IsWorldTblidx(m_currentWorldTblidx))
 		BroadcastTelecastToWorld(EnsureCurrentWorldId());
-	// Rank UI end state
-	if (m_cfg.rankUiEnabled)
-		BroadcastRankStateToWorld(EnsureCurrentWorldId(), 5, 1); // RANKBATTLE_BATTLESTATE_MATCH_FINISH
-	// Ensure HUD cleans up like RankBattle: send LEAVE
-	if (m_cfg.rankUiEnabled && m_currentWorldId)
-		BroadcastRankLeaveToWorld(m_currentWorldId);
+	// Do not send Rank finish/leave on arena worlds to keep UI until teleport
+	if (!ArenaWorld::IsWorldTblidx(m_currentWorldTblidx))
+	{
+		if (m_cfg.rankUiEnabled)
+			BroadcastRankStateToWorld(EnsureCurrentWorldId(), 5, 1); // RANKBATTLE_BATTLESTATE_MATCH_FINISH
+		if (m_cfg.rankUiEnabled && m_currentWorldId)
+			BroadcastRankLeaveToWorld(m_currentWorldId);
+	}
 	// Despawn arena mobs on finish
 	DespawnArenaMobs();
 	// Post-finish teleport if configured
@@ -2746,6 +2834,7 @@ void CArenaManager::FinishWithWinner(unsigned int winnerCharId)
 		PostFinishTeleportAll();
 	else
 		PostFinishTeleportDefault();
+	// Mark complete; UI may remain visible if configured
 	m_state = State::COMPLETE;
 }
 
@@ -2802,8 +2891,8 @@ void CArenaManager::BroadcastRankMatchStartToWorld(unsigned int worldId)
 	CWorld* pWorld = app->GetGameMain()->GetWorldManager()->FindWorld((WORLDID)worldId);
 	if (!pWorld) return;
 	BYTE rule = pWorld->GetTbldat()->byWorldRuleType;
-	// Force treat world 900043 as RANKBATTLE for Arena combat
-	if (worldId == 900043) rule = GAMERULE_RANKBATTLE;
+	// Treat arena-world range as RANKBATTLE for Arena combat UI
+	if (ArenaWorld::IsWorldTblidx(m_currentWorldTblidx)) rule = GAMERULE_RANKBATTLE;
 	if (rule == GAMERULE_MINORMATCH || rule == GAMERULE_MAJORMATCH || rule == GAMERULE_FINALMATCH)
 		return; // Skip RankBattle packets on Budokai-rule maps
 	if (rule != GAMERULE_RANKBATTLE)
@@ -2829,8 +2918,8 @@ void CArenaManager::BroadcastRankStageFinishToWorld(unsigned int worldId)
 	CWorld* pWorld = app->GetGameMain()->GetWorldManager()->FindWorld((WORLDID)worldId);
 	if (!pWorld) return;
 	BYTE rule = pWorld->GetTbldat()->byWorldRuleType;
-	// Force treat world 900043 as RANKBATTLE for Arena combat
-	if (worldId == 900043) rule = GAMERULE_RANKBATTLE;
+	// Treat arena-world range as RANKBATTLE for Arena combat UI
+	if (ArenaWorld::IsWorldTblidx(m_currentWorldTblidx)) rule = GAMERULE_RANKBATTLE;
 	if (rule == GAMERULE_MINORMATCH || rule == GAMERULE_MAJORMATCH || rule == GAMERULE_FINALMATCH)
 		return; // Skip RankBattle packets on Budokai-rule maps
 	if (rule != GAMERULE_RANKBATTLE)
@@ -2856,8 +2945,8 @@ void CArenaManager::BroadcastRankMatchFinishToWorld(unsigned int worldId)
 	CWorld* pWorld = app->GetGameMain()->GetWorldManager()->FindWorld((WORLDID)worldId);
 	if (!pWorld) return;
 	BYTE rule = pWorld->GetTbldat()->byWorldRuleType;
-	// Force treat world 900043 as RANKBATTLE for Arena combat
-	if (worldId == 900043) rule = GAMERULE_RANKBATTLE;
+	// Treat arena-world range as RANKBATTLE for Arena combat UI
+	if (ArenaWorld::IsWorldTblidx(m_currentWorldTblidx)) rule = GAMERULE_RANKBATTLE;
 	if (rule == GAMERULE_MINORMATCH || rule == GAMERULE_MAJORMATCH || rule == GAMERULE_FINALMATCH)
 		return;
 	if (rule != GAMERULE_RANKBATTLE)
@@ -2885,6 +2974,7 @@ void CArenaManager::BroadcastRankJoinToWorld(unsigned int worldId)
 	if (CWorld* pWorld = ((CGameServer*)g_pApp)->GetGameMain()->GetWorldManager()->FindWorld((WORLDID)worldId))
 	{
 		BYTE rule = pWorld->GetTbldat()->byWorldRuleType;
+		if (ArenaWorld::IsWorldTblidx(m_currentWorldTblidx)) rule = GAMERULE_RANKBATTLE;
 		if (rule == GAMERULE_MINORMATCH || rule == GAMERULE_MAJORMATCH || rule == GAMERULE_FINALMATCH)
 			return;
 		if (rule != GAMERULE_RANKBATTLE)
@@ -2912,6 +3002,7 @@ void CArenaManager::BroadcastRankLeaveToWorld(unsigned int worldId)
 	if (CWorld* pWorld = ((CGameServer*)g_pApp)->GetGameMain()->GetWorldManager()->FindWorld((WORLDID)worldId))
 	{
 		BYTE rule = pWorld->GetTbldat()->byWorldRuleType;
+		if (ArenaWorld::IsWorldTblidx(m_currentWorldTblidx)) rule = GAMERULE_RANKBATTLE;
 		if (rule == GAMERULE_MINORMATCH || rule == GAMERULE_MAJORMATCH || rule == GAMERULE_FINALMATCH)
 			return;
 		if (rule != GAMERULE_RANKBATTLE)
@@ -2984,6 +3075,7 @@ void CArenaManager::BroadcastRankTeamInfoToWorld(unsigned int worldId)
 	if (!pWorld) return;
 	// Only send on rank-rule worlds (skip Budokai and others)
 	BYTE rule = pWorld->GetTbldat()->byWorldRuleType;
+	if (ArenaWorld::IsWorldTblidx(m_currentWorldTblidx)) rule = GAMERULE_RANKBATTLE;
 	if (rule == GAMERULE_MINORMATCH || rule == GAMERULE_MAJORMATCH || rule == GAMERULE_FINALMATCH)
 		return;
 	if (rule != GAMERULE_RANKBATTLE)
@@ -3614,7 +3706,8 @@ void CArenaManager::BroadcastRankStateToWorld(unsigned int worldId, unsigned cha
 	sGU_RANKBATTLE_BATTLE_STATE_UPDATE_NFY* res = (sGU_RANKBATTLE_BATTLE_STATE_UPDATE_NFY*)packet.GetPacketData();
 	res->wOpCode = GU_RANKBATTLE_BATTLE_STATE_UPDATE_NFY;
 	res->byBattleState = byState;
-	res->byStage = byStage;
+	// Use 1-based stage to reflect current round number in UI
+	res->byStage = (BYTE)byStage;
 	packet.SetPacketLen(sizeof(sGU_RANKBATTLE_BATTLE_STATE_UPDATE_NFY));
 	for (auto cid : m_participants)
 	{
@@ -3640,19 +3733,19 @@ void CArenaManager::BroadcastRankFullStartSequence(unsigned int worldId)
 	}
 	else return;
 	// WAIT (0) with stage 0
-	BroadcastRankStateToWorld(worldId, RANKBATTLE_BATTLESTATE_WAIT, 0);
+	BroadcastRankStateToWorld(worldId, RANKBATTLE_BATTLESTATE_WAIT, m_rankBattleStage);
 	// DIRECTION phase (shows VS)
-	BroadcastRankStateToWorld(worldId, RANKBATTLE_BATTLESTATE_DIRECTION, 0);
+	BroadcastRankStateToWorld(worldId, RANKBATTLE_BATTLESTATE_DIRECTION, m_rankBattleStage);
 	// STAGE_PREPARE (gear up)
-	BroadcastRankStateToWorld(worldId, RANKBATTLE_BATTLESTATE_STAGE_PREPARE, 0);
+	BroadcastRankStateToWorld(worldId, RANKBATTLE_BATTLESTATE_STAGE_PREPARE, m_rankBattleStage);
 	// STAGE_READY (round ready)
-	BroadcastRankStateToWorld(worldId, RANKBATTLE_BATTLESTATE_STAGE_READY, 0);
+	BroadcastRankStateToWorld(worldId, RANKBATTLE_BATTLESTATE_STAGE_READY, m_rankBattleStage);
 	// MATCH START notification
 	BroadcastRankMatchStartToWorld(worldId);
 	// Unlock attack/movement
 	MakeParticipantsAttackable(worldId);
 	// STAGE_RUN
-	BroadcastRankStateToWorld(worldId, RANKBATTLE_BATTLESTATE_STAGE_RUN, 0);
+	BroadcastRankStateToWorld(worldId, RANKBATTLE_BATTLESTATE_STAGE_RUN, m_rankBattleStage);
 }
 
 void CArenaManager::ReviveParticipantsForNextRound()
@@ -3819,7 +3912,13 @@ void CArenaManager::FinishOnTimeout()
 			UpdateRankBattleState(RANKBATTLE_BATTLESTATE_STAGE_FINISH, m_rankBattleStage, stageFinishMs);
 			return;
 		}
-		// final round: finish the match UX then cleanup
+		// final round: on arena world, finish immediately with minimal UX
+		if (ArenaWorld::IsWorldTblidx(m_currentWorldTblidx))
+		{
+			FinishMatch(false);
+			return;
+		}
+		// otherwise, mirror RankBattle MATCH_FINISH
 		if (m_rankBattleState != RANKBATTLE_BATTLESTATE_MATCH_FINISH)
 			UpdateRankBattleState(RANKBATTLE_BATTLESTATE_MATCH_FINISH, m_rankBattleStage, matchFinishMs);
 		return;
@@ -3885,27 +3984,42 @@ void CArenaManager::FinishByPoints()
 		}
 		if (rep)
 		{
-			// Announce team winner using ComposeWinnerText helpers
-			wchar_t msg[256];
-			ComposeWinnerText(rep, msg, _countof(msg));
-			SendNotice(msg, SERVER_TEXT_SYSNOTICE);
-		}
-		// RankBattle-like finish UX
-		if (m_cfg.telecastEnabled)
-			BroadcastTelecastToWorld(EnsureCurrentWorldId());
-		if (m_cfg.rankUiEnabled)
-		{
-			BroadcastRankStateToWorld(EnsureCurrentWorldId(), 5, 1); // MATCH_FINISH
-			if (!m_cfg.keepRankUiAfterFinish)
+			// Announce team winner unless we are on arena world (minimal UX)
+			if (!ArenaWorld::IsWorldTblidx(m_currentWorldTblidx))
 			{
-				if (m_currentWorldId)
-					BroadcastRankLeaveToWorld(m_currentWorldId);
+				wchar_t msg[256];
+				ComposeWinnerText(rep, msg, _countof(msg));
+				SendNotice(msg, SERVER_TEXT_SYSNOTICE);
+			}
+		}
+		// RankBattle-like finish UX (skip on arena worlds)
+		if (m_cfg.telecastEnabled && !ArenaWorld::IsWorldTblidx(m_currentWorldTblidx))
+			BroadcastTelecastToWorld(EnsureCurrentWorldId());
+		// Suppress RankBattle finish/leave on arena world to keep UI
+		if (!ArenaWorld::IsWorldTblidx(m_currentWorldTblidx))
+		{
+			if (m_cfg.rankUiEnabled && !m_cfg.suppressRankFinishUi)
+			{
+				BroadcastRankStateToWorld(EnsureCurrentWorldId(), 5, 1); // MATCH_FINISH
+				if (!m_cfg.keepRankUiAfterFinish)
+				{
+					if (m_currentWorldId)
+						BroadcastRankLeaveToWorld(m_currentWorldId);
+				}
 			}
 		}
 		if (m_cfg.rewardsEnabled)
 		{
 			AwardRewards(true);
 			AwardRewards(false);
+			// Notify players that rewards were granted
+			for (auto cid : m_participants)
+			{
+				if (CPlayer* p = g_pObjectManager->FindByChar((CHARACTERID)cid))
+				{
+					SendSystemTo(p, L"[Arena] Rewards granted.");
+				}
+			}
 		}
 		DespawnArenaMobs();
 		if (m_cfg.postFinishTeleport)
@@ -3918,16 +4032,88 @@ void CArenaManager::FinishByPoints()
 	}
 }
 
+// Build and broadcast a simple scoreboard as system text to all participants present in the given world
+void CArenaManager::BroadcastScoreboardToWorld(unsigned int worldId)
+{
+	if (worldId == 0) return;
+	// Aggregate per-player points; in team modes also show team sums
+	std::unordered_map<unsigned int, unsigned int> teamTotals;
+	bool isTeamMode = (m_mode == Mode::PARTY_VS_PARTY || m_mode == Mode::GUILD_VS_GUILD);
+
+	// Compose a compact scoreboard string
+	std::wstring msg = L"[Arena] Score: ";
+	bool first = true;
+	for (auto& kv : m_killPoints)
+	{
+		CPlayer* p = g_pObjectManager->FindByChar((CHARACTERID)kv.first);
+		if (!p || !p->IsInitialized() || (unsigned int)p->GetWorldID() != worldId) continue;
+		if (!first) msg += L" | ";
+		first = false;
+		wchar_t buf[96];
+		swprintf_s(buf, L"%s:%u", p->GetCharName(), kv.second);
+		msg += buf;
+		if (isTeamMode)
+		{
+			unsigned int key = (m_mode == Mode::PARTY_VS_PARTY) ? (unsigned int)p->GetPartyID() : (unsigned int)p->GetGuildID();
+			teamTotals[key] += kv.second;
+		}
+	}
+	if (isTeamMode && !teamTotals.empty())
+	{
+		msg += L" || Team:";
+		bool firstTeam = true;
+		for (auto& tk : teamTotals)
+		{
+			if (!firstTeam) msg += L", ";
+			firstTeam = false;
+			wchar_t tbuf[64];
+			swprintf_s(tbuf, L"%u:%u", tk.first, tk.second);
+			msg += tbuf;
+		}
+	}
+
+	// Broadcast only to participants within the world
+	for (auto cid : m_participants)
+	{
+		CPlayer* pRecv = g_pObjectManager->FindByChar((CHARACTERID)cid);
+		if (!pRecv || !pRecv->IsInitialized() || (unsigned int)pRecv->GetWorldID() != worldId) continue;
+		SendSystemTo(pRecv, msg.c_str());
+	}
+}
+
 void CArenaManager::OnPlayerFaint(unsigned int killerCharId, unsigned int victimCharId)
 {
 	if (!m_cfg.enabled) return;
 	if (killerCharId == 0 || killerCharId == victimCharId) return;
 	if (m_participants.find(killerCharId) == m_participants.end()) return;
+	// Only count enemy eliminations in team modes; ignore friendly fire/self
+	bool countKill = true;
+	if (m_mode == Mode::PARTY_VS_PARTY || m_mode == Mode::GUILD_VS_GUILD)
+	{
+		CPlayer* pKiller = g_pObjectManager->FindByChar((CHARACTERID)killerCharId);
+		CPlayer* pVictim = g_pObjectManager->FindByChar((CHARACTERID)victimCharId);
+		if (pKiller && pVictim)
+		{
+			BYTE kt = RANKBATTLE_TEAM_NONE, vt = RANKBATTLE_TEAM_NONE;
+			if (sRANK_BATTLE_DATA* rdK = pKiller->GetRankBattleData()) kt = rdK->eTeamType;
+			if (sRANK_BATTLE_DATA* rdV = pVictim->GetRankBattleData()) vt = rdV->eTeamType;
+			if (kt != RANKBATTLE_TEAM_NONE && vt != RANKBATTLE_TEAM_NONE)
+				countKill = (kt != vt);
+			else if (m_mode == Mode::PARTY_VS_PARTY)
+				countKill = (pKiller->GetPartyID() != pVictim->GetPartyID());
+			else
+				countKill = (pKiller->GetGuildID() != pVictim->GetGuildID());
+		}
+	}
 	// Count depending on configuration:
 	// - scoreOnFaint: always award on faint (respawn scoring mode)
 	// - otherwise: only when revive is disabled (classic elimination points)
-	if (m_cfg.scoreOnFaint || !m_cfg.reviveOnFaint)
+	if (countKill && (m_cfg.scoreOnFaint || !m_cfg.reviveOnFaint))
 		m_killPoints[killerCharId] += 1;
+
+	// Optional: immediately show a lightweight scoreboard update to participants in the arena world
+	if (m_state == State::IN_ROUND && m_currentWorldId)
+		BroadcastScoreboardToWorld(m_currentWorldId);
 }
 
 void CArenaManager::SpawnArenaMobs()
@@ -4435,7 +4621,8 @@ void CArenaManager::SendRankStateTo(CPlayer* pPlayer, unsigned char byState, uns
 	sGU_RANKBATTLE_BATTLE_STATE_UPDATE_NFY* res = (sGU_RANKBATTLE_BATTLE_STATE_UPDATE_NFY*)packet.GetPacketData();
 	res->wOpCode = GU_RANKBATTLE_BATTLE_STATE_UPDATE_NFY;
 	res->byBattleState = byState;
-	res->byStage = byStage;
+	// Use 1-based stage for UI
+	res->byStage = (BYTE)byStage;
 	packet.SetPacketLen(sizeof(sGU_RANKBATTLE_BATTLE_STATE_UPDATE_NFY));
 	pPlayer->SendPacket(&packet);
 }
@@ -4639,6 +4826,8 @@ void CArenaManager::UpdateRankBattleState(eRANKBATTLE_BATTLESTATE newState, BYTE
 				sGU_RANKBATTLE_BATTLE_STATE_UPDATE_NFY* res = (sGU_RANKBATTLE_BATTLE_STATE_UPDATE_NFY*)packet.GetPacketData();
 				res->wOpCode = GU_RANKBATTLE_BATTLE_STATE_UPDATE_NFY;
 				res->byBattleState = newState;
+				// Use 1-based stage for UI display (Round = stage + 1)
+				res->byStage = (BYTE)byStage;
 				packet.SetPacketLen(sizeof(sGU_RANKBATTLE_BATTLE_STATE_UPDATE_NFY));
 
 				for (auto cid : m_participants)

@@ -57,6 +57,7 @@
 
 #include "NtlNavi.h"
 #include "HelperNpcManager.h"
+#include "ArenaWorld.h"
 #include "battle.h"
 #include "DojoWar.h"
 #include "BudokaiManager.h"
@@ -5199,8 +5200,8 @@ void CClientSession::RecvAttackBegin(CNtlPacket* pPacket)
 			return;
 
 		BYTE byWorldRuleType = cPlayer->GetCurWorld()->GetTbldat()->byWorldRuleType;
-		// Force treat world 900043 as RANKBATTLE for Arena combat
-		if (cPlayer->GetWorldID() == 900043) byWorldRuleType = GAMERULE_RANKBATTLE;
+		// Force treat Arena worlds as RANKBATTLE for Arena combat
+		if (ArenaWorld::IsWorldId(cPlayer->GetWorldID())) byWorldRuleType = GAMERULE_RANKBATTLE;
 
 		if (byWorldRuleType == GAMERULE_RANKBATTLE)
 		{
@@ -8083,7 +8084,7 @@ void CClientSession::RecvSkillTargetList(CNtlPacket* pPacket)
 					byTargetCount = pSkill->GetOriginalTableData()->byApply_Target_Max;
 
 				// Safe appoint target fallback: if client sent an empty list, use current selected target as appoint handle.
-				// This helps when the client refuses to include PC targets on custom arena world 900043.
+				// This helps when the client refuses to include PC targets on Arena worlds.
 				HOBJECT hAppoint = (byTargetCount > 0) ? req->ahApplyTarget[0] : cPlayer->GetTargetHandle();
 				pSkill->CastSkill(hAppoint, byTargetCount, req->ahApplyTarget);
 			}
