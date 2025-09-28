@@ -686,7 +686,17 @@ ACMD(do_world_fight)
 	}
 
 	// Force arena world and configure event
-	g_pArenaManager->ForceCurrentWorld(worldTblidx);
+	if (!g_pArenaManager->ForceCurrentWorld(worldTblidx))
+	{
+		CNtlPacket pkt(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+		sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)pkt.GetPacketData();
+		res->wOpCode = GU_SYSTEM_DISPLAY_TEXT; res->byDisplayType = SERVER_TEXT_SYSTEM;
+		wchar_t msg[128]; swprintf_s(msg, _countof(msg), L"[WorldFight] Invalid or unavailable world tblidx %u", worldTblidx);
+		NTL_SAFE_WCSCPY(res->awchMessage, msg);
+		pkt.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+		pPlayer->SendPacket(&pkt);
+		return;
+	}
 	g_pArenaManager->SetupWorldFight(scoreMode, seconds, arenaMode);
 
 	// Prepare world instance and suppress helper NPCs there
@@ -798,7 +808,10 @@ ACMD(do_dojo)
 
 	if (lower == L"on")
 	{
-		// Prefer ChatServer-driven RECEIVE window for all dojos
+		// Turn ON manual dojo mode so GS ticks regardless of Sunday window
+		g_pDojoManager->StartDojoEvent();
+
+		// Prefer additionally syncing ChatServer-driven RECEIVE window for all dojos
 		CGameServer* app = (CGameServer*)g_pApp;
 		if (app->GetChatServerSession())
 		{
@@ -818,18 +831,16 @@ ACMD(do_dojo)
 			CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
 			sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
 			res->wOpCode = GU_SYSTEM_DISPLAY_TEXT; res->byDisplayType = SERVER_TEXT_SYSTEM;
-			NTL_SAFE_WCSCPY(res->awchMessage, L"[Dojo] Opened RECEIVE on all dojos for 2 hours.");
+			NTL_SAFE_WCSCPY(res->awchMessage, L"[Dojo] Manual mode ON. Opened RECEIVE on all dojos for 2 hours (synced with ChatServer).");
 			packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
 			pPlayer->SendPacket(&packet);
 		}
 		else
 		{
-			// Fallback to legacy GS-side toggle (Sunday TickProcess still required)
-			g_pDojoManager->StartDojoEvent();
 			CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
 			sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
 			res->wOpCode = GU_SYSTEM_DISPLAY_TEXT; res->byDisplayType = SERVER_TEXT_SYSTEM;
-			NTL_SAFE_WCSCPY(res->awchMessage, L"[Dojo] ChatServer not connected. Set GS state to NORMAL; Sunday tick required.");
+			NTL_SAFE_WCSCPY(res->awchMessage, L"[Dojo] Manual mode ON. ChatServer not connected; GS will drive dojo flow.");
 			packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
 			pPlayer->SendPacket(&packet);
 		}
@@ -864,7 +875,7 @@ ACMD(do_dojo)
 			CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
 			sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
 			res->wOpCode = GU_SYSTEM_DISPLAY_TEXT; res->byDisplayType = SERVER_TEXT_SYSTEM;
-			NTL_SAFE_WCSCPY(res->awchMessage, L"[Dojo] ChatServer not connected. Set GS state to END only.");
+			NTL_SAFE_WCSCPY(res->awchMessage, L"[Dojo] Manual mode OFF. GS set all dojos to END.");
 			packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
 			pPlayer->SendPacket(&packet);
 		}

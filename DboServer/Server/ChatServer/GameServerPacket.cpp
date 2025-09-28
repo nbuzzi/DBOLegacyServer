@@ -138,10 +138,10 @@ void	CServerPassiveSession::RecUserEnterGame(CNtlPacket* pPacket)
 //--------------------------------------------------------------------------------------//
 //		RECEIVE USER LEAVE GAME FROM GAME SERVER
 //--------------------------------------------------------------------------------------//
-void	CServerPassiveSession::RecUserLeaveGame(CNtlPacket* pPacket)
+void	CServerPassiveSession::RecUserLeaveGame(CNtlPacket * pPacket)
 {
-	sGT_USER_LEAVE_GAME* req = (sGT_USER_LEAVE_GAME*)pPacket->GetPacketData();
-
+	sGT_USER_LEAVE_GAME * req = (sGT_USER_LEAVE_GAME *)pPacket->GetPacketData();
+	
 	CPlayer* pPlayer = g_pPlayerManager->FindPlayerWithAccID(req->accountId);
 	if (pPlayer && pPlayer->GetClientSession())
 	{
@@ -149,17 +149,7 @@ void	CServerPassiveSession::RecUserLeaveGame(CNtlPacket* pPacket)
 		if (pDojo)
 		{
 			if (pDojo->GetWarRequest() && pDojo->GetWarInProgress() == false && pDojo->GetDojoData()->challengeGuildId != INVALID_GUILDID)
-			{
-				CChatServer* appCfg = (CChatServer*)g_pApp;
-				if (appCfg && appCfg->m_config.bDisableDojoWar)
-				{
-					NTL_PRINT(PRINT_APP, "[Dojo] Auto-start on leave suppressed by DisableDojoWar config");
-				}
-				else
-				{
-					pDojo->BeginWarPreparation();
-				}
-			}
+				pDojo->BeginWarPreparation();
 		}
 
 		if (req->bIsKickOut || req->eCharLeavingType != CHARLEAVING_CHANNEL_CHANGE)
@@ -1818,98 +1808,71 @@ void	CServerPassiveSession::RecvDojoFunctionAddReq(CNtlPacket* pPacket)
 }
 
 
-void CServerPassiveSession::RecvDojoScrambleReq(CNtlPacket* pPacket)
+void CServerPassiveSession::RecvDojoScrambleReq(CNtlPacket * pPacket)
 {
 	WORD resulcode = GAME_FAIL;
-	sGT_DOJO_SCRAMBLE_REQ* req = (sGT_DOJO_SCRAMBLE_REQ*)pPacket->GetPacketData();
+	sGT_DOJO_SCRAMBLE_REQ * req = (sGT_DOJO_SCRAMBLE_REQ *)pPacket->GetPacketData();
 
 	CPlayer* pPlayer = g_pPlayerManager->FindPlayerWithCharID(req->charId);
-
-	CChatServer* appCfgTop = (CChatServer*)g_pApp;
-	if (appCfgTop && appCfgTop->m_config.bDisableDojoWar)
-	{
+	
+	if (pPlayer == NULL || pPlayer->GetPcInitState() == false)
+		resulcode = GAME_FAIL;
+	else if(pPlayer->GetGuild() == NULL || pPlayer->GetGuildID() == 0)
+		resulcode = GAME_GUILD_NO_GUILD_FOUND;
+	else if(Dbo_HasGuildFunction(pPlayer->GetGuild()->GetInfo()->qwGuildFunctionFlag, DBO_GUILD_FUNCTION_CAN_HAVE_DOJO) == false)
+		resulcode = GAME_GUILD_DOJO_NEED_FUNCTION;
+	else if(pPlayer->GetGuild()->IsGuildMaster(req->charId) == false)
+		resulcode = GAME_GUILD_DOJO_YOU_ARE_NOT_A_PARTY_LEADER;
+	else if(pPlayer->GetGuild()->HasDojo() == true) //dont allow war request if guild already has a dojo
+		resulcode = GAME_GUILD_DOJO_SCRAMBLE_CHALLENGE_HAVE_DOJO;
+	else if(pPlayer->GetGuild()->GetDojoTblidxWarRequest() != INVALID_TBLIDX)
+		resulcode = GAME_GUILD_DOJO_SCRAMBLE_CHALLENGE_ONLY_ONETIME;
+	else if (pPlayer->GetGuild()->CheckGuildReadyForDojo() == false)
 		resulcode = COMMUNITY_FAIL;
-	}
 	else
 	{
-
-		if (pPlayer == NULL || pPlayer->GetPcInitState() == false)
-			resulcode = GAME_FAIL;
-		else if (pPlayer->GetGuild() == NULL || pPlayer->GetGuildID() == 0)
-			resulcode = GAME_GUILD_NO_GUILD_FOUND;
-		else if (Dbo_HasGuildFunction(pPlayer->GetGuild()->GetInfo()->qwGuildFunctionFlag, DBO_GUILD_FUNCTION_CAN_HAVE_DOJO) == false)
-			resulcode = GAME_GUILD_DOJO_NEED_FUNCTION;
-		else if (pPlayer->GetGuild()->IsGuildMaster(req->charId) == false)
-			resulcode = GAME_GUILD_DOJO_YOU_ARE_NOT_A_PARTY_LEADER;
-		else if (pPlayer->GetGuild()->HasDojo() == true) //dont allow war request if guild already has a dojo
-			resulcode = GAME_GUILD_DOJO_SCRAMBLE_CHALLENGE_HAVE_DOJO;
-		else if (pPlayer->GetGuild()->GetDojoTblidxWarRequest() != INVALID_TBLIDX)
-			resulcode = GAME_GUILD_DOJO_SCRAMBLE_CHALLENGE_ONLY_ONETIME;
-		else if (pPlayer->GetGuild()->CheckGuildReadyForDojo() == false)
-			resulcode = COMMUNITY_FAIL;
+		CDojo* pDojo = g_pDojoManager->GetDojoByDojoTblidx(req->dojoTblidx);
+		
+		if (pDojo == NULL)
+			resulcode = GAME_GUILD_DOJO_NOT_FOUND;
+		else if (pDojo->GetDojoData()->guildId == pPlayer->GetGuildID())
+			resulcode = GAME_GUILD_DOJO_SELF_SCRAMBLE_FAIL;
+		else if(pDojo->GetWarRequest())
+			resulcode = GAME_GUILD_DOJO_SCRAMBLE_CHALLENGER_CANT_DO;
+		else if (pDojo->GetWarInProgress())
+			resulcode = GAME_GUILD_DOJO_SCRAMBLE_CHALLENGER_CANT_DO;
 		else
+			pDojo->RequestWar(pPlayer->GetGuildID(), pPlayer->GetCharID(), resulcode);
+
+		if (resulcode == GAME_SUCCESS)
 		{
-			CDojo* pDojo = g_pDojoManager->GetDojoByDojoTblidx(req->dojoTblidx);
+			pPlayer->GetGuild()->SetDojoTblidxWarRequest(req->dojoTblidx);
+			//get dojo owner. If owner not online, then war will begin
 
-			if (pDojo == NULL)
-				resulcode = GAME_GUILD_DOJO_NOT_FOUND;
-			else if (pDojo->GetDojoData()->guildId == pPlayer->GetGuildID())
-				resulcode = GAME_GUILD_DOJO_SELF_SCRAMBLE_FAIL;
-			else if (pDojo->GetWarRequest())
-				resulcode = GAME_GUILD_DOJO_SCRAMBLE_CHALLENGER_CANT_DO;
-			else if (pDojo->GetWarInProgress())
-				resulcode = GAME_GUILD_DOJO_SCRAMBLE_CHALLENGER_CANT_DO;
-			else
-				pDojo->RequestWar(pPlayer->GetGuildID(), pPlayer->GetCharID(), resulcode);
-
-			if (resulcode == GAME_SUCCESS)
+			CPlayer* pDojoOwner = g_pPlayerManager->FindPlayerWithCharID(pDojo->GetGuild()->GetInfo()->guildMaster);
+			if (pDojoOwner && pDojoOwner->GetPcInitState())
 			{
-				pPlayer->GetGuild()->SetDojoTblidxWarRequest(req->dojoTblidx);
-				//get dojo owner. If owner not online, then war will begin
+				pDojo->SetWarRequest(true); //only do this if the owner is online.. otherwise we wont be able to receive another request if the first one has been rejected
+				g_pEventMgr->AddEvent(pDojo, &CDojo::OnEvent_WarRequestTimer, EVENT_DOJO_WAR_REQUEST, DBO_DOJO_SCRAMBLE_MAX_WAIT_TICK, 1, 0); //start timer
 
-				CPlayer* pDojoOwner = g_pPlayerManager->FindPlayerWithCharID(pDojo->GetGuild()->GetInfo()->guildMaster);
-				if (pDojoOwner && pDojoOwner->GetPcInitState())
-				{
-					// Additional check to prevent Dojo War timer if disabled
-					CChatServer* appCfg = (CChatServer*)g_pApp;
-					if (appCfg && appCfg->m_config.bDisableDojoWar)
-					{
-						NTL_PRINT(PRINT_APP, "[Dojo] War request blocked - DojoWar is disabled in config");
-						resulcode = GAME_FAIL;
-					}
-					else
-					{
-						pDojo->SetWarRequest(true); //only do this if the owner is online.. otherwise we wont be able to receive another request if the first one has been rejected
-						g_pEventMgr->AddEvent(pDojo, &CDojo::OnEvent_WarRequestTimer, EVENT_DOJO_WAR_REQUEST, DBO_DOJO_SCRAMBLE_MAX_WAIT_TICK, 1, 0); //start timer
-
-						//send nfy to dojo owner that guild requested war. This will pop-up a request window wether if he want to accept or not.
-						CNtlPacket packet2(sizeof(sTU_DOJO_SCRAMBLE_NFY));
-						sTU_DOJO_SCRAMBLE_NFY* res2 = (sTU_DOJO_SCRAMBLE_NFY*)packet2.GetPacketData();
-						res2->wOpCode = TU_DOJO_SCRAMBLE_NFY;
-						NTL_SAFE_WCSCPY(res2->wszName, pPlayer->GetGuild()->GetInfo()->wszName);
-						packet2.SetPacketLen(sizeof(sTU_DOJO_SCRAMBLE_NFY));
-						pDojoOwner->SendPacket(&packet2);
-					}
-				}
-				else
-				{
-					//begin war Preparation
-					CChatServer* appCfg = (CChatServer*)g_pApp;
-					if (appCfg && appCfg->m_config.bDisableDojoWar)
-					{
-						NTL_PRINT(PRINT_APP, "[Dojo] BeginWarPreparation suppressed (owner offline) by DisableDojoWar config");
-					}
-					else
-					{
-						pDojo->BeginWarPreparation();
-					}
-				}
+				//send nfy to dojo owner that guild requested war. This will pop-up a request window wether if he want to accept or not.
+				CNtlPacket packet2(sizeof(sTU_DOJO_SCRAMBLE_NFY));
+				sTU_DOJO_SCRAMBLE_NFY * res2 = (sTU_DOJO_SCRAMBLE_NFY *)packet2.GetPacketData();
+				res2->wOpCode = TU_DOJO_SCRAMBLE_NFY;
+				NTL_SAFE_WCSCPY(res2->wszName, pPlayer->GetGuild()->GetInfo()->wszName);
+				packet2.SetPacketLen(sizeof(sTU_DOJO_SCRAMBLE_NFY));
+				pDojoOwner->SendPacket(&packet2);
+			}
+			else
+			{
+				//begin war Preparation
+				pDojo->BeginWarPreparation();
 			}
 		}
 	}
 
 	CNtlPacket packet(sizeof(sTG_DOJO_SCRAMBLE_RES));
-	sTG_DOJO_SCRAMBLE_RES* res = (sTG_DOJO_SCRAMBLE_RES*)packet.GetPacketData();
+	sTG_DOJO_SCRAMBLE_RES * res = (sTG_DOJO_SCRAMBLE_RES *)packet.GetPacketData();
 	res->wOpCode = TG_DOJO_SCRAMBLE_RES;
 	res->charId = req->charId;
 	res->wResultCode = resulcode;
@@ -1917,7 +1880,6 @@ void CServerPassiveSession::RecvDojoScrambleReq(CNtlPacket* pPacket)
 	packet.SetPacketLen(sizeof(sTG_DOJO_SCRAMBLE_RES));
 	g_pApp->Send(GetHandle(), &packet);
 }
-
 
 void CServerPassiveSession::RecvDojoScrambleResponse(CNtlPacket* pPacket)
 {

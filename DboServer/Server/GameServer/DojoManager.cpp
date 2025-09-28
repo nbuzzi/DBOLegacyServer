@@ -597,10 +597,13 @@ void CDojoManager::StartDojoEvent()
 		CDojo* pDojo = it->second;
 		if (pDojo)
 		{
-			// Set to NORMAL so TickProcess drives NORMAL -> RECEIVE like the Sunday flow
-			pDojo->SetState(eDBO_DOJO_STATUS_NORMAL, 0);
+			pDojo->SetState(eDBO_DOJO_STATUS_STANDBY, 0);
 		}
 	}
+		// Force-enable manual event so TickProcess runs outside Sunday window
+	m_manualEventActive = true;
+	// Run at least one immediate tick to propagate state transitions promptly
+	m_dwNextUpdateTick = 0;
 }
 
 void CDojoManager::StopDojoEvent()

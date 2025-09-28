@@ -5199,10 +5199,18 @@ void CClientSession::RecvAttackBegin(CNtlPacket* pPacket)
 			return;
 
 		BYTE byWorldRuleType = cPlayer->GetCurWorld()->GetTbldat()->byWorldRuleType;
+		// Force treat world 900043 as RANKBATTLE for Arena combat
+		if (cPlayer->GetWorldID() == 900043) byWorldRuleType = GAMERULE_RANKBATTLE;
 
 		if (byWorldRuleType == GAMERULE_RANKBATTLE)
 		{
-			if (cPlayer->GetRankBattleData()->eState != RANKBATTLE_MEMBER_STATE_ATTACKABLE)
+			// Allow arena participants to attack during RUN even if world is RANKBATTLE
+			if (g_pArenaManager->IsEnabled() && g_pArenaManager->IsParticipant(cPlayer) && 
+			    g_pArenaManager->GetState() == CArenaManager::State::IN_ROUND)
+			{
+				// Arena participants can attack during RUN
+			}
+			else if (cPlayer->GetRankBattleData()->eState != RANKBATTLE_MEMBER_STATE_ATTACKABLE)
 				return;
 		}
 		else if (byWorldRuleType == GAMERULE_MINORMATCH || byWorldRuleType == GAMERULE_MAJORMATCH || byWorldRuleType == GAMERULE_FINALMATCH)
@@ -8074,7 +8082,10 @@ void CClientSession::RecvSkillTargetList(CNtlPacket* pPacket)
 				if (byTargetCount > pSkill->GetOriginalTableData()->byApply_Target_Max)
 					byTargetCount = pSkill->GetOriginalTableData()->byApply_Target_Max;
 
-				pSkill->CastSkill(req->ahApplyTarget[0], byTargetCount, req->ahApplyTarget);
+				// Safe appoint target fallback: if client sent an empty list, use current selected target as appoint handle.
+				// This helps when the client refuses to include PC targets on custom arena world 900043.
+				HOBJECT hAppoint = (byTargetCount > 0) ? req->ahApplyTarget[0] : cPlayer->GetTargetHandle();
+				pSkill->CastSkill(hAppoint, byTargetCount, req->ahApplyTarget);
 			}
 		}
 		else

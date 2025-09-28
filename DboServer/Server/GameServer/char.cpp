@@ -895,8 +895,8 @@ bool CCharacter::IsTargetAttackble(CCharacter* pTarget, WORD wRange)
 			CNpc* pOtherNpc = dynamic_cast<CNpc*>(pTarget);
 			if (pSelfNpc2 && pOtherNpc)
 			{
-				const bool selfIsHelper = GetHelperNpcManager()->IsRegisteredHelper(pSelfNpc2) || pSelfNpc2->GetStandAlone();
-				const bool otherIsHelper = GetHelperNpcManager()->IsRegisteredHelper(pOtherNpc) || pOtherNpc->GetStandAlone();
+				const bool selfIsHelper = GetHelperNpcManager()->IsRegisteredHelper(pSelfNpc2);
+				const bool otherIsHelper = GetHelperNpcManager()->IsRegisteredHelper(pOtherNpc);
 				if (selfIsHelper && otherIsHelper)
 					return false;
 			}

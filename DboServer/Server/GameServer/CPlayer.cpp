@@ -404,6 +404,37 @@ void CPlayer::LeaveGame()
 			SetWorldID(GetTeleportWorldID());
 		}
 
+		// If disconnecting while in an Arena world or state, ensure safe fallback location
+		// to avoid logging in at a non-existent/invalid dynamic map.
+		// Default fallback:
+		// WorldID = 1, MapInfoIndex = 200101011
+		// CurLoc = (4975.609863, -48.869999, 4012.609863)
+		// CurDir = (0.911100, 0.0f, -0.412000)
+		const unsigned int SAFE_WORLD_TBLIDX = 1;
+		const unsigned int SAFE_MAP_INFO_INDEX = 200101011;
+		const CNtlVector SAFE_LOC(4975.609863f, -48.869999f, 4012.609863f);
+		const CNtlVector SAFE_DIR(0.911100f, 0.0f, -0.412000f);
+
+		// Detect Arena participation or being in an Arena world instance
+		bool inArenaContext = false;
+		do {
+			// Participant in ArenaManager?
+			if (g_pArenaManager && g_pArenaManager->IsParticipant(this)) { inArenaContext = true; break; }
+			// Inside current Arena world?
+			if (g_pArenaManager && g_pArenaManager->GetOrCreateCurrentWorldId() != 0 &&
+				(unsigned int)GetWorldID() == g_pArenaManager->GetOrCreateCurrentWorldId()) {
+				inArenaContext = true; break;
+			}
+		} while (false);
+
+		if (inArenaContext)
+		{
+			SetCurLoc((CNtlVector&)SAFE_LOC);
+			SetCurDir((CNtlVector&)SAFE_DIR);
+			SetWorldID((WORLDID)SAFE_WORLD_TBLIDX);
+			SetMapNameTblidx(SAFE_MAP_INFO_INDEX);
+		}
+
 		if (app->IsDojoChannel() && GetMatchIndex() != INVALID_BYTE)
 		{
 			// Issue a Budokai rejoin ticket so the player can return
@@ -813,6 +844,17 @@ void CPlayer::UpdateFreePvpZone(DWORD dwTickDiff)
 		m_dwFreePvpZoneUpdateTick = 0;
 		if (GetCurWorld())
 		{
+			// Do not auto-toggle PvP zone while the Arena is actively running on the custom world,
+			// otherwise this periodic check may undo the PvP flag we set for participants/world during RUN.
+			bool blockAutoToggle = false;
+			if (GetWorldID() == 900043 && g_pArenaManager && g_pArenaManager->IsEnabled() && g_pArenaManager->GetState() == CArenaManager::State::IN_ROUND)
+			{
+				blockAutoToggle = true;
+			}
+
+			if (blockAutoToggle)
+				return;
+
 			if (!IsPvpZone())
 			{
 				//if (GetNaviEngine()->IsBasicAttributeSet(GetCurWorld()->GetNaviInstanceHandle(), GetCurLoc().x, GetCurLoc().z, DBO_WORLD_ATTR_BASIC_FREE_PVP_ZONE))
@@ -4314,6 +4356,47 @@ bool CPlayer::IsAttackable(CCharacterObject* pTarget)
 
 			if (GetCurWorld() == NULL || pPlayerTargt->GetCurWorld() == NULL)
 				return false;
+
+			// Arena world override for custom map 900043:
+			// Decide PC vs PC combat strictly by Arena participation and alliance during IN_ROUND
+			// This bypasses normal world-rule dependencies (RankBattle/Budokai/Dojo/PvP zones) on this map.
+			if (GetWorldID() == 900043 || pPlayerTargt->GetWorldID() == 900043)
+			{
+				if (g_pArenaManager->IsEnabled())
+				{
+					const bool meSpectator = g_pArenaManager->IsSpectatorId((unsigned int)GetCharID());
+					const bool tgSpectator = g_pArenaManager->IsSpectatorId((unsigned int)pPlayerTargt->GetCharID());
+					if (meSpectator || tgSpectator)
+						return false; // spectators never engage
+
+					const bool meParticipant = g_pArenaManager->IsParticipant(this);
+					const bool tgParticipant = g_pArenaManager->IsParticipant(pPlayerTargt);
+					if (meParticipant && tgParticipant && g_pArenaManager->GetState() == CArenaManager::State::IN_ROUND)
+					{
+						switch (g_pArenaManager->GetMode())
+						{
+						case CArenaManager::Mode::PARTY_VS_PARTY:
+							// Deny friendly fire within same party; otherwise allow
+							if (GetPartyID() != INVALID_PARTYID && GetPartyID() == pPlayerTargt->GetPartyID())
+								return false;
+							return true;
+						case CArenaManager::Mode::GUILD_VS_GUILD:
+							// Deny friendly fire within same guild; otherwise allow
+							if (GetGuildID() != 0 && GetGuildID() == pPlayerTargt->GetGuildID())
+								return false;
+							return true;
+						case CArenaManager::Mode::FREE_FOR_ALL:
+						case CArenaManager::Mode::OPEN:
+						default:
+							return true; // everyone can hit everyone
+						}
+					}
+				}
+
+				// On 900043, outside an active Arena round (or if one of them isn't a participant), disallow PC vs PC by default
+				// to prevent unintended PK on the custom map.
+				return false;
+			}
 
 			if (GetDragonballScramble() && pPlayerTargt->GetDragonballScramble())
 			{

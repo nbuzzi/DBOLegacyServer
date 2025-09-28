@@ -10,6 +10,7 @@
 #include "NtlNavi.h"
 // Arena runtime for custom PvP battles
 #include "ArenaManager.h"
+#include "WorldCell.h"
 
 
 
@@ -92,7 +93,18 @@ void CSkillPc::CastSkill(HOBJECT hAppointTargetHandle, BYTE byApplyTargetCount, 
 	CSpellAreaChecker rSpellAreaChecker;
 	rSpellAreaChecker.Create();
 
-	CCharacter *pAppointTarget = (hAppointTargetHandle == INVALID_HOBJECT) ? m_pPlayerRef : g_pObjectManager->GetChar(hAppointTargetHandle);
+	// Derive appoint target. If handle is invalid or object not found, fall back to current target when available.
+	CCharacter *pAppointTarget = NULL;
+	if (hAppointTargetHandle != INVALID_HOBJECT)
+		pAppointTarget = g_pObjectManager->GetChar(hAppointTargetHandle);
+	if (pAppointTarget == NULL)
+	{
+		HOBJECT hCur = m_pPlayerRef->GetTargetHandle();
+		if (hCur != INVALID_HOBJECT)
+			pAppointTarget = g_pObjectManager->GetChar(hCur);
+	}
+	if (pAppointTarget == NULL)
+		pAppointTarget = m_pPlayerRef; // self as last resort for area/ally skills
 	if (GetOriginalTableData()->byAppoint_Target == DBO_SKILL_APPOINT_TARGET_SELF)
 		pAppointTarget = m_pPlayerRef;
 
@@ -130,6 +142,8 @@ void CSkillPc::CastSkill(HOBJECT hAppointTargetHandle, BYTE byApplyTargetCount, 
 				else if (pTarget->IsPC())
 				{
 					BYTE byWorldRuleType = m_pPlayerRef->GetCurWorld()->GetTbldat()->byWorldRuleType;
+					// Force treat world 900043 as RANKBATTLE for Arena combat
+					if (m_pPlayerRef->GetWorldID() == 900043) byWorldRuleType = GAMERULE_RANKBATTLE;
 					CPlayer* pTargetPc = (CPlayer*)pTarget;
 
 					if (byWorldRuleType == GAMERULE_NORMAL)
@@ -187,6 +201,32 @@ void CSkillPc::CastSkill(HOBJECT hAppointTargetHandle, BYTE byApplyTargetCount, 
 					}
 					else if (byWorldRuleType == GAMERULE_RANKBATTLE)
 					{
+						// Allow arena participants to use skills during RUN even in RANKBATTLE worlds
+						if (g_pArenaManager->IsEnabled() && g_pArenaManager->GetState() == CArenaManager::State::IN_ROUND
+							&& g_pArenaManager->IsParticipant(m_pPlayerRef) && g_pArenaManager->IsParticipant(pTargetPc))
+						{
+							bool allow = true;
+							switch (g_pArenaManager->GetMode())
+							{
+							case CArenaManager::Mode::PARTY_VS_PARTY:
+								allow = !(m_pPlayerRef->GetPartyID() != INVALID_PARTYID && m_pPlayerRef->GetPartyID() == pTargetPc->GetPartyID());
+								break;
+							case CArenaManager::Mode::GUILD_VS_GUILD:
+								allow = !(m_pPlayerRef->GetGuildID() != 0 && m_pPlayerRef->GetGuildID() == pTargetPc->GetGuildID());
+								break;
+							case CArenaManager::Mode::FREE_FOR_ALL:
+							case CArenaManager::Mode::OPEN:
+							default:
+								allow = true;
+								break;
+							}
+							if (allow)
+							{
+								targetList.AddTarget(ahApplyTarget[i]);
+								continue;
+							}
+						}
+						// Normal RANKBATTLE logic: different teams can target each other
 						if (m_pPlayerRef->GetRankBattleData()->eTeamType == pTargetPc->GetRankBattleData()->eTeamType)
 							continue;
 					}
@@ -231,6 +271,8 @@ void CSkillPc::CastSkill(HOBJECT hAppointTargetHandle, BYTE byApplyTargetCount, 
 						}
 
 						BYTE byWorldRuleType = m_pPlayerRef->GetCurWorld()->GetTbldat()->byWorldRuleType;
+						// Force treat world 900043 as RANKBATTLE for Arena combat (ALLIANCE case)
+						if (m_pPlayerRef->GetWorldID() == 900043) byWorldRuleType = GAMERULE_RANKBATTLE;
 						CPlayer* pTargetPc = (CPlayer*)pTarget;
 
 						if (byWorldRuleType == GAMERULE_NORMAL)
@@ -309,6 +351,8 @@ void CSkillPc::CastSkill(HOBJECT hAppointTargetHandle, BYTE byApplyTargetCount, 
 						}
 
 						BYTE byWorldRuleType = m_pPlayerRef->GetCurWorld()->GetTbldat()->byWorldRuleType;
+						// Force treat world 900043 as RANKBATTLE for Arena combat (PARTY case)
+						if (m_pPlayerRef->GetWorldID() == 900043) byWorldRuleType = GAMERULE_RANKBATTLE;
 						CPlayer* pTargetPc = (CPlayer*)pTarget;
 
 						if (byWorldRuleType == GAMERULE_NORMAL)

@@ -101,6 +101,8 @@ private:
 
 	typedef std::map<GUILDID, CDojo*> TMAP_DOJO;
 	TMAP_DOJO m_map_Dojo;
+	// When true, force dojo TickProcess regardless of weekday/time window.
+	bool m_manualEventActive = false;
 
 private:
 

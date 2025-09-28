@@ -97,10 +97,15 @@ public:
 		bool keepRankUiAfterFinish;
 		// diagnostics
 		bool verboseLogs; // when true, emit detailed ERR_LOG traces for troubleshooting
+		// When enabled, set the entire arena world as PvP zone for all players while in RUN
+		// This helps bypass map-level PC battle restrictions and ensures free PvP during fights
+		bool worldWidePvpDuringRun;
 		// CC battle mode (like RankBattle)
 		bool ccBattleMode; // when true, use RankBattle logic for world creation and teleportation
 		bool allowCustomWorlds; // when true, allow GM commands and config to override worlds; when false, only use RankBattle table worlds
 		bool useOnlyCustomWorlds; // when true, ignore RankBattle table and use only worlds from WorldTblidxList
+		// When true, do not fall back to other worlds if world creation fails; used for strict GM-run events
+		bool forceExactWorld;
 		// rewards
 		bool rewardsEnabled;
 		// pair<itemTblidx,count>
@@ -121,8 +126,8 @@ public:
 			rankUiEnabled(false), rankPacketsEnabled(false),
 			postFinishTeleport(true), postFinishWorldTblidx(1), postFinishPosX(4975.609863f), postFinishPosY(-48.869999f), postFinishPosZ(4012.609863f),
 			postFinishDirX(0.911100f), postFinishDirY(-0.412000f), postFinishDirZ(0.0f), keepRankUiAfterFinish(true),
-			verboseLogs(false),
-			ccBattleMode(false), allowCustomWorlds(false), useOnlyCustomWorlds(false), allowBudokaiRuleWorlds(false),
+			verboseLogs(false), worldWidePvpDuringRun(false),
+			ccBattleMode(false), allowCustomWorlds(false), useOnlyCustomWorlds(false), allowBudokaiRuleWorlds(false), forceExactWorld(false),
 			rewardsEnabled(false) {
 		}
 	};
@@ -286,6 +291,9 @@ private:
 	void FinishMatch(bool aborted);
 	void ClearCombatRestrictionsFor(class CPlayer* pPlayer);
 	void ClearCombatRestrictionsForParticipants();
+	// World-wide PvP toggles for the arena world during RUN
+	void ApplyWorldWidePvp(unsigned int worldId);
+	void RevertWorldWidePvp();
 	// System status helpers
 	void AnnounceRoundTimeRemaining(unsigned int secondsLeft);
 	void AnnounceRotationTimeRemaining(unsigned int secondsLeft);
@@ -360,6 +368,9 @@ private:
 	unsigned long m_randomWaveRemainMs = 0;
 	// Mob name -> id mapping loaded from file for @addmob by name
 	std::unordered_map<std::string, unsigned int> m_mobNameToId;
+
+	// Track which characters we force-enabled PvP zone for (to safely revert on finish)
+	std::unordered_set<unsigned int> m_worldWidePvpToggled;
 };
 
 #define GetArenaManager() CArenaManager::GetInstance()

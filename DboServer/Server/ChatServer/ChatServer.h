@@ -154,12 +154,6 @@ public:
 			return NTL_ERR_SYS_CONFIG_FILE_READ_FAIL;
 		}
 
-		// GOVERNANCE
-		if (!file.Read("GAMECONFIG", "DisableDojoWar", m_config.bDisableDojoWar))
-		{
-		 	m_config.bDisableDojoWar = TRUE;
-		}
-
 		// Optional translator config (DeepL)
 		{
 			int enableTrans = 0; (void)file.Read("Translator", "Enable", enableTrans);
