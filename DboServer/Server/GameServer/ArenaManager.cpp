@@ -11,6 +11,8 @@
 #include "World.h"
 #include "WorldTable.h"
 #include "TableContainerManager.h"
+#include "SystemEffectTable.h"
+#include "SkillTable.h"
 #include "ItemManager.h"
 #include "NtlLog.h"
 #include "Monster.h"
@@ -252,6 +254,10 @@ bool CArenaManager::LoadConfigFromIniPath(const char* iniPath)
 	if (file.Read("Arena", "StopOnTimeout", stopOnTimeout)) m_cfg.stopOnTimeout = (stopOnTimeout != 0);
 	int reviveOnFaint = 0;
 	if (file.Read("Arena", "ReviveOnFaint", reviveOnFaint)) m_cfg.reviveOnFaint = (reviveOnFaint != 0);
+	unsigned int reviveDelayMs = 0;
+	if (file.Read("Arena", "ReviveDelayMs", reviveDelayMs)) m_cfg.reviveDelayMs = reviveDelayMs;
+	unsigned int reviveProtectMs = 0;
+	if (file.Read("Arena", "ReviveProtectMs", reviveProtectMs)) m_cfg.reviveProtectMs = reviveProtectMs;
 	int faintBecomeSpectator = 1;
 	if (file.Read("Arena", "FaintBecomeSpectator", faintBecomeSpectator)) m_cfg.faintBecomeSpectator = (faintBecomeSpectator != 0);
 	{
@@ -710,6 +716,47 @@ void CArenaManager::TickProcess(unsigned long dwTickDiff)
 		}
 	}
 
+	if (m_cfg.reviveOnFaint || m_cfg.scoreOnFaint) {
+		// Drive pending delayed revives (only during IN_ROUND)
+		if (m_state == State::IN_ROUND && !m_pendingReviveMs.empty())
+		{
+			std::vector<unsigned int> toRevive;
+			for (auto& kv : m_pendingReviveMs)
+			{
+				if (kv.second > dwTickDiff)
+					kv.second -= dwTickDiff;
+				else
+					toRevive.push_back(kv.first);
+			}
+			for (unsigned int cid : toRevive)
+			{
+				m_pendingReviveMs.erase(cid);
+				ReviveParticipantNow(cid, /*bApplyRespawnBuff*/true);
+			}
+		}
+
+		// Drive post-revive protection timers
+		if (!m_reviveProtectRemainMs.empty())
+		{
+			std::vector<unsigned int> toClear;
+			for (auto& kv : m_reviveProtectRemainMs)
+			{
+				if (kv.second > dwTickDiff)
+					kv.second -= dwTickDiff;
+				else
+					toClear.push_back(kv.first);
+			}
+			for (unsigned int cid : toClear)
+			{
+				m_reviveProtectRemainMs.erase(cid);
+				CPlayer* p = g_pObjectManager->FindByChar((CHARACTERID)cid);
+				if (p && p->IsInitialized())
+					ClearReviveProtection(p);
+			}
+		}
+
+	}
+
 	// Auto-detect if participants are already in arena world while in ENROLLMENT state
 	// This handles cases where players were teleported manually or the state got stuck
 	if (m_state == State::ENROLLMENT && !m_participants.empty())
@@ -1109,16 +1156,7 @@ void CArenaManager::TickProcess(unsigned long dwTickDiff)
 			{
 				SendNotice(L"Arena invite timed out. No participants accepted.", SERVER_TEXT_SYSNOTICE);
 				m_state = State::ENROLLMENT;
-				// Clear invite UI on clients
-				for (auto cid : m_participants)
-				{
-					if (CPlayer* p = g_pObjectManager->FindByChar((CHARACTERID)cid))
-					{
-						// Cancel any Arena invite proposals (RB or Dojo)
-						p->CancelTeleportProposal(TELEPORT_TYPE_RANKBATTLE);
-						p->CancelTeleportProposal(TELEPORT_TYPE_DOJO);
-					}
-				}
+				// Do not cancel external proposals; Arena uses direct teleports now
 				NTL_PRINT(PRINT_APP, _T("[ARENA] Invite timeout: no acceptors. Reset to ENROLLMENT"));
 			}
 			else
@@ -1128,15 +1166,7 @@ void CArenaManager::TickProcess(unsigned long dwTickDiff)
 				{
 					SendNotice(L"Arena invite concluded: not enough participants accepted.", SERVER_TEXT_SYSNOTICE);
 					m_state = State::ENROLLMENT;
-					// Cancel any open proposals and keep players in place
-					for (auto cid : m_participants)
-					{
-						if (CPlayer* p = g_pObjectManager->FindByChar((CHARACTERID)cid))
-						{
-							p->CancelTeleportProposal(TELEPORT_TYPE_RANKBATTLE);
-							p->CancelTeleportProposal(TELEPORT_TYPE_DOJO);
-						}
-					}
+					// Do not cancel external proposals; Arena uses direct teleports now
 					NTL_PRINT(PRINT_APP, _T("[ARENA] Invite end: accepted=%u < 2. Reset to ENROLLMENT"), accepted);
 					return;
 				}
@@ -2016,15 +2046,9 @@ void CArenaManager::TeleportParticipants(bool forceDirect)
 			m_currentWorldId = (unsigned int)pWorld->GetID();
 		}
 
-		// Choose teleport type
-		// In world_fight strict mode, avoid RANKBATTLE teleport types to prevent client-side reroute to CC rooms
-		BYTE tpType;
-		if (m_cfg.forceExactWorld)
-			tpType = TELEPORT_TYPE_DOJO;
-		else
-			tpType = m_cfg.ccBattleMode ? TELEPORT_TYPE_RANKBATTLE : ((pWorldTbldat->byWorldRuleType == GAMERULE_RANKBATTLE) ? TELEPORT_TYPE_RANKBATTLE : TELEPORT_TYPE_DOJO);
-		// Use same index as type (previous working behavior)
-		BYTE tpIndex = tpType;
+		// Teleport strategy: avoid proposal types (RankBattle/Dojo) to prevent conflicts with Budokai/Dojo systems.
+		// Always use state-neutral direct teleports for Arena.
+		// BYTE tpType = TELEPORT_TYPE_COMMAND; BYTE tpIndex = tpType; // not used anymore
 
 		// CC Battle Mode: Assign teams to different spawn positions like RankBattle
 		if (m_cfg.ccBattleMode)
@@ -2062,20 +2086,10 @@ void CArenaManager::TeleportParticipants(bool forceDirect)
 					if (rd2) rd2->eTeamType = RANKBATTLE_TEAM_CHALLENGER; else ARENA_VLOG(m_cfg, LOG_GENERAL, "[ARENA][WARN] Null RankBattleData on invite team assign (challenger) char=%u", (unsigned)p->GetCharID());
 				}
 
-				bool ok = p->StartTeleportProposal(NULL, (WORD)m_cfg.inviteWaitSeconds, tpType, tpIndex, (TBLIDX)m_currentWorldTblidx, pWorld->GetID(), destLoc, destDir);
-				if (!ok)
-				{
-					bool dynamic = (p->GetCurWorld() && p->GetCurWorld()->GetTbldat()->bDynamic);
-					NTL_PRINT(PRINT_APP, _T("[ARENA] Invite FAILED: char=%u type=%u idx=%u dynamic=%d hasWorld=%d. Fallback to direct teleport."),
-						(unsigned)cid, (unsigned)tpType, (unsigned)tpIndex, dynamic ? 1 : 0, p->GetCurWorld() ? 1 : 0);
-					// Fallback: direct-teleport if proposal cannot be shown (player in dynamic world, etc.)
-					p->StartTeleport(destLoc, destDir, pWorld->GetID(), TELEPORT_TYPE_DOJO);
-				}
-				else
-				{
-					NTL_PRINT(PRINT_APP, _T("[ARENA] CC Battle invite sent: char=%u team=%u worldId=%u type=%u idx=%u"),
-						(unsigned)cid, (teamIndex < teamSize ? 1 : 2), (unsigned)pWorld->GetID(), (unsigned)tpType, (unsigned)tpIndex);
-				}
+				// Direct teleport (state-neutral)
+				p->StartTeleport(destLoc, destDir, pWorld->GetID(), TELEPORT_TYPE_COMMAND);
+				NTL_PRINT(PRINT_APP, _T("[ARENA] Teleported (CC Battle): char=%u team=%u worldId=%u type=COMMAND"),
+					(unsigned)cid, (teamIndex < teamSize ? 1 : 2), (unsigned)pWorld->GetID());
 				teamIndex++;
 			}
 		}
@@ -2090,19 +2104,10 @@ void CArenaManager::TeleportParticipants(bool forceDirect)
 				CPlayer* p = g_pObjectManager->FindByChar((CHARACTERID)cid);
 				if (!p || !p->IsInitialized()) continue;
 
-				bool ok = p->StartTeleportProposal(NULL, (WORD)m_cfg.inviteWaitSeconds, tpType, tpIndex, (TBLIDX)m_currentWorldTblidx, pWorld->GetID(), destLoc, destDir);
-				if (!ok)
-				{
-					bool dynamic = (p->GetCurWorld() && p->GetCurWorld()->GetTbldat()->bDynamic);
-					NTL_PRINT(PRINT_APP, _T("[ARENA] Invite FAILED: char=%u type=%u idx=%u dynamic=%d hasWorld=%d. Fallback to direct teleport."),
-						(unsigned)cid, (unsigned)tpType, (unsigned)tpIndex, dynamic ? 1 : 0, p->GetCurWorld() ? 1 : 0);
-					p->StartTeleport(destLoc, destDir, pWorld->GetID(), TELEPORT_TYPE_DOJO);
-				}
-				else
-				{
-					NTL_PRINT(PRINT_APP, _T("[ARENA] Invite sent: char=%u worldTblidx=%u worldId=%u type=%u idx=%u wait=%us"),
-						(unsigned)cid, (unsigned)m_currentWorldTblidx, (unsigned)pWorld->GetID(), (unsigned)tpType, (unsigned)tpIndex, (unsigned)m_cfg.inviteWaitSeconds);
-				}
+				// Direct teleport (state-neutral)
+				p->StartTeleport(destLoc, destDir, pWorld->GetID(), TELEPORT_TYPE_COMMAND);
+				NTL_PRINT(PRINT_APP, _T("[ARENA] Teleported: char=%u worldTblidx=%u worldId=%u type=COMMAND"),
+					(unsigned)cid, (unsigned)m_currentWorldTblidx, (unsigned)pWorld->GetID());
 			}
 		}
 		m_inviting = true;
@@ -2173,7 +2178,7 @@ void CArenaManager::TeleportParticipantsHere(CPlayer* pGm)
 		{
 			if (!p->IsInitialized()) continue;
 			// Only teleports players connected to this GameServer instance
-			p->StartTeleport(pGm->GetCurLoc(), pGm->GetCurDir(), pGm->GetWorldID(), TELEPORT_TYPE_DOJO);
+			p->StartTeleport(pGm->GetCurLoc(), pGm->GetCurDir(), pGm->GetWorldID(), TELEPORT_TYPE_COMMAND);
 		}
 	}
 }
@@ -2187,7 +2192,7 @@ void CArenaManager::TeleportSpectatorsHere(CPlayer* pGm)
 		{
 			if (!p->IsInitialized()) continue;
 			// Only teleports players connected to this GameServer instance
-			p->StartTeleport(pGm->GetCurLoc(), pGm->GetCurDir(), pGm->GetWorldID(), TELEPORT_TYPE_DOJO);
+			p->StartTeleport(pGm->GetCurLoc(), pGm->GetCurDir(), pGm->GetWorldID(), TELEPORT_TYPE_COMMAND);
 		}
 	}
 }
@@ -2339,6 +2344,14 @@ void CArenaManager::CheckFaintAndAliveLogic()
 		return;
 	}
 
+	// SCORE mode: do NOT advance rounds or finish when only one alive.
+	// In scoring mode we auto-respawn on faint and keep accumulating points until the timer/match ends.
+	// We only abort when participants drop below 2 (handled above) or when stopped explicitly.
+	if (m_cfg.reviveOnFaint || m_cfg.scoreOnFaint)
+	{
+		return; // keep running; ignore alive/team elimination checks below
+	}
+
 	// End early if one team is fully eliminated in team modes
 	bool teamEliminated = false;
 	if (m_mode == Mode::PARTY_VS_PARTY || m_mode == Mode::GUILD_VS_GUILD)
@@ -2428,8 +2441,8 @@ void CArenaManager::FinishMatch(bool aborted)
 	StopRoundTimerUI();
 	// Cancel any outstanding watchdog once we are finishing
 	m_matchFinishWatchdogMs = 0;
-	// Minimal finalization on arena worlds: do not send any Rank/Budokai finish/leave broadcasts
-	// to keep UI intact until teleport; we are not in a real Rank map context
+	// During the fight we mirror Rank UX if enabled; at finish we ensure clients exit Rank mode.
+	// On non-arena (rank-rule) worlds, mirror finish and then optionally send LEAVE.
 	if (!ArenaWorld::IsWorldTblidx(m_currentWorldTblidx))
 	{
 		// Non-arena worlds: mirror RankBattle finish UX unless suppressed
@@ -2438,11 +2451,17 @@ void CArenaManager::FinishMatch(bool aborted)
 			unsigned int wid = m_currentWorldId ? m_currentWorldId : EnsureCurrentWorldId();
 			if (wid)
 				BroadcastRankStateToWorld(wid, RANKBATTLE_BATTLESTATE_MATCH_FINISH, 1);
-			if (!m_cfg.keepRankUiAfterFinish)
-			{
-				if (m_currentWorldId)
-					BroadcastRankLeaveToWorld(m_currentWorldId);
-			}
+			// Always leave at the very end to clear HUD
+			if (m_currentWorldId)
+				BroadcastRankLeaveToWorld(m_currentWorldId);
+		}
+	}
+	else
+	{
+		// Arena world: we used Rank style during match; now explicitly clear Rank HUD
+		if (m_cfg.rankPacketsEnabled && m_currentWorldId)
+		{
+			BroadcastRankLeaveToWorld(m_currentWorldId);
 		}
 	}
 	// Always clear combat permissions before any teleports/cleanup
@@ -2554,6 +2573,9 @@ void CArenaManager::FinishMatch(bool aborted)
 		PostFinishTeleportAll();
 	else
 		PostFinishTeleportDefault();
+
+	// Let players know Rank mode was cleared explicitly
+	BroadcastSystem(L"[Arena] Rank mode cleared. You can use normal Rank features again.");
 	// Clear internal lists for a clean next start
 	m_participants.clear();
 	m_spectators.clear();
@@ -2662,7 +2684,7 @@ void CArenaManager::SetCombatPermittedFor(CPlayer* pPlayer, bool enable)
 	{
 		// Clear common blocking conditions to ensure damage can apply
 		ClearCombatRestrictionsFor(pPlayer);
-		
+
 		// CRITICAL: Set RankBattle data so IsAttackable() recognizes arena participants as attackable
 		sRANK_BATTLE_DATA* pRankData = pPlayer->GetRankBattleData();
 		if (pRankData)
@@ -2673,13 +2695,13 @@ void CArenaManager::SetCombatPermittedFor(CPlayer* pPlayer, bool enable)
 			{
 			case Mode::PARTY_VS_PARTY:
 				// Use party ID hash as team identifier to create two teams
-				pRankData->eTeamType = (pPlayer->GetPartyID() != INVALID_PARTYID) 
+				pRankData->eTeamType = (pPlayer->GetPartyID() != INVALID_PARTYID)
 					? ((pPlayer->GetPartyID() % 2 == 0) ? RANKBATTLE_TEAM_OWNER : RANKBATTLE_TEAM_CHALLENGER)
 					: RANKBATTLE_TEAM_OTHER;
 				break;
 			case Mode::GUILD_VS_GUILD:
 				// Use guild ID hash as team identifier to create two teams
-				pRankData->eTeamType = (pPlayer->GetGuildID() != 0) 
+				pRankData->eTeamType = (pPlayer->GetGuildID() != 0)
 					? ((pPlayer->GetGuildID() % 2 == 0) ? RANKBATTLE_TEAM_OWNER : RANKBATTLE_TEAM_CHALLENGER)
 					: RANKBATTLE_TEAM_OTHER;
 				break;
@@ -3040,6 +3062,7 @@ void CArenaManager::BroadcastRankJoinToWorld(unsigned int worldId)
 // Notify clients they left the rank battle room, used on finish/abort
 void CArenaManager::BroadcastRankLeaveToWorld(unsigned int worldId)
 {
+	if (!m_cfg.rankPacketsEnabled) return;
 	if (worldId == 0) return;
 	// Ensure world is rank-rule
 	if (CWorld* pWorld = ((CGameServer*)g_pApp)->GetGameMain()->GetWorldManager()->FindWorld((WORLDID)worldId))
@@ -3052,16 +3075,20 @@ void CArenaManager::BroadcastRankLeaveToWorld(unsigned int worldId)
 			return;
 	}
 	else return;
-	for (auto cid : m_participants)
+	auto sendLeave = [&](CHARACTERID cid)
 	{
-		CPlayer* pPlayer = g_pObjectManager->FindByChar((CHARACTERID)cid);
-		if (!pPlayer || !pPlayer->IsInitialized() || (unsigned int)pPlayer->GetWorldID() != worldId) continue;
+		CPlayer* pPlayer = g_pObjectManager->FindByChar(cid);
+		if (!pPlayer || !pPlayer->IsInitialized() || (unsigned int)pPlayer->GetWorldID() != worldId) return;
 		CNtlPacket packet(sizeof(sGU_RANKBATTLE_LEAVE_NFY));
 		sGU_RANKBATTLE_LEAVE_NFY* res = (sGU_RANKBATTLE_LEAVE_NFY*)packet.GetPacketData();
 		res->wOpCode = GU_RANKBATTLE_LEAVE_NFY;
 		packet.SetPacketLen(sizeof(sGU_RANKBATTLE_LEAVE_NFY));
 		pPlayer->SendPacket(&packet);
-	}
+	};
+	for (auto cid : m_participants)
+		sendLeave((CHARACTERID)cid);
+	for (auto cid : m_spectators)
+		sendLeave((CHARACTERID)cid);
 }
 
 // Budokai-style: broadcast current match-state to arena participants present in the world
@@ -3808,6 +3835,8 @@ void CArenaManager::ReviveParticipantsForNextRound()
 			p->Revival(loc, p->GetWorldID(), REVIVAL_TYPE_RESCUED);
 			p->UpdateCurLpEp(p->GetMaxLP(), p->GetMaxEP(), true, false);
 			p->SendCharStateStanding();
+			// Apply standard arena respawn buff
+			ApplyRespawnBuff(p);
 		}
 	}
 }
@@ -4129,6 +4158,7 @@ void CArenaManager::OnPlayerFaint(unsigned int killerCharId, unsigned int victim
 	if (!m_cfg.enabled) return;
 	if (killerCharId == 0 || killerCharId == victimCharId) return;
 	if (m_participants.find(killerCharId) == m_participants.end()) return;
+	bool isParticipantVictim = (m_participants.find(victimCharId) != m_participants.end());
 	// Only count enemy eliminations in team modes; ignore friendly fire/self
 	bool countKill = true;
 	if (m_mode == Mode::PARTY_VS_PARTY || m_mode == Mode::GUILD_VS_GUILD)
@@ -4157,6 +4187,130 @@ void CArenaManager::OnPlayerFaint(unsigned int killerCharId, unsigned int victim
 	// Optional: immediately show a lightweight scoreboard update to participants in the arena world
 	if (m_state == State::IN_ROUND && m_currentWorldId)
 		BroadcastScoreboardToWorld(m_currentWorldId);
+
+	// Revive (possibly delayed) in score mode to keep action flowing
+	if (isParticipantVictim && m_state == State::IN_ROUND && m_cfg.reviveOnFaint)
+	{
+		if (m_cfg.reviveDelayMs == 0)
+		{
+			ReviveParticipantNow(victimCharId, /*bApplyRespawnBuff*/true);
+		}
+		else
+		{
+			m_pendingReviveMs[victimCharId] = m_cfg.reviveDelayMs;
+			// Optional: notify the victim of pending respawn
+			CPlayer* pVictim = g_pObjectManager->FindByChar((CHARACTERID)victimCharId);
+			if (pVictim)
+			{
+				wchar_t buf[96];
+				swprintf_s(buf, L"Respawning in %.1f seconds...", (double)m_cfg.reviveDelayMs / 1000.0);
+				SendSystemTo(pVictim, buf, SERVER_TEXT_SYSNOTICE);
+			}
+		}
+	}
+}
+
+void CArenaManager::ReviveParticipantNow(unsigned int victimCharId, bool bApplyRespawnBuff)
+{
+	CPlayer* pVictim = g_pObjectManager->FindByChar((CHARACTERID)victimCharId);
+	if (!pVictim || !pVictim->IsInitialized()) return;
+	// Only handle victims currently in the active arena world
+	unsigned int worldId = m_currentWorldId ? m_currentWorldId : EnsureCurrentWorldId();
+	if (!worldId || (unsigned int)pVictim->GetWorldID() != worldId) return;
+	if (!pVictim->IsFainting()) return; // already revived elsewhere
+
+	CNtlVector loc = pVictim->GetCurLoc();
+	// Use CURRENT_POSITION + SKILL teleport type to force client SPAWNING and clear FAINT UI
+	pVictim->Revival(loc, pVictim->GetWorldID(), REVIVAL_TYPE_CURRENT_POSITION, TELEPORT_TYPE_SKILL);
+	pVictim->UpdateCurLpEp(pVictim->GetMaxLP(), pVictim->GetMaxEP(), true, false);
+	// Clear environmental hazard ticks (lava) that may persist across faint
+	pVictim->LeaveLava();
+	// Ensure PvP zone + ATTACKABLE are active immediately after revive
+	pVictim->UpdatePvpZone(true);
+	if (CWorld* pWorld = ((CGameServer*)g_pApp)->GetGameMain()->GetWorldManager()->FindWorld((WORLDID)pVictim->GetWorldID()))
+	{
+		BYTE r = pWorld->GetTbldat()->byWorldRuleType;
+		bool isBudokaiRule = (r == GAMERULE_MINORMATCH || r == GAMERULE_MAJORMATCH || r == GAMERULE_FINALMATCH);
+		if (isBudokaiRule)
+		{
+			std::unordered_set<unsigned int> one{ pVictim->GetCharID() };
+			ArenaBroadcastBudokaiPlayerStateToWorld(pWorld, one, MATCH_MEMBER_STATE_NORMAL);
+		}
+		else
+		{
+			CNtlPacket pkt(sizeof(sGU_RANKBATTLE_BATTLE_PLAYER_STATE_NFY));
+			sGU_RANKBATTLE_BATTLE_PLAYER_STATE_NFY* res = (sGU_RANKBATTLE_BATTLE_PLAYER_STATE_NFY*)pkt.GetPacketData();
+			res->wOpCode = GU_RANKBATTLE_BATTLE_PLAYER_STATE_NFY;
+			res->hPc = pVictim->GetID();
+			res->byPCState = RANKBATTLE_MEMBER_STATE_ATTACKABLE;
+			pkt.SetPacketLen(sizeof(sGU_RANKBATTLE_BATTLE_PLAYER_STATE_NFY));
+			pVictim->SendPacket(&pkt);
+		}
+	}
+	// Persist RankBattle ATTACKABLE state after revive
+	if (sRANK_BATTLE_DATA* rd = pVictim->GetRankBattleData()) rd->eState = RANKBATTLE_MEMBER_STATE_ATTACKABLE;
+	// Clear any lingering restrictions (can't attack/skills)
+	ClearCombatRestrictionsFor(pVictim);
+	// Apply short post-revive protection if configured
+	if (m_cfg.reviveProtectMs > 0)
+	{
+		ApplyReviveProtection(pVictim);
+		m_reviveProtectRemainMs[pVictim->GetCharID()] = m_cfg.reviveProtectMs;
+	}
+	if (bApplyRespawnBuff)
+		ApplyRespawnBuff(pVictim);
+}
+
+void CArenaManager::ApplyRespawnBuff(CPlayer* pPlayer)
+{
+	if (!pPlayer || !pPlayer->IsInitialized()) return;
+	// Apply buff by SkillTblidx 813 (as requested)
+	sSKILL_TBLDAT* pSkillTbldat = (sSKILL_TBLDAT*)g_pTableContainer->GetSkillTable()->FindData((TBLIDX)813);
+	if (!pSkillTbldat) return;
+
+	DWORD dwDurationInMs = pSkillTbldat->dwKeepTimeInMilliSecs;
+	eSYSTEM_EFFECT_CODE aeEffectCode[NTL_MAX_EFFECT_IN_SKILL];
+	sDBO_BUFF_PARAMETER aBuffParameter[NTL_MAX_EFFECT_IN_SKILL];
+	for (int i = 0; i < NTL_MAX_EFFECT_IN_SKILL; ++i)
+	{
+		// Resolve effect code using the container helper (consistent with gm.cpp)
+		aeEffectCode[i] = g_pTableContainer->GetSystemEffectTable()->GetEffectCodeWithTblidx(pSkillTbldat->skill_Effect[i]);
+		aBuffParameter[i].byBuffParameterType = DBO_BUFF_PARAMETER_TYPE_DEFAULT;
+		aBuffParameter[i].buffParameter.fParameter = (float)(pSkillTbldat->aSkill_Effect_Value[i]);
+		aBuffParameter[i].buffParameter.dwRemainValue = (DWORD)pSkillTbldat->aSkill_Effect_Value[i];
+		if (aeEffectCode[i] == ACTIVE_HEAL_OVER_TIME || aeEffectCode[i] == ACTIVE_EP_OVER_TIME)
+		{
+			aBuffParameter[i].byBuffParameterType = DBO_BUFF_PARAMETER_TYPE_HOT;
+			aBuffParameter[i].buffParameter.dwRemainTime = dwDurationInMs;
+		}
+		else if (aeEffectCode[i] == ACTIVE_BLEED || aeEffectCode[i] == ACTIVE_POISON || aeEffectCode[i] == ACTIVE_STOMACHACHE || aeEffectCode[i] == ACTIVE_BURN)
+		{
+			aBuffParameter[i].byBuffParameterType = DBO_BUFF_PARAMETER_TYPE_DOT;
+			aBuffParameter[i].buffParameter.dwRemainTime = dwDurationInMs;
+		}
+	}
+	// Register as a bless-type buff sourced from system
+	pPlayer->GetBuffManager()->RegisterBuff(dwDurationInMs, aeEffectCode, aBuffParameter, INVALID_HOBJECT, BUFF_TYPE_BLESS, pSkillTbldat);
+}
+
+void CArenaManager::ApplyReviveProtection(CPlayer* pPlayer)
+{
+	if (!pPlayer || !pPlayer->IsInitialized()) return;
+	// Add true invincibility and cannot be targeted briefly
+	pPlayer->GetStateManager()->AddConditionState(CHARCOND_INVINCIBLE, NULL, true);
+	pPlayer->GetStateManager()->AddConditionState(CHARCOND_CANT_BE_TARGETTED, NULL, true);
+	// Also disallow attacking to avoid cheap shots during protection
+	pPlayer->GetStateManager()->AddConditionState(CHARCOND_ATTACK_DISALLOW, NULL, true);
+	// Ensure client gets a standing update
+	pPlayer->SendCharStateStanding();
+}
+
+void CArenaManager::ClearReviveProtection(CPlayer* pPlayer)
+{
+	if (!pPlayer || !pPlayer->IsInitialized()) return;
+	pPlayer->GetStateManager()->RemoveConditionState(CHARCOND_INVINCIBLE, NULL, true);
+	pPlayer->GetStateManager()->RemoveConditionState(CHARCOND_CANT_BE_TARGETTED, NULL, true);
+	pPlayer->GetStateManager()->RemoveConditionState(CHARCOND_ATTACK_DISALLOW, NULL, true);
 }
 
 void CArenaManager::SpawnArenaMobs()
@@ -4619,8 +4773,8 @@ bool CArenaManager::TeleportOneToWorldTblidx(CPlayer* pPlayer, unsigned int worl
 		destLoc.x = posX; destLoc.y = posY; destLoc.z = posZ;
 	}
 
-	// Use DOJO teleport type consistently; we emulate RankBattle UI separately
-	pPlayer->StartTeleport(destLoc, pPlayer->GetCurDir(), pWorld->GetID(), TELEPORT_TYPE_DOJO);
+	// Use COMMAND teleport type to avoid Budokai/Dojo proposal side effects
+	pPlayer->StartTeleport(destLoc, pPlayer->GetCurDir(), pWorld->GetID(), TELEPORT_TYPE_COMMAND);
 	return true;
 }
 

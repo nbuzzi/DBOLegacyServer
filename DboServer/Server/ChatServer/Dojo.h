@@ -45,8 +45,6 @@ public:
 	inline eDBO_DOJO_STATUS				GetDojoWarStatus() { return m_eDojoState; }
 
 	void								BeginWarPreparation();
-	// Manual path that bypasses DisableDojoWar auto-gating
-	//void								BeginWarPreparationManual();
 
 	void								UpdateState(BYTE byState, DOJOTIME tmNextStepTime);
 

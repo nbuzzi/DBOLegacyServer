@@ -3875,10 +3875,14 @@ void	CPlayer::EnterLava()
 	if (g_pEventMgr->HasEvent(this, EVENT_ON_LAVA))
 		return;
 
-	//Do damage once enter lava and then let event handle damage
-	event_LavaDamage();
+	// Do not apply immediate damage if invincible (e.g., post-revive protection)
+	if (!GetStateManager()->IsCharCondition(CHARCOND_INVINCIBLE))
+	{
+		//Do damage once enter lava and then let event handle damage
+		event_LavaDamage();
+	}
 
-	if (!IsFainting())
+	if (!IsFainting() && !GetStateManager()->IsCharCondition(CHARCOND_INVINCIBLE))
 		g_pEventMgr->AddEvent(this, &CPlayer::event_LavaDamage, EVENT_ON_LAVA, 2000, 0xFFFFFFFF, 0);
 }
 //--------------------------------------------------------------------------------------//

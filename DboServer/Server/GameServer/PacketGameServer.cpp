@@ -5362,11 +5362,14 @@ void CClientSession::RecvCharSkillReq(CNtlPacket* pPacket)
 
 					if (byWorldRuleType == GAMERULE_RANKBATTLE)
 					{
-						if (cPlayer->GetRankBattleData()->eState != RANKBATTLE_MEMBER_STATE_ATTACKABLE)
+						// Arena exception: while Arena is running and player is a participant, allow skill casts
+						bool arenaActive = (g_pArenaManager->IsEnabled() && g_pArenaManager->IsParticipant(cPlayer) && g_pArenaManager->GetState() == CArenaManager::State::IN_ROUND);
+						if (!arenaActive && cPlayer->GetRankBattleData()->eState != RANKBATTLE_MEMBER_STATE_ATTACKABLE)
 							resultcode = GAME_SKILL_CANT_CAST_NOW;
 					}
 					else if (byWorldRuleType == GAMERULE_MINORMATCH || byWorldRuleType == GAMERULE_MAJORMATCH || byWorldRuleType == GAMERULE_FINALMATCH)
 					{
+						// Arena doesn’t use Budokai worlds; keep original gating
 						if (cPlayer->GetBudokaiPcState() != MATCH_MEMBER_STATE_NORMAL)
 							resultcode = GAME_SKILL_CANT_CAST_NOW;
 					}

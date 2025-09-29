@@ -68,7 +68,9 @@ public:
 		float spectatorPosY;
 		float spectatorPosZ;
 		// faint handling
-		bool reviveOnFaint; // instantly revive fainted participants (100% LP/EP)
+		bool reviveOnFaint; // revive fainted participants during score mode
+		unsigned int reviveDelayMs; // delay before reviving (ms); 0 = instant
+		unsigned int reviveProtectMs; // post-revive protection duration (ms); 0 = none
 		bool faintBecomeSpectator; // move fainted players to spectators if not revive
 		bool spectatorHide; // apply transparent condition to spectators
 		// scoring
@@ -124,7 +126,7 @@ public:
 			mobsAllowed(false), randomMobsSpawn(false), randomMobsPerWave(2), randomMobsWaveSeconds(25),
 			spectatorsEnabled(false), spectatorsUseSameWorld(true),
 			spectatorWorldTblidx(0), spectatorPosX(0), spectatorPosY(0), spectatorPosZ(0),
-			reviveOnFaint(false), faintBecomeSpectator(true), spectatorHide(true), scoreOnFaint(false), noticeType(3),
+			reviveOnFaint(false), reviveDelayMs(0), reviveProtectMs(1500), faintBecomeSpectator(true), spectatorHide(true), scoreOnFaint(false), noticeType(3),
 			telecastEnabled(false), telecastType(3), telecastSpeechTblidx(0), telecastDisplayMs(5000),
 			rankUiEnabled(false), rankPacketsEnabled(false),
 			postFinishTeleport(true), postFinishWorldTblidx(1), postFinishPosX(4975.609863f), postFinishPosY(-48.869999f), postFinishPosZ(4012.609863f),
@@ -278,6 +280,11 @@ private:
 	bool IsRankBattleWorld(unsigned int worldTblidx) const;
 	void SpawnArenaMobs();
 	void DespawnArenaMobs();
+	// Respawn helpers
+	void ReviveParticipantNow(unsigned int victimCharId, bool bApplyRespawnBuff);
+	void ApplyRespawnBuff(class CPlayer* pPlayer);
+	void ApplyReviveProtection(class CPlayer* pPlayer);
+	void ClearReviveProtection(class CPlayer* pPlayer);
 	// Random mob waves
 	void SpawnRandomMobWave(unsigned int count);
 	std::vector<unsigned int> GetPresetPool() const;
@@ -377,6 +384,11 @@ private:
 
 	// Track which characters we force-enabled PvP zone for (to safely revert on finish)
 	std::unordered_set<unsigned int> m_worldWidePvpToggled;
+
+	// Pending delayed revive timers: charId -> ms remaining
+	std::unordered_map<unsigned int, unsigned long> m_pendingReviveMs;
+	// Post-revive protection timers: charId -> ms remaining
+	std::unordered_map<unsigned int, unsigned long> m_reviveProtectRemainMs;
 };
 
 #define GetArenaManager() CArenaManager::GetInstance()

@@ -177,6 +177,9 @@ void CPlayer::event_LavaDamage()
 {
 	if (!IsInitialized() || IsFainting() || IsTeleporting() || IsDespawning())
 		return;
+	// Skip lava damage while invincible (e.g., post-revive protection)
+	if (GetStateManager()->IsCharCondition(CHARCOND_INVINCIBLE))
+		return;
 
 	int nDecreaseLP = (int)(GetMaxLP() * 0.10f);
 

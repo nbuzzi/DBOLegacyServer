@@ -792,12 +792,14 @@ ACMD(do_budokai)
 ACMD(do_dojo)
 {
 	// Syntax:
-	// @dojo on                  -> open RECEIVE on all dojos (Sunday-like)
-	// @dojo off                 -> force END on all dojos
-	// @dojo start [dojoTblidx]  -> open RECEIVE on all or a specific dojo
-	// @dojo clear <dojoTblidx>  -> reset specific dojo to NORMAL (clear requests)
-	// @dojo next <dojoTblidx>   -> nudge ChatServer to re-broadcast current state
-	// @dojo status              -> show usage
+	// @dojo on                      -> enable manual mode (GS ticks outside Sunday)
+	// @dojo off                     -> disable manual mode
+	// @dojo start [dojoTblidx]      -> open RECEIVE on all or a specific dojo (via ChatServer)
+	// @dojo clear <dojoTblidx>      -> reset specific dojo to NORMAL (via ChatServer)
+	// @dojo next <dojoTblidx>       -> ask ChatServer to re-broadcast current state
+	// @dojo setatt <dojoTblidx> <attGuildId> -> set attacker guild locally (prep for war)
+	// @dojo war <dojoTblidx>        -> force state progression to READY/START locally
+	// @dojo status                  -> show usage
 	// Note: When possible, we drive ChatServer via GT_* opcodes to mirror Sunday flow.
 	pToken->PopToPeek();
 	std::wstring sub = pToken->PeekNextToken(NULL, &iLine);
@@ -808,8 +810,8 @@ ACMD(do_dojo)
 
 	if (lower == L"on")
 	{
-		// Turn ON manual dojo mode so GS ticks regardless of Sunday window
-		g_pDojoManager->StartDojoEvent();
+		// Enable manual dojo mode so GS ticks regardless of Sunday window
+		g_pDojoManager->SetManualMode(true);
 
 		// Prefer additionally syncing ChatServer-driven RECEIVE window for all dojos
 		CGameServer* app = (CGameServer*)g_pApp;
@@ -848,37 +850,13 @@ ACMD(do_dojo)
 	else if (lower == L"off")
 	{
 		CGameServer* app = (CGameServer*)g_pApp;
-		/*if (app->GetChatServerSession())
-		{
-			for (auto it = g_pDojoManager->GetDojoSetBegin(); it != g_pDojoManager->GetDojoSetEnd(); ++it)
-			{
-				CDojo* d = it->second; if (!d) continue;
-				CNtlPacket pk(sizeof(sGT_DOJO_SCRAMBLE_STATE_CHANGE));
-				sGT_DOJO_SCRAMBLE_STATE_CHANGE* rq = (sGT_DOJO_SCRAMBLE_STATE_CHANGE*)pk.GetPacketData();
-				rq->wOpCode = GT_DOJO_SCRAMBLE_STATE_CHANGE;
-				rq->byState = eDBO_DOJO_STATUS_NORMAL;
-				rq->dojoTblidx = d->GetDojoTblidx();
-				rq->tmNextStepTime = 0;
-				pk.SetPacketLen(sizeof(sGT_DOJO_SCRAMBLE_STATE_CHANGE));
-				app->SendTo(app->GetChatServerSession(), &pk);
-			}
-			CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
-			sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
-			res->wOpCode = GU_SYSTEM_DISPLAY_TEXT; res->byDisplayType = SERVER_TEXT_SYSTEM;
-			NTL_SAFE_WCSCPY(res->awchMessage, L"[Dojo] Wars disabled: all dojos reset to NORMAL.");
-			packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
-			pPlayer->SendPacket(&packet);
-		}
-		else*/
-		{
-			g_pDojoManager->StopDojoEvent();
-			CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
-			sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
-			res->wOpCode = GU_SYSTEM_DISPLAY_TEXT; res->byDisplayType = SERVER_TEXT_SYSTEM;
-			NTL_SAFE_WCSCPY(res->awchMessage, L"[Dojo] Manual mode OFF. GS set all dojos to END.");
-			packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
-			pPlayer->SendPacket(&packet);
-		}
+		g_pDojoManager->SetManualMode(false);
+		CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+		sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+		res->wOpCode = GU_SYSTEM_DISPLAY_TEXT; res->byDisplayType = SERVER_TEXT_SYSTEM;
+		NTL_SAFE_WCSCPY(res->awchMessage, L"[Dojo] Manual mode OFF.");
+		packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+		pPlayer->SendPacket(&packet);
 	}
 	else if (lower == L"start")
 	{
@@ -895,6 +873,83 @@ ACMD(do_dojo)
 			packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
 			pPlayer->SendPacket(&packet);
 			return;
+		}
+		else if (lower == L"setatt")
+		{
+			// setatt <dojoTblidx> <attGuildId>
+			pToken->PopToPeek();
+			std::wstring widx = pToken->PeekNextToken(NULL, &iLine);
+			pToken->PopToPeek();
+			std::wstring wgid = pToken->PeekNextToken(NULL, &iLine);
+			if (widx.empty() || wgid.empty())
+			{
+				CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+				sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+				res->wOpCode = GU_SYSTEM_DISPLAY_TEXT; res->byDisplayType = SERVER_TEXT_SYSTEM;
+				NTL_SAFE_WCSCPY(res->awchMessage, L"Usage: @dojo setatt <dojoTblidx> <attGuildId>");
+				packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+				pPlayer->SendPacket(&packet);
+				return;
+			}
+			TBLIDX dojoTblidx = (TBLIDX)atoi(ws2s(widx).c_str());
+			GUILDID gid = (GUILDID)atoi(ws2s(wgid).c_str());
+			CDojo* d = g_pDojoManager->GetDojoWithTblidx(dojoTblidx);
+			if (!d)
+			{
+				CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+				sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+				res->wOpCode = GU_SYSTEM_DISPLAY_TEXT; res->byDisplayType = SERVER_TEXT_SYSTEM;
+				NTL_SAFE_WCSCPY(res->awchMessage, L"[Dojo] Dojo not found.");
+				packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+				pPlayer->SendPacket(&packet);
+				return;
+			}
+			d->SetAttGuild(gid);
+			CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+			sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+			res->wOpCode = GU_SYSTEM_DISPLAY_TEXT; res->byDisplayType = SERVER_TEXT_SYSTEM;
+			NTL_SAFE_WCSCPY(res->awchMessage, L"[Dojo] Attacker guild set.");
+			packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+			pPlayer->SendPacket(&packet);
+		}
+		else if (lower == L"war")
+		{
+			// war <dojoTblidx>
+			pToken->PopToPeek();
+			std::wstring widx = pToken->PeekNextToken(NULL, &iLine);
+			if (widx.empty())
+			{
+				CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+				sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+				res->wOpCode = GU_SYSTEM_DISPLAY_TEXT; res->byDisplayType = SERVER_TEXT_SYSTEM;
+				NTL_SAFE_WCSCPY(res->awchMessage, L"Usage: @dojo war <dojoTblidx>");
+				packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+				pPlayer->SendPacket(&packet);
+				return;
+			}
+			TBLIDX dojoTblidx = (TBLIDX)atoi(ws2s(widx).c_str());
+			CDojo* d = g_pDojoManager->GetDojoWithTblidx(dojoTblidx);
+			if (!d)
+			{
+				CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+				sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+				res->wOpCode = GU_SYSTEM_DISPLAY_TEXT; res->byDisplayType = SERVER_TEXT_SYSTEM;
+				NTL_SAFE_WCSCPY(res->awchMessage, L"[Dojo] Dojo not found.");
+				packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+				pPlayer->SendPacket(&packet);
+				return;
+			}
+			// Advance to STANDBY soon; TickProcess will handle spawn/teleport and auto-advance to READY
+			// Ensure manual mode is on so ticks occur outside Sunday window
+			g_pDojoManager->SetManualMode(true);
+			DBOTIME now = ((CGameServer*)g_pApp)->GetTime();
+			d->SetState(eDBO_DOJO_STATUS_STANDBY, now + 1);
+			CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+			sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+			res->wOpCode = GU_SYSTEM_DISPLAY_TEXT; res->byDisplayType = SERVER_TEXT_SYSTEM;
+			NTL_SAFE_WCSCPY(res->awchMessage, L"[Dojo] War sequence initiated: STANDBY scheduled in 1s (manual mode enabled).");
+			packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+			pPlayer->SendPacket(&packet);
 		}
 		DBOTIME until = app->GetTime() + 7200;
 		if (widx.empty())
@@ -1025,7 +1080,7 @@ ACMD(do_dojo)
 		CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
 		sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
 		res->wOpCode = GU_SYSTEM_DISPLAY_TEXT; res->byDisplayType = SERVER_TEXT_SYSTEM;
-		NTL_SAFE_WCSCPY(res->awchMessage, L"Usage: @dojo on | off | start [dojoTblidx] | clear <dojoTblidx> | next <dojoTblidx> | status");
+		NTL_SAFE_WCSCPY(res->awchMessage, L"Usage: @dojo on | off | start [dojoTblidx] | clear <dojoTblidx> | next <dojoTblidx> | setatt <dojoTblidx> <attGuildId> | war <dojoTblidx> | status");
 		packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
 		pPlayer->SendPacket(&packet);
 	}

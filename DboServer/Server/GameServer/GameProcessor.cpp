@@ -74,7 +74,7 @@ void CGameProcessor::Run(DWORD dwTickCount)
 
 	if (m_dwTickCount - m_dwLastTimeGameMainUpdated >= m_dwTickTime)
 	{
-	//	ERR_LOG(LOG_FIRST, "m_dwTickCount %u - m_dwLastTimeGameMainUpdated %u >= m_dwTickTime %u\n", m_dwTickCount, m_dwLastTimeGameMainUpdated, m_dwTickTime);
+		//	ERR_LOG(LOG_FIRST, "m_dwTickCount %u - m_dwLastTimeGameMainUpdated %u >= m_dwTickTime %u\n", m_dwTickCount, m_dwLastTimeGameMainUpdated, m_dwTickTime);
 		LARGE_INTEGER m_freq, rStart, rEvent, rWorld, rObject, rEnd, rSpawn, rItem, rShenron, rTrade, rDungeon, rScript, rRankBattle, rDynamicEvent, rDbHunt, rParty;
 
 		float fMultiple = (float)m_dwTickDiff / (float)m_dwTickTime;
@@ -102,7 +102,6 @@ void CGameProcessor::Run(DWORD dwTickCount)
 		{
 			g_pDojoManager->TickProcess(dwTickDiff);
 			g_pBudokaiManager->TickProcess(dwTickDiff);
-			// g_pArenaManager->TickProcess(dwTickDiff);
 		}
 		else
 		{
@@ -135,7 +134,6 @@ void CGameProcessor::Run(DWORD dwTickCount)
 
 			// Periodic helper-NPC watchdog to repair spawns after floor transitions
 			GetHelperNpcManager()->TickWatchdog(m_dwTickCount);
-
 			g_pArenaManager->TickProcess(dwTickDiff);
 		}
 
@@ -171,11 +169,11 @@ void CGameProcessor::Run(DWORD dwTickCount)
 
 			m_dwLogTick = 0;
 		}*/
-		
+
 	}
 }
 
-void CGameProcessor::PostClientPacketEvent(CPacketEventObj * pEvent)
+void CGameProcessor::PostClientPacketEvent(CPacketEventObj* pEvent)
 {
 	m_pPacketEvent->PostEvent(pEvent);
 }
@@ -190,7 +188,7 @@ void CGameProcessor::StartServerShutdownEvent()
 	}
 
 	CNtlPacket packet(sizeof(sGU_SHUTDOWN_COUNT_DOWN_START_NFY));
-	sGU_SHUTDOWN_COUNT_DOWN_START_NFY * res = (sGU_SHUTDOWN_COUNT_DOWN_START_NFY *)packet.GetPacketData();
+	sGU_SHUTDOWN_COUNT_DOWN_START_NFY* res = (sGU_SHUTDOWN_COUNT_DOWN_START_NFY*)packet.GetPacketData();
 	res->wOpCode = GU_SHUTDOWN_COUNT_DOWN_START_NFY;
 	res->byMsgType = 1;
 	packet.SetPacketLen(sizeof(sGU_SHUTDOWN_COUNT_DOWN_START_NFY));
@@ -200,7 +198,7 @@ void CGameProcessor::StartServerShutdownEvent()
 	//Send packet to master server so no new people can connect.
 	CGameServer* app = (CGameServer*)g_pApp;
 	CNtlPacket packet2(sizeof(sGM_SERVER_SHUT_DOWN));
-	sGM_SERVER_SHUT_DOWN * res2 = (sGM_SERVER_SHUT_DOWN *)packet2.GetPacketData();
+	sGM_SERVER_SHUT_DOWN* res2 = (sGM_SERVER_SHUT_DOWN*)packet2.GetPacketData();
 	res2->wOpCode = GM_SERVER_SHUT_DOWN;
 	packet2.SetPacketLen(sizeof(sGM_SERVER_SHUT_DOWN));
 	app->SendTo(app->GetMasterServerSession(), &packet2);

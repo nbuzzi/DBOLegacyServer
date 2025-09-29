@@ -109,7 +109,6 @@ public:
 	void						RecvDojoScrambleRewardReq(CNtlPacket * pPacket);
 	void						RecvDojoNpcInfoReq(CNtlPacket * pPacket);
 	void						RecvDojoSendTeleportProposal(CNtlPacket * pPacket);
-    void                        RecvDojoCommand(CNtlPacket* pPacket);
 
 	void						RecvBroadcastingSystemNfy(CNtlPacket * pPacket);
 

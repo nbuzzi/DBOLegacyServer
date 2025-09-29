@@ -588,34 +588,7 @@ CDojoManager::~CDojoManager()
 void CDojoManager::Init()
 {
 	m_dwNextUpdateTick = 0;
-}
-
-void CDojoManager::StartDojoEvent()
-{
-	for (auto it = m_map_Dojo.begin(); it != m_map_Dojo.end(); ++it)
-	{
-		CDojo* pDojo = it->second;
-		if (pDojo)
-		{
-			pDojo->SetState(eDBO_DOJO_STATUS_STANDBY, 0);
-		}
-	}
-		// Force-enable manual event so TickProcess runs outside Sunday window
-	m_manualEventActive = true;
-	// Run at least one immediate tick to propagate state transitions promptly
-	m_dwNextUpdateTick = 0;
-}
-
-void CDojoManager::StopDojoEvent()
-{
-	for (auto it = m_map_Dojo.begin(); it != m_map_Dojo.end(); ++it)
-	{
-		CDojo* pDojo = it->second;
-		if (pDojo)
-		{
-			pDojo->SetState(eDBO_DOJO_STATUS_END, 0);
-		}
-	}
+	m_bManualMode = false;
 }
 
 void	CDojoManager::UpdateDojoMark(GUILDID guildId, sDBO_GUILD_MARK* mark)
@@ -627,7 +600,7 @@ void	CDojoManager::UpdateDojoMark(GUILDID guildId, sDBO_GUILD_MARK* mark)
 		pDojo->SetDojoMark(mark);
 
 		CNtlPacket packet(sizeof(sGU_DOJO_MARK_CHANGED_NFY));
-		sGU_DOJO_MARK_CHANGED_NFY* res = (sGU_DOJO_MARK_CHANGED_NFY*)packet.GetPacketData();
+		sGU_DOJO_MARK_CHANGED_NFY * res = (sGU_DOJO_MARK_CHANGED_NFY *)packet.GetPacketData();
 		res->wOpCode = GU_DOJO_MARK_CHANGED_NFY;
 		res->dojoTblidx = pDojo->GetDojoTblidx();
 		res->guildId = guildId;
@@ -747,15 +720,12 @@ void CDojoManager::TickProcess(DWORD dwTickDiff)
 
 	tm timeStruct = {};
 	localtime_s(&timeStruct, &curTime);
-
-	if (timeStruct.tm_wday == 0 && (timeStruct.tm_hour >= 16 && timeStruct.tm_hour <= 20)) //check if its sunday
+	
+	for (std::map<GUILDID, CDojo*>::const_iterator it = GetDojoSetBegin(); it != GetDojoSetEnd(); it++)
 	{
-		for (std::map<GUILDID, CDojo*>::const_iterator it = GetDojoSetBegin(); it != GetDojoSetEnd(); it++)
-		{
-			CDojo* pDojo = it->second;
-			if (pDojo)
-				pDojo->TickProcess(dwTickDiff);
-		}
+		CDojo* pDojo = it->second;
+		if (pDojo)
+			pDojo->TickProcess(dwTickDiff);
 	}
 }
 
