@@ -91,6 +91,8 @@ public:
 		float postFinishPosX;
 		float postFinishPosY;
 		float postFinishPosZ;
+		// Optional delay before teleporting everyone out after finish (ms). 0 = immediate
+		unsigned int postFinishTeleportDelayMs;
 		// Optional direction for post-finish teleport destination
 		float postFinishDirX;
 		float postFinishDirY;
@@ -130,6 +132,7 @@ public:
 			telecastEnabled(false), telecastType(3), telecastSpeechTblidx(0), telecastDisplayMs(5000),
 			rankUiEnabled(false), rankPacketsEnabled(false),
 			postFinishTeleport(true), postFinishWorldTblidx(1), postFinishPosX(4975.609863f), postFinishPosY(-48.869999f), postFinishPosZ(4012.609863f),
+			postFinishTeleportDelayMs(3000),
 			postFinishDirX(0.911100f), postFinishDirY(-0.412000f), postFinishDirZ(0.0f), keepRankUiAfterFinish(true), suppressRankFinishUi(false),
 			verboseLogs(false), worldWidePvpDuringRun(false),
 			ccBattleMode(false), allowCustomWorlds(false), useOnlyCustomWorlds(false), allowBudokaiRuleWorlds(false), forceExactWorld(false),
@@ -224,6 +227,19 @@ public:
 	float GetSpectatorPosX() const { return m_cfg.spectatorPosX; }
 	float GetSpectatorPosY() const { return m_cfg.spectatorPosY; }
 	float GetSpectatorPosZ() const { return m_cfg.spectatorPosZ; }
+
+	// Runtime configuration toggles (no server restart needed)
+	void SetAllowCustomWorlds(bool on);
+	void SetUseOnlyCustomWorlds(bool on);
+	void SetAllowBudokaiRuleWorlds(bool on);
+	void SetRandomizeMapOnStart(bool on);
+	void SetRotationSeconds(unsigned int seconds);
+	// Rebuild world list from RankBattle table (ignoring custom worlds) and apply current filters
+	void RebuildWorldList_RankOnly();
+	// Replace world list from a CSV string (e.g., "900043,900044"); applies budokai filter if disabled
+	void SetWorldListCsv(const std::string& csv);
+	// Show a compact configuration summary to a player
+	void ShowCfgTo(CPlayer* pWho);
 
 private:
 	void BroadcastSystem(const wchar_t* msg);
@@ -330,7 +346,11 @@ private:
 	bool m_inviting = false;
 	unsigned long m_inviteRemainMs = 0;
 	unsigned CountParticipantsInWorld(unsigned int worldId);
+	// Count participants present in any world instance matching the given world table index
+	unsigned CountParticipantsInWorldTblidx(unsigned int worldTblidx);
 	unsigned CountOnlineParticipants();
+	// Returns the worldId of the first participant found in any world instance matching the given world tblidx
+	unsigned GetFirstParticipantWorldIdForTblidx(unsigned int worldTblidx);
 
 	// Round timer state
 	bool m_roundUiActive = false;
@@ -357,6 +377,9 @@ private:
     unsigned long m_runUnlockPulseMs = 0;
 	// Watchdog to force-complete match if MATCH_FINISH stalls
 	unsigned long m_matchFinishWatchdogMs = 0;
+
+	// Post-finish teleport delay timer
+	unsigned long m_postFinishTeleportRemainMs = 0;
 
 	// Battle state timers (similar to RankBattle)
 	unsigned long m_directionTimeMs = 0;    // Time for direction/intro phase

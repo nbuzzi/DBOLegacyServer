@@ -100,8 +100,13 @@ void CGameProcessor::Run(DWORD dwTickCount)
 
 		if (app->IsDojoChannel())
 		{
-			g_pDojoManager->TickProcess(dwTickDiff);
+			// Budokai always ticks on the Dojo channel
 			g_pBudokaiManager->TickProcess(dwTickDiff);
+			// Dojo tick is gated by a manual enable flag controlled via GM command (@dojo on/off)
+			if (g_pDojoManager->IsManualMode())
+			{
+				g_pDojoManager->TickProcess(dwTickDiff);
+			}
 		}
 		else
 		{

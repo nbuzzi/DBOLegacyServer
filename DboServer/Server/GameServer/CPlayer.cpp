@@ -4027,8 +4027,8 @@ bool CPlayer::AttackProgress(DWORD dwTickDiff, float fMultiple)
 
 				ERR_LOG(LOG_GENERAL,
 					"[AttackDbg] Range=false me=%u world=%u tgt=%u tblidx=%u dist3=%.2f range=%.2f airTgt=%d airMe=%d",
-						(unsigned)GetCharID(), (unsigned)GetWorldID(), (unsigned)pVictim->GetID(), (unsigned)pVictim->GetTblidx(),
-						dist3, range, (int)pVictim->GetAirState(), (int)GetAirState());
+					(unsigned)GetCharID(), (unsigned)GetWorldID(), (unsigned)pVictim->GetID(), (unsigned)pVictim->GetTblidx(),
+					dist3, range, (int)pVictim->GetAirState(), (int)GetAirState());
 			}
 			return false;
 		}
@@ -4305,7 +4305,7 @@ bool CPlayer::ConsiderAttackRange()
 			{
 				if (IsInRange(pTarget, baseRange + extra))
 				{
-					if (g_pCustomDropEvent->m_bVerbose) 
+					if (g_pCustomDropEvent->m_bVerbose)
 					{
 						ERR_LOG(LOG_GENERAL,
 							"[AttackDbg] EventPad used: me=%u tgt=%u tblidx=%u base=%.2f extra=%.2f dist=%.2f",
@@ -4570,8 +4570,8 @@ bool CPlayer::IsAttackable(CCharacterObject* pTarget)
 
 			if (m_sRankBattleData.eState == RANKBATTLE_MEMBER_STATE_ATTACKABLE && pPlayerTargt->GetRankBattleData()->eState == RANKBATTLE_MEMBER_STATE_ATTACKABLE)
 			{
-				if (m_sRankBattleData.eTeamType != pPlayerTargt->GetRankBattleData()->eTeamType)
-					return true;
+				// Attackable due rank
+				return true;
 			}
 
 			else if (GetCurWorld()->GetRuleType() == GAMERULE_DOJO && GetGuildID() != pPlayerTargt->GetGuildID())

@@ -296,6 +296,7 @@ ACMD(do_arena)
 	// @arena mobs on|off | perwave <n> | waveseconds <sec> | preset <name|none>
 	// @arena joinparty [name]  -- add entire party of player (or self)
 	// @arena joinguild [name]  -- add all online guild members of player (or self)
+	// @arena cfg show | rankonly | custom on|off | onlycustom on|off | budokai on|off | randomize on|off | rotsec <n> | worlds <csv>
 	pToken->PopToPeek();
 	std::wstring sub = pToken->PeekNextToken(NULL, &iLine);
 	if (sub.empty()) {
@@ -420,6 +421,71 @@ ACMD(do_arena)
 			g_pArenaManager->StatusTo(pPlayer);
 		}
 	}
+	else if (sc == "cfg") {
+		pToken->PopToPeek();
+		std::wstring wopt = pToken->PeekNextToken(NULL, &iLine);
+		std::string opt = ws2s(wopt); for (auto& c : opt) c = (char)tolower(c);
+		if (opt.empty() || opt == "show") {
+			g_pArenaManager->ShowCfgTo(pPlayer);
+			return;
+		}
+		if (opt == "rankonly") {
+			g_pArenaManager->SetAllowCustomWorlds(false);
+			g_pArenaManager->SetUseOnlyCustomWorlds(false);
+			g_pArenaManager->RebuildWorldList_RankOnly();
+			g_pArenaManager->ShowCfgTo(pPlayer);
+			return;
+		}
+		if (opt == "custom") {
+			pToken->PopToPeek(); std::wstring won = pToken->PeekNextToken(NULL, &iLine);
+			std::string son = ws2s(won); for (auto& c : son) c = (char)tolower(c);
+			bool on = (son == "on" || son == "1" || son == "true");
+			g_pArenaManager->SetAllowCustomWorlds(on);
+			g_pArenaManager->ShowCfgTo(pPlayer); return;
+		}
+		if (opt == "onlycustom") {
+			pToken->PopToPeek(); std::wstring won = pToken->PeekNextToken(NULL, &iLine);
+			std::string son = ws2s(won); for (auto& c : son) c = (char)tolower(c);
+			bool on = (son == "on" || son == "1" || son == "true");
+			g_pArenaManager->SetUseOnlyCustomWorlds(on);
+			g_pArenaManager->ShowCfgTo(pPlayer); return;
+		}
+		if (opt == "budokai") {
+			pToken->PopToPeek(); std::wstring won = pToken->PeekNextToken(NULL, &iLine);
+			std::string son = ws2s(won); for (auto& c : son) c = (char)tolower(c);
+			bool on = (son == "on" || son == "1" || son == "true");
+			g_pArenaManager->SetAllowBudokaiRuleWorlds(on);
+			g_pArenaManager->ShowCfgTo(pPlayer); return;
+		}
+		if (opt == "randomize") {
+			pToken->PopToPeek(); std::wstring won = pToken->PeekNextToken(NULL, &iLine);
+			std::string son = ws2s(won); for (auto& c : son) c = (char)tolower(c);
+			bool on = (son == "on" || son == "1" || son == "true");
+			g_pArenaManager->SetRandomizeMapOnStart(on);
+			g_pArenaManager->ShowCfgTo(pPlayer); return;
+		}
+		if (opt == "rotsec") {
+			pToken->PopToPeek(); std::wstring wv = pToken->PeekNextToken(NULL, &iLine);
+			unsigned int sec = (unsigned int)atoi(ws2s(wv).c_str());
+			g_pArenaManager->SetRotationSeconds(sec);
+			g_pArenaManager->ShowCfgTo(pPlayer); return;
+		}
+		if (opt == "worlds") {
+			// worlds <csv>
+			pToken->PopToPeek();
+			std::wstring wcsv = pToken->PeekNextToken(NULL, &iLine);
+			std::string csv = ws2s(wcsv);
+			g_pArenaManager->SetWorldListCsv(csv);
+			g_pArenaManager->ShowCfgTo(pPlayer); return;
+		}
+		{
+			CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+			sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+			res->wOpCode = GU_SYSTEM_DISPLAY_TEXT; res->byDisplayType = SERVER_TEXT_SYSTEM;
+			NTL_SAFE_WCSCPY(res->awchMessage, L"Usage: @arena cfg show | rankonly | custom on|off | onlycustom on|off | budokai on|off | randomize on|off | rotsec <n> | worlds <csv>");
+			packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT)); pPlayer->SendPacket(&packet);
+		}
+	}
 	else if (sc == "join") {
 		// Individual join - warn if inappropriate for team mode
 		if (g_pArenaManager->GetState() == CArenaManager::State::ENROLLMENT &&
@@ -539,9 +605,9 @@ ACMD(do_arena)
 		std::wstring which = pToken->PeekNextToken(NULL, &iLine);
 		std::string swhich = ws2s(which);
 		for (auto& c : swhich) c = (char)tolower(c);
-		if (swhich == "participants") g_pArenaManager->TeleportParticipants();
+		if (swhich == "participants") g_pArenaManager->TeleportParticipants(true);
 		else if (swhich == "spectators") g_pArenaManager->TeleportSpectators();
-		else if (swhich == "all") { g_pArenaManager->TeleportParticipants(); g_pArenaManager->TeleportSpectators(); }
+		else if (swhich == "all") { g_pArenaManager->TeleportParticipants(true); g_pArenaManager->TeleportSpectators(); }
 		else if (swhich == "here") {
 			pToken->PopToPeek();
 			std::wstring wsub = pToken->PeekNextToken(NULL, &iLine);
