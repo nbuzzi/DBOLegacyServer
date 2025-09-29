@@ -33,6 +33,19 @@
 #include "BusSystem.h" // #include "NtlPacketGU.h"
 #include "HelperNpcManager.h"
 #include "ArenaWorld.h"
+#include "CustomDropEvent.h"
+
+// Helper: name-based arena detection for the player's current world (no table lookup)
+static inline bool IsInArenaWorldByName(const CPlayer* plr)
+{
+	if (!plr) return false;
+	// GetCurWorld is non-const in this codebase; use const_cast to access for read-only check.
+	CPlayer* p = const_cast<CPlayer*>(plr);
+	CWorld* w = p->GetCurWorld();
+	if (!w) return false;
+	sWORLD_TBLDAT* td = w->GetTbldat();
+	return td && ArenaWorld::IsArenaWorldByWideName(td->wszName);
+}
 
 
 bool DeleteItemUponLogin(TBLIDX itemIdx)
@@ -405,35 +418,67 @@ void CPlayer::LeaveGame()
 			SetWorldID(GetTeleportWorldID());
 		}
 
-		// If disconnecting while in an Arena world or state, ensure safe fallback location
-		// to avoid logging in at a non-existent/invalid dynamic map.
-		// Default fallback:
-		// WorldID = 1, MapInfoIndex = 200101011
-		// CurLoc = (4975.609863, -48.869999, 4012.609863)
-		// CurDir = (0.911100, 0.0f, -0.412000)
+		// If disconnecting while in an Arena world or as an Arena participant, try to restore
+		// the player's original world/position saved before entering the arena. If not available,
+		// fall back to a safe static location.
 		const unsigned int SAFE_WORLD_TBLIDX = 1;
 		const unsigned int SAFE_MAP_INFO_INDEX = 200101011;
 		const CNtlVector SAFE_LOC(4975.609863f, -48.869999f, 4012.609863f);
 		const CNtlVector SAFE_DIR(0.911100f, 0.0f, -0.412000f);
 
-		// Detect Arena participation or being in an Arena world instance
 		bool inArenaContext = false;
 		do {
-			// Participant in ArenaManager?
-			if (g_pArenaManager && g_pArenaManager->IsParticipant(this)) { inArenaContext = true; break; }
-			// Inside current Arena world?
-			if (g_pArenaManager && g_pArenaManager->GetOrCreateCurrentWorldId() != 0 &&
-				(unsigned int)GetWorldID() == g_pArenaManager->GetOrCreateCurrentWorldId()) {
-				inArenaContext = true; break;
+			if (g_pArenaManager && g_pArenaManager->IsEnabled())
+			{
+				if (g_pArenaManager->IsParticipant(this)) { inArenaContext = true; break; }
+				unsigned int arenaWorldId = g_pArenaManager->GetOrCreateCurrentWorldId();
+				if (arenaWorldId != 0 && (unsigned int)GetWorldID() == arenaWorldId) { inArenaContext = true; break; }
 			}
 		} while (false);
 
 		if (inArenaContext)
 		{
-			SetCurLoc((CNtlVector&)SAFE_LOC);
-			SetCurDir((CNtlVector&)SAFE_DIR);
-			SetWorldID((WORLDID)SAFE_WORLD_TBLIDX);
-			SetMapNameTblidx(SAFE_MAP_INFO_INDEX);
+			// Proactively clear arena-applied conditions so we don't relog invisible or locked
+			if (GetStateManager())
+			{
+				GetStateManager()->RemoveConditionState(CHARCOND_TRANSPARENT, NULL, true);
+				GetStateManager()->RemoveConditionState(CHARCOND_INVINCIBLE, NULL, true);
+				GetStateManager()->RemoveConditionState(CHARCOND_CANT_BE_TARGETTED, NULL, true);
+				GetStateManager()->RemoveConditionState(CHARCOND_ATTACK_DISALLOW, NULL, true);
+			}
+
+			unsigned int prevWorldId = INVALID_WORLDID;
+			CNtlVector prevLoc, prevDir;
+			bool hasPrev = false;
+			if (g_pArenaManager)
+			{
+				hasPrev = g_pArenaManager->GetPrevLocation(GetCharID(), prevWorldId, prevLoc, prevDir);
+			}
+
+			if (hasPrev)
+			{
+				SetCurLoc(prevLoc);
+				SetCurDir(prevDir);
+				SetWorldID((WORLDID)prevWorldId);
+				// Try resolve map name index from world; fall back to safe index when unavailable
+				if (CWorld* pPrevWorld = app->GetGameMain()->GetWorldManager()->FindWorld((WORLDID)prevWorldId))
+					SetMapNameTblidx(GetNaviEngine()->GetTextAllIndex(pPrevWorld->GetNaviInstanceHandle(), prevLoc.x, prevLoc.z));
+				else
+					SetMapNameTblidx(SAFE_MAP_INFO_INDEX);
+			}
+			else
+			{
+				SetCurLoc((CNtlVector&)SAFE_LOC);
+				SetCurDir((CNtlVector&)SAFE_DIR);
+				SetWorldID((WORLDID)SAFE_WORLD_TBLIDX);
+				SetMapNameTblidx(SAFE_MAP_INFO_INDEX);
+			}
+
+			// Ensure ArenaManager forgets our arena context snapshot/membership
+			if (g_pArenaManager)
+			{
+				g_pArenaManager->Remove(this);
+			}
 		}
 
 		if (app->IsDojoChannel() && GetMatchIndex() != INVALID_BYTE)
@@ -848,7 +893,7 @@ void CPlayer::UpdateFreePvpZone(DWORD dwTickDiff)
 			// Do not auto-toggle PvP zone while the Arena is actively running on the custom world,
 			// otherwise this periodic check may undo the PvP flag we set for participants/world during RUN.
 			bool blockAutoToggle = false;
-			if (ArenaWorld::IsWorldId(GetWorldID()) && g_pArenaManager && g_pArenaManager->IsEnabled() && g_pArenaManager->GetState() == CArenaManager::State::IN_ROUND)
+			if (IsInArenaWorldByName(this) && g_pArenaManager && g_pArenaManager->IsEnabled() && g_pArenaManager->GetState() == CArenaManager::State::IN_ROUND)
 			{
 				blockAutoToggle = true;
 			}
@@ -3956,9 +4001,37 @@ bool CPlayer::AttackProgress(DWORD dwTickDiff, float fMultiple)
 			return false;
 
 		if (!IsAttackable(pVictim))
+		{
+			// Diagnostics: only when CustomDropEvent is ON (to troubleshoot event-related reports)
+			if (g_pCustomDropEvent && g_pCustomDropEvent->m_bOn && g_pCustomDropEvent->m_bVerbose)
+			{
+				QWORD tCond = pVictim->GetStateManager()->GetConditionState();
+				QWORD mCond = GetStateManager()->GetConditionState();
+				ERR_LOG(LOG_GENERAL,
+					"[AttackDbg] IsAttackable=false me=%u world=%u tgt=%u tblidx=%u tState=%u tCond=%I64u mState=%u mCond=%I64u",
+					(unsigned)GetCharID(), (unsigned)GetWorldID(), (unsigned)pVictim->GetID(), (unsigned)pVictim->GetTblidx(),
+					(unsigned)pVictim->GetCharStateID(), tCond, (unsigned)GetCharStateID(), mCond);
+			}
 			return false;
+		}
 		else if (ConsiderAttackRange() == false)
+		{
+			if (g_pCustomDropEvent && g_pCustomDropEvent->m_bOn && g_pCustomDropEvent->m_bVerbose)
+			{
+				// Log distance vs range to understand geometry issues
+				float dx = GetCurLoc().x - pVictim->GetCurLoc().x;
+				float dy = GetCurLoc().y - pVictim->GetCurLoc().y;
+				float dz = GetCurLoc().z - pVictim->GetCurLoc().z;
+				float dist3 = sqrtf(dx * dx + dy * dy + dz * dz);
+				float range = GetAttackRange(pVictim);
+
+				ERR_LOG(LOG_GENERAL,
+					"[AttackDbg] Range=false me=%u world=%u tgt=%u tblidx=%u dist3=%.2f range=%.2f airTgt=%d airMe=%d",
+						(unsigned)GetCharID(), (unsigned)GetWorldID(), (unsigned)pVictim->GetID(), (unsigned)pVictim->GetTblidx(),
+						dist3, range, (int)pVictim->GetAirState(), (int)GetAirState());
+			}
 			return false;
+		}
 
 		UpdateBattleCombatMode(true); //Start/Reset combat event
 
@@ -4186,15 +4259,62 @@ bool CPlayer::ConsiderAttackRange()
 	CCharacter* pTarget = g_pObjectManager->GetChar(GetAttackTarget());
 	if (pTarget)
 	{
+		const float baseRange = GetAttackRange(pTarget);
 		if (pTarget->GetAirState() == AIR_STATE_ON)
 		{
-			if (IsInRange3(pTarget, GetAttackRange(pTarget)))
+			if (IsInRange3(pTarget, baseRange))
 				return true;
 		}
 		else
 		{
-			if (IsInRange(pTarget, GetAttackRange(pTarget)))
+			if (IsInRange(pTarget, baseRange))
 				return true;
+		}
+
+		// Event-aware lenience: some event-replaced bosses have very large models or offset centers where
+		// center-to-center distance can exceed practical melee reach. When the Custom Drop Event is ON,
+		// allow a bounded dynamic extra range for MONSTER targets only to account for this. No effect in PvP.
+		if (g_pCustomDropEvent && g_pCustomDropEvent->m_bOn && pTarget->IsMonster())
+		{
+			// Compute current distance in matching metric (3D if target is airborne)
+			float dx = GetCurLoc().x - pTarget->GetCurLoc().x;
+			float dy = GetCurLoc().y - pTarget->GetCurLoc().y;
+			float dz = GetCurLoc().z - pTarget->GetCurLoc().z;
+			float dist = (pTarget->GetAirState() == AIR_STATE_ON) ? sqrtf(dx * dx + dy * dy + dz * dz) : sqrtf(dx * dx + dz * dz);
+
+			// Bridge only the missing gap, up to a safe cap to prevent abuse
+			float missing = dist - baseRange;
+			float extra = (missing > 0.f ? missing + 0.25f : 0.f); // just enough, add a hair
+			if (extra > 25.0f) extra = 25.0f; // hard cap
+
+			if (pTarget->GetAirState() == AIR_STATE_ON)
+			{
+				if (IsInRange3(pTarget, baseRange + extra))
+				{
+					if (g_pCustomDropEvent->m_bVerbose)
+					{
+						ERR_LOG(LOG_GENERAL,
+							"[AttackDbg] EventPad used (air): me=%u tgt=%u tblidx=%u base=%.2f extra=%.2f dist=%.2f",
+							(unsigned)GetCharID(), (unsigned)pTarget->GetID(), (unsigned)pTarget->GetTblidx(), baseRange, extra, dist);
+					}
+
+					return true;
+				}
+			}
+			else
+			{
+				if (IsInRange(pTarget, baseRange + extra))
+				{
+					if (g_pCustomDropEvent->m_bVerbose) 
+					{
+						ERR_LOG(LOG_GENERAL,
+							"[AttackDbg] EventPad used: me=%u tgt=%u tblidx=%u base=%.2f extra=%.2f dist=%.2f",
+							(unsigned)GetCharID(), (unsigned)pTarget->GetID(), (unsigned)pTarget->GetTblidx(), baseRange, extra, dist);
+					}
+
+					return true;
+				}
+			}
 		}
 	}
 
@@ -4203,18 +4323,40 @@ bool CPlayer::ConsiderAttackRange()
 
 float CPlayer::GetAttackRange(CCharacter* pTarget)
 {
+	// Base melee range from attributes (weapon/class)
 	float fAttackRange = CCharacterObject::GetAttackRange();
 
+	// Great Namek uses a fixed longer melee reach
 	if (GetStateManager()->GetAspectStateID() == ASPECTSTATE_GREAT_NAMEK)
 	{
 		fAttackRange = DBO_GREAT_NAMEK_ATTACK_RANGE;
 	}
 
-	fAttackRange += CCharacter::GetAttackRange(pTarget);
+	// Include target surface by adding target's radius (existing behavior)
+	float fTargetRadius = 0.0f;
+	if (pTarget)
+		fTargetRadius = pTarget->GetObjectRadius();
 
-	fAttackRange += 0.5f; // add some padding
+	// Also include our own radius so the check is effectively center-to-center <= base + bothRadii
+	float fSelfRadius = GetObjectRadius();
 
-	return fAttackRange;
+	// Small universal padding
+	float fPad = 0.5f;
+
+	// For oversized monsters, allow a tiny extra lenience to account for large collision hulls and nav buffers
+	// Keep this conservative and PvE-only by nature (applies only when the target is a monster)
+	if (pTarget && pTarget->IsMonster())
+	{
+		if (fTargetRadius >= 10.0f)
+		{
+			// Up to +2.0m extra, scaled by monster size
+			float extra = fTargetRadius * 0.05f; // 5% of target radius
+			if (extra > 2.0f) extra = 2.0f;
+			fPad += extra;
+		}
+	}
+
+	return fAttackRange + fTargetRadius + fSelfRadius + fPad;
 }
 void CPlayer::TeleportSky(WORLDID ID)
 {
@@ -4358,17 +4500,14 @@ void CPlayer::CancelTeleportProposal(BYTE byTeleportIndex)
 //--------------------------------------------------------------------------------------//
 bool CPlayer::IsAttackable(CCharacterObject* pTarget)
 {
-			// Arena custom override: while an arena round is running on an Arena world,
-	// treat the entire map as PvP and only restrict by alliance (party/guild) for participants.
-	// This bypasses the base CCharacterObject::IsAttackable gate that may forbid PC vs PC in non-PvP maps.
+	// Arena override only when both players are on the Arena world AND the arena is actively running.
 	if (pTarget && pTarget->IsPC())
 	{
-			CPlayer* pPlayerTargt = static_cast<CPlayer*>(pTarget);
-			const bool isArenaWorld = (ArenaWorld::IsWorldId(GetWorldID()) || ArenaWorld::IsWorldId(pPlayerTargt->GetWorldID()));
-		if (isArenaWorld && g_pArenaManager && g_pArenaManager->IsEnabled() &&
-			(g_pArenaManager->GetState() == CArenaManager::State::IN_ROUND ||
-			 g_pArenaManager->GetState() == CArenaManager::State::STAGE_READY ||
-			 g_pArenaManager->GetState() == CArenaManager::State::MATCH_READY))
+		CPlayer* pPlayerTargt = static_cast<CPlayer*>(pTarget);
+		const bool bothInArenaWorld = (IsInArenaWorldByName(this) && IsInArenaWorldByName(pPlayerTargt));
+		const bool arenaActive = (bothInArenaWorld && g_pArenaManager && g_pArenaManager->IsEnabled() &&
+			g_pArenaManager->GetState() == CArenaManager::State::IN_ROUND);
+		if (arenaActive)
 		{
 			const bool meSpectator = g_pArenaManager->IsSpectatorId((unsigned int)GetCharID());
 			const bool tgSpectator = g_pArenaManager->IsSpectatorId((unsigned int)pPlayerTargt->GetCharID());
@@ -4409,46 +4548,7 @@ bool CPlayer::IsAttackable(CCharacterObject* pTarget)
 			if (GetCurWorld() == NULL || pPlayerTargt->GetCurWorld() == NULL)
 				return false;
 
-			// Arena world override for Arena maps:
-			// Decide PC vs PC combat strictly by Arena participation and alliance during IN_ROUND
-			// This bypasses normal world-rule dependencies (RankBattle/Budokai/Dojo/PvP zones) on this map.
-			if (ArenaWorld::IsWorldId(GetWorldID()) || ArenaWorld::IsWorldId(pPlayerTargt->GetWorldID()))
-			{
-				if (g_pArenaManager->IsEnabled())
-				{
-					const bool meSpectator = g_pArenaManager->IsSpectatorId((unsigned int)GetCharID());
-					const bool tgSpectator = g_pArenaManager->IsSpectatorId((unsigned int)pPlayerTargt->GetCharID());
-					if (meSpectator || tgSpectator)
-						return false; // spectators never engage
-
-					const bool meParticipant = g_pArenaManager->IsParticipant(this);
-					const bool tgParticipant = g_pArenaManager->IsParticipant(pPlayerTargt);
-					if (meParticipant && tgParticipant && g_pArenaManager->GetState() == CArenaManager::State::IN_ROUND)
-					{
-						switch (g_pArenaManager->GetMode())
-						{
-						case CArenaManager::Mode::PARTY_VS_PARTY:
-							// Deny friendly fire within same party; otherwise allow
-							if (GetPartyID() != INVALID_PARTYID && GetPartyID() == pPlayerTargt->GetPartyID())
-								return false;
-							return true;
-						case CArenaManager::Mode::GUILD_VS_GUILD:
-							// Deny friendly fire within same guild; otherwise allow
-							if (GetGuildID() != 0 && GetGuildID() == pPlayerTargt->GetGuildID())
-								return false;
-							return true;
-						case CArenaManager::Mode::FREE_FOR_ALL:
-						case CArenaManager::Mode::OPEN:
-						default:
-							return true; // everyone can hit everyone
-						}
-					}
-				}
-
-				// On Arena worlds, outside an active Arena round (or if one of them isn't a participant), disallow PC vs PC by default
-				// to prevent unintended PK on the custom map.
-				return false;
-			}
+			// Arena-specific handling is already applied in the early block above. Avoid duplication here.
 
 			if (GetDragonballScramble() && pPlayerTargt->GetDragonballScramble())
 			{
@@ -4463,37 +4563,7 @@ bool CPlayer::IsAttackable(CCharacterObject* pTarget)
 			if (GetFreeBattleID() != INVALID_DWORD && GetFreeBattleID() == pPlayerTargt->GetFreeBattleID())
 				return true;
 
-			// Arena-friendly fire rules (apply for all harmful checks incl. AoE)
-			if (g_pArenaManager->IsEnabled())
-			{
-				const bool meParticipant = g_pArenaManager->IsParticipant(this);
-				const bool tgParticipant = g_pArenaManager->IsParticipant(pPlayerTargt);
-				const bool meSpectator = g_pArenaManager->IsSpectatorId((unsigned int)GetCharID());
-				const bool tgSpectator = g_pArenaManager->IsSpectatorId((unsigned int)pPlayerTargt->GetCharID());
-
-				// Spectators can’t be attacked and can’t attack
-				if (meSpectator || tgSpectator)
-					return false;
-
-				if (meParticipant && tgParticipant && g_pArenaManager->GetState() == CArenaManager::State::IN_ROUND)
-				{
-					switch (g_pArenaManager->GetMode())
-					{
-					case CArenaManager::Mode::PARTY_VS_PARTY:
-						if (GetPartyID() != INVALID_PARTYID && GetPartyID() == pPlayerTargt->GetPartyID())
-							return false; // friendly like Dojo/Budokai team logic
-						return true;
-					case CArenaManager::Mode::GUILD_VS_GUILD:
-						if (GetGuildID() != 0 && GetGuildID() == pPlayerTargt->GetGuildID())
-							return false; // same-guild friendly like Dojo
-						return true;
-					case CArenaManager::Mode::FREE_FOR_ALL:
-					case CArenaManager::Mode::OPEN:
-					default:
-						return true;
-					}
-				}
-			}
+			// Arena-friendly fire is handled above; no extra checks here.
 
 			if (IsPvpZone() == true && IsInBattleArena(pPlayerTargt->GetWorldTblidx(), pPlayerTargt->GetCurLoc(), DiePowerTournament) == true) //dont allow players attack players who are not in battle arena
 				return true;

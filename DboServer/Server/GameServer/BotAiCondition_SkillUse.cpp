@@ -201,7 +201,7 @@ int CBotAiCondition_SkillUse::OnUpdate(DWORD dwTickDiff, float fMultiple)
 				if (pHelperCfg && pHelperCfg->bVerboseLogs && pPend)
 					ERR_LOG(LOG_BOTAI, "HelperNPC: resurrect target cleared");
 				if (pHelperCfg && pPend && !pPend->IsFainting()) {
-					++pHelperCfg->dwMetricResurrectSuccess;
+					// metrics are optional; avoid mutating const config
 					if (pHelperCfg->bVerboseLogs)
 						ERR_LOG(LOG_BOTAI, "HelperNPC: successful resurrection");
 				}
@@ -210,6 +210,15 @@ int CBotAiCondition_SkillUse::OnUpdate(DWORD dwTickDiff, float fMultiple)
 				m_dwSinceLastResurrectAttemptMs = 0;
 				// Force a buff audit soon after revival
 				m_dwSinceLastRebuffCheckMs = 0; // allow immediate coverage evaluation
+				// Unlock any stale skill lock and stand to avoid idle stuck
+				if (CSkillManagerBot* pSM = (CSkillManagerBot*)GetBot()->GetSkillManager()) pSM->SetSkillUse_Unlock();
+				GetBot()->SendCharStateStanding(true);
+				// Clear attack target to refocus on heal/buff
+				if (GetBot()->GetTargetHandle() != INVALID_HOBJECT)
+					GetBot()->SetTargetHandle(INVALID_HOBJECT);
+				// Trigger immediate heal scan on next fast cadence
+				DWORD healCad = (pHelperCfg && pHelperCfg->dwHealScanCooldownMs > 0) ? pHelperCfg->dwHealScanCooldownMs : 150;
+				m_dwSinceLastHealScanMs = healCad;
 			}
 			else
 			{
@@ -301,6 +310,34 @@ int CBotAiCondition_SkillUse::OnUpdate(DWORD dwTickDiff, float fMultiple)
 				else
 				{
 					bPrioritizeHealing = pLinked->ConsiderLPLow((float)pRoleCfg->wHealLpThresholdOverride);
+				}
+			}
+
+			// Extend healing priority to any injured party member in same world
+			if (!bPrioritizeHealing && pRoleCfg)
+			{
+				CPlayer* pLeader = (CPlayer*)g_pObjectManager->GetChar(GetBot()->GetLinkPc());
+				if (pLeader && pLeader->IsInitialized() && pLeader->GetParty())
+				{
+					BYTE cnt = pLeader->GetParty()->GetPartyMemberCount();
+					for (BYTE i = 0; i < cnt; ++i)
+					{
+						const sPARTY_MEMBER_INFO& mi = pLeader->GetParty()->GetMemberInfo(i);
+						CPlayer* pMem = g_pObjectManager->GetPC(mi.hHandle);
+						if (!pMem || !pMem->IsInitialized() || pMem->IsFainting()) continue;
+						if (pMem->GetCurWorld() != GetBot()->GetCurWorld()) continue;
+						bool low = false;
+						if (pRoleCfg->wHealLpThresholdOverride == 0)
+						{
+							float miss = 100.f - pMem->GetCurLpInPercent();
+							low = (miss >= (float)pRoleCfg->wHealPriorityMinMissingPercent);
+						}
+						else
+						{
+							low = pMem->ConsiderLPLow((float)pRoleCfg->wHealLpThresholdOverride);
+						}
+						if (low) { bPrioritizeHealing = true; break; }
+					}
 				}
 			}
 
@@ -1299,10 +1336,10 @@ int CBotAiCondition_SkillUse::OnUpdate(DWORD dwTickDiff, float fMultiple)
 									if (pLeader && pLeader->IsInitialized())
 									{
 										float fDistL = GetBot()->GetDistance(pLeader->GetCurLoc());
-										if (fDistL > 12.0f && GetBot()->GetMoveFlag() != NTL_MOVE_FLAG_INVALID)
+										// Allow healing even while following unless extremely far away and moving (avoid skill fail spam)
+										if (fDistL > 40.0f && GetBot()->GetMoveFlag() != NTL_MOVE_FLAG_INVALID)
 										{
-											// skip fast-queue this tick to avoid rc=605 while running
-											return m_status;
+											return m_status; // too far and moving fast to catch up; try later
 										}
 									}
 								}

@@ -144,7 +144,14 @@ void CSkillPc::CastSkill(HOBJECT hAppointTargetHandle, BYTE byApplyTargetCount, 
 				{
 					BYTE byWorldRuleType = m_pPlayerRef->GetCurWorld()->GetTbldat()->byWorldRuleType;
 					// Force treat Arena worlds as RANKBATTLE for Arena combat
-					if (ArenaWorld::IsWorldId(m_pPlayerRef->GetWorldID())) byWorldRuleType = GAMERULE_RANKBATTLE;
+					if (m_pPlayerRef->GetCurWorld())
+					{
+						bool isArenaWorld = ArenaWorld::IsArenaWorldByWideName(m_pPlayerRef->GetCurWorld()->GetTbldat()->wszName);
+						bool arenaActive = (isArenaWorld && g_pArenaManager && g_pArenaManager->IsEnabled() &&
+							g_pArenaManager->GetState() == CArenaManager::State::IN_ROUND && g_pArenaManager->IsParticipant(m_pPlayerRef));
+						if (arenaActive)
+							byWorldRuleType = GAMERULE_RANKBATTLE;
+					}
 					CPlayer* pTargetPc = (CPlayer*)pTarget;
 
 					if (byWorldRuleType == GAMERULE_NORMAL)
@@ -273,7 +280,14 @@ void CSkillPc::CastSkill(HOBJECT hAppointTargetHandle, BYTE byApplyTargetCount, 
 
 						BYTE byWorldRuleType = m_pPlayerRef->GetCurWorld()->GetTbldat()->byWorldRuleType;
 						// Force treat Arena worlds as RANKBATTLE for Arena combat (ALLIANCE case)
-						if (ArenaWorld::IsWorldId(m_pPlayerRef->GetWorldID())) byWorldRuleType = GAMERULE_RANKBATTLE;
+						if (m_pPlayerRef->GetCurWorld())
+						{
+							bool isArenaWorld = ArenaWorld::IsArenaWorldByWideName(m_pPlayerRef->GetCurWorld()->GetTbldat()->wszName);
+							bool arenaActive = (isArenaWorld && g_pArenaManager && g_pArenaManager->IsEnabled() &&
+								g_pArenaManager->GetState() == CArenaManager::State::IN_ROUND && g_pArenaManager->IsParticipant(m_pPlayerRef));
+							if (arenaActive)
+								byWorldRuleType = GAMERULE_RANKBATTLE;
+						}
 						CPlayer* pTargetPc = (CPlayer*)pTarget;
 
 						if (byWorldRuleType == GAMERULE_NORMAL)
@@ -353,7 +367,14 @@ void CSkillPc::CastSkill(HOBJECT hAppointTargetHandle, BYTE byApplyTargetCount, 
 
 						BYTE byWorldRuleType = m_pPlayerRef->GetCurWorld()->GetTbldat()->byWorldRuleType;
 						// Force treat Arena worlds as RANKBATTLE for Arena combat (PARTY case)
-						if (ArenaWorld::IsWorldId(m_pPlayerRef->GetWorldID())) byWorldRuleType = GAMERULE_RANKBATTLE;
+						if (m_pPlayerRef->GetCurWorld())
+						{
+							bool isArenaWorld = ArenaWorld::IsArenaWorldByWideName(m_pPlayerRef->GetCurWorld()->GetTbldat()->wszName);
+							bool arenaActive = (isArenaWorld && g_pArenaManager && g_pArenaManager->IsEnabled() &&
+								g_pArenaManager->GetState() == CArenaManager::State::IN_ROUND && g_pArenaManager->IsParticipant(m_pPlayerRef));
+							if (arenaActive)
+								byWorldRuleType = GAMERULE_RANKBATTLE;
+						}
 						CPlayer* pTargetPc = (CPlayer*)pTarget;
 
 						if (byWorldRuleType == GAMERULE_NORMAL)

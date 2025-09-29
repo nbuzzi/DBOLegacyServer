@@ -111,6 +111,7 @@ private:
 
 public:
     bool m_bOn;
+    bool m_bVerbose;
     void StartEvent(BYTE byHours = 3);
     void EndEvent();
     void LoadEvent(HSESSION hSession);

@@ -5190,18 +5190,40 @@ void CClientSession::RecvAttackBegin(CNtlPacket* pPacket)
 		HOBJECT hTarget = cPlayer->GetTargetHandle();
 
 		if (hTarget == cPlayer->GetID())
+		{
+			if (g_pCustomDropEvent && g_pCustomDropEvent->m_bOn && g_pCustomDropEvent->m_bVerbose)
+			{
+				ERR_LOG(LOG_GENERAL, "[AttackDbg] Reject self-target attack: me=%u", (unsigned)cPlayer->GetCharID());
+			}
 			return;
+		}
 
 		CCharacter* victim = g_pObjectManager->GetChar(hTarget);
 		if (victim == NULL || victim->IsInitialized() == false)
+		{
+			if (g_pCustomDropEvent && g_pCustomDropEvent->m_bOn && g_pCustomDropEvent->m_bVerbose)
+			{
+				ERR_LOG(LOG_GENERAL, "[AttackDbg] No/Uninit victim on attack begin: me=%u tgtHandle=%u", (unsigned)cPlayer->GetCharID(), (unsigned)hTarget);
+			}
 			return;
+		}
 
 		if (cPlayer->GetCurWorld() == NULL)
+		{
+			if (g_pCustomDropEvent && g_pCustomDropEvent->m_bOn && g_pCustomDropEvent->m_bVerbose)
+			{
+				ERR_LOG(LOG_GENERAL, "[AttackDbg] No current world on attack begin: me=%u", (unsigned)cPlayer->GetCharID());
+			}
 			return;
+		}
 
 		BYTE byWorldRuleType = cPlayer->GetCurWorld()->GetTbldat()->byWorldRuleType;
-		// Force treat Arena worlds as RANKBATTLE for Arena combat
-		if (ArenaWorld::IsWorldId(cPlayer->GetWorldID())) byWorldRuleType = GAMERULE_RANKBATTLE;
+		// Arena override: only apply RankBattle rules when IN the Arena world AND actively participating during RUN
+		bool isArenaWorld = (cPlayer->GetCurWorld() && ArenaWorld::IsArenaWorldByWideName(cPlayer->GetCurWorld()->GetTbldat()->wszName));
+		bool arenaActive = (isArenaWorld && g_pArenaManager && g_pArenaManager->IsEnabled() &&
+			g_pArenaManager->GetState() == CArenaManager::State::IN_ROUND && g_pArenaManager->IsParticipant(cPlayer));
+		if (arenaActive)
+			byWorldRuleType = GAMERULE_RANKBATTLE;
 
 		if (byWorldRuleType == GAMERULE_RANKBATTLE)
 		{
@@ -5212,12 +5234,24 @@ void CClientSession::RecvAttackBegin(CNtlPacket* pPacket)
 				// Arena participants can attack during RUN
 			}
 			else if (cPlayer->GetRankBattleData()->eState != RANKBATTLE_MEMBER_STATE_ATTACKABLE)
+			{
+				if (g_pCustomDropEvent && g_pCustomDropEvent->m_bOn && g_pCustomDropEvent->m_bVerbose)
+				{
+					ERR_LOG(LOG_GENERAL, "[AttackDbg] Reject by rankbattle state: me=%u state=%u", (unsigned)cPlayer->GetCharID(), (unsigned)cPlayer->GetRankBattleData()->eState);
+				}
 				return;
+			}
 		}
 		else if (byWorldRuleType == GAMERULE_MINORMATCH || byWorldRuleType == GAMERULE_MAJORMATCH || byWorldRuleType == GAMERULE_FINALMATCH)
 		{
 			if (cPlayer->GetBudokaiPcState() != MATCH_MEMBER_STATE_NORMAL)
+			{
+				if (g_pCustomDropEvent && g_pCustomDropEvent->m_bOn && g_pCustomDropEvent->m_bVerbose)
+				{
+					ERR_LOG(LOG_GENERAL, "[AttackDbg] Reject by budokai state: me=%u state=%u", (unsigned)cPlayer->GetCharID(), (unsigned)cPlayer->GetBudokaiPcState());
+				}
 				return;
+			}
 		}
 
 		if (cPlayer->GetCurrentPetId() != INVALID_HOBJECT)
@@ -5230,7 +5264,13 @@ void CClientSession::RecvAttackBegin(CNtlPacket* pPacket)
 		}
 
 		if (cPlayer->IsKnockedDown())
+		{
+			if (g_pCustomDropEvent && g_pCustomDropEvent->m_bOn && g_pCustomDropEvent->m_bVerbose)
+			{
+				ERR_LOG(LOG_GENERAL, "[AttackDbg] Reject by knocked down: me=%u", (unsigned)cPlayer->GetCharID());
+			}
 			return;
+		}
 
 	cPlayer->SetAttackTarget(victim->GetID());
 		cPlayer->ChangeAttackProgress(true);
@@ -12321,16 +12361,12 @@ void CClientSession::RecvGiftShopBuyReq(CNtlPacket* pPacket)
 				}
 			}
 
-			// Deduct WP and ensure it cannot exceed the 2k limit after purchase
+			// Deduct WP and apply only non-negative floor; GS is authoritative for deductions
 			DWORD newWaguPoints = cPlayer->GetWaguPoints();
 			if (newWaguPoints < price)
 				newWaguPoints = 0;
 			else
 				newWaguPoints -= price;
-			// Prevent any restoration of previous WP balance (exploit fix)
-			// Only deduction and capping allowed
-			if (newWaguPoints > 2000)
-				newWaguPoints = 2000;
 			cPlayer->UpdateWaguPoints(newWaguPoints);
 
 			CGameServer* app = (CGameServer*)g_pApp;

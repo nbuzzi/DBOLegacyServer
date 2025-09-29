@@ -50,6 +50,7 @@ CCustomDropEvent::~CCustomDropEvent()
 void CCustomDropEvent::Init()
 {
 	m_bOn = false;
+	m_bVerbose = false;
 	m_timeStart = 0;
 	m_timeEnd = 0;
 	m_dwNextUpdateTick = 0;
@@ -1550,6 +1551,37 @@ void CCustomDropEvent::ApplyModifiers(CMonster* pMob)
 	// Mark mob as debuff-immune to avoid recalculation via curse-type effects
 	if (m_debuffImmuneEnabled)
 		pMob->SetEventDebuffImmune(true);
+
+	// Ensure event-modified mobs are actually fightable: clear lingering script conditions that block combat
+	// Common offenders observed: ATTACK_DISALLOW, INVINCIBLE, CLICK_DISABLE, CANT_BE_TARGETTED
+	{
+		auto sm = pMob->GetStateManager();
+		bool cleared = false;
+		if (sm->IsCharCondition(CHARCOND_ATTACK_DISALLOW))
+		{
+			sm->RemoveConditionState(CHARCOND_ATTACK_DISALLOW, NULL, true);
+			cleared = true;
+		}
+		if (sm->IsCharCondition(CHARCOND_CANT_BE_TARGETTED))
+		{
+			sm->RemoveConditionState(CHARCOND_CANT_BE_TARGETTED, NULL, true);
+			cleared = true;
+		}
+		if (sm->IsCharCondition(CHARCOND_INVINCIBLE))
+		{
+			sm->RemoveConditionState(CHARCOND_INVINCIBLE, NULL, true);
+			cleared = true;
+		}
+		if (sm->IsCharCondition(CHARCOND_CLICK_DISABLE))
+		{
+			sm->RemoveConditionState(CHARCOND_CLICK_DISABLE, NULL, true);
+			cleared = true;
+		}
+		if (cleared)
+		{
+			ERR_LOG(LOG_GENERAL, "[CustomDropEvent] Cleared combat-blocking flags on mob %u (world %u)", (unsigned)pMob->GetTblidx(), (unsigned)pMob->GetWorldID());
+		}
+	}
 }
 
 void CCustomDropEvent::ApplyBuffs(CMonster* pMob)

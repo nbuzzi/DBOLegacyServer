@@ -1338,7 +1338,33 @@ void CChatServerSession::RecvCharWaguPointUpdateRes(CNtlPacket* pPacket)
 	CPlayer* player = g_pObjectManager->FindByChar(req->charId);
 	if (player && player->IsInitialized())
 	{
-		player->UpdateWaguPoints(req->dwWaguPoints);
+		// Guard against stale updates that would restore an older (usually higher) value after a purchase.
+		// GameServer is the authority for deductions; accept increases from ChatServer (e.g., rewards),
+		// but ignore decreases that are lower than our current value to avoid rollback.
+		DWORD cur = player->GetWaguPoints();
+		DWORD incoming = req->dwWaguPoints;
+		if (incoming < cur)
+		{
+			// Ignore regressive update; log for diagnostics
+			NTL_LOG(LOG_USER, _T("[WAGU][GUARD] Ignored stale WaguPoints update: char=%u current=%u incoming=%u"),
+				(unsigned)req->charId, (unsigned)cur, (unsigned)incoming);
+			return;
+		}
+		if (incoming > cur)
+		{
+			// Accept only small reasonable increases to prevent restoring old balances.
+			const DWORD kMaxAcceptableDelta = 100; // safe cap per notification
+			DWORD delta = incoming - cur;
+			if (delta > kMaxAcceptableDelta)
+			{
+				NTL_LOG(LOG_USER, _T("[WAGU][GUARD] Ignored excessive WaguPoints increase: char=%u current=%u incoming=%u delta=%u"),
+					(unsigned)req->charId, (unsigned)cur, (unsigned)incoming, (unsigned)delta);
+				return;
+			}
+			NTL_LOG(LOG_USER, _T("[WAGU] Applying WaguPoints increase: char=%u %u -> %u (delta=%u)"),
+				(unsigned)req->charId, (unsigned)cur, (unsigned)incoming, (unsigned)delta);
+		}
+		player->UpdateWaguPoints(incoming);
 	}
 }
 

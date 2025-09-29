@@ -35,6 +35,22 @@
 
 static unsigned long ToMs(unsigned int seconds) { return seconds * 1000UL; }
 
+// Name-based check: is the given world tblidx our Arena world (map name contains "TORNEOPODER")?
+static inline bool IsArenaWorldByTblidxName(TBLIDX worldTblidx)
+{
+	sWORLD_TBLDAT* pWorld = (sWORLD_TBLDAT*)g_pTableContainer->GetWorldTable()->FindData(worldTblidx);
+	return pWorld && ArenaWorld::IsArenaWorldByWideName(pWorld->wszName);
+}
+
+// Overload: use existing CWorld* when available (no table lookup)
+static inline bool IsArenaWorld(const CWorld* pWorld)
+{
+	if (!pWorld) return false;
+	// GetTbldat is non-const in this codebase; we only read from it here.
+	sWORLD_TBLDAT* pTbldat = const_cast<CWorld*>(pWorld)->GetTbldat();
+	return pTbldat && ArenaWorld::IsArenaWorldByWideName(pTbldat->wszName);
+}
+
 // Gated verbose logging: helper formats into a buffer and logs via ERR_LOG to avoid vararg macro pitfalls
 static inline void ArenaErrLog(unsigned int category, const char* fmt, ...)
 {
@@ -483,6 +499,19 @@ bool CArenaManager::LoadConfigFromIniPath(const char* iniPath)
 		NTL_PRINT(PRINT_APP, _T("[ARENA] Warning: No worlds available - arena will not function properly"));
 	}
 
+	return true;
+}
+
+bool CArenaManager::GetPrevLocation(unsigned int charId, unsigned int& outWorldId, CNtlVector& outLoc, CNtlVector& outDir) const
+{
+	auto it = m_prevLoc.find(charId);
+	if (it == m_prevLoc.end())
+		return false;
+	if (it->second.worldId == INVALID_WORLDID)
+		return false;
+	outWorldId = it->second.worldId;
+	outLoc = it->second.loc;
+	outDir = it->second.dir;
 	return true;
 }
 
@@ -1487,7 +1516,7 @@ void CArenaManager::TickProcess(unsigned long dwTickDiff)
 					// Final round on arena world: only stop timer and finish immediately with rewards/teleport.
 					// Skip any Rank/Budokai state broadcasts to keep UI intact until teleport.
 					StopRoundTimerUI();
-					if (ArenaWorld::IsWorldTblidx(m_currentWorldTblidx))
+					if (IsArenaWorldByTblidxName(m_currentWorldTblidx))
 					{
 						FinishMatch(false);
 						break;
@@ -1971,6 +2000,8 @@ bool CArenaManager::Remove(CPlayer* pPlayer)
 	m_participants.erase(pPlayer->GetCharID());
 	m_spectators.erase(pPlayer->GetCharID());
 	m_winners.erase(pPlayer->GetCharID());
+	// Clear any saved previous location snapshot once player leaves arena context
+	m_prevLoc.erase(pPlayer->GetCharID());
 	return true;
 }
 
@@ -2410,7 +2441,7 @@ void CArenaManager::CheckFaintAndAliveLogic()
 				}
 			}
 			// Minimal finalization on arena world: stop timer and finish immediately
-			if (ArenaWorld::IsWorldTblidx(m_currentWorldTblidx))
+			if (IsArenaWorldByTblidxName(m_currentWorldTblidx))
 			{
 				StopRoundTimerUI();
 				FinishMatch(false);
@@ -2443,7 +2474,7 @@ void CArenaManager::FinishMatch(bool aborted)
 	m_matchFinishWatchdogMs = 0;
 	// During the fight we mirror Rank UX if enabled; at finish we ensure clients exit Rank mode.
 	// On non-arena (rank-rule) worlds, mirror finish and then optionally send LEAVE.
-	if (!ArenaWorld::IsWorldTblidx(m_currentWorldTblidx))
+	if (!IsArenaWorldByTblidxName(m_currentWorldTblidx))
 	{
 		// Non-arena worlds: mirror RankBattle finish UX unless suppressed
 		if (m_cfg.rankUiEnabled && !m_cfg.suppressRankFinishUi)
@@ -2475,7 +2506,7 @@ void CArenaManager::FinishMatch(bool aborted)
 	if (!aborted && m_winners.size() > 0)
 	{
 		// On arena worlds, skip notices to keep UI calm; otherwise announce
-		if (!ArenaWorld::IsWorldTblidx(m_currentWorldTblidx))
+	if (!IsArenaWorldByTblidxName(m_currentWorldTblidx))
 		{
 			for (auto cid : m_winners)
 			{
@@ -2509,7 +2540,7 @@ void CArenaManager::FinishMatch(bool aborted)
 			if (CPlayer* winner = g_pObjectManager->FindByChar((CHARACTERID)lastAlive))
 			{
 				// On arena worlds, avoid notices; still record winner for rewards
-				if (!ArenaWorld::IsWorldTblidx(m_currentWorldTblidx))
+				if (!IsArenaWorldByTblidxName(m_currentWorldTblidx))
 				{
 					wchar_t msg[256];
 					ComposeWinnerText(winner, msg, _countof(msg));
@@ -2535,7 +2566,7 @@ void CArenaManager::FinishMatch(bool aborted)
 		}
 
 		// Arena-world: announce winner to everyone and remind to check inventory, just before teleport
-		if (ArenaWorld::IsWorldTblidx(m_currentWorldTblidx))
+	if (IsArenaWorldByTblidxName(m_currentWorldTblidx))
 		{
 			wchar_t msg[320];
 			bool announced = false;
@@ -2560,7 +2591,7 @@ void CArenaManager::FinishMatch(bool aborted)
 	}
 
 	// Skip scoreboard and final notices on arena worlds to avoid UI toggles before teleport
-	if (!ArenaWorld::IsWorldTblidx(m_currentWorldTblidx))
+	if (!IsArenaWorldByTblidxName(m_currentWorldTblidx))
 	{
 		if (m_currentWorldId)
 			BroadcastScoreboardToWorld(m_currentWorldId);
@@ -2849,7 +2880,7 @@ void CArenaManager::FinishWithWinner(unsigned int winnerCharId)
 		if (CPlayer* p = g_pObjectManager->FindByChar((CHARACTERID)winnerCharId))
 		{
 			MarkWinner(p);
-			if (!ArenaWorld::IsWorldTblidx(m_currentWorldTblidx))
+		if (!IsArenaWorldByTblidxName(m_currentWorldTblidx))
 			{
 				wchar_t msg[256];
 				ComposeWinnerText(p, msg, _countof(msg));
@@ -2862,7 +2893,7 @@ void CArenaManager::FinishWithWinner(unsigned int winnerCharId)
 		AwardRewards(true);
 		AwardRewards(false);
 		// Arena-world: announce winner + reward hint to everyone before teleport
-		if (ArenaWorld::IsWorldTblidx(m_currentWorldTblidx))
+	if (IsArenaWorldByTblidxName(m_currentWorldTblidx))
 		{
 			wchar_t msg[320];
 			if (winnerCharId)
@@ -2882,10 +2913,10 @@ void CArenaManager::FinishWithWinner(unsigned int winnerCharId)
 		}
 	}
 	// Telecast at finish as well (skip on arena world for minimal UX)
-	if (m_cfg.telecastEnabled && !ArenaWorld::IsWorldTblidx(m_currentWorldTblidx))
+	if (m_cfg.telecastEnabled && !IsArenaWorldByTblidxName(m_currentWorldTblidx))
 		BroadcastTelecastToWorld(EnsureCurrentWorldId());
 	// Do not send Rank finish/leave on arena worlds to keep UI until teleport
-	if (!ArenaWorld::IsWorldTblidx(m_currentWorldTblidx))
+				if (!IsArenaWorldByTblidxName(m_currentWorldTblidx))
 	{
 		if (m_cfg.rankUiEnabled)
 			BroadcastRankStateToWorld(EnsureCurrentWorldId(), 5, 1); // RANKBATTLE_BATTLESTATE_MATCH_FINISH
@@ -2956,8 +2987,8 @@ void CArenaManager::BroadcastRankMatchStartToWorld(unsigned int worldId)
 	CWorld* pWorld = app->GetGameMain()->GetWorldManager()->FindWorld((WORLDID)worldId);
 	if (!pWorld) return;
 	BYTE rule = pWorld->GetTbldat()->byWorldRuleType;
-	// Treat arena-world range as RANKBATTLE for Arena combat UI
-	if (ArenaWorld::IsWorldTblidx(m_currentWorldTblidx)) rule = GAMERULE_RANKBATTLE;
+	// Treat our arena world as RANKBATTLE for Arena combat UI (use world pointer, no lookup)
+	if (IsArenaWorld(pWorld)) rule = GAMERULE_RANKBATTLE;
 	if (rule == GAMERULE_MINORMATCH || rule == GAMERULE_MAJORMATCH || rule == GAMERULE_FINALMATCH)
 		return; // Skip RankBattle packets on Budokai-rule maps
 	if (rule != GAMERULE_RANKBATTLE)
@@ -2983,8 +3014,8 @@ void CArenaManager::BroadcastRankStageFinishToWorld(unsigned int worldId)
 	CWorld* pWorld = app->GetGameMain()->GetWorldManager()->FindWorld((WORLDID)worldId);
 	if (!pWorld) return;
 	BYTE rule = pWorld->GetTbldat()->byWorldRuleType;
-	// Treat arena-world range as RANKBATTLE for Arena combat UI
-	if (ArenaWorld::IsWorldTblidx(m_currentWorldTblidx)) rule = GAMERULE_RANKBATTLE;
+	// Treat arena world as RANKBATTLE for Arena combat UI
+	if (IsArenaWorld(pWorld)) rule = GAMERULE_RANKBATTLE;
 	if (rule == GAMERULE_MINORMATCH || rule == GAMERULE_MAJORMATCH || rule == GAMERULE_FINALMATCH)
 		return; // Skip RankBattle packets on Budokai-rule maps
 	if (rule != GAMERULE_RANKBATTLE)
@@ -3010,8 +3041,7 @@ void CArenaManager::BroadcastRankMatchFinishToWorld(unsigned int worldId)
 	CWorld* pWorld = app->GetGameMain()->GetWorldManager()->FindWorld((WORLDID)worldId);
 	if (!pWorld) return;
 	BYTE rule = pWorld->GetTbldat()->byWorldRuleType;
-	// Treat arena-world range as RANKBATTLE for Arena combat UI
-	if (ArenaWorld::IsWorldTblidx(m_currentWorldTblidx)) rule = GAMERULE_RANKBATTLE;
+	if (IsArenaWorld(pWorld)) rule = GAMERULE_RANKBATTLE;
 	if (rule == GAMERULE_MINORMATCH || rule == GAMERULE_MAJORMATCH || rule == GAMERULE_FINALMATCH)
 		return;
 	if (rule != GAMERULE_RANKBATTLE)
@@ -3039,7 +3069,7 @@ void CArenaManager::BroadcastRankJoinToWorld(unsigned int worldId)
 	if (CWorld* pWorld = ((CGameServer*)g_pApp)->GetGameMain()->GetWorldManager()->FindWorld((WORLDID)worldId))
 	{
 		BYTE rule = pWorld->GetTbldat()->byWorldRuleType;
-		if (ArenaWorld::IsWorldTblidx(m_currentWorldTblidx)) rule = GAMERULE_RANKBATTLE;
+		if (IsArenaWorld(pWorld)) rule = GAMERULE_RANKBATTLE;
 		if (rule == GAMERULE_MINORMATCH || rule == GAMERULE_MAJORMATCH || rule == GAMERULE_FINALMATCH)
 			return;
 		if (rule != GAMERULE_RANKBATTLE)
@@ -3068,7 +3098,7 @@ void CArenaManager::BroadcastRankLeaveToWorld(unsigned int worldId)
 	if (CWorld* pWorld = ((CGameServer*)g_pApp)->GetGameMain()->GetWorldManager()->FindWorld((WORLDID)worldId))
 	{
 		BYTE rule = pWorld->GetTbldat()->byWorldRuleType;
-		if (ArenaWorld::IsWorldTblidx(m_currentWorldTblidx)) rule = GAMERULE_RANKBATTLE;
+		if (IsArenaWorld(pWorld)) rule = GAMERULE_RANKBATTLE;
 		if (rule == GAMERULE_MINORMATCH || rule == GAMERULE_MAJORMATCH || rule == GAMERULE_FINALMATCH)
 			return;
 		if (rule != GAMERULE_RANKBATTLE)
@@ -3145,7 +3175,7 @@ void CArenaManager::BroadcastRankTeamInfoToWorld(unsigned int worldId)
 	if (!pWorld) return;
 	// Only send on rank-rule worlds (skip Budokai and others)
 	BYTE rule = pWorld->GetTbldat()->byWorldRuleType;
-	if (ArenaWorld::IsWorldTblidx(m_currentWorldTblidx)) rule = GAMERULE_RANKBATTLE;
+	if (IsArenaWorldByTblidxName(m_currentWorldTblidx)) rule = GAMERULE_RANKBATTLE;
 	if (rule == GAMERULE_MINORMATCH || rule == GAMERULE_MAJORMATCH || rule == GAMERULE_FINALMATCH)
 		return;
 	if (rule != GAMERULE_RANKBATTLE)
@@ -3917,6 +3947,8 @@ void CArenaManager::PostFinishTeleportDefault()
 				TeleportToBind(p);
 			}
 		}
+		// Clear snapshot after use
+		m_prevLoc.erase(cid);
 	}
 	for (auto cid : m_spectators)
 	{
@@ -3931,6 +3963,8 @@ void CArenaManager::PostFinishTeleportDefault()
 			else
 				TeleportToBind(p);
 		}
+		// Clear snapshot after use
+		m_prevLoc.erase(cid);
 	}
 }
 
@@ -3985,7 +4019,7 @@ void CArenaManager::FinishOnTimeout()
 			return;
 		}
 		// final round: on arena world, finish immediately with minimal UX
-		if (ArenaWorld::IsWorldTblidx(m_currentWorldTblidx))
+	if (IsArenaWorldByTblidxName(m_currentWorldTblidx))
 		{
 			FinishMatch(false);
 			return;
@@ -4057,7 +4091,7 @@ void CArenaManager::FinishByPoints()
 		if (rep)
 		{
 			// Announce team winner unless we are on arena world (minimal UX)
-			if (!ArenaWorld::IsWorldTblidx(m_currentWorldTblidx))
+			if (!IsArenaWorldByTblidxName(m_currentWorldTblidx))
 			{
 				wchar_t msg[256];
 				ComposeWinnerText(rep, msg, _countof(msg));
@@ -4065,10 +4099,10 @@ void CArenaManager::FinishByPoints()
 			}
 		}
 		// RankBattle-like finish UX (skip on arena worlds)
-		if (m_cfg.telecastEnabled && !ArenaWorld::IsWorldTblidx(m_currentWorldTblidx))
+		if (m_cfg.telecastEnabled && !IsArenaWorldByTblidxName(m_currentWorldTblidx))
 			BroadcastTelecastToWorld(EnsureCurrentWorldId());
 		// Suppress RankBattle finish/leave on arena world to keep UI
-		if (!ArenaWorld::IsWorldTblidx(m_currentWorldTblidx))
+		if (!IsArenaWorldByTblidxName(m_currentWorldTblidx))
 		{
 			if (m_cfg.rankUiEnabled && !m_cfg.suppressRankFinishUi)
 			{
@@ -4219,11 +4253,56 @@ void CArenaManager::ReviveParticipantNow(unsigned int victimCharId, bool bApplyR
 	if (!worldId || (unsigned int)pVictim->GetWorldID() != worldId) return;
 	if (!pVictim->IsFainting()) return; // already revived elsewhere
 
-	CNtlVector loc = pVictim->GetCurLoc();
-	// Use CURRENT_POSITION + SKILL teleport type to force client SPAWNING and clear FAINT UI
-	pVictim->Revival(loc, pVictim->GetWorldID(), REVIVAL_TYPE_CURRENT_POSITION, TELEPORT_TYPE_SKILL);
+	// 1) Proactively clear harmful DOTs and all conditions to avoid instant re-faint
+	//    (bleed/poison/burn/stomachache and any CC that could block actions)
+	if (pVictim->GetBuffManager())
+	{
+		pVictim->GetBuffManager()->EndSubBuff(ACTIVE_BLEED, INVALID_SYSTEM_EFFECT_CODE);
+		pVictim->GetBuffManager()->EndSubBuff(ACTIVE_POISON, INVALID_SYSTEM_EFFECT_CODE);
+		pVictim->GetBuffManager()->EndSubBuff(ACTIVE_BURN, INVALID_SYSTEM_EFFECT_CODE);
+		pVictim->GetBuffManager()->EndSubBuff(ACTIVE_STOMACHACHE, INVALID_SYSTEM_EFFECT_CODE);
+	}
+	if (pVictim->GetStateManager())
+	{
+		// Clear any existing conditions (including FAINT visuals) before reviving
+		pVictim->GetStateManager()->RemoveConditionFlags(INVALID_QWORD, true);
+	}
+
+	// 2) Pick a safe respawn location: team start spots for CC mode; otherwise world start1
+	CNtlVector loc;
+	CNtlVector dir;
+	if (sWORLD_TBLDAT* pWorldTbldat = (sWORLD_TBLDAT*)g_pTableContainer->GetWorldTable()->FindData((TBLIDX)m_currentWorldTblidx))
+	{
+		bool useTeam2 = false;
+		if (m_cfg.ccBattleMode)
+		{
+			if (sRANK_BATTLE_DATA* rd = pVictim->GetRankBattleData())
+				useTeam2 = (rd->eTeamType == RANKBATTLE_TEAM_CHALLENGER);
+		}
+		if (useTeam2)
+		{
+			loc = pWorldTbldat->vStart2Loc; dir = pWorldTbldat->vStart2Dir;
+		}
+		else
+		{
+			loc = pWorldTbldat->vStart1Loc; dir = pWorldTbldat->vStart1Dir;
+		}
+		// Slight randomization to avoid stacking
+		loc.x += RandomRangeF(-2.5f, 2.5f);
+		loc.z += RandomRangeF(-2.5f, 2.5f);
+	}
+	else
+	{
+		// Fallback: current position
+		loc = pVictim->GetCurLoc(); dir = pVictim->GetCurDir();
+	}
+
+	// 3) Revive cleanly (RESCUED semantics match round reset behavior) and restore resources
+	pVictim->Revival(loc, pVictim->GetWorldID(), REVIVAL_TYPE_RESCUED);
 	pVictim->UpdateCurLpEp(pVictim->GetMaxLP(), pVictim->GetMaxEP(), true, false);
-	// Clear environmental hazard ticks (lava) that may persist across faint
+	pVictim->SendCharStateStanding();
+
+	// 4) Clear environmental hazard ticks (lava) and ensure PvP zone + Rank/Budokai states are set
 	pVictim->LeaveLava();
 	// Ensure PvP zone + ATTACKABLE are active immediately after revive
 	pVictim->UpdatePvpZone(true);
@@ -4238,18 +4317,33 @@ void CArenaManager::ReviveParticipantNow(unsigned int victimCharId, bool bApplyR
 		}
 		else
 		{
-			CNtlPacket pkt(sizeof(sGU_RANKBATTLE_BATTLE_PLAYER_STATE_NFY));
-			sGU_RANKBATTLE_BATTLE_PLAYER_STATE_NFY* res = (sGU_RANKBATTLE_BATTLE_PLAYER_STATE_NFY*)pkt.GetPacketData();
-			res->wOpCode = GU_RANKBATTLE_BATTLE_PLAYER_STATE_NFY;
-			res->hPc = pVictim->GetID();
-			res->byPCState = RANKBATTLE_MEMBER_STATE_ATTACKABLE;
-			pkt.SetPacketLen(sizeof(sGU_RANKBATTLE_BATTLE_PLAYER_STATE_NFY));
-			pVictim->SendPacket(&pkt);
+			// Mirror RankBattle revive sequence: transition FAINT -> NORMAL -> ATTACKABLE
+			{
+				if (sRANK_BATTLE_DATA* rdN = pVictim->GetRankBattleData()) rdN->eState = RANKBATTLE_MEMBER_STATE_NORMAL;
+				CNtlPacket pktN(sizeof(sGU_RANKBATTLE_BATTLE_PLAYER_STATE_NFY));
+				sGU_RANKBATTLE_BATTLE_PLAYER_STATE_NFY* resN = (sGU_RANKBATTLE_BATTLE_PLAYER_STATE_NFY*)pktN.GetPacketData();
+				resN->wOpCode = GU_RANKBATTLE_BATTLE_PLAYER_STATE_NFY;
+				resN->hPc = pVictim->GetID();
+				resN->byPCState = RANKBATTLE_MEMBER_STATE_NORMAL;
+				pktN.SetPacketLen(sizeof(sGU_RANKBATTLE_BATTLE_PLAYER_STATE_NFY));
+				pWorld->Broadcast(&pktN);
+			}
+
+			{
+				if (sRANK_BATTLE_DATA* rdA = pVictim->GetRankBattleData()) rdA->eState = RANKBATTLE_MEMBER_STATE_ATTACKABLE;
+				CNtlPacket pktA(sizeof(sGU_RANKBATTLE_BATTLE_PLAYER_STATE_NFY));
+				sGU_RANKBATTLE_BATTLE_PLAYER_STATE_NFY* resA = (sGU_RANKBATTLE_BATTLE_PLAYER_STATE_NFY*)pktA.GetPacketData();
+				resA->wOpCode = GU_RANKBATTLE_BATTLE_PLAYER_STATE_NFY;
+				resA->hPc = pVictim->GetID();
+				resA->byPCState = RANKBATTLE_MEMBER_STATE_ATTACKABLE;
+				pktA.SetPacketLen(sizeof(sGU_RANKBATTLE_BATTLE_PLAYER_STATE_NFY));
+				pWorld->Broadcast(&pktA);
+			}
 		}
 	}
-	// Persist RankBattle ATTACKABLE state after revive
+	// Persist RankBattle ATTACKABLE state after revive (already set above, keep for safety)
 	if (sRANK_BATTLE_DATA* rd = pVictim->GetRankBattleData()) rd->eState = RANKBATTLE_MEMBER_STATE_ATTACKABLE;
-	// Clear any lingering restrictions (can't attack/skills)
+	// 5) Clear any lingering restrictions (can't attack/skills)
 	ClearCombatRestrictionsFor(pVictim);
 	// Apply short post-revive protection if configured
 	if (m_cfg.reviveProtectMs > 0)

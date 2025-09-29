@@ -314,6 +314,8 @@ private:
 
 public:
 	void OnPlayerFaint(unsigned int killerCharId, unsigned int victimCharId);
+	// Retrieve a player's saved pre-arena location; returns true when available
+	bool GetPrevLocation(unsigned int charId, unsigned int& outWorldId, CNtlVector& outLoc, CNtlVector& outDir) const;
 
 private:
 	Config m_cfg;

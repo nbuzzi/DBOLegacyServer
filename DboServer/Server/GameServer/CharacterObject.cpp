@@ -5,6 +5,7 @@
 #include "NtlSvrMath.h"
 #include "battle.h"
 #include "NtlPacketGU.h"
+#include "CustomDropEvent.h"
 
 
 
@@ -109,7 +110,7 @@ void CCharacterObject::TickProcess(DWORD dwTickDiff, float fMultiple)
 	//}
 
 	//if (IsPC() || (IsMonster() && GetTblidx() == 3411215))
-		CMoveableObject::TickProcess(dwTickDiff, fMultiple);
+	CMoveableObject::TickProcess(dwTickDiff, fMultiple);
 
 	if (GetAttackProgress() && GetFightMode())
 		AttackProgress(dwTickDiff, fMultiple);
@@ -289,7 +290,7 @@ bool CCharacterObject::UpdateRpBall(BYTE byDiff, bool bIncrease, bool bDropByTim
 void CCharacterObject::OnUpdateState()
 {
 	CNtlPacket pStatePacket(sizeof(sGU_UPDATE_CHAR_STATE));
-	sGU_UPDATE_CHAR_STATE * res = (sGU_UPDATE_CHAR_STATE *)pStatePacket.GetPacketData();
+	sGU_UPDATE_CHAR_STATE* res = (sGU_UPDATE_CHAR_STATE*)pStatePacket.GetPacketData();
 	res->wOpCode = GU_UPDATE_CHAR_STATE;
 	res->handle = GetID();
 	GetStateManager()->CopyTo(&res->sCharState);
@@ -299,13 +300,13 @@ void CCharacterObject::OnUpdateState()
 
 void CCharacterObject::OnUpdateAspectState()
 {
-	
+
 }
 
 void CCharacterObject::OnUpdateCondition()
 {
 	CNtlPacket packet(sizeof(sGU_UPDATE_CHAR_CONDITION));
-	sGU_UPDATE_CHAR_CONDITION * res = (sGU_UPDATE_CHAR_CONDITION *)packet.GetPacketData();
+	sGU_UPDATE_CHAR_CONDITION* res = (sGU_UPDATE_CHAR_CONDITION*)packet.GetPacketData();
 	res->wOpCode = GU_UPDATE_CHAR_CONDITION;
 	res->handle = GetID();
 	res->qwConditionFlag = GetStateManager()->GetConditionState();
@@ -396,7 +397,7 @@ bool CCharacterObject::ConsiderEPLow(float fLowLPFactor)
 void CCharacterObject::UpdateMoveSpeed(float fWalkSpeed, float fRunSpeed)
 {
 	CNtlPacket packet(sizeof(sGU_UPDATE_CHAR_SPEED));
-	sGU_UPDATE_CHAR_SPEED * res = (sGU_UPDATE_CHAR_SPEED *)packet.GetPacketData();
+	sGU_UPDATE_CHAR_SPEED* res = (sGU_UPDATE_CHAR_SPEED*)packet.GetPacketData();
 	res->wOpCode = GU_UPDATE_CHAR_SPEED;
 	res->handle = GetID();
 	res->fLastWalkingSpeed = fWalkSpeed;
@@ -414,7 +415,7 @@ void CCharacterObject::UpdateMoveSpeed(float fWalkSpeed, float fRunSpeed)
 void CCharacterObject::UpdateAttackSpeed(WORD wAttackSpeed)
 {
 	CNtlPacket packet(sizeof(sGU_UPDATE_CHAR_ATTACK_SPEEDRATE));
-	sGU_UPDATE_CHAR_ATTACK_SPEEDRATE * res = (sGU_UPDATE_CHAR_ATTACK_SPEEDRATE *)packet.GetPacketData();
+	sGU_UPDATE_CHAR_ATTACK_SPEEDRATE* res = (sGU_UPDATE_CHAR_ATTACK_SPEEDRATE*)packet.GetPacketData();
 	res->wOpCode = GU_UPDATE_CHAR_ATTACK_SPEEDRATE;
 	res->handle = this->GetID();
 	res->wAttackSpeedRate = wAttackSpeed;
@@ -430,7 +431,7 @@ void CCharacterObject::BlockMovementSpeed()
 	m_fRunSpeedBeforeBlock = GetRunSpeed();
 
 	CNtlPacket packet(sizeof(sGU_UPDATE_CHAR_SPEED));
-	sGU_UPDATE_CHAR_SPEED * res = (sGU_UPDATE_CHAR_SPEED *)packet.GetPacketData();
+	sGU_UPDATE_CHAR_SPEED* res = (sGU_UPDATE_CHAR_SPEED*)packet.GetPacketData();
 	res->wOpCode = GU_UPDATE_CHAR_SPEED;
 	res->handle = GetID();
 	res->fLastWalkingSpeed = 0.0f;
@@ -446,7 +447,7 @@ void CCharacterObject::BlockMovementSpeed()
 void CCharacterObject::UndoMovementBlock()
 {
 	CNtlPacket packet(sizeof(sGU_UPDATE_CHAR_SPEED));
-	sGU_UPDATE_CHAR_SPEED * res = (sGU_UPDATE_CHAR_SPEED *)packet.GetPacketData();
+	sGU_UPDATE_CHAR_SPEED* res = (sGU_UPDATE_CHAR_SPEED*)packet.GetPacketData();
 	res->wOpCode = GU_UPDATE_CHAR_SPEED;
 	res->handle = GetID();
 	res->fLastWalkingSpeed = m_fWalkSpeedBeforeBlock;
@@ -527,8 +528,15 @@ bool CCharacterObject::IsAttackable(CCharacterObject* pTarget)
 		if (this != pTarget)
 		{
 			if (pTarget->IsFainting() || pTarget->IsDespawning())
+			{
+				if (IsPC() && pTarget->IsMonster() && g_pCustomDropEvent && g_pCustomDropEvent->m_bOn && g_pCustomDropEvent->m_bVerbose)
+				{
+					ERR_LOG(LOG_GENERAL, "[AttackDbg] BaseIsAttackable=false reason=faint/despawn me=%u tgt=%u state=%u",
+						(unsigned)GetID(), (unsigned)pTarget->GetID(), (unsigned)pTarget->GetCharStateID());
+				}
 				return false;
-			
+			}
+
 			if (pTarget->IsValidTarget(0)) //not sure
 			{
 				if (pTarget->GetCharStateID() != CHARSTATE_SLIDING && pTarget->GetCharStateID() != CHARSTATE_HTB && pTarget->GetCharStateID() != CHARSTATE_SANDBAG && pTarget->GetCharStateID() != CHARSTATE_DIRECT_PLAY && pTarget->GetCharStateID() != CHARSTATE_TURNING)
@@ -538,11 +546,38 @@ bool CCharacterObject::IsAttackable(CCharacterObject* pTarget)
 						if (pTarget->GetAirState() == AIR_STATE_ON)
 						{
 							if (pTarget->GetCurLoc().y - GetCurLoc().y > GetAttackRange())
+							{
+								if (IsPC() && pTarget->IsMonster() && g_pCustomDropEvent && g_pCustomDropEvent->m_bOn && g_pCustomDropEvent->m_bVerbose)
+								{
+									ERR_LOG(LOG_GENERAL, "[AttackDbg] BaseIsAttackable=false reason=altitude dy=%.2f max=%.2f me=%u tgt=%u",
+										pTarget->GetCurLoc().y - GetCurLoc().y, GetAttackRange(), (unsigned)GetID(), (unsigned)pTarget->GetID());
+								}
 								return false;
+							}
 						}
 
 						return true;
 					}
+					else if (IsPC() && pTarget->IsMonster() && g_pCustomDropEvent && g_pCustomDropEvent->m_bOn && g_pCustomDropEvent->m_bVerbose)
+					{
+						ERR_LOG(LOG_GENERAL, "[AttackDbg] BaseIsAttackable=false reason=ATTACK_DISALLOW me=%u tgt=%u", (unsigned)GetID(), (unsigned)pTarget->GetID());
+					}
+				}
+				else if (IsPC() && pTarget->IsMonster() && g_pCustomDropEvent && g_pCustomDropEvent->m_bOn && g_pCustomDropEvent->m_bVerbose)
+				{
+					ERR_LOG(LOG_GENERAL, "[AttackDbg] BaseIsAttackable=false reason=blockedState state=%u me=%u tgt=%u",
+						(unsigned)pTarget->GetCharStateID(), (unsigned)GetID(), (unsigned)pTarget->GetID());
+				}
+			}
+			else if (IsPC() && pTarget->IsMonster() && g_pCustomDropEvent && g_pCustomDropEvent->m_bOn)
+			{
+				bool cant = pTarget->GetStateManager()->IsCharCondition(CHARCOND_CANT_BE_TARGETTED);
+				bool inv = pTarget->GetStateManager()->IsCharCondition(CHARCOND_INVISIBLE);
+				bool trans = pTarget->GetStateManager()->IsCharCondition(CHARCOND_TRANSPARENT);
+				if (g_pCustomDropEvent->m_bVerbose)
+				{
+					ERR_LOG(LOG_GENERAL, "[AttackDbg] BaseIsAttackable=false reason=InvalidTarget cant=%d inv=%d trans=%d me=%u tgt=%u",
+						(int)cant, (int)inv, (int)trans, (unsigned)GetID(), (unsigned)pTarget->GetID());
 				}
 			}
 		}
@@ -676,13 +711,13 @@ bool CCharacterObject::RefreshObjectRadius()
 		{
 
 			m_fObjectRadius = CNtlSvrMath::CalculateObjectRadius(m_pAniTbldat->m_vMax, m_pAniTbldat->m_vMin, m_pAniTbldat->m_fScale, GetScale());
-			
-		//	printf("m_pAniTbldat->m_vMax = %f, m_pAniTbldat->m_vMin = %f, m_pAniTbldat->m_fScale = %f, GetScale() = %f \n", m_pAniTbldat->m_vMax.x, m_pAniTbldat->m_vMin.x, m_pAniTbldat->m_fScale, GetScale());
 
-			/*
-			if(IsPC())
-				printf("m_fObjectRadius %f m_pAniTbldat->m_fScale %f GetScale %f max x%f z%f min x%f z %f\n", 
-				m_fObjectRadius, m_pAniTbldat->m_fScale, GetScale(), m_pAniTbldat->m_vMax.x, m_pAniTbldat->m_vMax.z, m_pAniTbldat->m_vMin.x, m_pAniTbldat->m_vMin.z);*/
+			//	printf("m_pAniTbldat->m_vMax = %f, m_pAniTbldat->m_vMin = %f, m_pAniTbldat->m_fScale = %f, GetScale() = %f \n", m_pAniTbldat->m_vMax.x, m_pAniTbldat->m_vMin.x, m_pAniTbldat->m_fScale, GetScale());
+
+				/*
+				if(IsPC())
+					printf("m_fObjectRadius %f m_pAniTbldat->m_fScale %f GetScale %f max x%f z%f min x%f z %f\n",
+					m_fObjectRadius, m_pAniTbldat->m_fScale, GetScale(), m_pAniTbldat->m_vMax.x, m_pAniTbldat->m_vMax.z, m_pAniTbldat->m_vMin.x, m_pAniTbldat->m_vMin.z);*/
 
 			return true;
 		}
