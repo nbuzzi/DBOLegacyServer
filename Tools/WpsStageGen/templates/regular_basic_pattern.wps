@@ -1,0 +1,29 @@
+    -- Regular Floor Template
+    -- Uses CCBD exec pattern and allows optional lightweight mechanics
+
+    Action( "CCBD exec pattern" )
+    --[
+        Param( "pattern list", {{PATTERN_LIST}} )
+    --]
+    End()
+
+    -- Optional: simple timed add/remove groups
+    -- Action( "function" )
+    -- --[
+    --     Action( "wait" )
+    --     --[
+    --         Condition( "time" )
+    --         --[
+    --             Param( "second", 30 )
+    --         --]
+    --         End()
+    --     --]
+    --     End()
+    --     Action( "add mobgroup" )
+    --     --[
+    --         Param( "group", {{ADD_GROUP}} )
+    --         Param( "no spawn wait", "true" )
+    --     --]
+    --     End()
+    -- --]
+    -- End()

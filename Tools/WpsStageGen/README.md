@@ -3,11 +3,12 @@
 A tiny .NET 8 console tool to append CCBD stages to a `.wps` file.
 
 - Detects highest existing `Action("CCBD stage")` `Param("stage", N)`
-- Sets any existing `LastStage` to false
+- Clears any existing `CCBD reward` `Param("last stage", "true")`
 - Appends N new stages with:
-  - `add mobgroup` auto-incrementing group ids
-  - `drop item` and `drop item amount` with linear progression
-  - Boss stage every K floors: marks `LastStage=true` and sets `tp world` if provided
+  - Regular floors: `CCBD exec pattern` using your `pattern` list
+  - Boss floors: `direct play=false`, spawn `add mobgroup group=<bossGroup>`, stage clear, wait, and `CCBD reward`
+  - Last appended boss floor gets `CCBD reward` `Param("last stage", "true")`
+  - Optional boss arena cycle comment `-- Boss arena: WORLD` per boss when `bossWorlds` is provided
 
 ## Build
 
@@ -22,7 +23,7 @@ cd d:\projects\dbo-legacy\OpenDBO-Core\Tools\WpsStageGen
 
 ```powershell
 # Append 5 stages after the current max stage, boss every 5
- dotnet run -- in="d:\projects\dbo-legacy\OpenDBO-Core\DboServer\ExecutionEnv\resource\server_data\wps\wps\83000.wps" add=5 bossEvery=5 dropItem=7000014 dropBase=2 dropStep=1 mobBase=9101 bossGroup=9999 bossWorld=CCBD_BOSS_WORLD
+ dotnet run -- in="d:\projects\dbo-legacy\OpenDBO-Core\DboServer\ExecutionEnv\resource\server_data\wps\wps\83000.wps" out="d:\\temp\\83000-gen.wps" add=5 bossEvery=5 bossGroup=9999 rewardItem=7000002 pattern="(1,35%), (2,35%), (3,10%), (4,10%), (6,10%)" bossWorlds=ARENA_A,ARENA_B,ARENA_C bossTemplate="d:\\projects\\boss150-snippet.wps"
 ```
 
 ### Parameters
@@ -30,12 +31,22 @@ cd d:\projects\dbo-legacy\OpenDBO-Core\Tools\WpsStageGen
 - `add`: Number of stages to add (default 5)
 - `bossEvery`: Every Nth stage is a boss (default 5)
 - `start`: First stage number to generate (default max+1)
-- `dropItem`: Item id used by `drop item` param
-- `dropBase`: Base amount used by `drop item amount`
-- `dropStep`: Increment per stage
-- `mobBase`: Base mob group for regular stages (group=mobBase+i)
 - `bossGroup`: Mob group id used for boss stages
-- `bossWorld`: Teleport world string for boss stages (optional)
+- `rewardItem`: CCBD reward item tblidx (default 7000002)
+- `pattern`: Pattern list string for regular floors (e.g. "(1,35%), (2,35%), (3,10%), (4,10%), (6,10%)")
+- `bossWorlds`: Comma-separated world names to cycle per boss (optional, comment only)
+ - `out`: Output path (optional). If not set, overwrites the input file.
+ - `bossTemplate`: Path to a WPS snippet injected inside each generated boss stage (optional)
+ - `regularTemplate`: Path to a WPS snippet injected inside each generated regular stage (optional)
+
+### Template placeholders
+You can include placeholders in your template files and they will be replaced:
+- `{{STAGE}}` → current stage number
+- `{{IS_BOSS}}` → true/false
+- `{{BOSS_GROUP}}` → boss group id
+- `{{REWARD_ITEM}}` → reward item tblidx
+- `{{ARENA_WORLD}}` → current arena name from bossWorlds (empty if none)
+- `{{BOSS_EVERY}}`, `{{START_STAGE}}`, `{{END_STAGE}}`
 
 ## Notes
 - The tool does not attempt to validate group ids or world names against server data.

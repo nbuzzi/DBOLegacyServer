@@ -1,0 +1,250 @@
+    -- Boss Phases Template (uses placeholders)
+    -- {{STAGE}} {{ARENA_WORLD}} {{BOSS_GROUP}} {{INVINCIBLE_BUFF}} {{PLAYER_DEBUFF}}
+    -- Optional groups per phase and protections:
+    -- {{PHASE91_GROUP}} {{PHASE71_GROUP}} {{PHASE61_GROUP}} {{PHASE41_GROUP}} {{PHASE25_GROUP}} {{PHASE20_GROUP}}
+    -- {{PROTECT_PLATFORM_GROUP}} {{PROTECT_ADDONS_GROUP}}
+
+    Action( "function" )
+    --[
+        Condition( "child" )
+        --[
+            Action( "while" )
+            --[
+                Action( "loop" )
+                --[
+                    -- Wait until boss engages in combat
+                    Action( "wait" )
+                    --[
+                        Condition( "check battle" )
+                        --[
+                            Param( "type", "mob" )
+                            Param( "group", {{BOSS_GROUP}} )
+                            Param( "is battle", "true" )
+                        --]
+                        End()
+                    --]
+                    End()
+
+                    -- Phase 91%
+                    Action( "wait" )
+                    --[
+                        Condition( "check lp" )
+                        --[
+                            Param( "type", "mob" )
+                            Param( "group", {{BOSS_GROUP}} )
+                            Param( "lp", 91 )
+                        --]
+                        End()
+                    --]
+                    End()
+                    Action( "add mobgroup" )
+                    --[
+                        Param( "group", {{PHASE91_GROUP}} )
+                        Param( "no spawn wait", "true" )
+                    --]
+                    End()
+
+                    -- Phase 71%
+                    Action( "wait" )
+                    --[
+                        Condition( "check lp" )
+                        --[
+                            Param( "type", "mob" )
+                            Param( "group", {{BOSS_GROUP}} )
+                            Param( "lp", 71 )
+                        --]
+                        End()
+                    --]
+                    End()
+                    Action( "remove mobgroup" )
+                    --[
+                        Param( "group", {{PHASE91_GROUP}} )
+                        Param( "type", "clear" )
+                    --]
+                    End()
+                    Action( "add mobgroup" )
+                    --[
+                        Param( "group", {{PHASE71_GROUP}} )
+                        Param( "no spawn wait", "true" )
+                    --]
+                    End()
+
+                    -- Phase 61%
+                    Action( "wait" )
+                    --[
+                        Condition( "check lp" )
+                        --[
+                            Param( "type", "mob" )
+                            Param( "group", {{BOSS_GROUP}} )
+                            Param( "lp", 61 )
+                        --]
+                        End()
+                    --]
+                    End()
+                    Action( "remove mobgroup" )
+                    --[
+                        Param( "group", {{PHASE71_GROUP}} )
+                        Param( "type", "clear" )
+                    --]
+                    End()
+                    Action( "add mobgroup" )
+                    --[
+                        Param( "group", {{PHASE61_GROUP}} )
+                        Param( "no spawn wait", "true" )
+                    --]
+                    End()
+
+                    -- Phase 41%
+                    Action( "wait" )
+                    --[
+                        Condition( "check lp" )
+                        --[
+                            Param( "type", "mob" )
+                            Param( "group", {{BOSS_GROUP}} )
+                            Param( "lp", 41 )
+                        --]
+                        End()
+                    --]
+                    End()
+                    Action( "add mobgroup" )
+                    --[
+                        Param( "group", {{PHASE41_GROUP}} )
+                        Param( "no spawn wait", "true" )
+                    --]
+                    End()
+
+                    -- Phase 25%
+                    Action( "wait" )
+                    --[
+                        Condition( "check lp" )
+                        --[
+                            Param( "type", "mob" )
+                            Param( "group", {{BOSS_GROUP}} )
+                            Param( "lp", 25 )
+                        --]
+                        End()
+                    --]
+                    End()
+                    Action( "add mobgroup" )
+                    --[
+                        Param( "group", {{PHASE25_GROUP}} )
+                        Param( "no spawn wait", "true" )
+                    --]
+                    End()
+
+                    -- Phase 20%
+                    Action( "wait" )
+                    --[
+                        Condition( "check lp" )
+                        --[
+                            Param( "type", "mob" )
+                            Param( "group", {{BOSS_GROUP}} )
+                            Param( "lp", 20 )
+                        --]
+                        End()
+                    --]
+                    End()
+                    Action( "add mobgroup" )
+                    --[
+                        Param( "group", {{PHASE20_GROUP}} )
+                        Param( "no spawn wait", "true" )
+                    --]
+                    End()
+
+                    -- Protective platform logic (optional)
+                    Action( "wait" )
+                    --[
+                        Condition( "check lp" )
+                        --[
+                            Param( "type", "mob" )
+                            Param( "group", {{PROTECT_PLATFORM_GROUP}} )
+                            Param( "lp", 99 )
+                        --]
+                        End()
+                    --]
+                    End()
+                    Action( "add mobgroup" )
+                    --[
+                        Param( "group", {{PROTECT_ADDONS_GROUP}} )
+                        Param( "no spawn wait", "true" )
+                    --]
+                    End()
+
+                    -- Remove boss invincibility when platform dies
+                    Action( "wait" )
+                    --[
+                        Condition( "check mobgroup" )
+                        --[
+                            Param( "group", {{PROTECT_PLATFORM_GROUP}} )
+                            Param( "count", 0 )
+                        --]
+                        End()
+                    --]
+                    End()
+                    Action( "unregister buff" )
+                    --[
+                        Param( "target type", "mob" )
+                        Param( "target index", {{BOSS_GROUP}} )
+                        Param( "buff index", {{INVINCIBLE_BUFF}} )
+                    --]
+                    End()
+
+                    -- Optional: apply player debuff (configure target type accordingly)
+                    -- Action( "register buff" )
+                    -- --[
+                    --     Param( "target type", "pc" ) -- or "party" / "all"
+                    --     Param( "target index", 0 )
+                    --     Param( "buff index", {{PLAYER_DEBUFF}} )
+                    -- --]
+                    -- End()
+
+                    -- Exit when boss is no longer in battle
+                    Action( "wait" )
+                    --[
+                        Condition( "check battle" )
+                        --[
+                            Param( "type", "mob" )
+                            Param( "group", {{BOSS_GROUP}} )
+                            Param( "is battle", "false" )
+                        --]
+                        End()
+                    --]
+                    End()
+                --]
+                End()
+            --]
+            End()
+        --]
+        End()
+
+    -- Cleanup once boss & platform groups are gone
+    Action( "exec at once" )
+    --[
+        Action( "remove mobgroup" )
+        --[
+            Param( "group", {{PROTECT_ADDONS_GROUP}} )
+            Param( "type", "clear" )
+        --]
+        End()
+        Action( "remove mobgroup" )
+        --[
+            Param( "group", {{PHASE41_GROUP}} )
+            Param( "type", "faint" )
+        --]
+        End()
+        Action( "remove mobgroup" )
+        --[
+            Param( "group", {{PHASE25_GROUP}} )
+            Param( "type", "faint" )
+        --]
+        End()
+        Action( "remove mobgroup" )
+        --[
+            Param( "group", {{PHASE20_GROUP}} )
+            Param( "type", "faint" )
+        --]
+        End()
+    --]
+    End()
+
+    -- Timed event after stage clear will be handled by the generator's reward/wait block.
