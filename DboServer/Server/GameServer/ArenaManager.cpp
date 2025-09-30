@@ -382,6 +382,16 @@ bool CArenaManager::LoadConfigFromIniPath(const char* iniPath)
 	if (file.Read("Arena", "VerboseLogs", verboseLogs)) m_cfg.verboseLogs = (verboseLogs != 0);
 	ARENA_VLOG(m_cfg, LOG_GENERAL, "[ARENA] VerboseLogs enabled=%d", m_cfg.verboseLogs ? 1 : 0);
 
+	// Watchdog settings (optional)
+	int watchdogEnabled = 0;
+	if (file.Read("Arena", "WatchdogEnabled", watchdogEnabled)) m_cfg.watchdogEnabled = (watchdogEnabled != 0);
+	unsigned int wdPre = 0, wdEnroll = 0, wdRun = 0;
+	if (file.Read("Arena", "WatchdogPreRoundSeconds", wdPre)) m_cfg.watchdogPreRoundSeconds = wdPre;
+	if (file.Read("Arena", "WatchdogEnrollmentSeconds", wdEnroll)) m_cfg.watchdogEnrollmentSeconds = wdEnroll;
+	if (file.Read("Arena", "WatchdogRunHardcapSeconds", wdRun)) m_cfg.watchdogRunHardcapSeconds = wdRun;
+	ARENA_VLOG(m_cfg, LOG_GENERAL, "[ARENA] Watchdog cfg: enabled=%d pre=%us enroll=%us runCap=%us",
+		m_cfg.watchdogEnabled ? 1 : 0, (unsigned)m_cfg.watchdogPreRoundSeconds, (unsigned)m_cfg.watchdogEnrollmentSeconds, (unsigned)m_cfg.watchdogRunHardcapSeconds);
+
 	// Attackability reliability tuning
 	unsigned int unlockSleepMs = 0;
 	if (file.Read("Arena", "UnlockPulseSleepMs", unlockSleepMs) && unlockSleepMs > 0) m_cfg.unlockPulseSleepMs = unlockSleepMs;
@@ -912,6 +922,17 @@ void CArenaManager::TickProcess(unsigned long dwTickDiff)
 	if (!m_cfg.enabled || m_state == State::IDLE)
 		return;
 
+	// Track elapsed time in the current arena state for watchdog purposes
+	if (m_prevState != m_state)
+	{
+		m_prevState = m_state;
+		m_stateElapsedMs = 0;
+	}
+	else
+	{
+		m_stateElapsedMs += dwTickDiff;
+	}
+
 	/*ARENA_VLOG(m_cfg, LOG_GENERAL, "[ARENA][Tick] state=%u runSettleMs=%u roundUi=%d roundRemainMs=%u worldTblidx=%u worldId=%u participants=%u spectators=%u",
 		(unsigned)m_state, (unsigned)m_runSettleMs, m_roundUiActive ? 1 : 0, (unsigned)m_roundRemainMs,
 		(unsigned)m_currentWorldTblidx, (unsigned)m_currentWorldId, (unsigned)m_participants.size(), (unsigned)m_spectators.size());*/
@@ -1021,12 +1042,12 @@ void CArenaManager::TickProcess(unsigned long dwTickDiff)
 						// As extra safety, clear any combat-restricting conditions again
 						ClearCombatRestrictionsForParticipants();
 
-							if (attempt < unlockAttempts - 1)
-							{
-								// Brief delay between attempts per configuration
-								if (m_cfg.unlockPulseSleepMs > 0)
-									Sleep(m_cfg.unlockPulseSleepMs);
-							}
+						if (attempt < unlockAttempts - 1)
+						{
+							// Brief delay between attempts per configuration
+							if (m_cfg.unlockPulseSleepMs > 0)
+								Sleep(m_cfg.unlockPulseSleepMs);
+						}
 					}
 				}
 			}
@@ -1047,6 +1068,83 @@ void CArenaManager::TickProcess(unsigned long dwTickDiff)
 				FinishMatch(false);
 				return; // state transitioned; exit early
 			}
+		}
+	}
+
+	// Watchdog: detect stuck states (PRE_ROUND/STAGE_READY/IN_ROUND) and recover safely
+	if (m_cfg.watchdogEnabled)
+	{
+		// Determine dynamic defaults if config is 0
+		unsigned int preRoundLimitMs = ToMs(m_cfg.watchdogPreRoundSeconds ? m_cfg.watchdogPreRoundSeconds : (m_cfg.maxWaitAllArriveSeconds ? m_cfg.maxWaitAllArriveSeconds + m_cfg.startDelaySeconds + 10 : 45));
+		unsigned int runHardcapMs = 0;
+		if (m_cfg.watchdogRunHardcapSeconds)
+			runHardcapMs = ToMs(m_cfg.watchdogRunHardcapSeconds);
+		else
+		{
+			// If a round timer UI is configured, add a small buffer; otherwise use a safe cap (10 minutes)
+			unsigned int base = (m_cfg.roundTimerSeconds ? (m_cfg.roundTimerSeconds + 15) : 600);
+			runHardcapMs = ToMs(base);
+		}
+
+		switch (m_state)
+		{
+		case State::PRE_ROUND:
+		case State::MATCH_READY:
+		case State::STAGE_READY:
+			if (m_stateElapsedMs > preRoundLimitMs)
+			{
+				ARENA_VLOG(m_cfg, LOG_GENERAL, "[ARENA][WATCHDOG] PreRound stuck > %ums. Forcing start or reset.", preRoundLimitMs);
+				// If we have at least 2 participants online, try to jump into RUN quickly; else reset to ENROLLMENT
+				if (CountOnlineParticipants() >= 2)
+				{
+					// Attempt a minimal start: bind world and send RUN with a short timer
+					unsigned int wid = m_currentWorldId ? m_currentWorldId : EnsureCurrentWorldId();
+					if (wid)
+					{
+						m_pendingStartMs = 0;
+						m_pendingStartWorldId = 0;
+						m_waitAllArriveMs = 0;
+						// Initialize HUD minimal state if enabled
+						if (m_cfg.rankUiEnabled)
+						{
+							BroadcastRankJoinToWorld(wid);
+							BroadcastRankStateToWorld(wid, RANKBATTLE_BATTLESTATE_STAGE_READY, m_rankBattleStage);
+						}
+						// Enter RUN with remaining or default timer
+						unsigned long runMs = ToMs(m_cfg.roundTimerSeconds ? m_cfg.roundTimerSeconds : 120);
+						UpdateRankBattleState(RANKBATTLE_BATTLESTATE_STAGE_RUN, m_rankBattleStage, runMs);
+						m_state = State::IN_ROUND;
+						m_stateElapsedMs = 0;
+						MakeParticipantsAttackable(wid);
+						ARENA_VLOG(m_cfg, LOG_GENERAL, "[ARENA][WATCHDOG] Forced start into RUN with %ums.", (unsigned)(runMs / 1000));
+					}
+					else
+					{
+						// Could not ensure a world; reset to enrollment
+						m_state = State::ENROLLMENT;
+						m_stateElapsedMs = 0;
+						ARENA_VLOG(m_cfg, LOG_GENERAL, "[ARENA][WATCHDOG] Reset to ENROLLMENT due to missing worldId.");
+					}
+				}
+				else
+				{
+					// Not enough participants; stop and reset cleanly
+					Stop(true);
+					m_state = State::IDLE;
+					m_stateElapsedMs = 0;
+				}
+			}
+			break;
+		case State::IN_ROUND:
+			// If we have a UI timer, our normal timeout handler will call FinishOnTimeout; otherwise enforce a hard cap
+			if (!m_roundUiActive && m_stateElapsedMs > runHardcapMs)
+			{
+				ARENA_VLOG(m_cfg, LOG_GENERAL, "[ARENA][WATCHDOG] RUN hardcap exceeded > %ums. Finishing on timeout.", (unsigned)(runHardcapMs / 1000));
+				FinishOnTimeout();
+			}
+			break;
+		default:
+			break;
 		}
 	}
 
@@ -1229,6 +1327,8 @@ void CArenaManager::TickProcess(unsigned long dwTickDiff)
 					m_state = State::ENROLLMENT;
 					SendNotice(L"Arena canceled: no participants online.", SERVER_TEXT_EMERGENCY);
 					NTL_PRINT(PRINT_APP, _T("[ARENA] Start canceled: no participants online"));
+					// Clear participant list so automation can proceed on next cycle
+					m_participants.clear();
 					return;
 				}
 			}
@@ -1360,6 +1460,8 @@ void CArenaManager::TickProcess(unsigned long dwTickDiff)
 				m_state = State::ENROLLMENT;
 				SendNotice(L"Arena canceled: nobody arrived to the arena.", SERVER_TEXT_EMERGENCY);
 				NTL_PRINT(PRINT_APP, _T("[ARENA] Start canceled: present=0 at timeout"));
+				// Avoid automation stalls: clear participants when nobody arrived
+				m_participants.clear();
 			}
 			else
 			{
@@ -1498,6 +1600,8 @@ void CArenaManager::TickProcess(unsigned long dwTickDiff)
 				m_state = State::ENROLLMENT;
 				// Do not cancel external proposals; Arena uses direct teleports now
 				NTL_PRINT(PRINT_APP, _T("[ARENA] Invite timeout: no acceptors. Reset to ENROLLMENT"));
+				// Clear participant list so AutoArena can open next cycle without @arena stop
+				m_participants.clear();
 			}
 			else
 			{
@@ -1508,6 +1612,8 @@ void CArenaManager::TickProcess(unsigned long dwTickDiff)
 					m_state = State::ENROLLMENT;
 					// Do not cancel external proposals; Arena uses direct teleports now
 					NTL_PRINT(PRINT_APP, _T("[ARENA] Invite end: accepted=%u < 2. Reset to ENROLLMENT"), accepted);
+					// Clear participant list to avoid automation stall
+					m_participants.clear();
 					return;
 				}
 				// If we don't have a shared worldId yet (per-player tblidx teleports), pick any participant's worldId for this tblidx
@@ -1522,7 +1628,7 @@ void CArenaManager::TickProcess(unsigned long dwTickDiff)
 					if (p && p->IsInitialized() && (
 						(worldId && (unsigned int)p->GetWorldID() == worldId) ||
 						(!worldId && (unsigned int)p->GetWorldTblidx() == m_currentWorldTblidx)
-					))
+						))
 					{
 						acceptedParticipants.insert(cid);
 					}
@@ -1922,7 +2028,7 @@ void CArenaManager::TickProcess(unsigned long dwTickDiff)
 				}
 				else
 				{
-						// Same-map next round: refresh HUD and team info and then gate start until players are present
+					// Same-map next round: refresh HUD and team info and then gate start until players are present
 					unsigned int worldId = m_currentWorldId ? m_currentWorldId : EnsureCurrentWorldId();
 					if (worldId)
 					{
@@ -2019,6 +2125,21 @@ void CArenaManager::AutomationTick(unsigned long dwTickDiff)
 	if (!m_cfg.autoEnabled)
 		return;
 
+	// Track elapsed time in AutoArena phase and add an independent ensure timer
+	if (m_prevAutoState != m_autoState)
+	{
+		m_prevAutoState = m_autoState;
+		m_autoStateElapsedMs = 0;
+	}
+	else
+	{
+		m_autoStateElapsedMs += dwTickDiff;
+	}
+	if (m_autoEnsureRemainMs > 0)
+	{
+		m_autoEnsureRemainMs = (m_autoEnsureRemainMs > dwTickDiff) ? (m_autoEnsureRemainMs - dwTickDiff) : 0;
+	}
+
 	// Optional channel-name filter: only run on matching channels
 	CGameServer* app = (CGameServer*)g_pApp;
 	if (m_cfg.autoChannelName.c_str() && m_cfg.autoChannelName.c_str()[0] != '\0')
@@ -2046,6 +2167,8 @@ void CArenaManager::AutomationTick(unsigned long dwTickDiff)
 		else
 			prepWaitSec = 0; // open enrollment immediately
 		m_autoRemainMs = ToMs(prepWaitSec);
+		// As an extra safety, arm an ensure timer to force an open if scheduler stalls
+		m_autoEnsureRemainMs = ToMs((prepWaitSec > 0 ? prepWaitSec : 1) * 2);
 		return;
 	}
 
@@ -2105,6 +2228,13 @@ void CArenaManager::AutomationTick(unsigned long dwTickDiff)
 		BroadcastSystem(L"[Arena] Auto event opened. Use @arenajoin within the next minutes to participate.");
 		m_autoState = AutoState::ENROLLMENT_OPEN;
 		m_autoRemainMs = ToMs(m_cfg.autoEnrollmentSeconds);
+		// Ensure watchdog: if the arena fails to open correctly or Start() didn't change state, bump it
+		if (m_state != State::ENROLLMENT)
+		{
+			m_state = State::ENROLLMENT;
+		}
+		// Arm ensure timer to force-close enrollment in case TeleportParticipants fails to reset
+		m_autoEnsureRemainMs = ToMs(m_cfg.autoEnrollmentSeconds + 15);
 		return;
 	}
 
@@ -2129,6 +2259,13 @@ void CArenaManager::AutomationTick(unsigned long dwTickDiff)
 		m_autoRemainMs = 0;
 		TeleportParticipants(true);
 		TeleportSpectators();
+		// If teleport/start was aborted due to validation failure (e.g., not enough participants),
+		// TeleportParticipants(true) leaves state as ENROLLMENT. Clear the participant list now so the
+		// "no participants" branch below resets the arena to IDLE and allows the next auto cycle to open.
+		if (m_state == State::ENROLLMENT)
+		{
+			m_participants.clear();
+		}
 		BroadcastSystem(L"[Arena] Enrollment closed. Teleporting participants...");
 		// If nobody joined, reset arena state to IDLE so the next cycle can open properly
 		if (m_participants.empty())
@@ -2151,6 +2288,27 @@ void CArenaManager::AutomationTick(unsigned long dwTickDiff)
 		else
 			prepWaitSec = 0;
 		m_autoRemainMs = ToMs(prepWaitSec);
+		m_autoEnsureRemainMs = ToMs((prepWaitSec > 0 ? prepWaitSec : 1) * 2);
+	}
+
+	// Auto watchdog: if automation appears stalled beyond configured thresholds, nudge it
+	if (m_cfg.watchdogEnabled)
+	{
+		// If we sit in ENROLLMENT for too long outside an open window, reset to IDLE so next cycle can open
+		unsigned int enrollMaxMs = ToMs(m_cfg.watchdogEnrollmentSeconds ? m_cfg.watchdogEnrollmentSeconds : (m_cfg.autoEnrollmentSeconds ? (m_cfg.autoEnrollmentSeconds + 30) : 180));
+		if (m_state == State::ENROLLMENT && m_autoState != AutoState::ENROLLMENT_OPEN && m_stateElapsedMs > enrollMaxMs)
+		{
+			ARENA_VLOG(m_cfg, LOG_GENERAL, "[ARENA][WATCHDOG][AUTO] Enrollment stuck > %ums. Resetting to IDLE.", (unsigned)(enrollMaxMs / 1000));
+			m_participants.clear();
+			m_state = State::IDLE;
+			m_stateElapsedMs = 0;
+		}
+		// If WAIT_NEXT takes too long (scheduler didn't fire), force-open a new enrollment
+		if (m_autoState == AutoState::WAIT_NEXT && m_autoEnsureRemainMs == 0)
+		{
+			ARENA_VLOG(m_cfg, LOG_GENERAL, "[ARENA][WATCHDOG][AUTO] Forcing enrollment open (ensure timer).");
+			m_autoRemainMs = 0; // fall into the open branch on next tick
+		}
 	}
 }
 
@@ -2264,7 +2422,7 @@ bool CArenaManager::IsArenaWorldTblidx(unsigned int worldTblidx) const
 	auto within = [&](unsigned int base, unsigned int id) -> bool {
 		const unsigned int kSpan = 200; // +/- range
 		return id >= base && id <= base + kSpan;
-	};
+		};
 	for (unsigned int base : m_cfg.autoWorldTblidxList)
 		if (within(base, worldTblidx)) return true;
 	for (unsigned int base : m_cfg.worldTblidxList)
@@ -2809,6 +2967,8 @@ void CArenaManager::MoveToSpectator(CPlayer* pPlayer)
 		return;
 	// Clear any active round timers/countdown for this player to avoid HUD freeze
 	SendRoundTimerEndTo(pPlayer);
+	// Ensure fallback countdown is also stopped explicitly
+	SendCountdownTo(pPlayer, false);
 	// Clear RankBattle HUD for this player to avoid client freezes leaving the fight context
 	if (m_cfg.rankUiEnabled)
 		SendRankLeaveTo(pPlayer);
@@ -3021,15 +3181,15 @@ void CArenaManager::FinishMatch(bool aborted)
 			unsigned int wid = m_currentWorldId ? m_currentWorldId : EnsureCurrentWorldId();
 			if (wid)
 				BroadcastRankStateToWorld(wid, RANKBATTLE_BATTLESTATE_MATCH_FINISH, 1);
-			// Always leave at the very end to clear HUD
-			if (m_currentWorldId)
+			// If we are not keeping the Rank UI after finish, clear it now; otherwise, we'll send LEAVE just before teleport
+			if (m_currentWorldId && !m_cfg.keepRankUiAfterFinish)
 				BroadcastRankLeaveToWorld(m_currentWorldId);
 		}
 	}
 	else
 	{
 		// Arena world: we used Rank style during match; now explicitly clear Rank HUD
-		if (m_cfg.rankPacketsEnabled && m_currentWorldId)
+		if (m_cfg.rankPacketsEnabled && m_currentWorldId && !m_cfg.keepRankUiAfterFinish)
 		{
 			BroadcastRankLeaveToWorld(m_currentWorldId);
 		}
@@ -3047,7 +3207,7 @@ void CArenaManager::FinishMatch(bool aborted)
 	if (!aborted && m_winners.size() > 0)
 	{
 		// On arena worlds, skip notices to keep UI calm; otherwise announce
-	if (!IsArenaWorldTblidx(m_currentWorldTblidx))
+		if (!IsArenaWorldTblidx(m_currentWorldTblidx))
 		{
 			for (auto cid : m_winners)
 			{
@@ -3108,7 +3268,7 @@ void CArenaManager::FinishMatch(bool aborted)
 		}
 
 		// Arena-world: announce winner to everyone and remind to check inventory, just before teleport
-	if (IsArenaWorldByTblidxName(m_currentWorldTblidx))
+		if (IsArenaWorldByTblidxName(m_currentWorldTblidx))
 		{
 			wchar_t msg[320];
 			bool announced = false;
@@ -3440,7 +3600,7 @@ void CArenaManager::FinishWithWinner(unsigned int winnerCharId)
 		if (CPlayer* p = g_pObjectManager->FindByChar((CHARACTERID)winnerCharId))
 		{
 			MarkWinner(p);
-		if (!IsArenaWorldByTblidxName(m_currentWorldTblidx))
+			if (!IsArenaWorldByTblidxName(m_currentWorldTblidx))
 			{
 				wchar_t msg[256];
 				ComposeWinnerText(p, msg, _countof(msg));
@@ -3454,7 +3614,7 @@ void CArenaManager::FinishWithWinner(unsigned int winnerCharId)
 		AwardRewards(false);
 		AwardMudosaPoints();
 		// Arena-world: announce winner + reward hint to everyone before teleport
-	if (IsArenaWorldByTblidxName(m_currentWorldTblidx))
+		if (IsArenaWorldByTblidxName(m_currentWorldTblidx))
 		{
 			wchar_t msg[320];
 			if (winnerCharId)
@@ -3477,7 +3637,7 @@ void CArenaManager::FinishWithWinner(unsigned int winnerCharId)
 	if (m_cfg.telecastEnabled && !IsArenaWorldByTblidxName(m_currentWorldTblidx))
 		BroadcastTelecastToWorld(EnsureCurrentWorldId());
 	// Do not send Rank finish/leave on arena worlds to keep UI until teleport
-				if (!IsArenaWorldByTblidxName(m_currentWorldTblidx))
+	if (!IsArenaWorldByTblidxName(m_currentWorldTblidx))
 	{
 		if (m_cfg.rankUiEnabled)
 			BroadcastRankStateToWorld(EnsureCurrentWorldId(), 5, 1); // RANKBATTLE_BATTLESTATE_MATCH_FINISH
@@ -3557,6 +3717,7 @@ void CArenaManager::BroadcastRankMatchStartToWorld(unsigned int worldId)
 	CGameServer* app = (CGameServer*)g_pApp;
 	CWorld* pWorld = app->GetGameMain()->GetWorldManager()->FindWorld((WORLDID)worldId);
 	if (!pWorld) return;
+	if (!pWorld->GetTbldat()) return;
 	BYTE rule = pWorld->GetTbldat()->byWorldRuleType;
 	// Treat our arena world as RANKBATTLE for Arena combat UI (use world pointer, no lookup)
 	if (IsArenaWorld(pWorld)) rule = GAMERULE_RANKBATTLE;
@@ -3584,6 +3745,7 @@ void CArenaManager::BroadcastRankStageFinishToWorld(unsigned int worldId)
 	CGameServer* app = (CGameServer*)g_pApp;
 	CWorld* pWorld = app->GetGameMain()->GetWorldManager()->FindWorld((WORLDID)worldId);
 	if (!pWorld) return;
+	if (!pWorld->GetTbldat()) return;
 	BYTE rule = pWorld->GetTbldat()->byWorldRuleType;
 	// Treat arena world as RANKBATTLE for Arena combat UI
 	if (IsArenaWorld(pWorld)) rule = GAMERULE_RANKBATTLE;
@@ -3611,6 +3773,7 @@ void CArenaManager::BroadcastRankMatchFinishToWorld(unsigned int worldId)
 	CGameServer* app = (CGameServer*)g_pApp;
 	CWorld* pWorld = app->GetGameMain()->GetWorldManager()->FindWorld((WORLDID)worldId);
 	if (!pWorld) return;
+	if (!pWorld->GetTbldat()) return;
 	BYTE rule = pWorld->GetTbldat()->byWorldRuleType;
 	if (IsArenaWorld(pWorld)) rule = GAMERULE_RANKBATTLE;
 	if (rule == GAMERULE_MINORMATCH || rule == GAMERULE_MAJORMATCH || rule == GAMERULE_FINALMATCH)
@@ -3639,6 +3802,7 @@ void CArenaManager::BroadcastRankJoinToWorld(unsigned int worldId)
 	// Ensure world is rank-rule
 	if (CWorld* pWorld = ((CGameServer*)g_pApp)->GetGameMain()->GetWorldManager()->FindWorld((WORLDID)worldId))
 	{
+		if (!pWorld->GetTbldat()) return;
 		BYTE rule = pWorld->GetTbldat()->byWorldRuleType;
 		if (IsArenaWorld(pWorld)) rule = GAMERULE_RANKBATTLE;
 		if (rule == GAMERULE_MINORMATCH || rule == GAMERULE_MAJORMATCH || rule == GAMERULE_FINALMATCH)
@@ -3668,6 +3832,7 @@ void CArenaManager::BroadcastRankLeaveToWorld(unsigned int worldId)
 	// Ensure world is rank-rule
 	if (CWorld* pWorld = ((CGameServer*)g_pApp)->GetGameMain()->GetWorldManager()->FindWorld((WORLDID)worldId))
 	{
+		if (!pWorld->GetTbldat()) return;
 		BYTE rule = pWorld->GetTbldat()->byWorldRuleType;
 		if (IsArenaWorld(pWorld)) rule = GAMERULE_RANKBATTLE;
 		if (rule == GAMERULE_MINORMATCH || rule == GAMERULE_MAJORMATCH || rule == GAMERULE_FINALMATCH)
@@ -3677,15 +3842,15 @@ void CArenaManager::BroadcastRankLeaveToWorld(unsigned int worldId)
 	}
 	else return;
 	auto sendLeave = [&](CHARACTERID cid)
-	{
-		CPlayer* pPlayer = g_pObjectManager->FindByChar(cid);
-		if (!pPlayer || !pPlayer->IsInitialized() || (unsigned int)pPlayer->GetWorldID() != worldId) return;
-		CNtlPacket packet(sizeof(sGU_RANKBATTLE_LEAVE_NFY));
-		sGU_RANKBATTLE_LEAVE_NFY* res = (sGU_RANKBATTLE_LEAVE_NFY*)packet.GetPacketData();
-		res->wOpCode = GU_RANKBATTLE_LEAVE_NFY;
-		packet.SetPacketLen(sizeof(sGU_RANKBATTLE_LEAVE_NFY));
-		pPlayer->SendPacket(&packet);
-	};
+		{
+			CPlayer* pPlayer = g_pObjectManager->FindByChar(cid);
+			if (!pPlayer || !pPlayer->IsInitialized() || (unsigned int)pPlayer->GetWorldID() != worldId) return;
+			CNtlPacket packet(sizeof(sGU_RANKBATTLE_LEAVE_NFY));
+			sGU_RANKBATTLE_LEAVE_NFY* res = (sGU_RANKBATTLE_LEAVE_NFY*)packet.GetPacketData();
+			res->wOpCode = GU_RANKBATTLE_LEAVE_NFY;
+			packet.SetPacketLen(sizeof(sGU_RANKBATTLE_LEAVE_NFY));
+			pPlayer->SendPacket(&packet);
+		};
 	for (auto cid : m_participants)
 		sendLeave((CHARACTERID)cid);
 	for (auto cid : m_spectators)
@@ -3744,6 +3909,7 @@ void CArenaManager::BroadcastRankTeamInfoToWorld(unsigned int worldId)
 	CGameServer* app = (CGameServer*)g_pApp;
 	CWorld* pWorld = app->GetGameMain()->GetWorldManager()->FindWorld((WORLDID)worldId);
 	if (!pWorld) return;
+	if (!pWorld->GetTbldat()) return;
 	// Only send on rank-rule worlds (skip Budokai and others)
 	BYTE rule = pWorld->GetTbldat()->byWorldRuleType;
 	if (IsArenaWorldTblidx(m_currentWorldTblidx)) rule = GAMERULE_RANKBATTLE;
@@ -4182,16 +4348,16 @@ unsigned int CArenaManager::EnsureCurrentWorldId()
 
 		// If the target world is static (non-dynamic), it is created at server startup and cannot be created via CreateWorld.
 		// Reuse the existing static instance by its worldID (which equals tblidx for static worlds).
-			if (!pWorldTbldat->bDynamic)
+		if (!pWorldTbldat->bDynamic)
 		{
 			CWorld* pExistingStatic = app->GetGameMain()->GetWorldManager()->FindWorld((WORLDID)pWorldTbldat->tblidx);
 			if (pExistingStatic)
 			{
-					if (IsArenaWorld(pExistingStatic) && ShouldOverrideRuleForWorld(m_currentWorldTblidx))
-					{
-						pExistingStatic->SetRuleOverride(GAMERULE_RANKBATTLE);
-						m_worldsWithOverride.insert((unsigned int)pExistingStatic->GetID());
-					}
+				if (IsArenaWorld(pExistingStatic) && ShouldOverrideRuleForWorld(m_currentWorldTblidx))
+				{
+					pExistingStatic->SetRuleOverride(GAMERULE_RANKBATTLE);
+					m_worldsWithOverride.insert((unsigned int)pExistingStatic->GetID());
+				}
 				m_currentWorldId = (unsigned int)pExistingStatic->GetID();
 				NTL_PRINT(PRINT_APP, _T("[ARENA] CC Mode: Reusing static world instance ID %u for tblidx %u"), m_currentWorldId, m_currentWorldTblidx);
 				ARENA_VLOG(m_cfg, LOG_GENERAL, "[ARENA] Reused static world: id=%u tblidx=%u", (unsigned)m_currentWorldId, (unsigned)m_currentWorldTblidx);
@@ -4576,6 +4742,39 @@ void CArenaManager::ResetParticipantsBetweenRounds()
 
 void CArenaManager::PostFinishTeleportDefault()
 {
+	// Proactively clear any HUD elements (round timer, countdown, rank HUD) before teleporting out
+	// This avoids client-side leftovers like 'Please wait' or Rank button after returning
+	if (m_currentWorldId)
+	{
+		for (auto cid : m_participants)
+		{
+			if (CPlayer* p = g_pObjectManager->FindByChar((CHARACTERID)cid))
+			{
+				if ((unsigned int)p->GetWorldID() == m_currentWorldId)
+				{
+					SendRoundTimerEndTo(p);
+					// Defer LEAVE until now if UI was kept at finish
+					if (m_cfg.rankPacketsEnabled && m_cfg.keepRankUiAfterFinish)
+						SendRankLeaveTo(p);
+					// Also ensure fallback countdown is stopped
+					SendCountdownTo(p, false);
+				}
+			}
+		}
+		for (auto cid : m_spectators)
+		{
+			if (CPlayer* p = g_pObjectManager->FindByChar((CHARACTERID)cid))
+			{
+				if ((unsigned int)p->GetWorldID() == m_currentWorldId)
+				{
+					SendRoundTimerEndTo(p);
+					if (m_cfg.rankPacketsEnabled && m_cfg.keepRankUiAfterFinish)
+						SendRankLeaveTo(p);
+					SendCountdownTo(p, false);
+				}
+			}
+		}
+	}
 	// First, ensure all fainted participants in the arena world are standing to avoid FAINT carryover
 	if (m_currentWorldId)
 	{
@@ -4695,7 +4894,7 @@ void CArenaManager::FinishOnTimeout()
 			return;
 		}
 		// final round: on arena world, finish immediately with minimal UX
-	if (IsArenaWorldTblidx(m_currentWorldTblidx))
+		if (IsArenaWorldTblidx(m_currentWorldTblidx))
 		{
 			FinishMatch(false);
 			return;
@@ -4778,7 +4977,7 @@ void CArenaManager::FinishByPoints()
 		if (m_cfg.telecastEnabled && !IsArenaWorldTblidx(m_currentWorldTblidx))
 			BroadcastTelecastToWorld(EnsureCurrentWorldId());
 		// Suppress RankBattle finish/leave on arena world to keep UI
-			if (!IsArenaWorldTblidx(m_currentWorldTblidx))
+		if (!IsArenaWorldTblidx(m_currentWorldTblidx))
 		{
 			if (m_cfg.rankUiEnabled && !m_cfg.suppressRankFinishUi)
 			{
@@ -5252,6 +5451,37 @@ void CArenaManager::PostFinishTeleportAll()
 	{
 		PostFinishTeleportDefault();
 		return;
+	}
+
+	// Proactively clear any HUD elements (round timer, countdown, rank HUD) before teleporting out
+	if (m_currentWorldId)
+	{
+		for (auto cid : m_participants)
+		{
+			if (CPlayer* p = g_pObjectManager->FindByChar((CHARACTERID)cid))
+			{
+				if ((unsigned int)p->GetWorldID() == m_currentWorldId)
+				{
+					SendRoundTimerEndTo(p);
+					if (m_cfg.rankPacketsEnabled && m_cfg.keepRankUiAfterFinish)
+						SendRankLeaveTo(p);
+					SendCountdownTo(p, false);
+				}
+			}
+		}
+		for (auto cid : m_spectators)
+		{
+			if (CPlayer* p = g_pObjectManager->FindByChar((CHARACTERID)cid))
+			{
+				if ((unsigned int)p->GetWorldID() == m_currentWorldId)
+				{
+					SendRoundTimerEndTo(p);
+					if (m_cfg.rankPacketsEnabled && m_cfg.keepRankUiAfterFinish)
+						SendRankLeaveTo(p);
+					SendCountdownTo(p, false);
+				}
+			}
+		}
 	}
 
 	// Ensure fainted participants are standing before teleporting out to avoid client re-spawn quirks
@@ -6143,6 +6373,13 @@ bool CArenaManager::ValidateTeamComposition()
 			BroadcastSystem(L"[Arena] Not enough participants online. Arena canceled.");
 			SendNotice(L"Arena canceled - not enough participants.", SERVER_TEXT_SYSNOTICE);
 			NTL_PRINT(PRINT_APP, _T("[ARENA] Validation failed: only %u participants online for non-team mode"), onlineParticipants);
+			// If this occurred during AutoArena enrollment closing, proactively clear participants so
+			// the scheduler can reset to IDLE and reopen on the next cycle without requiring @arena stop
+			if (m_cfg.autoEnabled && m_autoState == AutoState::ENROLLMENT_OPEN)
+			{
+				m_participants.clear();
+				ARENA_VLOG(m_cfg, LOG_GENERAL, "[ARENA][AUTO] Cleared participants on validation failure (<2) to allow auto restart.");
+			}
 			return false;
 		}
 		return true;
@@ -6203,6 +6440,11 @@ bool CArenaManager::ValidateTeamComposition()
 		BroadcastSystem(L"[Arena] Not enough valid participants online. Arena canceled.");
 		SendNotice(L"Arena canceled - not enough participants.", SERVER_TEXT_SYSNOTICE);
 		NTL_PRINT(PRINT_APP, _T("[ARENA] Validation failed: only %u valid participants for team mode"), validParticipants);
+		if (m_cfg.autoEnabled && m_autoState == AutoState::ENROLLMENT_OPEN)
+		{
+			m_participants.clear();
+			ARENA_VLOG(m_cfg, LOG_GENERAL, "[ARENA][AUTO] Cleared participants on team-mode validation failure (<2) to allow auto restart.");
+		}
 		return false;
 	}
 

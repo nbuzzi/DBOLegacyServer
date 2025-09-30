@@ -161,7 +161,7 @@ bool CCustomDropEvent::LoadConfigInternal(const char* path)
 		const char* visualsKw = "visuals";
 		const char* totemKw = "totem";
 		const char* replaceKw = "replace";
-	const char* settingsKw = "settings"; // global settings for defaults
+		const char* settingsKw = "settings"; // global settings for defaults
 		bool isMods = false;
 		bool isSpawn = false;
 		bool isBuffs = false;
@@ -589,7 +589,7 @@ bool CCustomDropEvent::LoadConfigInternal(const char* path)
 							while (*pEnd && *pEnd != '@' && *pEnd != ',' && *pEnd != '\n' && *pEnd != '\r') ++pEnd;
 							char saved = *pEnd; *pEnd = '\0';
 							size_t len = strlen(p1);
-							if (len > 0 && (p1[len-1] == 's' || p1[len-1] == 'S')) { secs = true; p1[len-1] = '\0'; }
+							if (len > 0 && (p1[len - 1] == 's' || p1[len - 1] == 'S')) { secs = true; p1[len - 1] = '\0'; }
 							durationMs = (DWORD)strtoul(p1, nullptr, 10);
 							if (secs) durationMs *= 1000;
 							*pEnd = saved;
@@ -602,7 +602,7 @@ bool CCustomDropEvent::LoadConfigInternal(const char* path)
 								while (*pEnd2 && *pEnd2 != ',' && *pEnd2 != '\n' && *pEnd2 != '\r') ++pEnd2;
 								char saved2 = *pEnd2; *pEnd2 = '\0';
 								size_t len2 = strlen(p2);
-								if (len2 > 0 && (p2[len2-1] == 's' || p2[len2-1] == 'S')) { secs2 = true; p2[len2-1] = '\0'; }
+								if (len2 > 0 && (p2[len2 - 1] == 's' || p2[len2 - 1] == 'S')) { secs2 = true; p2[len2 - 1] = '\0'; }
 								periodMs = (DWORD)strtoul(p2, nullptr, 10);
 								if (secs2) periodMs *= 1000;
 								*pEnd2 = saved2;
@@ -835,7 +835,7 @@ void CCustomDropEvent::TickProcess(DWORD dwTick)
 									{
 										if (now < t.buffNextTicks[bi])
 											continue;
-										const BuffEntry &be = t.buffs[bi];
+										const BuffEntry& be = t.buffs[bi];
 										sSKILL_TBLDAT* pSkill = (sSKILL_TBLDAT*)g_pTableContainer->GetSkillTable()->FindData(be.skillTblidx);
 										if (!pSkill) continue;
 
@@ -947,7 +947,7 @@ void CCustomDropEvent::ApplyAutoStartPolicy()
 void CCustomDropEvent::Update(CMonster* pMob, CCharacter* pPlayer)
 {
 	if (!pPlayer->GetCurWorld()) { m_eventSpawned.erase(pMob->GetID()); return; }
-	
+
 	// Allow CustomDropEvent in all worlds except competitive/PvP-only modes
 	eGAMERULE_TYPE ruleType = pPlayer->GetCurWorld()->GetRuleType();
 	switch (ruleType)

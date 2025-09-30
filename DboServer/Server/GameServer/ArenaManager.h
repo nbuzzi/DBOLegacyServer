@@ -139,6 +139,12 @@ public:
 		bool autoRandomizeWorlds;         // pick random world each event (when list provided)
 		bool autoMapPerRound;             // rotate world each round during an event using the list
 
+		// Watchdog: self-heal guards to avoid stuck arena/automation
+		bool watchdogEnabled;             // enable watchdog checks (safe defaults)
+		unsigned int watchdogPreRoundSeconds;   // max time to stay in PRE_ROUND/STAGE_READY before forced recovery (0 = auto)
+		unsigned int watchdogEnrollmentSeconds; // max time to stay in ENROLLMENT without active AutoEnrollment (0 = auto)
+		unsigned int watchdogRunHardcapSeconds; // hard cap for a RUN state when no round timer is configured (0 = auto)
+
 		Config()
 			: enabled(false), rotationSeconds(0), startDelaySeconds(5), roundTimerSeconds(180), stopOnTimeout(true),
 			roundsCount(0),
@@ -159,7 +165,8 @@ public:
 			rewardsEnabled(false),
 			unlockPulseSleepMs(100), unlockDefaultAttempts(2),
 			autoEnabled(false), autoChannelName("ARENA"), autoIntervalSeconds(600), autoInitialDelaySeconds(300), autoEnrollmentSeconds(600),
-			autoWorldTblidx(900043), autoMode(Mode::FREE_FOR_ALL), autoUseElimination(true), autoRandomizeWorlds(false), autoMapPerRound(false) {
+			autoWorldTblidx(900043), autoMode(Mode::FREE_FOR_ALL), autoUseElimination(true), autoRandomizeWorlds(false), autoMapPerRound(false),
+			watchdogEnabled(false), watchdogPreRoundSeconds(0), watchdogEnrollmentSeconds(0), watchdogRunHardcapSeconds(0) {
 			// Default Mudosa rewards
 			mudosaWinnerPoints = 3000;
 			mudosaParticipantPoints = 2000;
@@ -419,10 +426,17 @@ private:
 
 	// Short grace window after entering RUN before we evaluate alive/faint logic
 	unsigned long m_runSettleMs = 0;
-    // Small delayed pulse to re-send ATTACKABLE shortly after RUN starts
-    unsigned long m_runUnlockPulseMs = 0;
+	// Small delayed pulse to re-send ATTACKABLE shortly after RUN starts
+	unsigned long m_runUnlockPulseMs = 0;
 	// Watchdog to force-complete match if MATCH_FINISH stalls
 	unsigned long m_matchFinishWatchdogMs = 0;
+
+	// Watchdog bookkeeping: track durations in current states and automation phases
+	State m_prevState = State::IDLE;
+	unsigned long m_stateElapsedMs = 0;           // ms spent in current Arena state
+	AutoState m_prevAutoState = AutoState::OFF;
+	unsigned long m_autoStateElapsedMs = 0;       // ms spent in current AutoArena phase
+	unsigned long m_autoEnsureRemainMs = 0;       // independent ensure timer to force reopen if scheduler stalls
 
 	// Post-finish teleport delay timer
 	unsigned long m_postFinishTeleportRemainMs = 0;
