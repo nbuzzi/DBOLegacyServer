@@ -51,6 +51,12 @@ static inline bool IsArenaWorld(const CWorld* pWorld)
 	return pTbldat && ArenaWorld::IsArenaWorldByWideName(pTbldat->wszName);
 }
 
+// Treat ARENAPODER custom maps (900043/900300) specially: keep their original rule and avoid per-round rotation
+static inline bool IsArenaPoderWorldTblidx(unsigned int worldTblidx)
+{
+	return worldTblidx >= 900043u && worldTblidx <= 900300u;
+}
+
 // Gated verbose logging: helper formats into a buffer and logs via ERR_LOG to avoid vararg macro pitfalls
 static inline void ArenaErrLog(unsigned int category, const char* fmt, ...)
 {
@@ -126,6 +132,36 @@ bool CArenaManager::IsRankBattleWorld(unsigned int worldTblidx) const
 			return true;
 	}
 	return false;
+}
+
+bool CArenaManager::ShouldOverrideRuleForWorld(unsigned int worldTblidx) const
+{
+	// Skip override for custom ARENAPODER maps to preserve their behavior
+	if (IsArenaPoderWorldTblidx(worldTblidx))
+		return false;
+	return true;
+}
+
+bool CArenaManager::ShouldRotatePerRoundForWorld(unsigned int worldTblidx) const
+{
+	// Do not rotate per round on ARENAPODER maps; they were designed to persist across rounds
+	if (IsArenaPoderWorldTblidx(worldTblidx))
+		return false;
+	return true;
+}
+
+void CArenaManager::RevertWorldRuleOverrides()
+{
+	if (m_worldsWithOverride.empty()) return;
+	CGameServer* app = (CGameServer*)g_pApp;
+	for (auto wid : m_worldsWithOverride)
+	{
+		if (CWorld* pW = app->GetGameMain()->GetWorldManager()->FindWorld((WORLDID)wid))
+		{
+			pW->ClearRuleOverride();
+		}
+	}
+	m_worldsWithOverride.clear();
 }
 
 CArenaManager::CArenaManager()
@@ -380,6 +416,34 @@ bool CArenaManager::LoadConfigFromIniPath(const char* iniPath)
 	int autoElim = 1;
 	if (file.Read("AutoArena", "UseElimination", autoElim)) m_cfg.autoUseElimination = (autoElim != 0);
 
+	// AutoArena optional CSV world list: AutoWorldTblidxList = 900043, 10000, 13000
+	m_cfg.autoWorldTblidxList.clear();
+	CNtlString autoWorldsCsv = file.Read("AutoArena", "AutoWorldTblidxList");
+	if (autoWorldsCsv.c_str())
+	{
+		std::string s = autoWorldsCsv.c_str();
+		size_t pos = 0;
+		while (pos != std::string::npos)
+		{
+			size_t comma = s.find(',', pos);
+			std::string tok = s.substr(pos, comma == std::string::npos ? std::string::npos : (comma - pos));
+			// trim
+			while (!tok.empty() && (tok.front() == ' ' || tok.front() == '\t')) tok.erase(tok.begin());
+			while (!tok.empty() && (tok.back() == ' ' || tok.back() == '\t')) tok.pop_back();
+			if (!tok.empty())
+			{
+				unsigned int v = (unsigned int)strtoul(tok.c_str(), nullptr, 10);
+				if (v != 0) m_cfg.autoWorldTblidxList.push_back(v);
+			}
+			if (comma == std::string::npos) break;
+			pos = comma + 1;
+		}
+	}
+	int autoRand = 0;
+	if (file.Read("AutoArena", "RandomizeWorlds", autoRand)) m_cfg.autoRandomizeWorlds = (autoRand != 0);
+	int autoMpr = 0;
+	if (file.Read("AutoArena", "MapPerRound", autoMpr)) m_cfg.autoMapPerRound = (autoMpr != 0);
+
 	// [Spectator]
 	int specEnabled = 0;
 	if (file.Read("Spectator", "Enabled", specEnabled)) m_cfg.spectatorsEnabled = (specEnabled != 0);
@@ -399,6 +463,12 @@ bool CArenaManager::LoadConfigFromIniPath(const char* iniPath)
 	CNtlString partCsv = file.Read("Rewards", "Participants");
 	ParseRewardsCsv(winCsv, m_cfg.winnerRewards);
 	ParseRewardsCsv(partCsv, m_cfg.participantRewards);
+	// Optional Mudosa point rewards
+	int mudosaWin = 0, mudosaPart = 0;
+	if (file.Read("Rewards", "MudosaWinnerPoints", mudosaWin) && mudosaWin > 0)
+		m_cfg.mudosaWinnerPoints = (unsigned)mudosaWin;
+	if (file.Read("Rewards", "MudosaParticipantPoints", mudosaPart) && mudosaPart > 0)
+		m_cfg.mudosaParticipantPoints = (unsigned)mudosaPart;
 
 	// World list resolution strategy
 	// 1) If UseOnlyCustomWorlds=true: use only cfgWorlds (validated)
@@ -1762,7 +1832,7 @@ void CArenaManager::TickProcess(unsigned long dwTickDiff)
 					// Final round on arena world: only stop timer and finish immediately with rewards/teleport.
 					// Skip any Rank/Budokai state broadcasts to keep UI intact until teleport.
 					StopRoundTimerUI();
-					if (IsArenaWorldByTblidxName(m_currentWorldTblidx))
+					if (IsArenaWorldTblidx(m_currentWorldTblidx))
 					{
 						FinishMatch(false);
 						break;
@@ -1789,8 +1859,8 @@ void CArenaManager::TickProcess(unsigned long dwTickDiff)
 				// Immediately broadcast the updated stage so clients show the correct Round number
 				if (m_currentWorldId)
 					BroadcastDungeonStateToWorld(m_currentWorldId, m_rankBattleStage + 1);
-				// If configured, rotate map between rounds
-				if (m_cfg.mapPerRound && !m_cfg.worldTblidxList.empty())
+				// If configured, rotate map between rounds (skip for ARENAPODER)
+				if (m_cfg.mapPerRound && !m_cfg.worldTblidxList.empty() && ShouldRotatePerRoundForWorld(m_currentWorldTblidx))
 				{
 					// Choose next map in list
 					m_worldIndex = (m_worldIndex + 1) % m_cfg.worldTblidxList.size();
@@ -1986,16 +2056,46 @@ void CArenaManager::AutomationTick(unsigned long dwTickDiff)
 
 	if (m_autoState == AutoState::WAIT_NEXT && m_autoRemainMs == 0)
 	{
-		// Don't interrupt an active arena; defer until it returns to IDLE/COMPLETE
-		if (m_state != State::IDLE && m_state != State::COMPLETE)
+		// Don't interrupt an active arena; defer until it returns to IDLE/COMPLETE.
+		// However, if we're stuck in ENROLLMENT with no participants, allow automation to proceed.
+		if (!(m_state == State::IDLE || m_state == State::COMPLETE ||
+			(m_state == State::ENROLLMENT && m_participants.empty())))
 		{
 			// retry in 5 seconds
 			m_autoRemainMs = 5000;
 			return;
 		}
 		// Open a new enrollment window
-		// Configure world_fight parameters from config
-		unsigned int wid = m_cfg.autoWorldTblidx ? m_cfg.autoWorldTblidx : 900043;
+		// Select world for this auto event
+		unsigned int wid = 0;
+		if (!m_cfg.autoWorldTblidxList.empty())
+		{
+			if (m_cfg.autoRandomizeWorlds)
+			{
+				// random pick
+				unsigned int idx = (unsigned int)(rand() % m_cfg.autoWorldTblidxList.size());
+				wid = m_cfg.autoWorldTblidxList[idx];
+			}
+			else
+			{
+				// round-robin
+				if (m_autoWorldIndex >= m_cfg.autoWorldTblidxList.size()) m_autoWorldIndex = 0;
+				wid = m_cfg.autoWorldTblidxList[m_autoWorldIndex++];
+			}
+			// If per-round rotation requested, set the arena world list to the AutoArena list now
+			if (m_cfg.autoMapPerRound)
+			{
+				m_cfg.worldTblidxList = m_cfg.autoWorldTblidxList;
+				// align world index with chosen wid
+				for (size_t i = 0; i < m_cfg.worldTblidxList.size(); ++i) if (m_cfg.worldTblidxList[i] == wid) { m_worldIndex = (unsigned int)i; break; }
+				m_cfg.mapPerRound = true;
+			}
+			else
+			{
+				m_cfg.mapPerRound = false; // honor AutoArena setting explicitly
+			}
+		}
+		if (wid == 0) wid = (m_cfg.autoWorldTblidx ? m_cfg.autoWorldTblidx : 900043);
 		ForceCurrentWorld(wid);
 		// Use world_fight setup to configure elimination or score
 		unsigned int sec = m_cfg.autoUseElimination ? (m_cfg.roundTimerSeconds ? m_cfg.roundTimerSeconds : 0) : (m_cfg.roundTimerSeconds ? m_cfg.roundTimerSeconds : 900);
@@ -2030,6 +2130,19 @@ void CArenaManager::AutomationTick(unsigned long dwTickDiff)
 		TeleportParticipants(true);
 		TeleportSpectators();
 		BroadcastSystem(L"[Arena] Enrollment closed. Teleporting participants...");
+		// If nobody joined, reset arena state to IDLE so the next cycle can open properly
+		if (m_participants.empty())
+		{
+			m_state = State::IDLE;
+			m_inviting = false;
+			m_inviteRemainMs = 0;
+			m_pendingStartMs = 0;
+			m_pendingStartWorldId = 0;
+			m_waitAllArriveMs = 0;
+			m_readyParticipants.clear();
+			m_readyDelayMs.clear();
+			m_pendingStartParticipants.clear();
+		}
 		// Next cycle: schedule opening so that the next fight happens after IntervalSeconds from now
 		m_autoState = AutoState::WAIT_NEXT;
 		unsigned int prepWaitSec = 0;
@@ -2046,6 +2159,12 @@ void CArenaManager::AutomationTick(unsigned long dwTickDiff)
 void CArenaManager::RotateMapNow()
 {
 	if (m_cfg.worldTblidxList.empty()) return;
+	// Do not rotate map mid-match for ARENAPODER maps to preserve original behavior
+	if (!ShouldRotatePerRoundForWorld(m_currentWorldTblidx))
+	{
+		ARENA_VLOG(m_cfg, LOG_GENERAL, "[ARENA] RotateMapNow skipped for ARENAPODER world %u", (unsigned)m_currentWorldTblidx);
+		return;
+	}
 	StopRoundTimerUI();
 	m_worldIndex = (m_worldIndex + 1) % m_cfg.worldTblidxList.size();
 	m_currentWorldTblidx = m_cfg.worldTblidxList[m_worldIndex];
@@ -2124,6 +2243,37 @@ unsigned int CArenaManager::GetOrCreateCurrentWorldId()
 	return m_currentWorldId ? m_currentWorldId : EnsureCurrentWorldId();
 }
 
+bool CArenaManager::IsArenaWorldTblidx(unsigned int worldTblidx) const
+{
+	// Primary: name-based Arena detection (TORNEOPODER etc.)
+	if (IsArenaWorldByTblidxName((TBLIDX)worldTblidx))
+		return true;
+
+	// Configured Arena rotation list (main Arena worlds)
+	for (unsigned int v : m_cfg.worldTblidxList)
+		if (v == worldTblidx) return true;
+
+	// AutoArena world(s)
+	if (m_cfg.autoWorldTblidx && m_cfg.autoWorldTblidx == worldTblidx)
+		return true;
+	for (unsigned int v : m_cfg.autoWorldTblidxList)
+		if (v == worldTblidx) return true;
+
+	// Instance expansion heuristic: if worldTblidx matches any configured base within small range
+	// Example: base 10000 implies instances 10000..10100 are considered arena. Keep small to avoid false positives.
+	auto within = [&](unsigned int base, unsigned int id) -> bool {
+		const unsigned int kSpan = 200; // +/- range
+		return id >= base && id <= base + kSpan;
+	};
+	for (unsigned int base : m_cfg.autoWorldTblidxList)
+		if (within(base, worldTblidx)) return true;
+	for (unsigned int base : m_cfg.worldTblidxList)
+		if (within(base, worldTblidx)) return true;
+	if (m_cfg.autoWorldTblidx && within(m_cfg.autoWorldTblidx, worldTblidx)) return true;
+
+	return false;
+}
+
 void CArenaManager::SetupWorldFight(bool scoreMode, unsigned int roundSeconds, Mode mode)
 {
 	// Minimal, targeted configuration for requested world-fight event
@@ -2144,7 +2294,7 @@ void CArenaManager::SetupWorldFight(bool scoreMode, unsigned int roundSeconds, M
 	// Lock the event to the currently forced world only: disable randomization/rotation and
 	// constrain the rotation list to a single entry so nothing overrides the GM's choice.
 	m_cfg.randomizeMapOnStart = false;
-	m_cfg.mapPerRound = false;
+	// Keep current mapPerRound setting (AutoArena may enable it)
 	m_cfg.rotationSeconds = 0; // no auto-rotation during world_fight
 	m_cfg.useOnlyCustomWorlds = true;
 	// Always use direct teleport for world_fight to avoid client-side RankBattle routing
@@ -2253,17 +2403,21 @@ void CArenaManager::AwardRewards(bool winnersOnly)
 					ARENA_VLOG(m_cfg, LOG_GENERAL, "[ARENA][REWARD][WARN] Item tblidx=%u not found. Skipping for char=%u", item, (unsigned)p->GetCharID());
 					continue;
 				}
-				// Clamp count to item stack limits (avoid std::min/max due to potential Windows macros)
+				// Respect item stack limits by creating multiple stacks/instances until the requested count is fulfilled
 				unsigned int maxStack = (pItemTbldat->byMax_Stack > 0) ? (unsigned int)pItemTbldat->byMax_Stack : 1u;
-				unsigned int cap255 = (maxStack < 255u) ? maxStack : 255u;
-				unsigned int clamped = (cnt < cap255) ? cnt : cap255;
-				if (clamped != cnt)
+				if (maxStack == 0) maxStack = 1; // safety
+				unsigned int remaining = cnt;
+				while (remaining > 0)
 				{
-					ARENA_VLOG(m_cfg, LOG_GENERAL, "[ARENA][REWARD][INFO] Clamping item tblidx=%u count from %u to %u for char=%u", item, cnt, clamped, (unsigned)p->GetCharID());
-				}
-				if (!g_pItemManager->CreateItem(p, (TBLIDX)item, (BYTE)clamped))
-				{
-					ARENA_VLOG(m_cfg, LOG_GENERAL, "[ARENA][REWARD][ERR] CreateItem failed for char=%u, item tblidx=%u, count=%u", (unsigned)p->GetCharID(), item, clamped);
+					// Per create call, cap to both the item stack size and 255 (packet/count limit)
+					unsigned int cap255 = (maxStack < 255u) ? maxStack : 255u;
+					unsigned int give = (remaining < cap255) ? remaining : cap255;
+					if (!g_pItemManager->CreateItem(p, (TBLIDX)item, (BYTE)give))
+					{
+						ARENA_VLOG(m_cfg, LOG_GENERAL, "[ARENA][REWARD][ERR] CreateItem failed for char=%u, item tblidx=%u, count=%u (remaining=%u)", (unsigned)p->GetCharID(), item, give, remaining);
+						break; // stop trying this item if creation fails (likely due to no space)
+					}
+					remaining -= give;
 				}
 			}
 		};
@@ -2286,9 +2440,50 @@ void CArenaManager::AwardRewards(bool winnersOnly)
 	}
 }
 
+void CArenaManager::AwardMudosaPoints()
+{
+	// Only act if Rewards are enabled; Mudosa awards are part of the reward phase
+	if (!m_cfg.rewardsEnabled)
+		return;
+	const unsigned int winPts = m_cfg.mudosaWinnerPoints;
+	const unsigned int partPts = m_cfg.mudosaParticipantPoints;
+	if (winPts == 0 && partPts == 0)
+		return;
+
+	// Winners: grant winner points
+	if (winPts > 0)
+	{
+		for (auto cid : m_winners)
+		{
+			if (CPlayer* p = g_pObjectManager->FindByChar((CHARACTERID)cid))
+			{
+				if (!p->IsInitialized()) continue;
+				p->UpdateMudosaPoints(p->GetMudosaPoints() + winPts, true);
+			}
+		}
+	}
+	// Participants: grant participant points to all participants who are not in winners set
+	if (partPts > 0)
+	{
+		for (auto cid : m_participants)
+		{
+			if (m_winners.find(cid) != m_winners.end())
+				continue; // skip, already got winner points
+			if (CPlayer* p = g_pObjectManager->FindByChar((CHARACTERID)cid))
+			{
+				if (!p->IsInitialized()) continue;
+				p->UpdateMudosaPoints(p->GetMudosaPoints() + partPts, true);
+			}
+		}
+	}
+}
+
 void CArenaManager::TryRotateByTime(unsigned long dwTickDiff)
 {
 	if (m_cfg.rotationSeconds == 0 || m_cfg.worldTblidxList.size() <= 1)
+		return;
+	// Skip timed rotation for ARENAPODER maps during a match
+	if (!ShouldRotatePerRoundForWorld(m_currentWorldTblidx))
 		return;
 	if (m_rotationRemainMs > dwTickDiff)
 		m_rotationRemainMs -= dwTickDiff;
@@ -2782,7 +2977,7 @@ void CArenaManager::CheckFaintAndAliveLogic()
 				}
 			}
 			// Minimal finalization on arena world: stop timer and finish immediately
-			if (IsArenaWorldByTblidxName(m_currentWorldTblidx))
+			if (IsArenaWorldTblidx(m_currentWorldTblidx))
 			{
 				StopRoundTimerUI();
 				FinishMatch(false);
@@ -2818,7 +3013,7 @@ void CArenaManager::FinishMatch(bool aborted)
 	m_matchFinishWatchdogMs = 0;
 	// During the fight we mirror Rank UX if enabled; at finish we ensure clients exit Rank mode.
 	// On non-arena (rank-rule) worlds, mirror finish and then optionally send LEAVE.
-	if (!IsArenaWorldByTblidxName(m_currentWorldTblidx))
+	if (!IsArenaWorldTblidx(m_currentWorldTblidx))
 	{
 		// Non-arena worlds: mirror RankBattle finish UX unless suppressed
 		if (m_cfg.rankUiEnabled && !m_cfg.suppressRankFinishUi)
@@ -2845,12 +3040,14 @@ void CArenaManager::FinishMatch(bool aborted)
 	ClearCombatRestrictionsForParticipants();
 	// Revert any world-wide PvP toggles made during RUN so subsequent arenas start clean
 	RevertWorldWidePvp();
+	// Revert any temporary world rule overrides applied during the match
+	RevertWorldRuleOverrides();
 
 	// Determine and announce winner if not aborted
 	if (!aborted && m_winners.size() > 0)
 	{
 		// On arena worlds, skip notices to keep UI calm; otherwise announce
-	if (!IsArenaWorldByTblidxName(m_currentWorldTblidx))
+	if (!IsArenaWorldTblidx(m_currentWorldTblidx))
 		{
 			for (auto cid : m_winners)
 			{
@@ -2884,7 +3081,7 @@ void CArenaManager::FinishMatch(bool aborted)
 			if (CPlayer* winner = g_pObjectManager->FindByChar((CHARACTERID)lastAlive))
 			{
 				// On arena worlds, avoid notices; still record winner for rewards
-				if (!IsArenaWorldByTblidxName(m_currentWorldTblidx))
+				if (!IsArenaWorldTblidx(m_currentWorldTblidx))
 				{
 					wchar_t msg[256];
 					ComposeWinnerText(winner, msg, _countof(msg));
@@ -2900,6 +3097,7 @@ void CArenaManager::FinishMatch(bool aborted)
 	{
 		AwardRewards(true);  // Winner rewards
 		AwardRewards(false); // Participant rewards
+		AwardMudosaPoints(); // Mudosa points per winners/participants
 		// Notify players that rewards were granted
 		for (auto cid : m_participants)
 		{
@@ -3235,6 +3433,8 @@ void CArenaManager::FinishWithWinner(unsigned int winnerCharId)
 	RevertWorldWidePvp();
 	// Always clear the round/countdown UI on finish (keep Rank HUD otherwise intact)
 	StopRoundTimerUI();
+	// Revert any temporary world rule overrides applied during the match
+	RevertWorldRuleOverrides();
 	if (winnerCharId)
 	{
 		if (CPlayer* p = g_pObjectManager->FindByChar((CHARACTERID)winnerCharId))
@@ -3252,6 +3452,7 @@ void CArenaManager::FinishWithWinner(unsigned int winnerCharId)
 	{
 		AwardRewards(true);
 		AwardRewards(false);
+		AwardMudosaPoints();
 		// Arena-world: announce winner + reward hint to everyone before teleport
 	if (IsArenaWorldByTblidxName(m_currentWorldTblidx))
 		{
@@ -3545,7 +3746,7 @@ void CArenaManager::BroadcastRankTeamInfoToWorld(unsigned int worldId)
 	if (!pWorld) return;
 	// Only send on rank-rule worlds (skip Budokai and others)
 	BYTE rule = pWorld->GetTbldat()->byWorldRuleType;
-	if (IsArenaWorldByTblidxName(m_currentWorldTblidx)) rule = GAMERULE_RANKBATTLE;
+	if (IsArenaWorldTblidx(m_currentWorldTblidx)) rule = GAMERULE_RANKBATTLE;
 	if (rule == GAMERULE_MINORMATCH || rule == GAMERULE_MAJORMATCH || rule == GAMERULE_FINALMATCH)
 		return;
 	if (rule != GAMERULE_RANKBATTLE)
@@ -3979,13 +4180,44 @@ unsigned int CArenaManager::EnsureCurrentWorldId()
 			return 0;
 		}
 
-		NTL_PRINT(PRINT_APP, _T("[ARENA] Attempting to create world: tblidx=%u name='%s'"),
+		// If the target world is static (non-dynamic), it is created at server startup and cannot be created via CreateWorld.
+		// Reuse the existing static instance by its worldID (which equals tblidx for static worlds).
+			if (!pWorldTbldat->bDynamic)
+		{
+			CWorld* pExistingStatic = app->GetGameMain()->GetWorldManager()->FindWorld((WORLDID)pWorldTbldat->tblidx);
+			if (pExistingStatic)
+			{
+					if (IsArenaWorld(pExistingStatic) && ShouldOverrideRuleForWorld(m_currentWorldTblidx))
+					{
+						pExistingStatic->SetRuleOverride(GAMERULE_RANKBATTLE);
+						m_worldsWithOverride.insert((unsigned int)pExistingStatic->GetID());
+					}
+				m_currentWorldId = (unsigned int)pExistingStatic->GetID();
+				NTL_PRINT(PRINT_APP, _T("[ARENA] CC Mode: Reusing static world instance ID %u for tblidx %u"), m_currentWorldId, m_currentWorldTblidx);
+				ARENA_VLOG(m_cfg, LOG_GENERAL, "[ARENA] Reused static world: id=%u tblidx=%u", (unsigned)m_currentWorldId, (unsigned)m_currentWorldTblidx);
+				return m_currentWorldId;
+			}
+			else
+			{
+				NTL_PRINT(PRINT_APP, _T("[ARENA] CC Mode: Static world tblidx %u not found; cannot dynamically create static worlds"), m_currentWorldTblidx);
+				ARENA_VLOG(m_cfg, LOG_GENERAL, "[ARENA] Static world missing in manager: tblidx=%u", (unsigned)m_currentWorldTblidx);
+				return 0;
+			}
+		}
+
+		NTL_PRINT(PRINT_APP, _T("[ARENA] Attempting to create dynamic world: tblidx=%u name='%s'"),
 			m_currentWorldTblidx, pWorldTbldat->wszName);
 		ARENA_VLOG(m_cfg, LOG_GENERAL, "[ARENA] CreateWorld CC mode: tblidx=%u", (unsigned)m_currentWorldTblidx);
 
 		CWorld* pWorld = app->GetGameMain()->GetWorldManager()->CreateWorld(pWorldTbldat);
 		if (pWorld)
 		{
+			// Treat Arena worlds as RankBattle at runtime to avoid dungeon revive and lockouts
+			if (IsArenaWorld(pWorld) && ShouldOverrideRuleForWorld(m_currentWorldTblidx))
+			{
+				pWorld->SetRuleOverride(GAMERULE_RANKBATTLE);
+				m_worldsWithOverride.insert((unsigned int)pWorld->GetID());
+			}
 			m_currentWorldId = (unsigned int)pWorld->GetID();
 			NTL_PRINT(PRINT_APP, _T("[ARENA] CC Mode: Created fresh world instance ID %u for tblidx %u"),
 				m_currentWorldId, m_currentWorldTblidx);
@@ -4017,6 +4249,11 @@ unsigned int CArenaManager::EnsureCurrentWorldId()
 					CWorld* pFallbackWorld = app->GetGameMain()->GetWorldManager()->CreateWorld(pFallbackTbldat);
 					if (pFallbackWorld)
 					{
+						if (IsArenaWorld(pFallbackWorld) && ShouldOverrideRuleForWorld(fallbackTblidx))
+						{
+							pFallbackWorld->SetRuleOverride(GAMERULE_RANKBATTLE);
+							m_worldsWithOverride.insert((unsigned int)pFallbackWorld->GetID());
+						}
 						m_currentWorldId = (unsigned int)pFallbackWorld->GetID();
 						m_currentWorldTblidx = fallbackTblidx; // Update the current tblidx to the working one
 						NTL_PRINT(PRINT_APP, _T("[ARENA] Using fallback world: tblidx=%u name='%s' worldId=%u"),
@@ -4035,7 +4272,14 @@ unsigned int CArenaManager::EnsureCurrentWorldId()
 	{
 		CWorld* pWorldExisting = app->GetGameMain()->GetWorldManager()->FindWorld((WORLDID)m_currentWorldId);
 		if (pWorldExisting)
+		{
+			if (IsArenaWorld(pWorldExisting) && ShouldOverrideRuleForWorld(m_currentWorldTblidx))
+			{
+				pWorldExisting->SetRuleOverride(GAMERULE_RANKBATTLE);
+				m_worldsWithOverride.insert((unsigned int)pWorldExisting->GetID());
+			}
 			return m_currentWorldId;
+		}
 		// fallthrough to recreate
 	}
 
@@ -4046,9 +4290,35 @@ unsigned int CArenaManager::EnsureCurrentWorldId()
 		return 0;
 	}
 
+	// If world is static (non-dynamic), reuse it directly rather than calling CreateWorld (which returns NULL for static worlds)
+	if (!pWorldTbldat->bDynamic)
+	{
+		CWorld* pStatic = app->GetGameMain()->GetWorldManager()->FindWorld((WORLDID)pWorldTbldat->tblidx);
+		if (pStatic)
+		{
+			if (IsArenaWorld(pStatic) && ShouldOverrideRuleForWorld(m_currentWorldTblidx))
+			{
+				pStatic->SetRuleOverride(GAMERULE_RANKBATTLE);
+				m_worldsWithOverride.insert((unsigned int)pStatic->GetID());
+			}
+			m_currentWorldId = (unsigned int)pStatic->GetID();
+			return m_currentWorldId;
+		}
+		else
+		{
+			NTL_PRINT(PRINT_APP, _T("[ARENA] Normal Mode: Static world tblidx %u not found in manager; cannot create statics"), m_currentWorldTblidx);
+			return 0;
+		}
+	}
+
 	CWorld* pWorld = app->GetGameMain()->GetWorldManager()->CreateWorld(pWorldTbldat);
 	if (pWorld)
 	{
+		if (IsArenaWorld(pWorld) && ShouldOverrideRuleForWorld(m_currentWorldTblidx))
+		{
+			pWorld->SetRuleOverride(GAMERULE_RANKBATTLE);
+			m_worldsWithOverride.insert((unsigned int)pWorld->GetID());
+		}
 		m_currentWorldId = (unsigned int)pWorld->GetID();
 	}
 	else
@@ -4072,6 +4342,11 @@ unsigned int CArenaManager::EnsureCurrentWorldId()
 				CWorld* pFallbackWorld = app->GetGameMain()->GetWorldManager()->CreateWorld(pFallbackTbldat);
 				if (pFallbackWorld)
 				{
+					if (IsArenaWorld(pFallbackWorld) && ShouldOverrideRuleForWorld(fallbackTblidx))
+					{
+						pFallbackWorld->SetRuleOverride(GAMERULE_RANKBATTLE);
+						m_worldsWithOverride.insert((unsigned int)pFallbackWorld->GetID());
+					}
 					m_currentWorldId = (unsigned int)pFallbackWorld->GetID();
 					m_currentWorldTblidx = fallbackTblidx; // Update the current tblidx to the working one
 					NTL_PRINT(PRINT_APP, _T("[ARENA] Normal Mode: Using fallback world: tblidx=%u name='%s' worldId=%u"),
@@ -4327,7 +4602,7 @@ void CArenaManager::PostFinishTeleportDefault()
 			if (it != m_prevLoc.end() && it->second.worldId != INVALID_WORLDID)
 			{
 				// Avoid teleporting back into the same arena world instance; go to bind instead
-				if ((unsigned int)it->second.worldId == m_currentWorldId || IsArenaWorldByTblidxName(m_currentWorldTblidx))
+				if ((unsigned int)it->second.worldId == m_currentWorldId || IsArenaWorldTblidx(m_currentWorldTblidx))
 				{
 					TeleportToBind(p);
 				}
@@ -4354,7 +4629,7 @@ void CArenaManager::PostFinishTeleportDefault()
 			auto it = m_prevLoc.find(cid);
 			if (it != m_prevLoc.end() && it->second.worldId != INVALID_WORLDID)
 			{
-				if ((unsigned int)it->second.worldId == m_currentWorldId || IsArenaWorldByTblidxName(m_currentWorldTblidx))
+				if ((unsigned int)it->second.worldId == m_currentWorldId || IsArenaWorldTblidx(m_currentWorldTblidx))
 					TeleportToBind(p);
 				else
 					p->StartTeleport(it->second.loc, it->second.dir, (WORLDID)it->second.worldId, TELEPORT_TYPE_COMMAND);
@@ -4420,7 +4695,7 @@ void CArenaManager::FinishOnTimeout()
 			return;
 		}
 		// final round: on arena world, finish immediately with minimal UX
-	if (IsArenaWorldByTblidxName(m_currentWorldTblidx))
+	if (IsArenaWorldTblidx(m_currentWorldTblidx))
 		{
 			FinishMatch(false);
 			return;
@@ -4492,7 +4767,7 @@ void CArenaManager::FinishByPoints()
 		if (rep)
 		{
 			// Announce team winner unless we are on arena world (minimal UX)
-			if (!IsArenaWorldByTblidxName(m_currentWorldTblidx))
+			if (!IsArenaWorldTblidx(m_currentWorldTblidx))
 			{
 				wchar_t msg[256];
 				ComposeWinnerText(rep, msg, _countof(msg));
@@ -4500,10 +4775,10 @@ void CArenaManager::FinishByPoints()
 			}
 		}
 		// RankBattle-like finish UX (skip on arena worlds)
-		if (m_cfg.telecastEnabled && !IsArenaWorldByTblidxName(m_currentWorldTblidx))
+		if (m_cfg.telecastEnabled && !IsArenaWorldTblidx(m_currentWorldTblidx))
 			BroadcastTelecastToWorld(EnsureCurrentWorldId());
 		// Suppress RankBattle finish/leave on arena world to keep UI
-		if (!IsArenaWorldByTblidxName(m_currentWorldTblidx))
+			if (!IsArenaWorldTblidx(m_currentWorldTblidx))
 		{
 			if (m_cfg.rankUiEnabled && !m_cfg.suppressRankFinishUi)
 			{
@@ -5296,6 +5571,12 @@ bool CArenaManager::TeleportOneToWorldTblidx(CPlayer* pPlayer, unsigned int worl
 	{
 		pWorld = app->GetGameMain()->GetWorldManager()->CreateWorld(pWorldTbldat);
 		if (!pWorld) return false;
+		// Apply same arena rule override when we have to create the world on-demand
+		if (IsArenaWorld(pWorld) && ShouldOverrideRuleForWorld(worldTblidx))
+		{
+			pWorld->SetRuleOverride(GAMERULE_RANKBATTLE);
+			m_worldsWithOverride.insert((unsigned int)pWorld->GetID());
+		}
 		if (worldTblidx == m_currentWorldTblidx)
 			m_currentWorldId = (unsigned int)pWorld->GetID();
 	}
@@ -5626,6 +5907,26 @@ void CArenaManager::OnPlayerEnterWorld(CPlayer* pPlayer)
 	}
 
 	NTL_PRINT(PRINT_APP, _T("[ARENA] OnPlayerEnterWorld: Processing char=%u in arena world"), pPlayer->GetCharID());
+
+	// Enforce no-transformation rule at arrival (Kaio-ken allowed)
+	// If the player arrives already transformed (e.g., from another world), cancel it now
+	if (pPlayer->GetTransformationTbldat())
+	{
+		BYTE aspect = pPlayer->GetAspectStateId();
+		if (aspect != ASPECTSTATE_KAIOKEN)
+		{
+			pPlayer->CancelTransformation();
+			// Inform the player once
+			CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+			sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+			res->wOpCode = GU_SYSTEM_DISPLAY_TEXT;
+			res->byDisplayType = SERVER_TEXT_SYSTEM;
+			NTL_SAFE_WCSCPY(res->awchMessage, L"[Arena] Transformations are not allowed here. Your transformation has been removed.");
+			packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+			pPlayer->SendPacket(&packet);
+			ARENA_VLOG(m_cfg, LOG_GENERAL, "[ARENA] OnEnter: canceled transformation for char=%u (non-Kaio-ken)", (unsigned)pPlayer->GetCharID());
+		}
+	}
 
 	// Schedule readiness with optional per-player delay
 	unsigned int cid = pPlayer->GetCharID();

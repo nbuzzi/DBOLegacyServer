@@ -118,6 +118,9 @@ public:
 		// pair<itemTblidx,count>
 		std::vector<std::pair<unsigned int, unsigned int>> winnerRewards;
 		std::vector<std::pair<unsigned int, unsigned int>> participantRewards;
+		// Mudosa points awarded on arena finish (winners vs participants)
+		unsigned int mudosaWinnerPoints;
+		unsigned int mudosaParticipantPoints;
 
 		// Attackability reliability tuning
 		unsigned int unlockPulseSleepMs;   // sleep between unlock pulses when forcing attackable
@@ -129,9 +132,12 @@ public:
 		unsigned int autoIntervalSeconds; // how often to start a new enrollment window
 		unsigned int autoInitialDelaySeconds; // delay before the very first auto enrollment after server starts
 		unsigned int autoEnrollmentSeconds; // how long to keep enrollment open before teleport
-		unsigned int autoWorldTblidx;     // world to use for the automated event (0 = use default 900043)
+		unsigned int autoWorldTblidx;     // legacy: single world for automated event (kept for backward compatibility)
+		std::vector<unsigned int> autoWorldTblidxList; // CSV list of worlds to use for automation
 		Mode autoMode;                    // FFA or PARTY for automated events
 		bool autoUseElimination;          // true = elimination, false = score
+		bool autoRandomizeWorlds;         // pick random world each event (when list provided)
+		bool autoMapPerRound;             // rotate world each round during an event using the list
 
 		Config()
 			: enabled(false), rotationSeconds(0), startDelaySeconds(5), roundTimerSeconds(180), stopOnTimeout(true),
@@ -152,7 +158,11 @@ public:
 			ccBattleMode(false), allowCustomWorlds(false), useOnlyCustomWorlds(false), allowBudokaiRuleWorlds(false), forceExactWorld(false),
 			rewardsEnabled(false),
 			unlockPulseSleepMs(100), unlockDefaultAttempts(2),
-			autoEnabled(false), autoChannelName("ARENA"), autoIntervalSeconds(600), autoInitialDelaySeconds(300), autoEnrollmentSeconds(600), autoWorldTblidx(900043), autoMode(Mode::FREE_FOR_ALL), autoUseElimination(true) {
+			autoEnabled(false), autoChannelName("ARENA"), autoIntervalSeconds(600), autoInitialDelaySeconds(300), autoEnrollmentSeconds(600),
+			autoWorldTblidx(900043), autoMode(Mode::FREE_FOR_ALL), autoUseElimination(true), autoRandomizeWorlds(false), autoMapPerRound(false) {
+			// Default Mudosa rewards
+			mudosaWinnerPoints = 3000;
+			mudosaParticipantPoints = 2000;
 		}
 	};
 
@@ -190,6 +200,10 @@ public:
 	void SetupWorldFight(bool scoreMode, unsigned int roundSeconds, Mode mode);
 	// Ensure world instance exists and return its WORLDID (0 on failure)
 	unsigned int GetOrCreateCurrentWorldId();
+
+	// Helpers for PvP/Arena context detection
+	bool IsArenaWorldTblidx(unsigned int worldTblidx) const;
+	bool IsArenaWorldId(unsigned int worldId) const { return m_currentWorldId && worldId == m_currentWorldId; }
 
 	// Enrollment
 	bool AddParticipant(CPlayer* pPlayer);
@@ -234,6 +248,7 @@ public:
 
 	// GM utility: award configured rewards (true = winners only, false = all participants)
 	void AwardRewards(bool winnersOnly);
+	void AwardMudosaPoints();
 
 	// Accessors
 	const Config& GetConfig() const { return m_cfg; }
@@ -258,6 +273,10 @@ public:
 	void SetWorldListCsv(const std::string& csv);
 	// Show a compact configuration summary to a player
 	void ShowCfgTo(CPlayer* pWho);
+
+private:
+	// Round-robin pointer for AutoArena world selection
+	unsigned int m_autoWorldIndex = 0;
 
 private:
 	void BroadcastSystem(const wchar_t* msg, unsigned char byType = 2);
@@ -290,6 +309,10 @@ private:
 	// Combat permission toggles (enable PvP/FreeBattle during RUN, clear on finish)
 	void SetCombatPermittedForParticipants(bool enable);
 	void SetCombatPermittedFor(class CPlayer* pPlayer, bool enable);
+	// World rule override control
+	bool ShouldOverrideRuleForWorld(unsigned int worldTblidx) const; // skip override for custom ARENAPODER maps
+	bool ShouldRotatePerRoundForWorld(unsigned int worldTblidx) const; // skip per-round rotation for custom maps
+	void RevertWorldRuleOverrides(); // clear any world rule overrides applied during match
 	// Team validation for team-based modes
 	bool ValidateTeamComposition();
 	// Single-recipient helpers to recover when a player enters late
@@ -437,6 +460,8 @@ private:
 	std::unordered_map<unsigned int, unsigned long> m_pendingReviveMs;
 	// Post-revive protection timers: charId -> ms remaining
 	std::unordered_map<unsigned int, unsigned long> m_reviveProtectRemainMs;
+	// Track worlds where we applied a temporary rule override to restore on finish
+	std::unordered_set<unsigned int> m_worldsWithOverride;
 };
 
 #define GetArenaManager() CArenaManager::GetInstance()

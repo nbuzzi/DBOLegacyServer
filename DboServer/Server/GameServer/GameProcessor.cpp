@@ -140,10 +140,12 @@ void CGameProcessor::Run(DWORD dwTickCount)
 			// Periodic helper-NPC watchdog to repair spawns after floor transitions
 			GetHelperNpcManager()->TickWatchdog(m_dwTickCount);
 
-			// Arena automation + state machine (channel name compare)
-			if (_stricmp(app->m_config.ChannelName.c_str(), "ARENA") == 0)
-				g_pArenaManager->AutomationTick(dwTickDiff);
-			
+			// Arena automation + state machine
+			// Always tick automation here; ArenaManager internally checks autoEnabled and arena channel name
+			// and optionally filters by configured autoChannelName. This avoids brittle
+			// exact channel-name gating here and keeps the scheduler alive across renames.
+			g_pArenaManager->AutomationTick(dwTickDiff);
+
 			g_pArenaManager->TickProcess(dwTickDiff);
 		}
 
@@ -151,35 +153,6 @@ void CGameProcessor::Run(DWORD dwTickCount)
 		QueryPerformanceCounter(&rParty);
 
 		QueryPerformanceCounter(&rEnd);
-
-		/*m_dwLogTick += dwTickDiff;
-
-		if (m_dwLogTick >= 360000) //log every hour
-		{
-			float fTimeDif = ((float)(rEnd.QuadPart - rStart.QuadPart)) * 1000.f / ((float)m_freq.QuadPart);
-			if (fTimeDif > 200.f)
-			{
-				ERR_LOG(LOG_SYSTEM, "LOG-TICK: fTimeDif = %f, Event %f, Item %f, Shenron %f, Trade %f, World %f, Object %f, Spawn %f, Dungeon %f, Script %f, RankBattle %f, DynamicEvent %f, DbHunt %f, rParty %f",
-					fTimeDif,
-					((float)(rEvent.QuadPart - rStart.QuadPart)) * 1000.f / ((float)m_freq.QuadPart),
-					((float)(rItem.QuadPart - rEvent.QuadPart)) * 1000.f / ((float)m_freq.QuadPart),
-					((float)(rShenron.QuadPart - rItem.QuadPart)) * 1000.f / ((float)m_freq.QuadPart),
-					((float)(rTrade.QuadPart - rShenron.QuadPart)) * 1000.f / ((float)m_freq.QuadPart),
-					((float)(rWorld.QuadPart - rTrade.QuadPart)) * 1000.f / ((float)m_freq.QuadPart),
-					((float)(rObject.QuadPart - rWorld.QuadPart)) * 1000.f / ((float)m_freq.QuadPart),
-					((float)(rSpawn.QuadPart - rObject.QuadPart)) * 1000.f / ((float)m_freq.QuadPart),
-					((float)(rDungeon.QuadPart - rSpawn.QuadPart)) * 1000.f / ((float)m_freq.QuadPart),
-					((float)(rScript.QuadPart - rDungeon.QuadPart)) * 1000.f / ((float)m_freq.QuadPart),
-					((float)(rRankBattle.QuadPart - rScript.QuadPart)) * 1000.f / ((float)m_freq.QuadPart),
-					((float)(rDynamicEvent.QuadPart - rRankBattle.QuadPart)) * 1000.f / ((float)m_freq.QuadPart),
-					((float)(rDbHunt.QuadPart - rDynamicEvent.QuadPart)) * 1000.f / ((float)m_freq.QuadPart),
-					((float)(rParty.QuadPart - rDbHunt.QuadPart)) * 1000.f / ((float)m_freq.QuadPart)
-				);
-			}
-
-			m_dwLogTick = 0;
-		}*/
-
 	}
 }
 

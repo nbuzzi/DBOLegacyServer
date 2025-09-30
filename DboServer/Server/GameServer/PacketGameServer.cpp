@@ -17999,6 +17999,13 @@ void CClientSession::RecvCrescentPopoRevivalReq(CNtlPacket* pPacket)
 		resultcode = GAME_FAIL;
 		ERR_LOG(LOG_GENERAL, "ERROR: USER IS NOT IN FAINT. CHAR ID %u STATE ID %u", cPlayer->GetCharID(), cPlayer->GetCharStateID());
 	}
+	// Disallow Crescent Popo (auto-resurrect item) inside Arena worlds to keep matches fair
+	else if (g_pArenaManager && g_pArenaManager->IsEnabled() &&
+		(g_pArenaManager->IsArenaWorldId((unsigned int)cPlayer->GetWorldID()) ||
+		 g_pArenaManager->IsArenaWorldTblidx((unsigned int)cPlayer->GetWorldTblidx())))
+	{
+		resultcode = GAME_ITEM_CANT_USE_INVALID_WORLD;
+	}
 	else if (cPlayer->GetCurWorld() && cPlayer->GetCurWorld()->GetTbldat()->bDynamic)
 		resultcode = GAME_FAIL;
 	else

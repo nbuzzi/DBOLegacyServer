@@ -28,6 +28,7 @@
 #include "DojoWar.h"
 #include "SpellAreaChecker.h"
 #include "ItemOptionTable.h"
+#include "ArenaManager.h"
 
 
 CItem::CItem()
@@ -907,6 +908,18 @@ void CItem::Cast()
 			case ACTIVE_PURE_MAJIN:
 			case ACTIVE_GREAT_NAMEK:
 			{
+				// Prevent any transformation items in Arena worlds
+				if (m_pOwner && m_pOwner->GetCurWorld())
+				{
+					unsigned int worldTblidx = m_pOwner->GetCurWorld()->GetIdx();
+					if (g_pArenaManager->IsArenaWorldTblidx(worldTblidx))
+					{
+						// Inform the player and block the use
+						//g_pArenaManager->SendSystemTo(m_pOwner, L"[Arena] Transformations and transformation potions are not allowed in Arena worlds.", SERVER_TEXT_SYSTEM);
+						res->wResultCode = GAME_ITEM_CANT_USE_INVALID_WORLD;
+						break;
+					}
+				}
 				// This is a transformation item, so we need to check if the player can transform or is even a GM
 				//if (m_pOwner->IsGameMaster())
 				//{

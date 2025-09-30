@@ -52,6 +52,7 @@ void CWorld::Init()
 	m_hNaviInstance = NULL;
 
 	m_hTriggerObjectOffset = 1;
+	m_ruleOverride = INVALID_GAMERULE;
 }
 
 int CWorld::Create(WORLDID worldID, sWORLD_TBLDAT* pTbldat, CWorldZoneTable* pWorldZoneTable)
@@ -515,7 +516,8 @@ int CWorld::CopyToInfo(sWORLD_INFO* pWorldInfo)
 	pWorldInfo->worldID = GetID();
 	pWorldInfo->tblidx = GetIdx();
 	pWorldInfo->hTriggerObjectOffset = m_hTriggerObjectOffset;
-	pWorldInfo->sRuleInfo.byRuleType = GetTbldat()->byWorldRuleType;
+	// Reflect any runtime rule override so the client behaves accordingly (e.g., Arena as RankBattle)
+	pWorldInfo->sRuleInfo.byRuleType = (BYTE)GetRuleType();
 
 	if (GetTbldat()->byWorldRuleType == GAMERULE_CCBATTLEDUNGEON)
 	{
@@ -854,6 +856,8 @@ eGAMERULE_TYPE CWorld::GetRuleType()
 {
 	if (m_pTbldat)
 	{
+		if (m_ruleOverride != INVALID_GAMERULE)
+			return m_ruleOverride;
 		return (eGAMERULE_TYPE)m_pTbldat->byWorldRuleType;
 	}
 	else

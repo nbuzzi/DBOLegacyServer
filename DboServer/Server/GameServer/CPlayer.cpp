@@ -890,12 +890,12 @@ void CPlayer::UpdateFreePvpZone(DWORD dwTickDiff)
 		m_dwFreePvpZoneUpdateTick = 0;
 		if (GetCurWorld())
 		{
-			// Do not auto-toggle PvP zone while the Arena is actively running on the custom world,
-			// otherwise this periodic check may undo the PvP flag we set for participants/world during RUN.
+			// Do not auto-toggle PvP zone while Arena is running in the current world
 			bool blockAutoToggle = false;
-			if (IsInArenaWorldByName(this) && g_pArenaManager && g_pArenaManager->IsEnabled() && g_pArenaManager->GetState() == CArenaManager::State::IN_ROUND)
+			if (g_pArenaManager && g_pArenaManager->IsEnabled() && g_pArenaManager->GetState() == CArenaManager::State::IN_ROUND)
 			{
-				blockAutoToggle = true;
+				if (g_pArenaManager->IsArenaWorldId((unsigned int)GetWorldID()) || g_pArenaManager->IsArenaWorldTblidx((unsigned int)GetWorldTblidx()))
+					blockAutoToggle = true;
 			}
 
 			if (blockAutoToggle)
@@ -908,16 +908,17 @@ void CPlayer::UpdateFreePvpZone(DWORD dwTickDiff)
 
 			if (!IsPvpZone())
 			{
-				//if (GetNaviEngine()->IsBasicAttributeSet(GetCurWorld()->GetNaviInstanceHandle(), GetCurLoc().x, GetCurLoc().z, DBO_WORLD_ATTR_BASIC_FREE_PVP_ZONE))
-				if (IsInBattleArena(GetWorldTblidx(), GetCurLoc(), DiePowerTournament) || GetWorldTblidx() == 510000 && DiePowerTournament == false)
+				// Arena worlds are force-PvP zones during events
+				bool arenaWorld = (g_pArenaManager && g_pArenaManager->IsArenaWorldTblidx((unsigned int)GetWorldTblidx()));
+				if (arenaWorld || IsInBattleArena(GetWorldTblidx(), GetCurLoc(), DiePowerTournament) || (GetWorldTblidx() == 510000 && DiePowerTournament == false))
 				{
 					UpdatePvpZone(true);
 				}
 			}
 			else if (IsPvpZone())
 			{
-				//if (GetNaviEngine()->IsBasicAttributeSet(GetCurWorld()->GetNaviInstanceHandle(), GetCurLoc().x, GetCurLoc().z, DBO_WORLD_ATTR_BASIC_FREE_PVP_ZONE) == false)
-				if (IsInBattleArena(GetWorldTblidx(), GetCurLoc(), DiePowerTournament) == false || GetWorldTblidx() == 510000 && IsFainting() == true && DiePowerTournament == false)
+				bool arenaWorld = (g_pArenaManager && g_pArenaManager->IsArenaWorldTblidx((unsigned int)GetWorldTblidx()));
+				if ((!arenaWorld && IsInBattleArena(GetWorldTblidx(), GetCurLoc(), DiePowerTournament) == false) || (GetWorldTblidx() == 510000 && IsFainting() == true && DiePowerTournament == false))
 				{
 					UpdatePvpZone(false);
 					if (GetWorldTblidx() == 510000)
@@ -4504,7 +4505,12 @@ bool CPlayer::IsAttackable(CCharacterObject* pTarget)
 	if (pTarget && pTarget->IsPC())
 	{
 		CPlayer* pPlayerTargt = static_cast<CPlayer*>(pTarget);
-		const bool bothInArenaWorld = (IsInArenaWorldByName(this) && IsInArenaWorldByName(pPlayerTargt));
+		bool bothInArenaWorld = false;
+		if (g_pArenaManager)
+		{
+			bothInArenaWorld = (g_pArenaManager->IsArenaWorldId((unsigned int)GetWorldID()) || g_pArenaManager->IsArenaWorldTblidx((unsigned int)GetWorldTblidx())) &&
+				(g_pArenaManager->IsArenaWorldId((unsigned int)pPlayerTargt->GetWorldID()) || g_pArenaManager->IsArenaWorldTblidx((unsigned int)pPlayerTargt->GetWorldTblidx()));
+		}
 		const bool arenaActive = (bothInArenaWorld && g_pArenaManager && g_pArenaManager->IsEnabled() &&
 			g_pArenaManager->GetState() == CArenaManager::State::IN_ROUND);
 		if (arenaActive)

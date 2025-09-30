@@ -13,6 +13,7 @@
 #include "Monster.h"
 #include "SummonPet.h"
 #include "NtlNavi.h"
+#include "ArenaManager.h"
 
 
 void	PrintAllSkillFunctions(sSKILL_TBLDAT *pSkillDataRef)
@@ -1099,6 +1100,24 @@ void CSkill::CastSkill(HOBJECT hAppointTargetHandle, BYTE byApplyTargetCount, HO
 						case ACTIVE_KAIOKEN:
 						case ACTIVE_GREAT_NAMEK:
 						{
+							// Prevent transformation skills in Arena worlds, except Kaio-ken
+							if (m_pOwnerRef && m_pOwnerRef->GetCurWorld())
+							{
+								unsigned int worldTblidx = m_pOwnerRef->GetCurWorld()->GetIdx();
+								if (g_pArenaManager->IsArenaWorldTblidx(worldTblidx) && effectCode != ACTIVE_KAIOKEN)
+								{
+									CNtlPacket msg(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+									sGU_SYSTEM_DISPLAY_TEXT* pMsg = (sGU_SYSTEM_DISPLAY_TEXT*)msg.GetPacketData();
+									pMsg->wOpCode = GU_SYSTEM_DISPLAY_TEXT;
+									pMsg->byDisplayType = SERVER_TEXT_SYSTEM;
+									NTL_SAFE_WCSCPY(pMsg->awchMessage, L"[Arena] Transformations are not allowed in Arena worlds.");
+									msg.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+									((CPlayer*)m_pOwnerRef)->SendPacket(&msg);
+									res->wResultCode = GAME_SKILL_CANT_CAST_NOW;
+									break;
+								}
+							}
+							
 							if (!pTarget->IsPC() || pTarget->GetID() != GetOwner()->GetID())
 								goto LOOP_CONTINUE;
 

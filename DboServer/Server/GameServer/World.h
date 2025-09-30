@@ -75,6 +75,11 @@ public:
 	const char*				GetName();
 	eGAMERULE_TYPE			GetRuleType();
 
+	// Runtime override of the world rule for special contexts (e.g., Arena)
+	// Set to a valid eGAMERULE_TYPE to override; set to INVALID_GAMERULE to clear.
+	inline void				SetRuleOverride(eGAMERULE_TYPE rule) { m_ruleOverride = rule; }
+	inline void				ClearRuleOverride() { m_ruleOverride = INVALID_GAMERULE; }
+
 	virtual CWorldCell*		GetWorldCell(CELLID cellID);
 	CWorldCell*				GetWorldCellWithLoc(CNtlVector& rhs);
 	CELLID					GetCellID(CNtlVector& rhs);
@@ -169,6 +174,9 @@ private:
 	void*				m_hNaviInstance;
 
 	CNpcPartyManager	m_partyManager;
+
+	// When not INVALID_GAMERULE, GetRuleType() will return this value instead of table rule.
+	eGAMERULE_TYPE		m_ruleOverride;
 
 };
 
