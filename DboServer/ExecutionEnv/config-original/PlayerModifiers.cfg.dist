@@ -1,0 +1,33 @@
+# Player Modifiers configuration
+#
+# This file defines global multiplicative modifiers applied to all players' attributes
+# after base stats, items, passives, buffs, and transformations are calculated.
+#
+# Usage:
+# - Copy to PlayerModifiers.cfg and edit values. Any missing key defaults to 1.0 (no change).
+# - To enable this system, set `Enabled=1` (default is 0/disabled).
+# - Scopes supported (put modifiers after the colon):
+#     all modifiers: hp=1.10 physAtk=1.05 engDef=0.95          # global
+#     char 12345 modifiers: physAtk=1.20 engDef=0.90           # by CharacterID
+#     name Goku modifiers: runSpd=1.15 physCrit=1.10           # by Character Name (case-insensitive)
+#
+# Keys:
+#   hp, physAtk, engAtk, physDef, engDef,
+#   atkSpd, runSpd, physCrit, engCrit, physCritDmg, engCritDmg,
+#   attackRate, dodgeRate, blockRate, blockDmg, guardRate
+#
+# Notes:
+# - Attack speed is a rate where lower is faster. A value < 1.0 increases attack speed.
+# - These modifiers are applied on every stat recalculation and are not persisted.
+
+# Master switch (0 = disabled, 1 = enabled)
+Enabled=0
+
+# Example: modest global boost
+all modifiers: hp=1.05 physAtk=1.03 engAtk=1.03 physDef=1.02 engDef=1.02 runSpd=1.02
+
+# Example: per-player overrides
+# Character ID 1001 gets strong attack buff
+char 1001 modifiers: physAtk=1.25 engAtk=1.20 physCrit=1.15 physCritDmg=1.10
+# Character named "Goku" gets faster movement and guard
+name Goku modifiers: runSpd=1.20 guardRate=1.10

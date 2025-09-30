@@ -89,6 +89,7 @@
     </ClCompile>
     <ClCompile Include="TableContainerManager.cpp" />
     <ClCompile Include="ut_opcodes.cpp" />
+    <ClCompile Include="DeepLTranslator.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AuctionHouse.h" />
@@ -114,6 +115,7 @@
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="TableContainerManager.h" />
     <ClInclude Include="ut_opcodes.h" />
+    <ClInclude Include="DeepLTranslator.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\DboShared\NtlGameTable\NtlGameTable.vcxproj">

@@ -61,7 +61,7 @@ bool CItemDrop::IsStoneTblidx(TBLIDX id)
 	if (InRange(id, 160801, 160817)) return true; // BLACK_RED_U*_STONE
 	if (InRange(id, 161001, 161017)) return true; // BLACK_BLUE_U*_STONE
 
-	std::vector<TBLIDX> customIdsToPick = { 111, 110, 11160035,11160034,11160033, 11160029, 200001, 200002, 200003, 200004, 200005, 200006, 200007 };
+	std::vector<TBLIDX> customIdsToPick = { 111, 315, 110, 11160035,11160034,11160033, 11160029, 200001, 200002, 200003, 200004, 200005, 200006, 200007 };
 	if (std::find(customIdsToPick.begin(), customIdsToPick.end(), id) != customIdsToPick.end())
 		return true;
 

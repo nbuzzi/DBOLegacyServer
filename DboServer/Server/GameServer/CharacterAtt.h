@@ -17,6 +17,9 @@ public:
 	sAVATAR_ATTRIBUTE* GetAvatarAttributePointer() { return &m_pAttribute; }
 	sAVATAR_ATTRIBUTE& GetAvatarAttribute() { return m_pAttribute; }
 
+    // Expose owning character for systems that need context (e.g., per-player modifiers)
+    CCharacter* GetOwnerRef() const { return m_pOwnerRef; }
+
 public:
 
 	bool					Create(CCharacter* pChar);

@@ -9,6 +9,7 @@
 #include "SubNeighborServerInfoManager.h"
 
 #include "DatabaseEnv.h"
+#include "DeepLTranslator.h"
 
 //---------------------------------------------------------------------------------------------------//
 //---------------------------------------------------------------------------------------------------//
@@ -153,10 +154,12 @@ public:
 			return NTL_ERR_SYS_CONFIG_FILE_READ_FAIL;
 		}
 
-		// GOVERNANCE
-		if (!file.Read("GAMECONFIG", "DisableDojoWar", m_config.bDisableDojoWar))
+		// Optional translator config (DeepL)
 		{
-		 	m_config.bDisableDojoWar = TRUE;
+			int enableTrans = 0; (void)file.Read("Translator", "Enable", enableTrans);
+			CNtlString deeplKey; (void)file.Read("Translator", "DeepLKey", deeplKey);
+			int useFree = 1; (void)file.Read("Translator", "DeepLUseFreeApi", useFree);
+			DeepLTranslator::Instance().Configure(enableTrans != 0, deeplKey.c_str(), useFree != 0);
 		}
 
 		return NTL_SUCCESS;

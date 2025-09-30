@@ -6,6 +6,7 @@
 #include "char.h"
 #include "NtlNavi.h"
 #include "GameServer.h"
+#include "HelperNpcManager.h"
 
 
 CWorldManager::CWorldManager()
@@ -124,6 +125,9 @@ void CWorldManager::DestroyWorld(CWorld *pWorld)
 	{
 		ERR_LOG(LOG_SYSTEM, "pWorld == NULL");
 	}
+
+	// Ensure helper NPC tracking is cleaned for this world to prevent stale references
+	GetHelperNpcManager()->OnWorldDestroyed(pWorld);
 
 	pWorld->OnDestroy();
 	m_worldIdxList.RemoveWorld(pWorld);

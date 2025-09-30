@@ -17,7 +17,7 @@ int CClientSession::OnAccept()
 	int currentSessions = app->GetNetwork()->GetSessionList()->GetCurCount();
 	int maxSessions = app->GetNetwork()->GetSessionList()->GetMaxCount();
 	
-	NTL_PRINT(PRINT_APP, "CClientSession::OnAccept() - Session %u connecting. Current sessions: %d/%d (%.1f%% utilization)", 
+	NTL_PRINT(PRINT_APP, "CClientSession::OnAccept() - Session %u connecting. Sessions: %d/%d (%.1f%%)", 
 		GetHandle(), currentSessions, maxSessions, 
 		maxSessions > 0 ? (float)currentSessions / maxSessions * 100.0f : 0.0f);
 	

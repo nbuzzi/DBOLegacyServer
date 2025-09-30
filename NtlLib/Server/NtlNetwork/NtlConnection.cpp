@@ -158,6 +158,7 @@ void CNtlConnection::Init()
 	m_bSending = false;
 	m_bDisconnect = false;
 	m_bConnected = false;
+	m_bAcceptorDisconnectNotified = false;
 
 	m_dwConnectTime = 0;
 	m_dwBytesRecvSize = 0;
@@ -286,7 +287,8 @@ void CNtlConnection::Destroy()
 
 	if( m_pAcceptorRef )
 	{
-		m_pAcceptorRef->OnDisconnected( m_bConnected );
+		// Ensure counters are decremented exactly once
+		NotifyAcceptorDisconnected();
 	}
 
 	if( m_pConnectorRef )
@@ -331,6 +333,9 @@ void CNtlConnection::Close(bool bForce)
 		return;
 	}
 
+	// Proactively notify acceptor on close to free slots promptly
+	NotifyAcceptorDisconnected();
+
 	// The bottom, it is impossible in progress. Processor extinction due to the memory dwaem
 }
 
@@ -356,6 +361,9 @@ int CNtlConnection::Disconnect(bool bGraceful)
 	}
 
 	m_bDisconnect = true;
+
+	// Proactively notify acceptor when disconnecting
+	NotifyAcceptorDisconnected();
 
 
 	return NTL_SUCCESS;
@@ -384,10 +392,22 @@ int CNtlConnection::CheckDisconnect(bool bGraceful)
 
 		m_bDisconnect = true;
 
+		// Proactively notify acceptor when checking/forcing disconnect
+		NotifyAcceptorDisconnected();
+
 		return TRUE;
 	}
 
 	return FALSE;
+}
+
+void CNtlConnection::NotifyAcceptorDisconnected()
+{
+	if (m_pAcceptorRef && !m_bAcceptorDisconnectNotified)
+	{
+		m_pAcceptorRef->OnDisconnected(m_bConnected);
+		m_bAcceptorDisconnectNotified = true;
+	}
 }
 
 

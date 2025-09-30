@@ -73,6 +73,10 @@ public:
 	void						RecvEventCoinDecreaseNfy(CNtlPacket* pPacket);
 	void						RecvWaguWaguMachineUpdateCashitemInfo(CNtlPacket * pPacket);
 
+	// Arena
+	void						RecvArenaTeleportInfoReq(CNtlPacket * pPacket);
+	void						RecvArenaTeleportInfoRes(CNtlPacket * pPacket);
+
 	void						RecvDojoCreateRes(CNtlPacket * pPacket);
 	void						RecvCharServerTeleport(CNtlPacket * pPacket);
 	void						RecvDojoCreatedNfy(CNtlPacket * pPacket);

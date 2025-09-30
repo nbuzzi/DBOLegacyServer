@@ -154,6 +154,34 @@ class CBudokaiManager : public CNtlSingleton<CBudokaiManager>
 
 public:
 
+	// ---- Config overrides (public API) ----
+	// Reads [BUDOKAI] section from an INI file path (e.g., .\\config\\GameServer.ini)
+	bool                                LoadConfigFromIniPath(const char* iniPath);
+
+	// Runtime setters/getters for GM commands
+	void                                SetDojoRecommendTime(DWORD seconds);
+	void                                SetOpenNoticeTime(DWORD seconds);
+	void                                SetRegisterTime(DWORD seconds);
+	void                                SetEndingWaitTime(DWORD seconds);
+	void                                SetMinorMatchWaitTime(DWORD seconds);
+	void                                SetMajorMatchWaitTime(DWORD seconds);
+	void                                SetFinalMatchWaitTime(DWORD seconds);
+	void                                SetBudokaiEndTime(DWORD seconds);
+
+	DWORD                               GetDojoRecommendTime() const;
+	DWORD                               GetOpenNoticeTime() const;
+	DWORD                               GetRegisterTime() const;
+	DWORD                               GetEndingWaitTime() const;
+	DWORD                               GetMinorMatchWaitTime() const;
+	DWORD                               GetMajorMatchWaitTime() const;
+	DWORD                               GetFinalMatchWaitTime() const;
+	DWORD                               GetBudokaiEndTime() const;
+
+	void                                SetMajorMatchMaxScore(BYTE v);
+	void                                SetFinalMatchMaxScore(BYTE v);
+	BYTE                                GetMajorMatchMaxScore() const { return m_byMajorMatchMaxScore; }
+	BYTE                                GetFinalMatchMaxScore() const { return m_byFinalMatchMaxScore; }
+
 	CBudokaiManager();
 	virtual ~CBudokaiManager();
 
@@ -315,6 +343,10 @@ public:
 
 	bool								CanTeleportPrelim(CPlayer* pPlayer);
 	bool								CanTeleportMajorMatch(CPlayer* pPlayer);
+	// Rejoin support: attempt to bring a participant back into the ongoing Budokai context
+	// Teleports to the appropriate Budokai world (prelim/major/final) on the Dojo channel
+	// Returns true if a teleport was initiated.
+	bool								TryRejoinPlayer(CPlayer* pPlayer);
 
 private:
 
@@ -394,6 +426,10 @@ private:
 	std::map<CHARACTERID, TEAMTYPE>			m_mapTeamType;
 	std::map<JOINID, BYTE>					m_mapMatchIndex;
 
+
+	// Configurable caps (defaults aligned with legacy)
+	BYTE                                m_byMajorMatchMaxScore = 3;
+	BYTE                                m_byFinalMatchMaxScore = 4;
 
 };
 

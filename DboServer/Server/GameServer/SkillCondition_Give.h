@@ -5,6 +5,8 @@
 #include "SkillCondition.h"
 #include "ObjectManager.h"
 #include "HelperNpcManager.h"
+#include "CPlayer.h"
+#include "Party.h"
 
 class CSkillBot;
 class CNpc;
@@ -35,7 +37,7 @@ inline CSkillBot* CSkillCondition_Give::OnUpdate(DWORD dwTickTime)
 			ERR_LOG(LOG_GENERAL, "fail : INVALID_WORD == m_wUse_Skill_LP");
 			return NULL;
 		}
-		// Prefer NPC party member with lowest LP
+		// Prefer NPC party member with lowest LP first
 		m_pPartyMemberLowLP = NULL;
 		if (CNpcParty* pParty = GetBot()->GetNpcParty())
 		{
@@ -44,15 +46,55 @@ inline CSkillBot* CSkillCondition_Give::OnUpdate(DWORD dwTickTime)
 				m_pPartyMemberLowLP = pNpcLow;
 		}
 
-		// If no NPC party or no low member found, try linked PC (dungeon leader)
-		if (!m_pPartyMemberLowLP)
+		// If no NPC party member found, scan the linked PC leader's party and choose the lowest-HP member
+		// This enables healing of all team members instead of just the leader.
+		HOBJECT hLink = GetBot()->GetLinkPc();
+		if (!m_pPartyMemberLowLP && hLink != INVALID_HOBJECT)
 		{
-			HOBJECT hLink = GetBot()->GetLinkPc();
-			if (hLink != INVALID_HOBJECT)
+			CPlayer* pLeader = reinterpret_cast<CPlayer*>(g_pObjectManager->GetChar(hLink));
+			if (pLeader && pLeader->IsInitialized())
 			{
-				CCharacter* pLinked = g_pObjectManager->GetChar(hLink);
-				if (pLinked && pLinked->IsInitialized())
-					m_pPartyMemberLowLP = pLinked;
+				const CWorld* pBotWorld = GetBot()->GetCurWorld();
+				float bestMissingPct = -1.0f;
+				CCharacter* pBest = NULL;
+
+				auto consider = [&](CPlayer* pPlr)
+				{
+					if (!pPlr || !pPlr->IsInitialized()) return; // invalid
+					if (pPlr->IsFainting()) return; // resurrection handled elsewhere
+					if (pPlr->GetCurWorld() != pBotWorld) return; // different world
+					float curPct = pPlr->GetCurLpInPercent();
+					float missingPct = 100.0f - curPct;
+					if (missingPct <= 0.0f) return; // full HP
+					if (missingPct > bestMissingPct)
+					{
+						bestMissingPct = missingPct;
+						pBest = pPlr;
+					}
+				};
+
+				// Consider leader and party members
+				consider(pLeader);
+				if (pLeader->GetParty() && pLeader->GetParty()->GetPartyMemberCount() > 0)
+				{
+					CParty* pParty = pLeader->GetParty();
+					BYTE cnt = pParty->GetPartyMemberCount();
+					for (BYTE i = 0; i < cnt; ++i)
+					{
+						const sPARTY_MEMBER_INFO& mi = pParty->GetMemberInfo(i);
+						if (mi.hHandle == hLink) continue; // already considered leader
+						CPlayer* pMem = g_pObjectManager->GetPC(mi.hHandle);
+						consider(pMem);
+					}
+				}
+
+				if (pBest)
+					m_pPartyMemberLowLP = pBest;
+				else
+				{
+					// Fallback to the leader if nobody else is injured
+					m_pPartyMemberLowLP = pLeader;
+				}
 			}
 		}
 

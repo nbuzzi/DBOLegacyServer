@@ -111,6 +111,30 @@ bool CMonster::CreateDataAndSpawn(WORLDID worldId, sMOB_TBLDAT* mobTbldat, sSPAW
 {
 	SetWorldID(worldId);
 
+	// Optional: apply CustomDropEvent mob replacement for spawn-table spawns
+	if (g_pCustomDropEvent && g_pCustomDropEvent->m_bOn && mobTbldat)
+	{
+		unsigned int repl = g_pCustomDropEvent->GetMobReplacement(mobTbldat->tblidx);
+		if (repl != 0 && repl != mobTbldat->tblidx)
+		{
+			sMOB_TBLDAT* pRepl = (sMOB_TBLDAT*)g_pTableContainer->GetMobTable()->FindData(repl);
+			if (pRepl)
+			{
+				//ERR_LOG(LOG_GENERAL, "[CustomDropEvent] Replacing spawn mob %u with %u (world %u - spawn table)", mobTbldat->tblidx, pRepl->tblidx, worldId);
+				if (g_pCustomDropEvent->IsReplaceUseTargetStats())
+				{
+					// Using target template: stats and behavior come from replacement mob
+					mobTbldat = pRepl;
+				}
+				else
+				{
+					// Keep original stats; we'll adjust visuals/behavior later if needed
+					// No template switch here.
+				}
+			}
+		}
+	}
+
 	m_pTbldat = mobTbldat;
 
 	m_SpawnGroupID = spawnTbldat->spawnGroupId;
@@ -217,6 +241,28 @@ bool CMonster::CreateDataAndSpawn(WORLDID worldId, sMOB_TBLDAT* mobTbldat, sSPAW
 bool CMonster::CreateDataAndSpawn(sMOB_DATA& sData, sMOB_TBLDAT* mobTbldat, BYTE byActualLevel/* = INVALID_BYTE*/, BYTE byEffectLevel/* = INVALID_BYTE*/)
 {
 	SetWorldID(sData.worldID);
+
+	// Optional: apply CustomDropEvent mob replacement for script/GM spawns as well
+	if (g_pCustomDropEvent && g_pCustomDropEvent->m_bOn && mobTbldat)
+	{
+		unsigned int repl = g_pCustomDropEvent->GetMobReplacement(mobTbldat->tblidx);
+		if (repl != 0 && repl != mobTbldat->tblidx)
+		{
+			sMOB_TBLDAT* pRepl = (sMOB_TBLDAT*)g_pTableContainer->GetMobTable()->FindData(repl);
+			if (pRepl)
+			{
+				ERR_LOG(LOG_GENERAL, "[CustomDropEvent] Replacing spawn mob %u with %u (world %u - sMOB_DATA)", mobTbldat->tblidx, pRepl->tblidx, sData.worldID);
+				if (g_pCustomDropEvent->IsReplaceUseTargetStats())
+				{
+					mobTbldat = pRepl;
+				}
+				else
+				{
+					// Keep original stats
+				}
+			}
+		}
+	}
 
 	m_pTbldat = mobTbldat;
 
@@ -368,6 +414,37 @@ void CMonster::Spawn(bool bSpawnOnServerStart)
 	CGameServer* app = (CGameServer*)g_pApp;
 
 	sMOB_TBLDAT* tbldat = GetTbldat();
+
+	// Evaluate replacement on every spawn/respawn, in case event toggled after creation
+	if (g_pCustomDropEvent && g_pCustomDropEvent->m_bOn && tbldat)
+	{
+		unsigned int repl = g_pCustomDropEvent->GetMobReplacement(tbldat->tblidx);
+		if (repl != 0 && repl != tbldat->tblidx)
+		{
+			sMOB_TBLDAT* pRepl = (sMOB_TBLDAT*)g_pTableContainer->GetMobTable()->FindData(repl);
+			if (pRepl)
+			{
+				if (g_pCustomDropEvent->IsReplaceUseTargetStats())
+				{
+					// Transform to replacement so stats and behavior come from target
+					ACTIONPATTERNTBLIDX ap = INVALID_TBLIDX;
+					if (GetActionPattern())
+						ap = GetActionPattern()->GetTableIdx();
+					if (DoTransformation(repl, ap, bot_profile.sBotSubData.tblidxOnlyOneSkillUse))
+					{
+						ERR_LOG(LOG_GENERAL, "[CustomDropEvent] Transforming mob %u -> %u on spawn/respawn (world %u)", tbldat->tblidx, repl, GetWorldID());
+						// Recalculate attributes to reflect the new mob template
+						GetCharAtt()->CalculateAll();
+						tbldat = GetTbldat();
+					}
+				}
+				else
+				{
+					// Keep original stats; skip transform
+				}
+			}
+		}
+	}
 
 	SetCurLP(GetCharAtt()->GetMaxLP());
 	SetExp(tbldat->dwExp);

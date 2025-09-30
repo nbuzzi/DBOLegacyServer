@@ -1,6 +1,7 @@
 #pragma once
 
 #include "NtlPacketCommon.h"
+#include "NtlSharedDef.h"
 #include "NtlCharacter.h"
 #include "NtlGuild.h"
 #include "NtlParty.h"
@@ -50,17 +51,17 @@ enum eOPCODE_TG
 	TG_BUDOKAI_TOURNAMENT_TEAM_LIST_REQ,
 	TG_BUDOKAI_TOURNAMENT_TEAM_INFO_REQ,
 
-	TG_BUDOKAI_MINOR_MATCH_INDIVIDUAL_LIST_NFY,			// ¿¹¼±Àü ÃâÀü ¸®½ºÆ®(ÃµÇÏÁ¦ÀÏ¹«µµÈ¸ ¼­¹ö -> ÀÏ¹Ý °ÔÀÓ¼­¹ö)
-	TG_BUDOKAI_MINOR_MATCH_TEAM_LIST_NFY,				// ¿¹¼±Àü ÃâÀü ¸®½ºÆ®(ÃµÇÏÁ¦ÀÏ¹«µµÈ¸ ¼­¹ö -> ÀÏ¹Ý °ÔÀÓ¼­¹ö)
+	TG_BUDOKAI_MINOR_MATCH_INDIVIDUAL_LIST_NFY,			// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Æ®(Ãµï¿½ï¿½ï¿½ï¿½ï¿½Ï¹ï¿½ï¿½ï¿½È¸ ï¿½ï¿½ï¿½ï¿½ -> ï¿½Ï¹ï¿½ ï¿½ï¿½ï¿½Ó¼ï¿½ï¿½ï¿½)
+	TG_BUDOKAI_MINOR_MATCH_TEAM_LIST_NFY,				// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Æ®(Ãµï¿½ï¿½ï¿½ï¿½ï¿½Ï¹ï¿½ï¿½ï¿½È¸ ï¿½ï¿½ï¿½ï¿½ -> ï¿½Ï¹ï¿½ ï¿½ï¿½ï¿½Ó¼ï¿½ï¿½ï¿½)
 
-	TG_BUDOKAI_MINOR_MATCH_TELEPORT_INFO_REQ,			// ¿¹¼±Àü ÅÚ·¹Æ÷Æ® Á¤º¸ (ÀÏ¹Ý °ÔÀÓ¼­¹ö -> ÃµÇÏÁ¦ÀÏ¹«µµÈ¸ ¼­¹ö)
-	TG_BUDOKAI_MINOR_MATCH_TELEPORT_INFO_RES,			// ¿¹¼±Àü ÅÚ·¹Æ÷Æ® Á¤º¸ (ÃµÇÏÁ¦ÀÏ¹«µµÈ¸ ¼­¹ö -> ÀÏ¹Ý °ÔÀÓ¼­¹ö)
-	TG_BUDOKAI_PROGRESS_MESSAGE_NFY,					// ÁøÇà ¸Þ½ÃÁö,(¿¹¼±Àü¸¸)(ÃµÇÏÁ¦ÀÏ¹«µµÈ¸ ¼­¹ö -> ÀÏ¹Ý °ÔÀÓ¼­¹ö)
+	TG_BUDOKAI_MINOR_MATCH_TELEPORT_INFO_REQ,			// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ú·ï¿½ï¿½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½ (ï¿½Ï¹ï¿½ ï¿½ï¿½ï¿½Ó¼ï¿½ï¿½ï¿½ -> Ãµï¿½ï¿½ï¿½ï¿½ï¿½Ï¹ï¿½ï¿½ï¿½È¸ ï¿½ï¿½ï¿½ï¿½)
+	TG_BUDOKAI_MINOR_MATCH_TELEPORT_INFO_RES,			// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ú·ï¿½ï¿½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½ (Ãµï¿½ï¿½ï¿½ï¿½ï¿½Ï¹ï¿½ï¿½ï¿½È¸ ï¿½ï¿½ï¿½ï¿½ -> ï¿½Ï¹ï¿½ ï¿½ï¿½ï¿½Ó¼ï¿½ï¿½ï¿½)
+	TG_BUDOKAI_PROGRESS_MESSAGE_NFY,					// ï¿½ï¿½ï¿½ï¿½ ï¿½Þ½ï¿½ï¿½ï¿½,(ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½)(Ãµï¿½ï¿½ï¿½ï¿½ï¿½Ï¹ï¿½ï¿½ï¿½È¸ ï¿½ï¿½ï¿½ï¿½ -> ï¿½Ï¹ï¿½ ï¿½ï¿½ï¿½Ó¼ï¿½ï¿½ï¿½)
 
 	TG_BUDOKAI_GM_BUDOKAI_SERVER_ENTER_REQ,
 	TG_BUDOKAI_GM_BUDOKAI_SERVER_ENTER_RES,
 
-	TG_CHAR_MARKING_UPDATE_NFY,							// ÄªÈ£ ¾÷µ¥ÀÌÆ®
+	TG_CHAR_MARKING_UPDATE_NFY,							// ÄªÈ£ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®
 	TG_CHAR_WAGUPOINT_UPDATE_RES,
 	TG_CHAR_SERVER_TELEPORT,							// Teleport player to other channel
 
@@ -106,6 +107,10 @@ enum eOPCODE_TG
 	TG_WAGUCOIN_DECREASE_NFY,
 	TG_EVENTCOIN_DECREASE_NFY,
 	TG_WAGUWAGUMACHINE_UPDATE_CASHITEM_INFO,
+
+	// Arena: cross-channel teleport coordination
+	TG_ARENA_TELEPORT_INFO_REQ,
+	TG_ARENA_TELEPORT_INFO_RES,
 	//TG_CHARTITLE_SELECT_NFY,
 	//TG_CHARTITLE_ADD_NFY,
 	//TG_CHARTITLE_DELETE_NFY,
@@ -135,6 +140,36 @@ BEGIN_PROTOCOL(TG_USER_ENTER_GAME_ACK)
 	ACCOUNTID			accountId;
 	bool				bForSyncCommunity; //true if chat-server restart.
 	BYTE				abyAuthKey[NTL_MAX_SIZE_AUTH_KEY];
+END_PROTOCOL()
+//------------------------------------------------------------------
+
+// Arena: request (Chat -> Dojo GS)
+BEGIN_PROTOCOL( TG_ARENA_TELEPORT_INFO_REQ )
+HOBJECT                             handle;
+CHARACTERID                         charId;
+BYTE                                byServerChannelId; // source channel id
+BYTE                                byServerIndex;
+BYTE                                byRole; // 0 participant, 1 spectator
+	TBLIDX                              worldTblidx; // desired world (source-provided)
+END_PROTOCOL()
+//------------------------------------------------------------------
+// Arena: response (Dojo GS -> Chat -> Source GS)
+BEGIN_PROTOCOL( TG_ARENA_TELEPORT_INFO_RES )
+BYTE                                byServerChannelId; // source channel id
+BYTE                                byServerIndex;
+HOBJECT                             handle;
+CHARACTERID                         charId;
+BYTE                                byRole; // 0 participant, 1 spectator
+
+WORD                                wResultCode;
+
+BYTE                                byTeleportType; // eTELEPORT_TYPE
+BYTE                                byDestServerChannelId; // destination channel (Dojo)
+BYTE                                byDestServerIndex;
+TBLIDX                              worldTblidx;
+WORLDID                             worldId;
+sVECTOR3                            vLoc;
+sVECTOR3                            vDir;
 END_PROTOCOL()
 //------------------------------------------------------------------
 BEGIN_PROTOCOL(TG_USER_LEAVE_GAME_ACK)
@@ -286,7 +321,7 @@ END_PROTOCOL()
 //------------------------------------------------------------------
 BEGIN_PROTOCOL(TG_BUDOKAI_TOURNAMENT_INDIVIDUAL_LIST_REQ)
 	CHARACTERID					charId;
-	BYTE						byReceivedListCount;		// Å¬¶óÀÌ¾ðÆ®¿¡ ÀúÀåÇÏ°í ÀÖ´Â ¸®½ºÆ®(°æ±â Á¤º¸)ÀÇ °¹¼ö
+	BYTE						byReceivedListCount;		// Å¬ï¿½ï¿½ï¿½Ì¾ï¿½Æ®ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï°ï¿½ ï¿½Ö´ï¿½ ï¿½ï¿½ï¿½ï¿½Æ®(ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½)ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 END_PROTOCOL()
 //------------------------------------------------------------------
 BEGIN_PROTOCOL(TG_BUDOKAI_TOURNAMENT_INDIVIDUAL_INFO_REQ)
@@ -296,7 +331,7 @@ END_PROTOCOL()
 //------------------------------------------------------------------
 BEGIN_PROTOCOL(TG_BUDOKAI_TOURNAMENT_TEAM_LIST_REQ)
 	CHARACTERID					charId;
-	BYTE						byReceivedListCount;		// Å¬¶óÀÌ¾ðÆ®¿¡ ÀúÀåÇÏ°í ÀÖ´Â ¸®½ºÆ®(°æ±â Á¤º¸)ÀÇ °¹¼ö
+	BYTE						byReceivedListCount;		// Å¬ï¿½ï¿½ï¿½Ì¾ï¿½Æ®ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï°ï¿½ ï¿½Ö´ï¿½ ï¿½ï¿½ï¿½ï¿½Æ®(ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½)ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 END_PROTOCOL()
 //------------------------------------------------------------------
 BEGIN_PROTOCOL(TG_BUDOKAI_TOURNAMENT_TEAM_INFO_REQ)
@@ -433,13 +468,13 @@ BEGIN_PROTOCOL( TG_CONNECT_VALID_CHECK_RES )
 END_PROTOCOL()
 //------------------------------------------------------------------
 BEGIN_PROTOCOL( TG_DOJO_SCRAMBLE_RES )
-	HOBJECT								charId;		// ½ÅÃ»ÀÚ
+	HOBJECT								charId;		// ï¿½ï¿½Ã»ï¿½ï¿½
 	WORD								wResultCode;
 	DWORD								dwReqZenny;
 END_PROTOCOL()
 //------------------------------------------------------------------
 BEGIN_PROTOCOL( TG_DOJO_SCRAMBLE_RESPONSE )
-	HOBJECT								charId;		// µµÀå¸®´õ
+	HOBJECT								charId;		// ï¿½ï¿½ï¿½å¸®ï¿½ï¿½
 	bool								bIsAccept;	
 	WORD								wResultCode;
 	bool								bIsRetry;
@@ -474,7 +509,7 @@ END_PROTOCOL()
 //------------------------------------------------------------------
 BEGIN_PROTOCOL( TG_DOJO_SCRAMBLE_STATE_CHANGE )
 	TBLIDX								dojoTblidx;
-	BYTE								byState;	// µµÀåÀïÅ»Àü »óÅÂ
+	BYTE								byState;	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Å»ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	DOJOTIME							tmNextStepTime;
 END_PROTOCOL()
 //------------------------------------------------------------------
@@ -508,8 +543,8 @@ BEGIN_PROTOCOL( TG_DOJO_USERCOUNT_CHANGE )
 END_PROTOCOL()
 //------------------------------------------------------------------
 BEGIN_PROTOCOL(TG_RANKBATTLE_REMAIN_COUNT_FLUSH_NFY)
-sDBO_TIME							time;
-BYTE								byInitCount;
+DBOTIME							nProcTime;
+BYTE							byInitCount;
 END_PROTOCOL()
 //------------------------------------------------------------------
 BEGIN_PROTOCOL(TG_DAILY_LIMIT_COUNT_RESET_NFY)
@@ -587,6 +622,9 @@ BEGIN_PROTOCOL(TG_WAGUWAGUMACHINE_UPDATE_CASHITEM_INFO)
 	sCASHITEM_BRIEF	sInfo;
 END_PROTOCOL()
 //------------------------------------------------------------------
+
+// Arena: request/response used between ChatServer and GameServer
+// (duplicate definitions removed; see canonical definitions near top)
 
 
 #pragma pack()

@@ -19,6 +19,61 @@
 
 
 
+static bool TryTranslatePrefixed(std::wstring& text)
+{
+	if (!DeepLTranslator::Instance().IsEnabled()) return false;
+	const struct { const wchar_t* tok; const char* tgt; } map[] = {
+		{ L"$english-us", "EN-US" }, { L"$en-us", "EN-US" }, { L"$english-uk", "EN-GB" }, { L"$en-gb", "EN-GB" },
+		{ L"$english", "EN" }, { L"$en", "EN" },
+		{ L"$spanish", "ES" }, { L"$es", "ES" },
+		{ L"$japanese", "JA" }, { L"$ja", "JA" },
+		{ L"$chinese", "ZH" }, { L"$zh", "ZH" },
+		{ L"$korean", "KO" }, { L"$ko", "KO" },
+		{ L"$french", "FR" }, { L"$fr", "FR" },
+		{ L"$german", "DE" }, { L"$de", "DE" },
+		{ L"$portuguese-br", "PT-BR" }, { L"$pt-br", "PT-BR" },
+		{ L"$portuguese-pt", "PT-PT" }, { L"$pt-pt", "PT-PT" },
+		{ L"$portuguese", "PT-BR" }, { L"$pt", "PT-BR" },
+		{ L"$italian", "IT" }, { L"$it", "IT" },
+		{ L"$russian", "RU" }, { L"$ru", "RU" },
+		{ L"$turkish", "TR" }, { L"$tr", "TR" },
+		{ L"$polish", "PL" }, { L"$pl", "PL" },
+		{ L"$dutch", "NL" }, { L"$nl", "NL" },
+		{ L"$swedish", "SV" }, { L"$sv", "SV" },
+		{ L"$norwegian", "NB" }, { L"$no", "NB" }, { L"$nb", "NB" },
+		{ L"$danish", "DA" }, { L"$da", "DA" },
+		{ L"$finnish", "FI" }, { L"$fi", "FI" },
+		{ L"$czech", "CS" }, { L"$cs", "CS" },
+		{ L"$hungarian", "HU" }, { L"$hu", "HU" },
+		{ L"$romanian", "RO" }, { L"$ro", "RO" },
+		{ L"$bulgarian", "BG" }, { L"$bg", "BG" },
+		{ L"$slovak", "SK" }, { L"$sk", "SK" },
+		{ L"$slovenian", "SL" }, { L"$sl", "SL" },
+		{ L"$estonian", "ET" }, { L"$et", "ET" },
+		{ L"$latvian", "LV" }, { L"$lv", "LV" },
+		{ L"$lithuanian", "LT" }, { L"$lt", "LT" },
+		{ L"$ukrainian", "UK" }, { L"$uk", "UK" },
+		{ L"$indonesian", "ID" }, { L"$id", "ID" },
+		{ L"$greek", "EL" }, { L"$el", "EL" }
+	};
+	for (auto& m : map) {
+		size_t n = wcslen(m.tok);
+		if (text.size() > n && _wcsnicmp(text.c_str(), m.tok, n) == 0) {
+			wchar_t sep = text[n];
+			// Accept common separators: any whitespace, ':' or ',' or fullwidth colon '：'
+			if (iswspace(sep) || sep == L':' || sep == L',' || sep == 0xFF1A) {
+				// Skip all leading whitespace after the first separator
+				size_t start = n + 1;
+				while (start < text.size() && iswspace(text[start])) ++start;
+				std::wstring body = text.substr(start);
+				std::wstring out;
+				if (DeepLTranslator::Instance().Translate(body, m.tgt, out)) { text = out; return true; }
+				return false;
+			}
+		}
+	}
+	return false;
+}
 DWORD LockGlobalChat(BYTE byLevel)
 {
 	if (byLevel < 10)
@@ -110,11 +165,18 @@ void CClientSession::RecvChatMessageSay(CNtlPacket * pPacket)
 	if (cPlayer->IsMuted())
 		return;
 
+	// Optional: translate when prefixed with $language
+	std::wstring msg(req->awchMessage, req->wMessageLengthInUnicode);
+	TryTranslatePrefixed(msg);
+
 	CNtlPacket packet(sizeof(sTU_CHAT_MESSAGE_SAY));
 	sTU_CHAT_MESSAGE_SAY * res = (sTU_CHAT_MESSAGE_SAY *)packet.GetPacketData();
 	res->wOpCode = TU_CHAT_MESSAGE_SAY;
-	NTL_SAFE_WCSNCPY(res->awchMessage, req->awchMessage, req->wMessageLengthInUnicode);
-	res->wMessageLengthInUnicode = req->wMessageLengthInUnicode;
+	{
+		WORD outLen = (WORD)std::min<size_t>(msg.size(), NTL_MAX_LENGTH_OF_CHAT_MESSAGE);
+		NTL_SAFE_WCSNCPY(res->awchMessage, msg.c_str(), outLen);
+		res->wMessageLengthInUnicode = outLen;
+	}
 	res->hSubject = cPlayer->GetID();
 	NTL_SAFE_WCSCPY(res->awchSenderCharName, cPlayer->GetCharName() );
 	packet.SetPacketLen( sizeof(sTU_CHAT_MESSAGE_SAY) );
@@ -150,11 +212,16 @@ void CClientSession::RecvChatShout(CNtlPacket * pPacket)
 	if (cPlayer->IsMuted())
 		return;
 
+	std::wstring msg(req->awchMessage, req->wMessageLengthInUnicode);
+	TryTranslatePrefixed(msg);
 	CNtlPacket packet(sizeof(sTU_CHAT_MESSAGE_SHOUT));
 	sTU_CHAT_MESSAGE_SHOUT * res = (sTU_CHAT_MESSAGE_SHOUT *)packet.GetPacketData();
 	res->wOpCode = TU_CHAT_MESSAGE_SHOUT;
-	NTL_SAFE_WCSNCPY(res->awchMessage, req->awchMessage, req->wMessageLengthInUnicode);
-	res->wMessageLengthInUnicode = req->wMessageLengthInUnicode;
+	{
+		WORD outLen = (WORD)std::min<size_t>(msg.size(), NTL_MAX_LENGTH_OF_CHAT_MESSAGE);
+		NTL_SAFE_WCSNCPY(res->awchMessage, msg.c_str(), outLen);
+		res->wMessageLengthInUnicode = outLen;
+	}
 	res->hSubject = cPlayer->GetID();
 	NTL_SAFE_WCSCPY(res->awchSenderCharName, cPlayer->GetCharName());
 	packet.SetPacketLen( sizeof(sTU_CHAT_MESSAGE_SHOUT) );
@@ -192,14 +259,18 @@ void CClientSession::RecvChatWhisper(CNtlPacket * pPacket)
 	if (cPlayer->IsMuted())
 		return;
 
+	// Translate with prefix for whisper too
+	std::wstring msg(req->awchMessage, req->wMessageLengthInUnicode);
+	TryTranslatePrefixed(msg);
 	CPlayer* whisperto = g_pPlayerManager->FindPlayerByName( req->awchReceiverCharName );
 	if(whisperto && whisperto->IsBlackListed(cPlayer->GetCharID()) == false)
 	{
 		CNtlPacket packet(sizeof(sTU_CHAT_MESSAGE_WHISPER));
 		sTU_CHAT_MESSAGE_WHISPER * res = (sTU_CHAT_MESSAGE_WHISPER *)packet.GetPacketData();
 		res->wOpCode = TU_CHAT_MESSAGE_WHISPER;
-		NTL_SAFE_WCSNCPY(res->awchMessage, req->awchMessage, req->wMessageLengthInUnicode);
-		res->wMessageLengthInUnicode = req->wMessageLengthInUnicode;
+	WORD outLen = (WORD)std::min<size_t>(msg.size(), NTL_MAX_LENGTH_OF_CHAT_MESSAGE);
+	NTL_SAFE_WCSNCPY(res->awchMessage, msg.c_str(), outLen);
+	res->wMessageLengthInUnicode = outLen;
 		NTL_SAFE_WCSCPY(res->uCharName.wszMessageSenderCharName, cPlayer->GetCharName());
 		res->bIsMessageFromYou = false;
 		packet.SetPacketLen( sizeof(sTU_CHAT_MESSAGE_WHISPER) );
@@ -208,8 +279,9 @@ void CClientSession::RecvChatWhisper(CNtlPacket * pPacket)
 		CNtlPacket packet2(sizeof(sTU_CHAT_MESSAGE_WHISPER));
 		sTU_CHAT_MESSAGE_WHISPER * res2 = (sTU_CHAT_MESSAGE_WHISPER *)packet2.GetPacketData();
 		res2->wOpCode = TU_CHAT_MESSAGE_WHISPER;
-		NTL_SAFE_WCSNCPY(res2->awchMessage, req->awchMessage, req->wMessageLengthInUnicode);
-		res2->wMessageLengthInUnicode = req->wMessageLengthInUnicode;
+	WORD outLen2 = (WORD)std::min<size_t>(msg.size(), NTL_MAX_LENGTH_OF_CHAT_MESSAGE);
+	NTL_SAFE_WCSNCPY(res2->awchMessage, msg.c_str(), outLen2);
+	res2->wMessageLengthInUnicode = outLen2;
 		NTL_SAFE_WCSCPY(res2->uCharName.wszMessageReceiverCharName, req->awchReceiverCharName );
 		res2->bIsMessageFromYou = true;
 		packet2.SetPacketLen( sizeof(sTU_CHAT_MESSAGE_WHISPER) );
@@ -261,11 +333,17 @@ void CClientSession::RecvChatParty(CNtlPacket * pPacket)
 	if (cPlayer->IsMuted())
 		return;
 
+	// translate if prefixed
+	std::wstring msg2(req->awchMessage, req->wMessageLengthInUnicode);
+	TryTranslatePrefixed(msg2);
 	CNtlPacket packet(sizeof(sTU_CHAT_MESSAGE_PARTY));
 	sTU_CHAT_MESSAGE_PARTY * res = (sTU_CHAT_MESSAGE_PARTY *)packet.GetPacketData();
 	res->wOpCode = TU_CHAT_MESSAGE_PARTY;
-	NTL_SAFE_WCSNCPY(res->awchMessage, req->awchMessage, req->wMessageLengthInUnicode);
-	res->wMessageLengthInUnicode = req->wMessageLengthInUnicode;
+	{
+		WORD outLen = (WORD)std::min<size_t>(msg2.size(), NTL_MAX_LENGTH_OF_CHAT_MESSAGE);
+		NTL_SAFE_WCSNCPY(res->awchMessage, msg2.c_str(), outLen);
+		res->wMessageLengthInUnicode = outLen;
+	}
 	res->hSubject = cPlayer->GetID();
 	NTL_SAFE_WCSCPY(res->awchSenderCharName, cPlayer->GetCharName());
 	res->byChattingType = req->byChattingType;
@@ -307,11 +385,16 @@ void CClientSession::RecvChatGuild(CNtlPacket * pPacket)
 		if (cPlayer->IsMuted())
 			return;
 
+		std::wstring msgG(req->awchMessage, req->wMessageLengthInUnicode);
+		TryTranslatePrefixed(msgG);
 		CNtlPacket packet(sizeof(sTU_CHAT_MESSAGE_GUILD));
 		sTU_CHAT_MESSAGE_GUILD * res = (sTU_CHAT_MESSAGE_GUILD *)packet.GetPacketData();
 		res->wOpCode = TU_CHAT_MESSAGE_GUILD;
-		NTL_SAFE_WCSNCPY(res->awchMessage, req->awchMessage, req->wMessageLengthInUnicode);
-		res->wMessageLengthInUnicode = req->wMessageLengthInUnicode;
+		{
+			WORD outLen = (WORD)std::min<size_t>(msgG.size(), NTL_MAX_LENGTH_OF_CHAT_MESSAGE);
+			NTL_SAFE_WCSNCPY(res->awchMessage, msgG.c_str(), outLen);
+			res->wMessageLengthInUnicode = outLen;
+		}
 		NTL_SAFE_WCSCPY(res->wszSenderCharName, cPlayer->GetCharName());
 		res->byChattingType = req->byChattingType;
 		packet.SetPacketLen( sizeof(sTU_CHAT_MESSAGE_GUILD) );
@@ -354,11 +437,16 @@ void CClientSession::RecvChatTrade(CNtlPacket * pPacket)
 	if (cPlayer->SpamCheck(req->awchMessage) == false)
 		return;
 
+	std::wstring msgT(req->awchMessage, req->wMessageLengthInUnicode);
+	TryTranslatePrefixed(msgT);
 	CNtlPacket packet(sizeof(sTU_CHAT_MESSAGE_TRADE));
 	sTU_CHAT_MESSAGE_TRADE * res = (sTU_CHAT_MESSAGE_TRADE *)packet.GetPacketData();
 	res->wOpCode = TU_CHAT_MESSAGE_TRADE;
-	NTL_SAFE_WCSNCPY(res->awchMessage, req->awchMessage, req->wMessageLengthInUnicode);
-	res->wMessageLengthInUnicode = req->wMessageLengthInUnicode;
+	{
+		WORD outLen = (WORD)std::min<size_t>(msgT.size(), NTL_MAX_LENGTH_OF_CHAT_MESSAGE);
+		NTL_SAFE_WCSNCPY(res->awchMessage, msgT.c_str(), outLen);
+		res->wMessageLengthInUnicode = outLen;
+	}
 	res->hSubject = cPlayer->GetID();
 	NTL_SAFE_WCSCPY(res->awchSenderCharName, cPlayer->GetCharName());
 	res->serverChannelId = cPlayer->GetChannel();

@@ -44,8 +44,10 @@
 #include "StoneDropEvent.h"
 #include "Fairy Event.h"
 #include "CustomDropEvent.h"
+#include "PlayerModifiers.h"
 #include "HelperNpcManager.h"
 #include "SkillTable.h"
+#include "ArenaManager.h"
 // --- INICIO SOCKET COMANDOS ---
 #include <thread>
 #include <atomic>
@@ -272,6 +274,10 @@ int CGameServer::OnInitApp()
 	NTL_PRINT(PRINT_APP, "Custom Drop System");
 	CCustomDropEvent* pCustomDrop = new CCustomDropEvent;
 	UNREFERENCED_PARAMETER(pScs);
+
+	NTL_PRINT(PRINT_APP, "Player Modifiers System");
+	CPlayerModifiers* pPlayerMods = new CPlayerModifiers;
+	UNREFERENCED_PARAMETER(pPlayerMods);
 	if (!m_pGameMain->PrepareWorldAndObject())
 	{
 		NTL_PRINT(PRINT_APP, "m_pGameMain->PrepareWorldAndObject() == FALSE");
@@ -295,6 +301,17 @@ int CGameServer::OnAppStart()
 	NTL_PRINT(PRINT_APP, "Prepare Budokai System");
 	CBudokaiManager* pBudokaiManager = new CBudokaiManager;
 	UNREFERENCED_PARAMETER(pBudokaiManager);
+
+	NTL_PRINT(PRINT_APP, "Prepare Arena System");
+	CArenaManager* pArenaManager = new CArenaManager;
+	UNREFERENCED_PARAMETER(pArenaManager);
+
+	// Load Arena config now that the manager singleton exists
+	{
+		const char* arenaIni = ".\\config\\Arena.cfg";
+		bool ok = g_pArenaManager->LoadConfigFromIniPath(arenaIni);
+		NTL_PRINT(PRINT_APP, ok ? "[ARENA] Config loaded" : "[ARENA] Config not found or invalid");
+	}
 
 	int rc = NTL_SUCCESS;
 
@@ -543,6 +560,15 @@ int	CGameServer::OnConfiguration(const char* lpszConfigFile)
 	if (!file.Read("SETTINGS", "TsPath", m_config.strTsPath))
 		return NTL_ERR_SYS_CONFIG_FILE_READ_FAIL;
 
+	// Optional GM-only mode (defaults to 0/false)
+	{
+		int gmOnly = 0;
+		if (file.Read("SETTINGS", "AllowOnlyGMs", gmOnly))
+			m_bGmOnlyMode = (gmOnly != 0);
+		else
+			m_bGmOnlyMode = false;
+	}
+
 
 	if (!file.Read("Play Script", "DataPath", m_config.strPlayScriptPath))
 		return NTL_ERR_SYS_CONFIG_FILE_READ_FAIL;
@@ -636,6 +662,8 @@ int	CGameServer::OnConfiguration(const char* lpszConfigFile)
 		NTL_PRINT(PRINT_APP, "[HELPER_NPC] SpawnOffset=%.2f FollowLeader=%d AssistLeaderTarget=%d HealLpThresholdOverride=%u DamageMultiplier=%.2f HealPowerMultiplier=%.2f MoveSpeedMultiplier=%.2f AttackSpeedPercent=%u EpRegenPercent=%u InvincibleHelper=%d BuffCount=%zu",
 			cfg.fSpawnOffset, (int)cfg.bFollowLeader, (int)cfg.bAssistLeaderTarget, cfg.wHealLpThresholdOverride, cfg.fDamageMultiplier, cfg.fHealPowerMultiplier, cfg.fMoveSpeedMultiplier, cfg.wAttackSpeedPercent, cfg.wEpRegenPercent, (int)cfg.bInvincibleHelper, cfg.vBuffSkills.size());
 	}
+
+	// Arena config is loaded in OnAppStart after creating the manager
 
 	return NTL_SUCCESS;
 }
@@ -904,11 +932,11 @@ BOOL CGameServer::OnCommandInput(std::string& sCmd)
 		NTL_PRINT(PRINT_APP, "Dragonball Hunt Event Stopped");
 	}
 	else if (sCmd == "startdojo") {
-		g_pDojoManager->StartDojoEvent();
+		//g_pDojoManager->StartDojoEvent();
 		NTL_PRINT(PRINT_APP, "Dojo Event Started (manual)");
 	}
 	else if (sCmd == "stopdojo") {
-		g_pDojoManager->StopDojoEvent();
+		//g_pDojoManager->StopDojoEvent();
 		NTL_PRINT(PRINT_APP, "Dojo Event Stopped (manual)");
 	}
 	else if (sCmd == "dumpthreads") {
@@ -1022,6 +1050,9 @@ void CGameServer::Init()
 	m_pGameMain = NULL;
 	m_pGameData = NULL;
 	m_pActionPatternSystem = NULL;
+
+	// default: GM-only mode disabled
+	m_bGmOnlyMode = false;
 }
 
 
@@ -1087,13 +1118,22 @@ void CGameServer::DoUpdateSessionLog(DWORD dwNow)
 		int maxSessions = GetNetwork()->GetSessionList()->GetMaxCount();
 		float utilization = maxSessions > 0 ? (float)currentSessions / maxSessions * 100.0f : 0.0f;
 		
-		NTL_PRINT(PRINT_APP, "[SESSION MONITOR] Current: %d/%d sessions (%.1f%% utilization) - Available slots: %d", 
-			currentSessions, maxSessions, utilization, maxSessions - currentSessions);
+		// Include acceptor counters for deeper diagnostics
+		int accAccepting = m_clientAcceptor.GetAcceptingCount();
+		int accAccepted = m_clientAcceptor.GetAcceptedCount();
+		// Accepted-client utilization relative to configured client capacity
+		int cfgMaxClients = m_config.nMaxConnection;
+		float clientUtil = cfgMaxClients > 0 ? (float)accAccepted / (float)cfgMaxClients * 100.0f : 0.0f;
+		NTL_PRINT(PRINT_APP, "[SESSION MONITOR] Sessions: %d/%d (%.1f%%) | Clients(accepted): %d/%d (%.1f%%) | Avail(Sessions): %d | Acceptor accepting:%d accepted:%d total:%lu",
+			currentSessions, maxSessions, utilization,
+			accAccepted, cfgMaxClients, clientUtil,
+			maxSessions - currentSessions,
+			accAccepting, accAccepted, m_clientAcceptor.GetTotalAcceptCount());
 		
-		// Warn if utilization is getting high
-		if (utilization >= 80.0f)
+		// Warn if accepted-client utilization is getting high
+		if (clientUtil >= 80.0f)
 		{
-			NTL_PRINT(PRINT_APP, "WARNING: High session utilization detected! May start refusing connections soon.");
+			NTL_PRINT(PRINT_APP, "WARNING: High client utilization detected! May start refusing connections soon.");
 		}
 		
 		// Error if we're at capacity

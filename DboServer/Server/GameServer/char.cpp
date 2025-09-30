@@ -87,9 +87,15 @@ void CCharacter::TickProcess(DWORD dwTickDiff, float fMultiple)
 {
 	CCharacterObject::TickProcess(dwTickDiff, fMultiple);
 
+	// Skip processing if object is no longer initialized (destroying/despawned)
+	if (!IsInitialized())
+		return;
+
 	Recover(dwTickDiff);
 
-	m_pTargetListManager->TickProcess(dwTickDiff, fMultiple);
+	// Defensive: target list manager can be null during teardown; guard before use
+	if (m_pTargetListManager)
+		m_pTargetListManager->TickProcess(dwTickDiff, fMultiple);
 }
 
 void CCharacter::LeaveGame()
@@ -889,8 +895,8 @@ bool CCharacter::IsTargetAttackble(CCharacter* pTarget, WORD wRange)
 			CNpc* pOtherNpc = dynamic_cast<CNpc*>(pTarget);
 			if (pSelfNpc2 && pOtherNpc)
 			{
-				const bool selfIsHelper = GetHelperNpcManager()->IsRegisteredHelper(pSelfNpc2) || pSelfNpc2->GetStandAlone();
-				const bool otherIsHelper = GetHelperNpcManager()->IsRegisteredHelper(pOtherNpc) || pOtherNpc->GetStandAlone();
+				const bool selfIsHelper = GetHelperNpcManager()->IsRegisteredHelper(pSelfNpc2);
+				const bool otherIsHelper = GetHelperNpcManager()->IsRegisteredHelper(pOtherNpc);
 				if (selfIsHelper && otherIsHelper)
 					return false;
 			}

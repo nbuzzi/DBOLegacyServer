@@ -22,6 +22,7 @@
 #include "StoneDropEvent.h"
 #include "CustomDropEvent.h"
 #include "HelperNpcManager.h"
+#include "ArenaManager.h"
 
 
 CGameProcessor::CGameProcessor()
@@ -73,7 +74,7 @@ void CGameProcessor::Run(DWORD dwTickCount)
 
 	if (m_dwTickCount - m_dwLastTimeGameMainUpdated >= m_dwTickTime)
 	{
-	//	ERR_LOG(LOG_FIRST, "m_dwTickCount %u - m_dwLastTimeGameMainUpdated %u >= m_dwTickTime %u\n", m_dwTickCount, m_dwLastTimeGameMainUpdated, m_dwTickTime);
+		//	ERR_LOG(LOG_FIRST, "m_dwTickCount %u - m_dwLastTimeGameMainUpdated %u >= m_dwTickTime %u\n", m_dwTickCount, m_dwLastTimeGameMainUpdated, m_dwTickTime);
 		LARGE_INTEGER m_freq, rStart, rEvent, rWorld, rObject, rEnd, rSpawn, rItem, rShenron, rTrade, rDungeon, rScript, rRankBattle, rDynamicEvent, rDbHunt, rParty;
 
 		float fMultiple = (float)m_dwTickDiff / (float)m_dwTickTime;
@@ -99,8 +100,13 @@ void CGameProcessor::Run(DWORD dwTickCount)
 
 		if (app->IsDojoChannel())
 		{
-			g_pDojoManager->TickProcess(dwTickDiff);
+			// Budokai always ticks on the Dojo channel
 			g_pBudokaiManager->TickProcess(dwTickDiff);
+			// Dojo tick is gated by a manual enable flag controlled via GM command (@dojo on/off)
+			if (g_pDojoManager->IsManualMode())
+			{
+				g_pDojoManager->TickProcess(dwTickDiff);
+			}
 		}
 		else
 		{
@@ -133,45 +139,24 @@ void CGameProcessor::Run(DWORD dwTickCount)
 
 			// Periodic helper-NPC watchdog to repair spawns after floor transitions
 			GetHelperNpcManager()->TickWatchdog(m_dwTickCount);
+
+			// Arena automation + state machine
+			// Always tick automation here; ArenaManager internally checks autoEnabled and arena channel name
+			// and optionally filters by configured autoChannelName. This avoids brittle
+			// exact channel-name gating here and keeps the scheduler alive across renames.
+			g_pArenaManager->AutomationTick(dwTickDiff);
+
+			g_pArenaManager->TickProcess(dwTickDiff);
 		}
 
 		g_pPartyManager->TickProcess(dwTickDiff);
 		QueryPerformanceCounter(&rParty);
 
 		QueryPerformanceCounter(&rEnd);
-
-		/*m_dwLogTick += dwTickDiff;
-
-		if (m_dwLogTick >= 360000) //log every hour
-		{
-			float fTimeDif = ((float)(rEnd.QuadPart - rStart.QuadPart)) * 1000.f / ((float)m_freq.QuadPart);
-			if (fTimeDif > 200.f)
-			{
-				ERR_LOG(LOG_SYSTEM, "LOG-TICK: fTimeDif = %f, Event %f, Item %f, Shenron %f, Trade %f, World %f, Object %f, Spawn %f, Dungeon %f, Script %f, RankBattle %f, DynamicEvent %f, DbHunt %f, rParty %f",
-					fTimeDif,
-					((float)(rEvent.QuadPart - rStart.QuadPart)) * 1000.f / ((float)m_freq.QuadPart),
-					((float)(rItem.QuadPart - rEvent.QuadPart)) * 1000.f / ((float)m_freq.QuadPart),
-					((float)(rShenron.QuadPart - rItem.QuadPart)) * 1000.f / ((float)m_freq.QuadPart),
-					((float)(rTrade.QuadPart - rShenron.QuadPart)) * 1000.f / ((float)m_freq.QuadPart),
-					((float)(rWorld.QuadPart - rTrade.QuadPart)) * 1000.f / ((float)m_freq.QuadPart),
-					((float)(rObject.QuadPart - rWorld.QuadPart)) * 1000.f / ((float)m_freq.QuadPart),
-					((float)(rSpawn.QuadPart - rObject.QuadPart)) * 1000.f / ((float)m_freq.QuadPart),
-					((float)(rDungeon.QuadPart - rSpawn.QuadPart)) * 1000.f / ((float)m_freq.QuadPart),
-					((float)(rScript.QuadPart - rDungeon.QuadPart)) * 1000.f / ((float)m_freq.QuadPart),
-					((float)(rRankBattle.QuadPart - rScript.QuadPart)) * 1000.f / ((float)m_freq.QuadPart),
-					((float)(rDynamicEvent.QuadPart - rRankBattle.QuadPart)) * 1000.f / ((float)m_freq.QuadPart),
-					((float)(rDbHunt.QuadPart - rDynamicEvent.QuadPart)) * 1000.f / ((float)m_freq.QuadPart),
-					((float)(rParty.QuadPart - rDbHunt.QuadPart)) * 1000.f / ((float)m_freq.QuadPart)
-				);
-			}
-
-			m_dwLogTick = 0;
-		}*/
-		
 	}
 }
 
-void CGameProcessor::PostClientPacketEvent(CPacketEventObj * pEvent)
+void CGameProcessor::PostClientPacketEvent(CPacketEventObj* pEvent)
 {
 	m_pPacketEvent->PostEvent(pEvent);
 }
@@ -186,7 +171,7 @@ void CGameProcessor::StartServerShutdownEvent()
 	}
 
 	CNtlPacket packet(sizeof(sGU_SHUTDOWN_COUNT_DOWN_START_NFY));
-	sGU_SHUTDOWN_COUNT_DOWN_START_NFY * res = (sGU_SHUTDOWN_COUNT_DOWN_START_NFY *)packet.GetPacketData();
+	sGU_SHUTDOWN_COUNT_DOWN_START_NFY* res = (sGU_SHUTDOWN_COUNT_DOWN_START_NFY*)packet.GetPacketData();
 	res->wOpCode = GU_SHUTDOWN_COUNT_DOWN_START_NFY;
 	res->byMsgType = 1;
 	packet.SetPacketLen(sizeof(sGU_SHUTDOWN_COUNT_DOWN_START_NFY));
@@ -196,7 +181,7 @@ void CGameProcessor::StartServerShutdownEvent()
 	//Send packet to master server so no new people can connect.
 	CGameServer* app = (CGameServer*)g_pApp;
 	CNtlPacket packet2(sizeof(sGM_SERVER_SHUT_DOWN));
-	sGM_SERVER_SHUT_DOWN * res2 = (sGM_SERVER_SHUT_DOWN *)packet2.GetPacketData();
+	sGM_SERVER_SHUT_DOWN* res2 = (sGM_SERVER_SHUT_DOWN*)packet2.GetPacketData();
 	res2->wOpCode = GM_SERVER_SHUT_DOWN;
 	packet2.SetPacketLen(sizeof(sGM_SERVER_SHUT_DOWN));
 	app->SendTo(app->GetMasterServerSession(), &packet2);

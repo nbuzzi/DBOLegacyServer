@@ -107,6 +107,9 @@ public:
 
 	CNtlLog*						GetLog() { return &m_log; }
 
+	// GM-only mode gate
+	inline bool		IsGmOnlyMode() const { return m_bGmOnlyMode; }
+
 
 
 public:
@@ -159,5 +162,8 @@ public:
 		m_pMasterServerSession = pServerSession;
 	}
 
+private:
+	// When true, only GM accounts can enter the server
+	bool						m_bGmOnlyMode;
 };
 

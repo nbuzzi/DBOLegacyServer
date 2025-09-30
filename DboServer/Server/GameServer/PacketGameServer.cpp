@@ -57,12 +57,15 @@
 
 #include "NtlNavi.h"
 #include "HelperNpcManager.h"
+#include "ArenaWorld.h"
 #include "battle.h"
 #include "DojoWar.h"
 #include "BudokaiManager.h"
 #include "BusSystem.h"
 #include "scsManager.h"
 #include "WPShopContainer.h"
+// Arena runtime (custom PvP flow)
+#include "ArenaManager.h"
 
 // Local helpers: detect Broly worlds by name instead of numeric IDs
 #include <string>
@@ -866,19 +869,25 @@ void CClientSession::RecvCharReady(CNtlPacket* pPacket)
 	cPlayer->SetTeleportDir(CNtlVector::ZERO);
 	cPlayer->SetTeleportWorldID(INVALID_WORLDID);
 
-	// REJOIN: Consume rejoin ticket if available
+	// REJOIN: Attempt rejoin if ticket exists; log attempts, erase only when successful or expired
 	if (auto* t = g_Rejoin.Find(cPlayer->GetCharID()))
 	{
 		const DWORD now = GetTickCount();
 		if (now <= t->expireAtMs)
 		{
 			sREJOIN_TARGET tgt{};
-
-			g_Rejoin.ResolveRejoinTarget(*t, tgt, cPlayer);
-			g_Rejoin.Erase(cPlayer->GetCharID());
+			ERR_LOG(LOG_GENERAL, "[REJOIN] Attempting resolve: char=%u type=%u channel=%u expiresInMs=%u", (unsigned)cPlayer->GetCharID(), (unsigned)t->dungeonType, (unsigned)((CGameServer*)g_pApp)->GetGsChannel(), (unsigned)(t->expireAtMs - now));
+			const bool ok = g_Rejoin.ResolveRejoinTarget(*t, tgt, cPlayer);
+			if (ok)
+			{
+				ERR_LOG(LOG_GENERAL, "[REJOIN] Resolve succeeded: char=%u type=%u worldId=%u", (unsigned)cPlayer->GetCharID(), (unsigned)t->dungeonType, (unsigned)t->worldId);
+				g_Rejoin.Erase(cPlayer->GetCharID());
+			}
+			// else: keep ticket for later attempts within expiry window
 		}
 		else
 		{
+			ERR_LOG(LOG_GENERAL, "[REJOIN] Ticket expired: char=%u type=%u", (unsigned)cPlayer->GetCharID(), (unsigned)t->dungeonType);
 			g_Rejoin.Erase(cPlayer->GetCharID()); // expired ticket
 		}
 	}
@@ -5181,26 +5190,68 @@ void CClientSession::RecvAttackBegin(CNtlPacket* pPacket)
 		HOBJECT hTarget = cPlayer->GetTargetHandle();
 
 		if (hTarget == cPlayer->GetID())
+		{
+			if (g_pCustomDropEvent && g_pCustomDropEvent->m_bOn && g_pCustomDropEvent->m_bVerbose)
+			{
+				ERR_LOG(LOG_GENERAL, "[AttackDbg] Reject self-target attack: me=%u", (unsigned)cPlayer->GetCharID());
+			}
 			return;
+		}
 
 		CCharacter* victim = g_pObjectManager->GetChar(hTarget);
 		if (victim == NULL || victim->IsInitialized() == false)
+		{
+			if (g_pCustomDropEvent && g_pCustomDropEvent->m_bOn && g_pCustomDropEvent->m_bVerbose)
+			{
+				ERR_LOG(LOG_GENERAL, "[AttackDbg] No/Uninit victim on attack begin: me=%u tgtHandle=%u", (unsigned)cPlayer->GetCharID(), (unsigned)hTarget);
+			}
 			return;
+		}
 
 		if (cPlayer->GetCurWorld() == NULL)
+		{
+			if (g_pCustomDropEvent && g_pCustomDropEvent->m_bOn && g_pCustomDropEvent->m_bVerbose)
+			{
+				ERR_LOG(LOG_GENERAL, "[AttackDbg] No current world on attack begin: me=%u", (unsigned)cPlayer->GetCharID());
+			}
 			return;
+		}
 
 		BYTE byWorldRuleType = cPlayer->GetCurWorld()->GetTbldat()->byWorldRuleType;
+		// Arena override: only apply RankBattle rules when IN the Arena world AND actively participating during RUN
+		bool isArenaWorld = (cPlayer->GetCurWorld() && ArenaWorld::IsArenaWorldByWideName(cPlayer->GetCurWorld()->GetTbldat()->wszName));
+		bool arenaActive = (isArenaWorld && g_pArenaManager && g_pArenaManager->IsEnabled() &&
+			g_pArenaManager->GetState() == CArenaManager::State::IN_ROUND && g_pArenaManager->IsParticipant(cPlayer));
+		if (arenaActive)
+			byWorldRuleType = GAMERULE_RANKBATTLE;
 
 		if (byWorldRuleType == GAMERULE_RANKBATTLE)
 		{
-			if (cPlayer->GetRankBattleData()->eState != RANKBATTLE_MEMBER_STATE_ATTACKABLE)
+			// Allow arena participants to attack during RUN even if world is RANKBATTLE
+			if (g_pArenaManager->IsEnabled() && g_pArenaManager->IsParticipant(cPlayer) && 
+			    g_pArenaManager->GetState() == CArenaManager::State::IN_ROUND)
+			{
+				// Arena participants can attack during RUN
+			}
+			else if (cPlayer->GetRankBattleData()->eState != RANKBATTLE_MEMBER_STATE_ATTACKABLE)
+			{
+				if (g_pCustomDropEvent && g_pCustomDropEvent->m_bOn && g_pCustomDropEvent->m_bVerbose)
+				{
+					ERR_LOG(LOG_GENERAL, "[AttackDbg] Reject by rankbattle state: me=%u state=%u", (unsigned)cPlayer->GetCharID(), (unsigned)cPlayer->GetRankBattleData()->eState);
+				}
 				return;
+			}
 		}
 		else if (byWorldRuleType == GAMERULE_MINORMATCH || byWorldRuleType == GAMERULE_MAJORMATCH || byWorldRuleType == GAMERULE_FINALMATCH)
 		{
 			if (cPlayer->GetBudokaiPcState() != MATCH_MEMBER_STATE_NORMAL)
+			{
+				if (g_pCustomDropEvent && g_pCustomDropEvent->m_bOn && g_pCustomDropEvent->m_bVerbose)
+				{
+					ERR_LOG(LOG_GENERAL, "[AttackDbg] Reject by budokai state: me=%u state=%u", (unsigned)cPlayer->GetCharID(), (unsigned)cPlayer->GetBudokaiPcState());
+				}
 				return;
+			}
 		}
 
 		if (cPlayer->GetCurrentPetId() != INVALID_HOBJECT)
@@ -5213,7 +5264,13 @@ void CClientSession::RecvAttackBegin(CNtlPacket* pPacket)
 		}
 
 		if (cPlayer->IsKnockedDown())
+		{
+			if (g_pCustomDropEvent && g_pCustomDropEvent->m_bOn && g_pCustomDropEvent->m_bVerbose)
+			{
+				ERR_LOG(LOG_GENERAL, "[AttackDbg] Reject by knocked down: me=%u", (unsigned)cPlayer->GetCharID());
+			}
 			return;
+		}
 
 	cPlayer->SetAttackTarget(victim->GetID());
 		cPlayer->ChangeAttackProgress(true);
@@ -5345,18 +5402,31 @@ void CClientSession::RecvCharSkillReq(CNtlPacket* pPacket)
 
 					if (byWorldRuleType == GAMERULE_RANKBATTLE)
 					{
-						if (cPlayer->GetRankBattleData()->eState != RANKBATTLE_MEMBER_STATE_ATTACKABLE)
+						// Arena exception: while Arena is running and player is a participant, allow skill casts
+						bool arenaActive = (g_pArenaManager->IsEnabled() && g_pArenaManager->IsParticipant(cPlayer) && g_pArenaManager->GetState() == CArenaManager::State::IN_ROUND);
+						if (!arenaActive && cPlayer->GetRankBattleData()->eState != RANKBATTLE_MEMBER_STATE_ATTACKABLE)
 							resultcode = GAME_SKILL_CANT_CAST_NOW;
 					}
 					else if (byWorldRuleType == GAMERULE_MINORMATCH || byWorldRuleType == GAMERULE_MAJORMATCH || byWorldRuleType == GAMERULE_FINALMATCH)
 					{
+						// Arena doesn’t use Budokai worlds; keep original gating
 						if (cPlayer->GetBudokaiPcState() != MATCH_MEMBER_STATE_NORMAL)
 							resultcode = GAME_SKILL_CANT_CAST_NOW;
 					}
 
 					bool bIsHarmful = Dbo_IsHarmfulEffectType(pSkill->GetOriginalTableData()->bySkill_Active_Type) && pSkill->GetOriginalTableData()->byApply_Target != DBO_SKILL_APPLY_TARGET_PARTY;
 
-					if (bIsHarmful && cPlayer->IsPvpZone() == false && cPlayer->GetPcIsFreeBattle() == false && cPlayer->GetCurWorld()->GetTbldat()->bDynamic == false && GetNaviEngine()->IsBasicAttributeSet(cPlayer->GetCurWorld()->GetNaviInstanceHandle(), cPlayer->GetCurLoc().x, cPlayer->GetCurLoc().z, DBO_WORLD_ATTR_BASIC_FORBID_PC_BATTLE))
+					// In static worlds with FORBID_PC_BATTLE attribute, harmful skills are normally blocked unless the caster
+					// is in PvP zone or in a free battle. During Arena RUN we explicitly allow combat between participants;
+					// bypass this gate for Arena participants while the arena is active.
+					if (bIsHarmful
+						&& cPlayer->IsPvpZone() == false
+						&& cPlayer->GetPcIsFreeBattle() == false
+						&& cPlayer->GetCurWorld()->GetTbldat()->bDynamic == false
+						&& GetNaviEngine()->IsBasicAttributeSet(cPlayer->GetCurWorld()->GetNaviInstanceHandle(), cPlayer->GetCurLoc().x, cPlayer->GetCurLoc().z, DBO_WORLD_ATTR_BASIC_FORBID_PC_BATTLE)
+						&& !(g_pArenaManager->IsEnabled()
+							 && g_pArenaManager->IsParticipant(cPlayer)
+							 && g_pArenaManager->GetState() == CArenaManager::State::IN_ROUND))
 					{
 						resultcode = GAME_SKILL_INVALID_TARGET_APPOINTED;
 					}
@@ -8056,7 +8126,10 @@ void CClientSession::RecvSkillTargetList(CNtlPacket* pPacket)
 				if (byTargetCount > pSkill->GetOriginalTableData()->byApply_Target_Max)
 					byTargetCount = pSkill->GetOriginalTableData()->byApply_Target_Max;
 
-				pSkill->CastSkill(req->ahApplyTarget[0], byTargetCount, req->ahApplyTarget);
+				// Safe appoint target fallback: if client sent an empty list, use current selected target as appoint handle.
+				// This helps when the client refuses to include PC targets on Arena worlds.
+				HOBJECT hAppoint = (byTargetCount > 0) ? req->ahApplyTarget[0] : cPlayer->GetTargetHandle();
+				pSkill->CastSkill(hAppoint, byTargetCount, req->ahApplyTarget);
 			}
 		}
 		else
@@ -12288,16 +12361,12 @@ void CClientSession::RecvGiftShopBuyReq(CNtlPacket* pPacket)
 				}
 			}
 
-			// Deduct WP and ensure it cannot exceed the 2k limit after purchase
+			// Deduct WP and apply only non-negative floor; GS is authoritative for deductions
 			DWORD newWaguPoints = cPlayer->GetWaguPoints();
 			if (newWaguPoints < price)
 				newWaguPoints = 0;
 			else
 				newWaguPoints -= price;
-			// Prevent any restoration of previous WP balance (exploit fix)
-			// Only deduction and capping allowed
-			if (newWaguPoints > 2000)
-				newWaguPoints = 2000;
 			cPlayer->UpdateWaguPoints(newWaguPoints);
 
 			CGameServer* app = (CGameServer*)g_pApp;
@@ -12567,6 +12636,19 @@ void CClientSession::RecvTeleportConfirmationReq(CNtlPacket* pPacket)
 	{
 		if (req->bTeleport) // check if agree to teleport
 		{
+			// If accepting a Budokai teleport proposal, create a short-lived rejoin ticket
+			const BYTE tp = cPlayer->GetTeleportProposalType();
+			if (tp == TELEPORT_TYPE_MINORMATCH || tp == TELEPORT_TYPE_MAJORMATCH || tp == TELEPORT_TYPE_FINALMATCH)
+			{
+				sREJOIN_TICKET t{};
+				t.charId = cPlayer->GetCharID();
+				t.dungeonType = eREJOIN_DUNGEON_TYPE::REJOIN_BUDOKAI;
+				t.worldId = cPlayer->GetTeleportProposalWorldID();
+				// Budokai rejoin: short-lived ticket (2 minutes max)
+				t.expireAtMs = GetTickCount() + 60 * 2000;
+				g_Rejoin.Put(t);
+				ERR_LOG(LOG_GENERAL, "[REJOIN] Ticket created on accept: char=%u type=BUDOKAI worldId=%u expiresInMs=%u", (unsigned)cPlayer->GetCharID(), (unsigned)t.worldId, (unsigned)(60 * 1000));
+			}
 			cPlayer->StartTeleport(cPlayer->GetTeleportProposalLoc(), cPlayer->GetTeleportProposalDir(), cPlayer->GetTeleportProposalWorldID(), cPlayer->GetTeleportProposalType(), INVALID_TBLIDX, false, cPlayer->GetTeleportAnotherServer());
 		}
 		else
@@ -17916,6 +17998,13 @@ void CClientSession::RecvCrescentPopoRevivalReq(CNtlPacket* pPacket)
 	{
 		resultcode = GAME_FAIL;
 		ERR_LOG(LOG_GENERAL, "ERROR: USER IS NOT IN FAINT. CHAR ID %u STATE ID %u", cPlayer->GetCharID(), cPlayer->GetCharStateID());
+	}
+	// Disallow Crescent Popo (auto-resurrect item) inside Arena worlds to keep matches fair
+	else if (g_pArenaManager && g_pArenaManager->IsEnabled() &&
+		(g_pArenaManager->IsArenaWorldId((unsigned int)cPlayer->GetWorldID()) ||
+		 g_pArenaManager->IsArenaWorldTblidx((unsigned int)cPlayer->GetWorldTblidx())))
+	{
+		resultcode = GAME_ITEM_CANT_USE_INVALID_WORLD;
 	}
 	else if (cPlayer->GetCurWorld() && cPlayer->GetCurWorld()->GetTbldat()->bDynamic)
 		resultcode = GAME_FAIL;

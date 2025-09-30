@@ -1714,9 +1714,20 @@ void CQueryServerSession::RecvSkillInitRes(CNtlPacket* pPacket)
 
 		pOwner->GetSkillManager()->InitSkills(); //remove all and learn default skills
 
+		// If a pending class change was requested via GM command, apply it now
+		if (pOwner->HasPendingClassChange())
+		{
+			BYTE byClass = pOwner->ConsumePendingClassChange();
+			pOwner->UpdateClass(byClass);
+		}
+
 
 		if (req->bySkillResetMethod == 0)
-			pOwner->UpdateZeni(ZENNY_CHANGE_TYPE_INIT_SKILL, req->dwZeni, false, false);
+		{
+			// Do not charge when GM initiated a class change that used a reset
+			if (!pOwner->ConsumeSkipNextSkillResetCost())
+				pOwner->UpdateZeni(ZENNY_CHANGE_TYPE_INIT_SKILL, req->dwZeni, false, false);
+		}
 		else if (req->bySkillResetMethod == 1)
 		{
 			CItem* pItem = pOwner->GetPlayerItemContainer()->GetItem(req->itemId);
@@ -1981,7 +1992,11 @@ void CQueryServerSession::RecvPcDataLoadRes(CNtlPacket * pPacket)
 
 		return;
 	}
-
+	{
+		char* logName = Ntl_WC2MB(req->sPcData.awchName);
+		NTL_PRINT(PRINT_APP, "RecvPcDataLoadRes: charId=%u name=%s", req->sPcData.charId, logName ? logName : "<null>");
+		Ntl_CleanUpHeapString(logName);
+	}
 	pOwner->RecvLoadPcDataRes(&req->sPcData, &req->serverChangeInfo, req->bTutorialFlag, &req->sWarFogInfo, &req->sMailBrief, &req->sRankBattleScore, req->TitleIndexFlag, req->wWaguCoins, req->wEventCoins);
 }
 

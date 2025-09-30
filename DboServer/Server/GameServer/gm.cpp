@@ -33,7 +33,12 @@
 #include "Fairy Event.h"
 #include "CustomDropEvent.h"
 #include "HelperNpcManager.h"
+#include "Guild.h"
 #include "BudokaiManager.h"
+#include "PlayerModifiers.h"
+#include "ArenaManager.h"
+#include "DojoManager.h"
+#include <algorithm>
 
 void gm_read_command(sUG_SERVER_COMMAND* sPacket, CPlayer* pPlayer)
 {
@@ -105,6 +110,7 @@ ACMD(do_call);
 ACMD(do_shutdown);
 ACMD(do_setadult);
 ACMD(do_setclass);
+ACMD(do_changeclass);
 ACMD(do_dc);
 ACMD(do_kill);
 ACMD(do_delallitems);
@@ -155,10 +161,19 @@ ACMD(do_reload_customdrop_cfg);
 ACMD(do_customdrop_chainspawns);
 ACMD(do_customdrop_healmul);
 ACMD(do_customdrop_buffduration);
+ACMD(do_reload_playermods_cfg);
+ACMD(do_playermods_toggle);
 ACMD(do_reload_helpernpc_cfg);
 ACMD(do_helpernpc_metrics);
 ACMD(do_helpernpc_resetmetrics);
 ACMD(do_helpernpc_refresh);
+ACMD(do_arena);
+ACMD(do_arena_join_public);
+ACMD(do_arena_joinparty_public);
+ACMD(do_arena_joinguild_public);
+ACMD(do_world_fight);
+ACMD(do_budokai);
+ACMD(do_dojo);
 
 struct command_info cmd_info[] =
 {
@@ -170,6 +185,10 @@ struct command_info cmd_info[] =
 	{ L"@addmasteritem", do_addmasteritem, ADMIN_LEVEL_NONE }, // This command adds the item used to complete the master quest for your class, in case you lose it by accident. Can only be used after you accept it from Korin.
 	{ L"@addskill2", do_addskill2, ADMIN_LEVEL_NONE }, // This command unlocks the master class passive skill, in case a bug causes you to lose it. Can only be used after you have unlocked your master class.
 	{ L"@addhtb", do_addhtb, ADMIN_LEVEL_NONE }, // This command unlocks the main htb and master class htb, if you have already learned them. This is meant to be used after a skill reset. Can only be used after you have unlocked your master class.
+	{ L"@arenajoin", do_arena_join_public, ADMIN_LEVEL_NONE }, // Public: self-join Arena (no target parameter)
+	{ L"@joinarena", do_arena_join_public, ADMIN_LEVEL_NONE }, // Alias
+	{ L"@arenajoinparty", do_arena_joinparty_public, ADMIN_LEVEL_NONE }, // Public: party join (leader only)
+	{ L"@arenajoinguild", do_arena_joinguild_public, ADMIN_LEVEL_NONE }, // Public: guild join (guild member only)
 
 	// GM
 
@@ -188,6 +207,7 @@ struct command_info cmd_info[] =
 	{ L"@setspeed", do_setspeed, ADMIN_LEVEL_ADMIN },
 	{ L"@setlevel", do_setlevel, ADMIN_LEVEL_ADMIN },
 	{ L"@setclass", do_setclass, ADMIN_LEVEL_ADMIN },
+	{ L"@changeclass", do_changeclass, ADMIN_LEVEL_GAME_MASTER },
 	{ L"@addmob", do_addmob, ADMIN_LEVEL_ADMIN },
 	{ L"@addmobgroup", do_addmobgroup, ADMIN_LEVEL_ADMIN },
 	{ L"@addnpc", do_addnpc, ADMIN_LEVEL_ADMIN },
@@ -248,11 +268,1044 @@ struct command_info cmd_info[] =
 	{ L"@helpernpc_resetmetrics", do_helpernpc_resetmetrics, ADMIN_LEVEL_GAME_MASTER },
 	{ L"@helpernpc_refresh", do_helpernpc_refresh, ADMIN_LEVEL_GAME_MASTER },
 	{ L"@customdrop_chainspawns", do_customdrop_chainspawns, ADMIN_LEVEL_GAME_MASTER },
-    { L"@customdrop_healmul", do_customdrop_healmul, ADMIN_LEVEL_GAME_MASTER },
-    { L"@customdrop_buffduration", do_customdrop_buffduration, ADMIN_LEVEL_GAME_MASTER },
+	{ L"@customdrop_healmul", do_customdrop_healmul, ADMIN_LEVEL_GAME_MASTER },
+	{ L"@customdrop_buffduration", do_customdrop_buffduration, ADMIN_LEVEL_GAME_MASTER },
+	{ L"@reload_playermods", do_reload_playermods_cfg, ADMIN_LEVEL_GAME_MASTER },
+	{ L"@playermods", do_playermods_toggle, ADMIN_LEVEL_GAME_MASTER },
+	{ L"@arena", do_arena, ADMIN_LEVEL_GAME_MASTER },
+	{ L"@world_fight", do_world_fight, ADMIN_LEVEL_GAME_MASTER },
+	{ L"@dojo", do_dojo, ADMIN_LEVEL_GAME_MASTER },
+	{ L"@budokai", do_budokai, ADMIN_LEVEL_ADMIN },
 
 	{ L"@qwasawedsadas", NULL, ADMIN_LEVEL_ADMIN }
 };
+ACMD(do_arena)
+{
+	// Syntax:
+	// @arena start <mode>
+	// @arena stop [abort]
+	// @arena rotate
+	// @arena status
+	// @arena join [name]
+	// @arena spectate [name]
+	// @arena tp participants|spectators|all|here [participants|spectators|all]
+	// @arena win [name]
+	// @arena award winners|participants
+	// @arena map <worldTblidx>
+	// @arena spawn <mobTblidx> [count]
+	// @arena mobs on|off | perwave <n> | waveseconds <sec> | preset <name|none>
+	// @arena joinparty [name]  -- add entire party of player (or self)
+	// @arena joinguild [name]  -- add all online guild members of player (or self)
+	// @arena cfg show | rankonly | custom on|off | onlycustom on|off | budokai on|off | randomize on|off | rotsec <n> | worlds <csv>
+	pToken->PopToPeek();
+	std::wstring sub = pToken->PeekNextToken(NULL, &iLine);
+	if (sub.empty()) {
+		g_pArenaManager->StatusTo(pPlayer);
+		return;
+	}
+
+	std::string sc = ws2s(sub);
+	for (auto& c : sc) c = (char)tolower(c);
+
+	if (sc == "start") {
+		pToken->PopToPeek();
+		std::wstring wmode = pToken->PeekNextToken(NULL, &iLine);
+		std::string smode = ws2s(wmode);
+		for (auto& c : smode) c = (char)tolower(c);
+		CArenaManager::Mode mode = CArenaManager::Mode::OPEN;
+		if (smode == "gvg" || smode == "guild" || smode == "guild_vs_guild") mode = CArenaManager::Mode::GUILD_VS_GUILD;
+		else if (smode == "pvp" || smode == "party" || smode == "party_vs_party") mode = CArenaManager::Mode::PARTY_VS_PARTY;
+		else if (smode == "ffa" || smode == "free" || smode == "free_for_all") mode = CArenaManager::Mode::FREE_FOR_ALL;
+		else mode = CArenaManager::Mode::OPEN;
+		g_pArenaManager->Start(mode);
+	}
+	else if (sc == "stop") {
+		pToken->PopToPeek();
+		std::wstring warg = pToken->PeekNextToken(NULL, &iLine);
+		std::string sarg = ws2s(warg);
+		for (auto& c : sarg) c = (char)tolower(c);
+		bool abort = (sarg == "abort");
+		g_pArenaManager->Stop(abort);
+	}
+	else if (sc == "rotate") {
+		// support: @arena rotate [in <seconds>]
+		pToken->PopToPeek();
+		std::wstring warg = pToken->PeekNextToken(NULL, &iLine);
+		std::string sarg = ws2s(warg);
+		for (auto& c : sarg) c = (char)tolower(c);
+		if (sarg == "in")
+		{
+			pToken->PopToPeek();
+			std::wstring wsec = pToken->PeekNextToken(NULL, &iLine);
+			unsigned int sec = (unsigned int)atoi(ws2s(wsec).c_str());
+			if (sec > 0)
+				g_pArenaManager->SetRotationSecondsRemaining(sec);
+			else
+				g_pArenaManager->StatusTo(pPlayer);
+		}
+		else if (!sarg.empty())
+		{
+			// if user provided a number directly after rotate, treat as seconds
+			bool isNum = isdigit((unsigned char)sarg[0]);
+			if (isNum)
+			{
+				unsigned int sec = (unsigned int)atoi(sarg.c_str());
+				if (sec > 0) {
+					g_pArenaManager->SetRotationSecondsRemaining(sec);
+					return;
+				}
+			}
+			// fallback to immediate rotate
+			g_pArenaManager->RotateMapNow();
+		}
+		else {
+			g_pArenaManager->RotateMapNow();
+		}
+	}
+	else if (sc == "time") {
+		// @arena time <seconds>  OR  @arena time +<delta>
+		pToken->PopToPeek();
+		std::wstring wval = pToken->PeekNextToken(NULL, &iLine);
+		std::string sval = ws2s(wval);
+		if (sval.empty()) { g_pArenaManager->StatusTo(pPlayer); }
+		else if (sval[0] == '+' || sval[0] == '-') {
+			int delta = atoi(sval.c_str());
+			g_pArenaManager->AddRoundTimeSeconds(delta);
+		}
+		else {
+			unsigned int sec = (unsigned int)atoi(sval.c_str());
+			if (sec == 0) sec = 1; // avoid zero which would stop immediately
+			g_pArenaManager->SetRoundTimeRemaining(sec, true);
+		}
+	}
+	else if (sc == "status") {
+		g_pArenaManager->StatusTo(pPlayer);
+	}
+	else if (sc == "mobs") {
+		pToken->PopToPeek();
+		std::wstring wopt = pToken->PeekNextToken(NULL, &iLine);
+		std::string opt = ws2s(wopt);
+		for (auto& c : opt) c = (char)tolower(c);
+		if (opt == "on") { g_pArenaManager->SetRandomMobsSpawn(true); }
+		else if (opt == "off") { g_pArenaManager->SetRandomMobsSpawn(false); }
+		else if (opt == "perwave") {
+			pToken->PopToPeek();
+			std::wstring wv = pToken->PeekNextToken(NULL, &iLine);
+			unsigned int n = (unsigned int)atoi(ws2s(wv).c_str());
+			if (n == 0) n = 1; g_pArenaManager->SetRandomMobsPerWave(n);
+		}
+		else if (opt == "waveseconds") {
+			pToken->PopToPeek();
+			std::wstring ws = pToken->PeekNextToken(NULL, &iLine);
+			unsigned int sec = (unsigned int)atoi(ws2s(ws).c_str());
+			if (sec == 0) sec = 1; g_pArenaManager->SetRandomMobsWaveSeconds(sec);
+		}
+		else if (opt == "preset") {
+			pToken->PopToPeek();
+			std::wstring wname = pToken->PeekNextToken(NULL, &iLine);
+			std::string name = ws2s(wname);
+			if (name == "none" || name == "") { g_pArenaManager->SetRandomMobsPreset(""); }
+			else {
+				if (!g_pArenaManager->SetRandomMobsPreset(name)) {
+					CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+					sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+					res->wOpCode = GU_SYSTEM_DISPLAY_TEXT;
+					res->byDisplayType = SERVER_TEXT_SYSTEM;
+					NTL_SAFE_WCSCPY(res->awchMessage, L"[Arena] Unknown preset name.");
+					packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+					pPlayer->SendPacket(&packet);
+				}
+			}
+		}
+		else {
+			g_pArenaManager->StatusTo(pPlayer);
+		}
+	}
+	else if (sc == "cfg") {
+		pToken->PopToPeek();
+		std::wstring wopt = pToken->PeekNextToken(NULL, &iLine);
+		std::string opt = ws2s(wopt); for (auto& c : opt) c = (char)tolower(c);
+		if (opt.empty() || opt == "show") {
+			g_pArenaManager->ShowCfgTo(pPlayer);
+			return;
+		}
+		if (opt == "rankonly") {
+			g_pArenaManager->SetAllowCustomWorlds(false);
+			g_pArenaManager->SetUseOnlyCustomWorlds(false);
+			g_pArenaManager->RebuildWorldList_RankOnly();
+			g_pArenaManager->ShowCfgTo(pPlayer);
+			return;
+		}
+		if (opt == "custom") {
+			pToken->PopToPeek(); std::wstring won = pToken->PeekNextToken(NULL, &iLine);
+			std::string son = ws2s(won); for (auto& c : son) c = (char)tolower(c);
+			bool on = (son == "on" || son == "1" || son == "true");
+			g_pArenaManager->SetAllowCustomWorlds(on);
+			g_pArenaManager->ShowCfgTo(pPlayer); return;
+		}
+		if (opt == "onlycustom") {
+			pToken->PopToPeek(); std::wstring won = pToken->PeekNextToken(NULL, &iLine);
+			std::string son = ws2s(won); for (auto& c : son) c = (char)tolower(c);
+			bool on = (son == "on" || son == "1" || son == "true");
+			g_pArenaManager->SetUseOnlyCustomWorlds(on);
+			g_pArenaManager->ShowCfgTo(pPlayer); return;
+		}
+		if (opt == "budokai") {
+			pToken->PopToPeek(); std::wstring won = pToken->PeekNextToken(NULL, &iLine);
+			std::string son = ws2s(won); for (auto& c : son) c = (char)tolower(c);
+			bool on = (son == "on" || son == "1" || son == "true");
+			g_pArenaManager->SetAllowBudokaiRuleWorlds(on);
+			g_pArenaManager->ShowCfgTo(pPlayer); return;
+		}
+		if (opt == "randomize") {
+			pToken->PopToPeek(); std::wstring won = pToken->PeekNextToken(NULL, &iLine);
+			std::string son = ws2s(won); for (auto& c : son) c = (char)tolower(c);
+			bool on = (son == "on" || son == "1" || son == "true");
+			g_pArenaManager->SetRandomizeMapOnStart(on);
+			g_pArenaManager->ShowCfgTo(pPlayer); return;
+		}
+		if (opt == "rotsec") {
+			pToken->PopToPeek(); std::wstring wv = pToken->PeekNextToken(NULL, &iLine);
+			unsigned int sec = (unsigned int)atoi(ws2s(wv).c_str());
+			g_pArenaManager->SetRotationSeconds(sec);
+			g_pArenaManager->ShowCfgTo(pPlayer); return;
+		}
+		if (opt == "worlds") {
+			// worlds <csv>
+			pToken->PopToPeek();
+			std::wstring wcsv = pToken->PeekNextToken(NULL, &iLine);
+			std::string csv = ws2s(wcsv);
+			g_pArenaManager->SetWorldListCsv(csv);
+			g_pArenaManager->ShowCfgTo(pPlayer); return;
+		}
+		{
+			CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+			sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+			res->wOpCode = GU_SYSTEM_DISPLAY_TEXT; res->byDisplayType = SERVER_TEXT_SYSTEM;
+			NTL_SAFE_WCSCPY(res->awchMessage, L"Usage: @arena cfg show | rankonly | custom on|off | onlycustom on|off | budokai on|off | randomize on|off | rotsec <n> | worlds <csv>");
+			packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT)); pPlayer->SendPacket(&packet);
+		}
+	}
+	else if (sc == "join") {
+		// Individual join - warn if inappropriate for team mode
+		if (g_pArenaManager->GetState() == CArenaManager::State::ENROLLMENT &&
+			(g_pArenaManager->GetMode() == CArenaManager::Mode::PARTY_VS_PARTY ||
+				g_pArenaManager->GetMode() == CArenaManager::Mode::GUILD_VS_GUILD)) {
+					{
+						CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+						sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+						res->wOpCode = GU_SYSTEM_DISPLAY_TEXT;
+						res->byDisplayType = SERVER_TEXT_SYSTEM;
+						NTL_SAFE_WCSCPY(res->awchMessage, L"[Arena] Consider using 'joinparty' or 'joinguild' for team modes for better team coordination.");
+						packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+						pPlayer->SendPacket(&packet);
+					}
+		}
+
+		pToken->PopToPeek();
+		std::wstring wname = pToken->PeekNextToken(NULL, &iLine);
+		CPlayer* who = pPlayer;
+		if (!wname.empty()) {
+			CPlayer* found = g_pObjectManager->FindByName(wname.c_str());
+			if (found && found->IsInitialized()) who = found;
+		}
+		if (who) g_pArenaManager->AddParticipant(who);
+	}
+	else if (sc == "joinparty") {
+		// Validate mode for party joining
+		if (g_pArenaManager->GetState() == CArenaManager::State::ENROLLMENT &&
+			g_pArenaManager->GetMode() != CArenaManager::Mode::PARTY_VS_PARTY &&
+			g_pArenaManager->GetMode() != CArenaManager::Mode::FREE_FOR_ALL &&
+			g_pArenaManager->GetMode() != CArenaManager::Mode::OPEN) {
+				{
+					CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+					sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+					res->wOpCode = GU_SYSTEM_DISPLAY_TEXT;
+					res->byDisplayType = SERVER_TEXT_SYSTEM;
+					NTL_SAFE_WCSCPY(res->awchMessage, L"[Arena] Party joining only available for Party vs Party, Free For All, or Open modes.");
+					packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+					pPlayer->SendPacket(&packet);
+				}
+				return;
+		}
+
+		pToken->PopToPeek();
+		std::wstring wname = pToken->PeekNextToken(NULL, &iLine);
+		CPlayer* base = pPlayer;
+		if (!wname.empty()) {
+			CPlayer* found = g_pObjectManager->FindByName(wname.c_str());
+			if (found && found->IsInitialized()) base = found;
+		}
+		if (base && base->GetParty() && base->GetPartyID() != INVALID_PARTYID) {
+			auto fn = [&](CPlayer* mem) { if (mem) g_pArenaManager->AddParticipant(mem); };
+			base->GetParty()->ForEachOnlineMember(fn);
+		}
+		else if (base) {
+			g_pArenaManager->AddParticipant(base);
+		}
+	}
+	else if (sc == "joinguild") {
+		// Validate mode for guild joining
+		if (g_pArenaManager->GetState() == CArenaManager::State::ENROLLMENT &&
+			g_pArenaManager->GetMode() != CArenaManager::Mode::GUILD_VS_GUILD &&
+			g_pArenaManager->GetMode() != CArenaManager::Mode::FREE_FOR_ALL &&
+			g_pArenaManager->GetMode() != CArenaManager::Mode::OPEN) {
+				{
+					CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+					sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+					res->wOpCode = GU_SYSTEM_DISPLAY_TEXT;
+					res->byDisplayType = SERVER_TEXT_SYSTEM;
+					NTL_SAFE_WCSCPY(res->awchMessage, L"[Arena] Guild joining only available for Guild vs Guild, Free For All, or Open modes.");
+					packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+					pPlayer->SendPacket(&packet);
+				}
+				return;
+		}
+
+		pToken->PopToPeek();
+		std::wstring wname = pToken->PeekNextToken(NULL, &iLine);
+		CPlayer* base = pPlayer;
+		if (!wname.empty()) {
+			CPlayer* found = g_pObjectManager->FindByName(wname.c_str());
+			if (found && found->IsInitialized()) base = found;
+		}
+		if (base && base->GetGuildID() != 0) {
+			GUILDID gid = base->GetGuildID();
+			std::vector<HOBJECT> members;
+			g_pGuildManager->ForEachOnlineMember(gid, members);
+			for (HOBJECT h : members) {
+				CPlayer* p = g_pObjectManager->GetPC(h);
+				if (p) g_pArenaManager->AddParticipant(p);
+			}
+		}
+		else {
+			{
+				CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+				sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+				res->wOpCode = GU_SYSTEM_DISPLAY_TEXT;
+				res->byDisplayType = SERVER_TEXT_SYSTEM;
+				NTL_SAFE_WCSCPY(res->awchMessage, L"[Arena] Target player must be in a guild for guild joining.");
+				packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+				pPlayer->SendPacket(&packet);
+			}
+		}
+	}
+	else if (sc == "spectate") {
+		pToken->PopToPeek();
+		std::wstring wname = pToken->PeekNextToken(NULL, &iLine);
+		CPlayer* who = pPlayer;
+		if (!wname.empty()) {
+			CPlayer* found = g_pObjectManager->FindByName(wname.c_str());
+			if (found && found->IsInitialized()) who = found;
+		}
+		if (who) g_pArenaManager->AddSpectator(who);
+	}
+	else if (sc == "tp") {
+		pToken->PopToPeek();
+		std::wstring which = pToken->PeekNextToken(NULL, &iLine);
+		std::string swhich = ws2s(which);
+		for (auto& c : swhich) c = (char)tolower(c);
+		if (swhich == "participants") g_pArenaManager->TeleportParticipants(true);
+		else if (swhich == "spectators") g_pArenaManager->TeleportSpectators();
+		else if (swhich == "all") { g_pArenaManager->TeleportParticipants(true); g_pArenaManager->TeleportSpectators(); }
+		else if (swhich == "here") {
+			pToken->PopToPeek();
+			std::wstring wsub = pToken->PeekNextToken(NULL, &iLine);
+			std::string subarg = ws2s(wsub);
+			for (auto& c : subarg) c = (char)tolower(c);
+			if (subarg == "participants") g_pArenaManager->TeleportParticipantsHere(pPlayer);
+			else if (subarg == "spectators") g_pArenaManager->TeleportSpectatorsHere(pPlayer);
+			else /* all or empty */ { g_pArenaManager->TeleportParticipantsHere(pPlayer); g_pArenaManager->TeleportSpectatorsHere(pPlayer); }
+		}
+	}
+	else if (sc == "win") {
+		pToken->PopToPeek();
+		std::wstring wname = pToken->PeekNextToken(NULL, &iLine);
+		CPlayer* who = pPlayer;
+		if (!wname.empty()) {
+			CPlayer* found = g_pObjectManager->FindByName(wname.c_str());
+			if (found && found->IsInitialized()) who = found;
+		}
+		if (who) g_pArenaManager->MarkWinner(who);
+	}
+	else if (sc == "award") {
+		pToken->PopToPeek();
+		std::wstring wset = pToken->PeekNextToken(NULL, &iLine);
+		std::string sset = ws2s(wset);
+		for (auto& c : sset) c = (char)tolower(c);
+		if (sset == "winners") g_pArenaManager->AwardRewards(true);
+		else if (sset == "participants") g_pArenaManager->AwardRewards(false);
+	}
+	else if (sc == "map") {
+		pToken->PopToPeek();
+		std::wstring wnum = pToken->PeekNextToken(NULL, &iLine);
+		unsigned int tbl = (unsigned int)atoi(ws2s(wnum).c_str());
+		if (tbl) g_pArenaManager->SetCurrentWorld(tbl);
+	}
+	else if (sc == "spawn") {
+		pToken->PopToPeek();
+		std::wstring wmob = pToken->PeekNextToken(NULL, &iLine);
+		if (wmob.empty()) { g_pArenaManager->StatusTo(pPlayer); return; }
+		unsigned int mobId = (unsigned int)atoi(ws2s(wmob).c_str());
+		unsigned int count = 1;
+		pToken->PopToPeek();
+		std::wstring wcnt = pToken->PeekNextToken(NULL, &iLine);
+		if (!wcnt.empty()) count = (unsigned int)atoi(ws2s(wcnt).c_str());
+		if (count == 0) count = 1;
+		unsigned int spawned = 0;
+		for (unsigned int i = 0; i < count; ++i)
+			if (g_pArenaManager->SpawnMob(mobId)) ++spawned;
+		{
+			CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+			sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+			res->wOpCode = GU_SYSTEM_DISPLAY_TEXT; res->byDisplayType = SERVER_TEXT_SYSTEM;
+			wchar_t msg[128]; swprintf_s(msg, _countof(msg), L"[Arena] Spawned %u/%u mobs (tblidx=%u)", spawned, count, mobId);
+			NTL_SAFE_WCSCPY(res->awchMessage, msg);
+			packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+			pPlayer->SendPacket(&packet);
+		}
+	}
+	else {
+		g_pArenaManager->StatusTo(pPlayer);
+	}
+}
+
+ACMD(do_world_fight)
+{
+	// Syntax:
+	// @world_fight start score [worldTblidx] [ffa|party|guild] [seconds]
+	// @world_fight start elimination [worldTblidx] [ffa|party|guild]
+	// @world_fight stop
+	// Defaults: world=900043 (Arena base), mode=ffa, seconds=900 (15min)
+	const unsigned int DEFAULT_WORLD = 900043;
+	const unsigned int DEFAULT_SECONDS = 900;
+
+	pToken->PopToPeek();
+	std::wstring wsub = pToken->PeekNextToken(NULL, &iLine);
+	if (wsub.empty()) { ERR_LOG(LOG_SYSTEM, "@world_fight: missing subcommand"); return; }
+	std::string sub = ws2s(wsub); for (auto& c : sub) c = (char)tolower(c);
+
+	if (sub == "stop")
+	{
+		// Re-enable helpers for the active world and stop arena
+		unsigned int wid = g_pArenaManager->GetOrCreateCurrentWorldId();
+		if (wid)
+		{
+			// Unsuppress helpers and flush any lingering ones
+			CWorld* pWorld = ((CGameServer*)g_pApp)->GetGameMain()->GetWorldManager()->FindWorld((WORLDID)wid);
+			if (pWorld)
+			{
+				GetHelperNpcManager()->SetWorldSuppressed(pWorld->GetID(), false);
+				GetHelperNpcManager()->DespawnAllHelpersInWorld(pWorld);
+			}
+		}
+		g_pArenaManager->Stop(true);
+		g_pArenaManager->StatusTo(pPlayer);
+		return;
+	}
+
+	if (sub != "start") { ERR_LOG(LOG_SYSTEM, "@world_fight: unknown subcommand"); return; }
+
+	// mode token: score | elimination
+	pToken->PopToPeek();
+	std::wstring wmode = pToken->PeekNextToken(NULL, &iLine);
+	if (wmode.empty()) { ERR_LOG(LOG_SYSTEM, "@world_fight: missing mode (score|elimination)"); return; }
+	std::string smode = ws2s(wmode); for (auto& c : smode) c = (char)tolower(c);
+	bool scoreMode = (smode == "score");
+	if (!scoreMode && smode != "elimination") { ERR_LOG(LOG_SYSTEM, "@world_fight: mode must be 'score' or 'elimination'"); return; }
+
+	// optional world tblidx
+	unsigned int worldTblidx = DEFAULT_WORLD;
+	pToken->PopToPeek();
+	std::wstring wworld = pToken->PeekNextToken(NULL, &iLine);
+	if (!wworld.empty())
+	{
+		unsigned int t = (unsigned int)atoi(ws2s(wworld).c_str());
+		if (t != 0) worldTblidx = t;
+	}
+
+	// optional mode ffa|party|guild
+	CArenaManager::Mode arenaMode = CArenaManager::Mode::FREE_FOR_ALL;
+	pToken->PopToPeek();
+	std::wstring wfight = pToken->PeekNextToken(NULL, &iLine);
+	if (!wfight.empty())
+	{
+		std::string s = ws2s(wfight); for (auto& c : s) c = (char)tolower(c);
+		if (s == "party") arenaMode = CArenaManager::Mode::PARTY_VS_PARTY;
+		else if (s == "guild" || s == "gvg") arenaMode = CArenaManager::Mode::GUILD_VS_GUILD;
+		else if (s == "ffa" || s == "all") arenaMode = CArenaManager::Mode::FREE_FOR_ALL;
+		else {
+			// push back one token if it's not a mode (so it can be seconds)
+		}
+	}
+
+	// optional seconds (score mode only)
+	unsigned int seconds = DEFAULT_SECONDS;
+	if (scoreMode)
+	{
+		pToken->PopToPeek();
+		std::wstring wsec = pToken->PeekNextToken(NULL, &iLine);
+		if (!wsec.empty())
+		{
+			unsigned int t = (unsigned int)atoi(ws2s(wsec).c_str());
+			if (t > 0) seconds = t;
+		}
+	}
+
+	// Force arena world and configure event
+	if (!g_pArenaManager->ForceCurrentWorld(worldTblidx))
+	{
+		CNtlPacket pkt(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+		sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)pkt.GetPacketData();
+		res->wOpCode = GU_SYSTEM_DISPLAY_TEXT; res->byDisplayType = SERVER_TEXT_SYSTEM;
+		wchar_t msg[128]; swprintf_s(msg, _countof(msg), L"[WorldFight] Invalid or unavailable world tblidx %u", worldTblidx);
+		NTL_SAFE_WCSCPY(res->awchMessage, msg);
+		pkt.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+		pPlayer->SendPacket(&pkt);
+		return;
+	}
+	g_pArenaManager->SetupWorldFight(scoreMode, seconds, arenaMode);
+
+	// Prepare world instance and suppress helper NPCs there
+	unsigned int wid = g_pArenaManager->GetOrCreateCurrentWorldId();
+	if (wid)
+	{
+		CWorld* pWorld = ((CGameServer*)g_pApp)->GetGameMain()->GetWorldManager()->FindWorld((WORLDID)wid);
+		if (pWorld)
+		{
+			GetHelperNpcManager()->SetWorldSuppressed(pWorld->GetID(), true);
+			GetHelperNpcManager()->DespawnAllHelpersInWorld(pWorld);
+		}
+	}
+
+	// Start arena enrollment immediately for chosen mode
+	g_pArenaManager->Start(arenaMode);
+	wchar_t msg[256];
+	const wchar_t* modeName = (arenaMode == CArenaManager::Mode::PARTY_VS_PARTY) ? L"Party" : (arenaMode == CArenaManager::Mode::GUILD_VS_GUILD) ? L"Guild" : L"FFA";
+	if (scoreMode)
+		swprintf_s(msg, _countof(msg), L"[WorldFight] Score mode in world %u for %u seconds (%s)", worldTblidx, seconds, modeName);
+	else
+		swprintf_s(msg, _countof(msg), L"[WorldFight] Elimination mode in world %u (%s)", worldTblidx, modeName);
+	CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+	sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+	res->wOpCode = GU_SYSTEM_DISPLAY_TEXT; res->byDisplayType = SERVER_TEXT_NOTICE;
+	NTL_SAFE_WCSCPY(res->awchMessage, msg);
+	packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+	pPlayer->SendPacket(&packet);
+}
+
+ACMD(do_budokai)
+{
+	// @budokai show
+	// @budokai set time <DojoRecommend|OpenNotice|Register|EndingWait|MinorWait|MajorWait|FinalWait|End> <seconds>
+	// @budokai set score <major|final> <n>
+	pToken->PopToPeek();
+	std::wstring sub = pToken->PeekNextToken(NULL, &iLine);
+	if (sub.empty() || !_wcsicmp(sub.c_str(), L"show"))
+	{
+		char sz[512];
+		sprintf_s(sz, sizeof(sz),
+			"[BUDOKAI]\nDojoRecommendTime=%u OpenNoticeTime=%u RegisterTime=%u EndingWaitTime=%u\nMinorWait=%u MajorWait=%u FinalWait=%u EndTime=%u\nMajorMaxScore=%u FinalMaxScore=%u",
+			g_pBudokaiManager->GetDojoRecommendTime(), g_pBudokaiManager->GetOpenNoticeTime(), g_pBudokaiManager->GetRegisterTime(), g_pBudokaiManager->GetEndingWaitTime(),
+			g_pBudokaiManager->GetMinorMatchWaitTime(), g_pBudokaiManager->GetMajorMatchWaitTime(), g_pBudokaiManager->GetFinalMatchWaitTime(), g_pBudokaiManager->GetBudokaiEndTime(),
+			g_pBudokaiManager->GetMajorMatchMaxScore(), g_pBudokaiManager->GetFinalMatchMaxScore());
+		CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+		sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+		res->wOpCode = GU_SYSTEM_DISPLAY_TEXT; res->byDisplayType = SERVER_TEXT_SYSTEM;
+		std::string msg(sz);
+		std::wstring wmsg(msg.begin(), msg.end());
+		wcscpy_s(res->awchMessage, NTL_MAX_LENGTH_OF_CHAT_MESSAGE + 1, wmsg.c_str());
+		packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+		((CGameServer*)g_pApp)->Send(pPlayer->GetClientSessionID(), &packet);
+		return;
+	}
+
+	std::string ssub = ws2s(sub); for (auto& c : ssub) c = (char)tolower(c);
+	if (ssub == "set")
+	{
+		pToken->PopToPeek();
+		std::wstring wwhat = pToken->PeekNextToken(NULL, &iLine);
+		std::string what = ws2s(wwhat); for (auto& c : what) c = (char)tolower(c);
+
+		if (what == "time")
+		{
+			pToken->PopToPeek(); std::wstring wkey = pToken->PeekNextToken(NULL, &iLine);
+			pToken->PopToPeek(); std::wstring wval = pToken->PeekNextToken(NULL, &iLine);
+			if (wkey.empty() || wval.empty()) return;
+			std::string key = ws2s(wkey); for (auto& c : key) c = (char)tolower(c);
+			unsigned int sec = (unsigned int)atoi(ws2s(wval).c_str());
+			if (key == "dojorecommend") g_pBudokaiManager->SetDojoRecommendTime(sec);
+			else if (key == "opennotice") g_pBudokaiManager->SetOpenNoticeTime(sec);
+			else if (key == "register") g_pBudokaiManager->SetRegisterTime(sec);
+			else if (key == "endingwait") g_pBudokaiManager->SetEndingWaitTime(sec);
+			else if (key == "minorwait") g_pBudokaiManager->SetMinorMatchWaitTime(sec);
+			else if (key == "majorwait") g_pBudokaiManager->SetMajorMatchWaitTime(sec);
+			else if (key == "finalwait") g_pBudokaiManager->SetFinalMatchWaitTime(sec);
+			else if (key == "end") g_pBudokaiManager->SetBudokaiEndTime(sec);
+		}
+		else if (what == "score")
+		{
+			pToken->PopToPeek(); std::wstring wwhich = pToken->PeekNextToken(NULL, &iLine);
+			pToken->PopToPeek(); std::wstring wnum = pToken->PeekNextToken(NULL, &iLine);
+			if (wwhich.empty() || wnum.empty()) return;
+			std::string which = ws2s(wwhich); for (auto& c : which) c = (char)tolower(c);
+			BYTE v = (BYTE)atoi(ws2s(wnum).c_str()); if (!v) v = 1;
+			if (which == "major") g_pBudokaiManager->SetMajorMatchMaxScore(v);
+			else if (which == "final") g_pBudokaiManager->SetFinalMatchMaxScore(v);
+		}
+	}
+}
+
+// @dojo control for starting/stopping dojo wars from in-game GM
+ACMD(do_dojo)
+{
+	// Syntax:
+	// @dojo on                      -> enable manual mode (GS ticks outside Sunday)
+	// @dojo off                     -> disable manual mode
+	// @dojo start [dojoTblidx]      -> open RECEIVE on all or a specific dojo (via ChatServer)
+	// @dojo clear <dojoTblidx>      -> reset specific dojo to NORMAL (via ChatServer)
+	// @dojo next <dojoTblidx>       -> ask ChatServer to re-broadcast current state
+	// @dojo setatt <dojoTblidx> <attGuildId> -> set attacker guild locally (prep for war)
+	// @dojo war <dojoTblidx>        -> force state progression to READY/START locally
+	// @dojo status                  -> show usage
+	// Note: When possible, we drive ChatServer via GT_* opcodes to mirror Sunday flow.
+	pToken->PopToPeek();
+	std::wstring sub = pToken->PeekNextToken(NULL, &iLine);
+	if (sub.empty()) sub = L"status";
+
+	std::wstring lower = sub;
+	for (auto& ch : lower) ch = towlower(ch);
+
+	if (lower == L"on")
+	{
+		// Enable manual dojo mode so GS ticks regardless of Sunday window
+		g_pDojoManager->SetManualMode(true);
+
+		// Prefer additionally syncing ChatServer-driven RECEIVE window for all dojos
+		CGameServer* app = (CGameServer*)g_pApp;
+		if (app->GetChatServerSession())
+		{
+			DBOTIME until = app->GetTime() + 7200; // 2 hours receive window
+			for (auto it = g_pDojoManager->GetDojoSetBegin(); it != g_pDojoManager->GetDojoSetEnd(); ++it)
+			{
+				CDojo* d = it->second; if (!d) continue;
+				CNtlPacket pk(sizeof(sGT_DOJO_SCRAMBLE_STATE_CHANGE));
+				sGT_DOJO_SCRAMBLE_STATE_CHANGE* rq = (sGT_DOJO_SCRAMBLE_STATE_CHANGE*)pk.GetPacketData();
+				rq->wOpCode = GT_DOJO_SCRAMBLE_STATE_CHANGE;
+				rq->byState = eDBO_DOJO_STATUS_RECEIVE;
+				rq->dojoTblidx = d->GetDojoTblidx();
+				rq->tmNextStepTime = until;
+				pk.SetPacketLen(sizeof(sGT_DOJO_SCRAMBLE_STATE_CHANGE));
+				app->SendTo(app->GetChatServerSession(), &pk);
+			}
+			CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+			sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+			res->wOpCode = GU_SYSTEM_DISPLAY_TEXT; res->byDisplayType = SERVER_TEXT_SYSTEM;
+			NTL_SAFE_WCSCPY(res->awchMessage, L"[Dojo] Manual mode ON. Opened RECEIVE on all dojos for 2 hours (synced with ChatServer).");
+			packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+			pPlayer->SendPacket(&packet);
+		}
+		else
+		{
+			CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+			sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+			res->wOpCode = GU_SYSTEM_DISPLAY_TEXT; res->byDisplayType = SERVER_TEXT_SYSTEM;
+			NTL_SAFE_WCSCPY(res->awchMessage, L"[Dojo] Manual mode ON. ChatServer not connected; GS will drive dojo flow.");
+			packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+			pPlayer->SendPacket(&packet);
+		}
+	}
+	else if (lower == L"off")
+	{
+		CGameServer* app = (CGameServer*)g_pApp;
+		g_pDojoManager->SetManualMode(false);
+		CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+		sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+		res->wOpCode = GU_SYSTEM_DISPLAY_TEXT; res->byDisplayType = SERVER_TEXT_SYSTEM;
+		NTL_SAFE_WCSCPY(res->awchMessage, L"[Dojo] Manual mode OFF.");
+		packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+		pPlayer->SendPacket(&packet);
+	}
+	else if (lower == L"start")
+	{
+		// Optional dojoTblidx argument
+		pToken->PopToPeek();
+		std::wstring widx = pToken->PeekNextToken(NULL, &iLine);
+		CGameServer* app = (CGameServer*)g_pApp;
+		if (!app->GetChatServerSession())
+		{
+			CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+			sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+			res->wOpCode = GU_SYSTEM_DISPLAY_TEXT; res->byDisplayType = SERVER_TEXT_SYSTEM;
+			NTL_SAFE_WCSCPY(res->awchMessage, L"[Dojo] ChatServer not connected. Cannot open RECEIVE.");
+			packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+			pPlayer->SendPacket(&packet);
+			return;
+		}
+		else if (lower == L"setatt")
+		{
+			// setatt <dojoTblidx> <attGuildId>
+			pToken->PopToPeek();
+			std::wstring widx = pToken->PeekNextToken(NULL, &iLine);
+			pToken->PopToPeek();
+			std::wstring wgid = pToken->PeekNextToken(NULL, &iLine);
+			if (widx.empty() || wgid.empty())
+			{
+				CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+				sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+				res->wOpCode = GU_SYSTEM_DISPLAY_TEXT; res->byDisplayType = SERVER_TEXT_SYSTEM;
+				NTL_SAFE_WCSCPY(res->awchMessage, L"Usage: @dojo setatt <dojoTblidx> <attGuildId>");
+				packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+				pPlayer->SendPacket(&packet);
+				return;
+			}
+			TBLIDX dojoTblidx = (TBLIDX)atoi(ws2s(widx).c_str());
+			GUILDID gid = (GUILDID)atoi(ws2s(wgid).c_str());
+			CDojo* d = g_pDojoManager->GetDojoWithTblidx(dojoTblidx);
+			if (!d)
+			{
+				CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+				sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+				res->wOpCode = GU_SYSTEM_DISPLAY_TEXT; res->byDisplayType = SERVER_TEXT_SYSTEM;
+				NTL_SAFE_WCSCPY(res->awchMessage, L"[Dojo] Dojo not found.");
+				packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+				pPlayer->SendPacket(&packet);
+				return;
+			}
+			d->SetAttGuild(gid);
+			CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+			sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+			res->wOpCode = GU_SYSTEM_DISPLAY_TEXT; res->byDisplayType = SERVER_TEXT_SYSTEM;
+			NTL_SAFE_WCSCPY(res->awchMessage, L"[Dojo] Attacker guild set.");
+			packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+			pPlayer->SendPacket(&packet);
+		}
+		else if (lower == L"war")
+		{
+			// war <dojoTblidx>
+			pToken->PopToPeek();
+			std::wstring widx = pToken->PeekNextToken(NULL, &iLine);
+			if (widx.empty())
+			{
+				CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+				sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+				res->wOpCode = GU_SYSTEM_DISPLAY_TEXT; res->byDisplayType = SERVER_TEXT_SYSTEM;
+				NTL_SAFE_WCSCPY(res->awchMessage, L"Usage: @dojo war <dojoTblidx>");
+				packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+				pPlayer->SendPacket(&packet);
+				return;
+			}
+			TBLIDX dojoTblidx = (TBLIDX)atoi(ws2s(widx).c_str());
+			CDojo* d = g_pDojoManager->GetDojoWithTblidx(dojoTblidx);
+			if (!d)
+			{
+				CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+				sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+				res->wOpCode = GU_SYSTEM_DISPLAY_TEXT; res->byDisplayType = SERVER_TEXT_SYSTEM;
+				NTL_SAFE_WCSCPY(res->awchMessage, L"[Dojo] Dojo not found.");
+				packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+				pPlayer->SendPacket(&packet);
+				return;
+			}
+			// Advance to STANDBY soon; TickProcess will handle spawn/teleport and auto-advance to READY
+			// Ensure manual mode is on so ticks occur outside Sunday window
+			g_pDojoManager->SetManualMode(true);
+			DBOTIME now = ((CGameServer*)g_pApp)->GetTime();
+			d->SetState(eDBO_DOJO_STATUS_STANDBY, now + 1);
+			CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+			sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+			res->wOpCode = GU_SYSTEM_DISPLAY_TEXT; res->byDisplayType = SERVER_TEXT_SYSTEM;
+			NTL_SAFE_WCSCPY(res->awchMessage, L"[Dojo] War sequence initiated: STANDBY scheduled in 1s (manual mode enabled).");
+			packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+			pPlayer->SendPacket(&packet);
+		}
+		DBOTIME until = app->GetTime() + 7200;
+		if (widx.empty())
+		{
+			for (auto it = g_pDojoManager->GetDojoSetBegin(); it != g_pDojoManager->GetDojoSetEnd(); ++it)
+			{
+				CDojo* d = it->second; if (!d) continue;
+				CNtlPacket pk(sizeof(sGT_DOJO_SCRAMBLE_STATE_CHANGE));
+				sGT_DOJO_SCRAMBLE_STATE_CHANGE* rq = (sGT_DOJO_SCRAMBLE_STATE_CHANGE*)pk.GetPacketData();
+				rq->wOpCode = GT_DOJO_SCRAMBLE_STATE_CHANGE;
+				rq->byState = eDBO_DOJO_STATUS_RECEIVE;
+				rq->dojoTblidx = d->GetDojoTblidx();
+				rq->tmNextStepTime = until;
+				pk.SetPacketLen(sizeof(sGT_DOJO_SCRAMBLE_STATE_CHANGE));
+				app->SendTo(app->GetChatServerSession(), &pk);
+			}
+			CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+			sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+			res->wOpCode = GU_SYSTEM_DISPLAY_TEXT; res->byDisplayType = SERVER_TEXT_SYSTEM;
+			NTL_SAFE_WCSCPY(res->awchMessage, L"[Dojo] Opened RECEIVE on all dojos for 2 hours.");
+			packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+			pPlayer->SendPacket(&packet);
+		}
+		else
+		{
+			TBLIDX dojoTblidx = (TBLIDX)atoi(ws2s(widx).c_str());
+			CNtlPacket pk(sizeof(sGT_DOJO_SCRAMBLE_STATE_CHANGE));
+			sGT_DOJO_SCRAMBLE_STATE_CHANGE* rq = (sGT_DOJO_SCRAMBLE_STATE_CHANGE*)pk.GetPacketData();
+			rq->wOpCode = GT_DOJO_SCRAMBLE_STATE_CHANGE;
+			rq->byState = eDBO_DOJO_STATUS_RECEIVE;
+			rq->dojoTblidx = dojoTblidx;
+			rq->tmNextStepTime = until;
+			pk.SetPacketLen(sizeof(sGT_DOJO_SCRAMBLE_STATE_CHANGE));
+			app->SendTo(app->GetChatServerSession(), &pk);
+			CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+			sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+			res->wOpCode = GU_SYSTEM_DISPLAY_TEXT; res->byDisplayType = SERVER_TEXT_SYSTEM;
+			NTL_SAFE_WCSCPY(res->awchMessage, L"[Dojo] Opened RECEIVE on selected dojo for 2 hours.");
+			packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+			pPlayer->SendPacket(&packet);
+		}
+	}
+	else if (lower == L"clear")
+	{
+		// clear <dojoTblidx>
+		pToken->PopToPeek();
+		std::wstring widx = pToken->PeekNextToken(NULL, &iLine);
+		if (widx.empty())
+		{
+			CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+			sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+			res->wOpCode = GU_SYSTEM_DISPLAY_TEXT; res->byDisplayType = SERVER_TEXT_SYSTEM;
+			NTL_SAFE_WCSCPY(res->awchMessage, L"Usage: @dojo clear <dojoTblidx>");
+			packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+			pPlayer->SendPacket(&packet);
+			return;
+		}
+		CGameServer* app = (CGameServer*)g_pApp;
+		if (!app->GetChatServerSession())
+		{
+			CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+			sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+			res->wOpCode = GU_SYSTEM_DISPLAY_TEXT; res->byDisplayType = SERVER_TEXT_SYSTEM;
+			NTL_SAFE_WCSCPY(res->awchMessage, L"[Dojo] ChatServer not connected. Cannot clear.");
+			packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+			pPlayer->SendPacket(&packet);
+			return;
+		}
+		TBLIDX dojoTblidx = (TBLIDX)atoi(ws2s(widx).c_str());
+		CNtlPacket pk(sizeof(sGT_DOJO_SCRAMBLE_RESET));
+		sGT_DOJO_SCRAMBLE_RESET* rq = (sGT_DOJO_SCRAMBLE_RESET*)pk.GetPacketData();
+		rq->wOpCode = GT_DOJO_SCRAMBLE_RESET;
+		rq->byState = eDBO_DOJO_STATUS_NORMAL;
+		rq->dojoTblidx = dojoTblidx;
+		rq->tmNextStepTime = 0;
+		pk.SetPacketLen(sizeof(sGT_DOJO_SCRAMBLE_RESET));
+		app->SendTo(app->GetChatServerSession(), &pk);
+		CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+		sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+		res->wOpCode = GU_SYSTEM_DISPLAY_TEXT; res->byDisplayType = SERVER_TEXT_SYSTEM;
+		NTL_SAFE_WCSCPY(res->awchMessage, L"[Dojo] Cleared dojo to NORMAL.");
+		packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+		pPlayer->SendPacket(&packet);
+	}
+	else if (lower == L"next")
+	{
+		// next <dojoTblidx>
+		pToken->PopToPeek();
+		std::wstring widx = pToken->PeekNextToken(NULL, &iLine);
+		if (widx.empty())
+		{
+			CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+			sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+			res->wOpCode = GU_SYSTEM_DISPLAY_TEXT; res->byDisplayType = SERVER_TEXT_SYSTEM;
+			NTL_SAFE_WCSCPY(res->awchMessage, L"Usage: @dojo next <dojoTblidx>");
+			packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+			pPlayer->SendPacket(&packet);
+			return;
+		}
+		CGameServer* app = (CGameServer*)g_pApp;
+		if (!app->GetChatServerSession())
+		{
+			CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+			sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+			res->wOpCode = GU_SYSTEM_DISPLAY_TEXT; res->byDisplayType = SERVER_TEXT_SYSTEM;
+			NTL_SAFE_WCSCPY(res->awchMessage, L"[Dojo] ChatServer not connected. Cannot nudge.");
+			packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+			pPlayer->SendPacket(&packet);
+			return;
+		}
+		TBLIDX dojoTblidx = (TBLIDX)atoi(ws2s(widx).c_str());
+		CNtlPacket pkt(sizeof(sGT_DOJO_COMMAND));
+		sGT_DOJO_COMMAND* req = (sGT_DOJO_COMMAND*)pkt.GetPacketData();
+		req->wOpCode = GT_DOJO_COMMAND;
+		req->byCommand = eDBO_DOJO_COMMAND_TYPE_NEXT;
+		req->dojoTblidx = dojoTblidx;
+		pkt.SetPacketLen(sizeof(sGT_DOJO_COMMAND));
+		((CGameServer*)g_pApp)->SendTo(((CGameServer*)g_pApp)->GetChatServerSession(), &pkt);
+		CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+		sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+		res->wOpCode = GU_SYSTEM_DISPLAY_TEXT; res->byDisplayType = SERVER_TEXT_SYSTEM;
+		NTL_SAFE_WCSCPY(res->awchMessage, L"[Dojo] Requested state re-broadcast.");
+		packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+		pPlayer->SendPacket(&packet);
+	}
+	else // status or unknown -> print usage
+	{
+		CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+		sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+		res->wOpCode = GU_SYSTEM_DISPLAY_TEXT; res->byDisplayType = SERVER_TEXT_SYSTEM;
+		NTL_SAFE_WCSCPY(res->awchMessage, L"Usage: @dojo on | off | start [dojoTblidx] | clear <dojoTblidx> | next <dojoTblidx> | setatt <dojoTblidx> <attGuildId> | war <dojoTblidx> | status");
+		packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+		pPlayer->SendPacket(&packet);
+	}
+}
+
+
+ACMD(do_arena_join_public)
+{
+	// Players can only join themselves; ignore any parameters to prevent impersonation
+	UNREFERENCED_PARAMETER(iLine);
+	// consume any leftover tokens if present
+	pToken->PopToPeek();
+	// Add the caller as a participant if ArenaManager exists
+	if (g_pArenaManager && pPlayer && pPlayer->IsInitialized())
+	{
+		// Individual join - warn if inappropriate for team mode
+		if (g_pArenaManager->GetState() == CArenaManager::State::ENROLLMENT &&
+			(g_pArenaManager->GetMode() == CArenaManager::Mode::PARTY_VS_PARTY ||
+				g_pArenaManager->GetMode() == CArenaManager::Mode::GUILD_VS_GUILD)) {
+
+			CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+			sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+			res->wOpCode = GU_SYSTEM_DISPLAY_TEXT;
+			res->byDisplayType = SERVER_TEXT_SYSTEM;
+			NTL_SAFE_WCSCPY(res->awchMessage, L"Consider using @arenajoinparty for team modes for better coordination.");
+			packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+			pPlayer->SendPacket(&packet);
+		}
+
+		g_pArenaManager->AddParticipant(pPlayer);
+
+		// Optional: feedback to the player (kept lightweight)
+		CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+		sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+		res->wOpCode = GU_SYSTEM_DISPLAY_TEXT;
+		res->byDisplayType = SERVER_TEXT_SYSTEM;
+		NTL_SAFE_WCSCPY(res->awchMessage, L"You have been added to the Arena.");
+		packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+		pPlayer->SendPacket(&packet);
+	}
+}
+
+ACMD(do_arena_joinparty_public)
+{
+	UNREFERENCED_PARAMETER(iLine);
+	// consume any leftover tokens if present (we ignore parameters)
+	pToken->PopToPeek();
+
+	if (!pPlayer || !pPlayer->IsInitialized())
+		return;
+
+	// Validate arena mode for party joining
+	if (g_pArenaManager && g_pArenaManager->GetState() == CArenaManager::State::ENROLLMENT &&
+		g_pArenaManager->GetMode() != CArenaManager::Mode::PARTY_VS_PARTY &&
+		g_pArenaManager->GetMode() != CArenaManager::Mode::FREE_FOR_ALL &&
+		g_pArenaManager->GetMode() != CArenaManager::Mode::OPEN)
+	{
+		CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+		sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+		res->wOpCode = GU_SYSTEM_DISPLAY_TEXT;
+		res->byDisplayType = SERVER_TEXT_SYSTEM;
+		NTL_SAFE_WCSCPY(res->awchMessage, L"Party joining only available for Party vs Party, Free For All, or Open modes.");
+		packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+		pPlayer->SendPacket(&packet);
+		return;
+	}
+
+	if (!pPlayer->GetParty() || pPlayer->GetPartyID() == INVALID_PARTYID)
+	{
+		CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+		sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+		res->wOpCode = GU_SYSTEM_DISPLAY_TEXT;
+		res->byDisplayType = SERVER_TEXT_SYSTEM;
+		NTL_SAFE_WCSCPY(res->awchMessage, L"Need to be in a party to register it.");
+		packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+		pPlayer->SendPacket(&packet);
+		return;
+	}
+
+	if (pPlayer->GetParty()->GetPartyLeaderID() != pPlayer->GetID())
+	{
+		CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+		sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+		res->wOpCode = GU_SYSTEM_DISPLAY_TEXT;
+		res->byDisplayType = SERVER_TEXT_SYSTEM;
+		NTL_SAFE_WCSCPY(res->awchMessage, L"Only the party leader can register it in the Arena.");
+		packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+		pPlayer->SendPacket(&packet);
+		return;
+	}
+
+	auto addFn = [&](CPlayer* mem) { if (mem) g_pArenaManager->AddParticipant(mem); };
+	pPlayer->GetParty()->ForEachOnlineMember(addFn);
+
+	CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+	sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+	res->wOpCode = GU_SYSTEM_DISPLAY_TEXT;
+	res->byDisplayType = SERVER_TEXT_SYSTEM;
+	NTL_SAFE_WCSCPY(res->awchMessage, L"Your party has been registered in the Arena.");
+	packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+	pPlayer->SendPacket(&packet);
+}
+
+ACMD(do_arena_joinguild_public)
+{
+	UNREFERENCED_PARAMETER(iLine);
+	// consume any leftover tokens if present (we ignore parameters)
+	pToken->PopToPeek();
+
+	if (!pPlayer || !pPlayer->IsInitialized())
+		return;
+
+	// Validate arena mode for guild joining
+	if (g_pArenaManager && g_pArenaManager->GetState() == CArenaManager::State::ENROLLMENT &&
+		g_pArenaManager->GetMode() != CArenaManager::Mode::GUILD_VS_GUILD &&
+		g_pArenaManager->GetMode() != CArenaManager::Mode::FREE_FOR_ALL &&
+		g_pArenaManager->GetMode() != CArenaManager::Mode::OPEN)
+	{
+		CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+		sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+		res->wOpCode = GU_SYSTEM_DISPLAY_TEXT;
+		res->byDisplayType = SERVER_TEXT_SYSTEM;
+		NTL_SAFE_WCSCPY(res->awchMessage, L"Guild joining only available for Guild vs Guild, Free For All, or Open modes.");
+		packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+		pPlayer->SendPacket(&packet);
+		return;
+	}
+
+	if (pPlayer->GetGuildID() == 0)
+	{
+		CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+		sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+		res->wOpCode = GU_SYSTEM_DISPLAY_TEXT;
+		res->byDisplayType = SERVER_TEXT_SYSTEM;
+		NTL_SAFE_WCSCPY(res->awchMessage, L"Need to be in a guild to register it.");
+		packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+		pPlayer->SendPacket(&packet);
+		return;
+	}
+
+	GUILDID guildId = pPlayer->GetGuildID();
+	std::vector<HOBJECT> members;
+	g_pGuildManager->ForEachOnlineMember(guildId, members);
+	for (HOBJECT h : members) {
+		CPlayer* p = g_pObjectManager->GetPC(h);
+		if (p) g_pArenaManager->AddParticipant(p);
+	}
+
+	CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+	sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+	res->wOpCode = GU_SYSTEM_DISPLAY_TEXT;
+	res->byDisplayType = SERVER_TEXT_SYSTEM;
+	NTL_SAFE_WCSCPY(res->awchMessage, L"Your guild has been registered in the Arena.");
+	packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+	pPlayer->SendPacket(&packet);
+}
+
 
 ACMD(do_big)
 {
@@ -289,25 +1342,25 @@ ACMD(do_start_dbhunt)
 	else
 		g_pDragonballHuntEvent->StartEvent(true, byHours);
 
-	NTL_PRINT(PRINT_APP, "Dragonball Hunt Event Started");
+	NTL_PRINT(PRINT_APP, _T("Dragonball Hunt Event Started"));
 }
 
 ACMD(do_stop_dbhunt)
 {
 	g_pDragonballHuntEvent->EndEvent();
-	NTL_PRINT(PRINT_APP, "Dragonball Hunt Event Stopped");
+	NTL_PRINT(PRINT_APP, _T("Dragonball Hunt Event Stopped"));
 }
 
 ACMD(do_start_dbscramble)
 {
 	g_pDragonballScramble->StartEvent();
-	NTL_PRINT(PRINT_APP, "Dragonball Scramble Event Started");
+	NTL_PRINT(PRINT_APP, _T("Dragonball Scramble Event Started"));
 }
 
 ACMD(do_stop_dbscramble)
 {
 	g_pDragonballScramble->EndEvent(true);
-	NTL_PRINT(PRINT_APP, "Dragonball Scramble Event Stopped");
+	NTL_PRINT(PRINT_APP, _T("Dragonball Scramble Event Stopped"));
 }
 
 ACMD(do_start_stonedrop)
@@ -324,13 +1377,13 @@ ACMD(do_start_stonedrop)
 	else
 		g_pStoneDropEvent->StartEvent(byHours);
 
-	NTL_PRINT(PRINT_APP, "Double Stone Drop Event Started");
+	NTL_PRINT(PRINT_APP, _T("Double Stone Drop Event Started"));
 }
 
 ACMD(do_stop_stonedrop)
 {
 	g_pStoneDropEvent->EndEvent();
-	NTL_PRINT(PRINT_APP, "Double Stone Drop Event Stopped");
+	NTL_PRINT(PRINT_APP, _T("Double Stone Drop Event Stopped"));
 }
 
 ACMD(do_start_customdrop)
@@ -347,13 +1400,13 @@ ACMD(do_start_customdrop)
 	else
 		g_pCustomDropEvent->StartEvent(byHours);
 
-	NTL_PRINT(PRINT_APP, "Custom Drop Event Started");
+	NTL_PRINT(PRINT_APP, _T("Custom Drop Event Started"));
 }
 
 ACMD(do_stop_customdrop)
 {
 	g_pCustomDropEvent->EndEvent();
-	NTL_PRINT(PRINT_APP, "Custom Drop Event Stopped");
+	NTL_PRINT(PRINT_APP, _T("Custom Drop Event Stopped"));
 }
 
 ACMD(do_reload_customdrop_cfg)
@@ -383,9 +1436,9 @@ ACMD(do_reload_customdrop_cfg)
 	}
 
 	if (g_pCustomDropEvent->ReloadConfig(path.c_str()))
-		NTL_PRINT(PRINT_APP, "CustomDropEvent: config reloaded from %s", path.c_str());
+		NTL_PRINT(PRINT_APP, _T("CustomDropEvent: config reloaded from %s"), s2ws(path).c_str());
 	else
-		NTL_PRINT(PRINT_APP, "CustomDropEvent: failed to reload config from %s", path.c_str());
+		NTL_PRINT(PRINT_APP, _T("CustomDropEvent: failed to reload config from %s"), s2ws(path).c_str());
 }
 
 // Reload helper NPC configuration at runtime
@@ -411,16 +1464,16 @@ ACMD(do_reload_helpernpc_cfg)
 	CNtlIniFile ini;
 	if (!ini.Create(path.c_str()))
 	{
-		NTL_PRINT(PRINT_APP, "HelperNPC: failed to open %s", path.c_str());
+		NTL_PRINT(PRINT_APP, _T("HelperNPC: failed to open %s"), s2ws(path).c_str());
 		return;
 	}
 	if (GetHelperNpcManager()->LoadConfig(ini))
 	{
-		NTL_PRINT(PRINT_APP, "HelperNPC: config reloaded from %s", path.c_str());
+		NTL_PRINT(PRINT_APP, _T("HelperNPC: config reloaded from %s"), s2ws(path).c_str());
 	}
 	else
 	{
-		NTL_PRINT(PRINT_APP, "HelperNPC: failed to reload config from %s", path.c_str());
+		NTL_PRINT(PRINT_APP, _T("HelperNPC: failed to reload config from %s"), s2ws(path).c_str());
 	}
 }
 
@@ -461,12 +1514,12 @@ ACMD(do_customdrop_chainspawns)
 	{
 		bool on = (_stricmp(arg.c_str(), "on") == 0 || _stricmp(arg.c_str(), "1") == 0 || _stricmp(arg.c_str(), "true") == 0);
 		g_pCustomDropEvent->SetAllowChainSpawns(on);
-		NTL_PRINT(PRINT_APP, "CustomDropEvent: chain spawns %s", on ? "ENABLED" : "DISABLED");
+		NTL_PRINT(PRINT_APP, _T("CustomDropEvent: chain spawns %s"), (on ? L"ENABLED" : L"DISABLED"));
 	}
 	else
 	{
 		bool on = g_pCustomDropEvent->IsAllowChainSpawns();
-		NTL_PRINT(PRINT_APP, "CustomDropEvent: chain spawns currently %s", on ? "ENABLED" : "DISABLED");
+		NTL_PRINT(PRINT_APP, _T("CustomDropEvent: chain spawns currently %s"), (on ? L"ENABLED" : L"DISABLED"));
 	}
 }
 
@@ -481,11 +1534,11 @@ ACMD(do_customdrop_healmul)
 		float mul = (float)atof(arg.c_str());
 		if (mul < 0.0f) mul = 0.0f;
 		g_pCustomDropEvent->SetTotemHealMultiplier(mul);
-		NTL_PRINT(PRINT_APP, "CustomDropEvent: totem heal multiplier set to %.2f", mul);
+		NTL_PRINT(PRINT_APP, _T("CustomDropEvent: totem heal multiplier set to %.2f"), mul);
 	}
 	else
 	{
-		NTL_PRINT(PRINT_APP, "CustomDropEvent: totem heal multiplier = %.2f", g_pCustomDropEvent->GetTotemHealMultiplier());
+		NTL_PRINT(PRINT_APP, _T("CustomDropEvent: totem heal multiplier = %.2f"), g_pCustomDropEvent->GetTotemHealMultiplier());
 	}
 }
 
@@ -499,11 +1552,54 @@ ACMD(do_customdrop_buffduration)
 	{
 		DWORD ms = (DWORD)strtoul(arg.c_str(), nullptr, 10);
 		g_pCustomDropEvent->SetTotemBuffDurationOverrideMs(ms);
-		NTL_PRINT(PRINT_APP, "CustomDropEvent: totem buff duration override set to %u ms", ms);
+		NTL_PRINT(PRINT_APP, _T("CustomDropEvent: totem buff duration override set to %u ms"), ms);
 	}
 	else
 	{
-		NTL_PRINT(PRINT_APP, "CustomDropEvent: totem buff duration override = %u ms", g_pCustomDropEvent->GetTotemBuffDurationOverrideMs());
+		NTL_PRINT(PRINT_APP, _T("CustomDropEvent: totem buff duration override = %u ms"), g_pCustomDropEvent->GetTotemBuffDurationOverrideMs());
+	}
+}
+
+ACMD(do_reload_playermods_cfg)
+{
+	// optional path parameter
+	pToken->PopToPeek();
+	std::wstring strToken = pToken->PeekNextToken(NULL, &iLine);
+	std::string arg = ws2s(strToken);
+	std::string path;
+	if (arg.empty())
+		path = ".\\config\\PlayerModifiers.cfg";
+	else
+	{
+		bool hasBackslash = arg.find('\\') != std::string::npos || arg.find('/') != std::string::npos;
+		bool hasExt = arg.rfind('.') != std::string::npos;
+		if (!hasBackslash && !hasExt)
+			path = ".\\config\\" + arg + ".cfg";
+		else
+			path = arg;
+	}
+	if (g_pPlayerModifiers->ReloadConfig(path.c_str()))
+		NTL_PRINT(PRINT_APP, _T("PlayerModifiers: config reloaded from %s"), s2ws(path).c_str());
+	else
+		NTL_PRINT(PRINT_APP, _T("PlayerModifiers: failed to reload config from %s"), s2ws(path).c_str());
+}
+
+ACMD(do_playermods_toggle)
+{
+	// usage: @playermods on|off (no arg prints state)
+	pToken->PopToPeek();
+	std::wstring strToken = pToken->PeekNextToken(NULL, &iLine);
+	std::string arg = ws2s(strToken);
+	if (!arg.empty())
+	{
+		bool on = (_stricmp(arg.c_str(), "on") == 0 || _stricmp(arg.c_str(), "1") == 0 || _stricmp(arg.c_str(), "true") == 0);
+		g_pPlayerModifiers->SetEnabled(on);
+		size_t n = g_pObjectManager->RecalculateAllPlayers();
+		NTL_PRINT(PRINT_APP, _T("PlayerModifiers: %s; recalculated %zu players"), (on ? L"ENABLED" : L"DISABLED"), n);
+	}
+	else
+	{
+		NTL_PRINT(PRINT_APP, _T("PlayerModifiers: currently %s (cfg=%s)"), (g_pPlayerModifiers->IsEnabled() ? L"ENABLED" : L"DISABLED"), s2ws(g_pPlayerModifiers->GetCfgPath()).c_str());
 	}
 }
 
@@ -564,49 +1660,49 @@ ACMD(do_buff)
 
 	// helper lambda to apply to one player
 	auto applyTo = [&](CPlayer* tgt)
-	{
-		if (!tgt || !tgt->IsInitialized()) return;
-		sDBO_BUFF_PARAMETER aBuffParameter[NTL_MAX_EFFECT_IN_SKILL];
-		eSYSTEM_EFFECT_CODE aeEffectCode[NTL_MAX_EFFECT_IN_SKILL];
-		for (int i = 0; i < NTL_MAX_EFFECT_IN_SKILL; i++)
 		{
-			aBuffParameter[i].byBuffParameterType = DBO_BUFF_PARAMETER_TYPE_DEFAULT;
-			aBuffParameter[i].buffParameter.fParameter = (float)(pSkillTbldat->aSkill_Effect_Value[i]);
-			aBuffParameter[i].buffParameter.dwRemainValue = (DWORD)pSkillTbldat->aSkill_Effect_Value[i];
-			aeEffectCode[i] = g_pTableContainer->GetSystemEffectTable()->GetEffectCodeWithTblidx(pSkillTbldat->skill_Effect[i]);
-			if (aeEffectCode[i] == ACTIVE_HEAL_OVER_TIME || aeEffectCode[i] == ACTIVE_EP_OVER_TIME)
+			if (!tgt || !tgt->IsInitialized()) return;
+			sDBO_BUFF_PARAMETER aBuffParameter[NTL_MAX_EFFECT_IN_SKILL];
+			eSYSTEM_EFFECT_CODE aeEffectCode[NTL_MAX_EFFECT_IN_SKILL];
+			for (int i = 0; i < NTL_MAX_EFFECT_IN_SKILL; i++)
 			{
-				aBuffParameter[i].byBuffParameterType = DBO_BUFF_PARAMETER_TYPE_HOT;
-				aBuffParameter[i].buffParameter.dwRemainTime = pSkillTbldat->dwKeepTimeInMilliSecs;
+				aBuffParameter[i].byBuffParameterType = DBO_BUFF_PARAMETER_TYPE_DEFAULT;
+				aBuffParameter[i].buffParameter.fParameter = (float)(pSkillTbldat->aSkill_Effect_Value[i]);
+				aBuffParameter[i].buffParameter.dwRemainValue = (DWORD)pSkillTbldat->aSkill_Effect_Value[i];
+				aeEffectCode[i] = g_pTableContainer->GetSystemEffectTable()->GetEffectCodeWithTblidx(pSkillTbldat->skill_Effect[i]);
+				if (aeEffectCode[i] == ACTIVE_HEAL_OVER_TIME || aeEffectCode[i] == ACTIVE_EP_OVER_TIME)
+				{
+					aBuffParameter[i].byBuffParameterType = DBO_BUFF_PARAMETER_TYPE_HOT;
+					aBuffParameter[i].buffParameter.dwRemainTime = pSkillTbldat->dwKeepTimeInMilliSecs;
+				}
+				else if (aeEffectCode[i] == ACTIVE_BLEED || aeEffectCode[i] == ACTIVE_POISON || aeEffectCode[i] == ACTIVE_STOMACHACHE || aeEffectCode[i] == ACTIVE_BURN)
+				{
+					aBuffParameter[i].byBuffParameterType = DBO_BUFF_PARAMETER_TYPE_DOT;
+					aBuffParameter[i].buffParameter.dwRemainTime = pSkillTbldat->dwKeepTimeInMilliSecs;
+				}
 			}
-			else if (aeEffectCode[i] == ACTIVE_BLEED || aeEffectCode[i] == ACTIVE_POISON || aeEffectCode[i] == ACTIVE_STOMACHACHE || aeEffectCode[i] == ACTIVE_BURN)
+			// Handle direct heal instantly and do not register as a buff
+			bool hasBuffable = false;
+			for (int i = 0; i < NTL_MAX_EFFECT_IN_SKILL; ++i)
 			{
-				aBuffParameter[i].byBuffParameterType = DBO_BUFF_PARAMETER_TYPE_DOT;
-				aBuffParameter[i].buffParameter.dwRemainTime = pSkillTbldat->dwKeepTimeInMilliSecs;
+				//if (aeEffectCode[i] == ACTIVE_DIRECT_HEAL)
+				//{
+				//	float amt = 0.0f;
+				//	CalcDirectHeal(pPlayer, pSkillTbldat, (BYTE)i, amt);
+				//	if (amt != 0.0f)
+				//	{
+				//		tgt->UpdateCurLP((int)amt, true, false);
+				//		tgt->SendEffectAffected(g_pTableContainer->GetSystemEffectTable()->GetEffectTblidx(aeEffectCode[i]), DBO_OBJECT_SOURCE_SKILL, pSkillTbldat->tblidx, amt, 0.0f, pPlayer->GetID());
+				//	}
+				//	aeEffectCode[i] = INVALID_SYSTEM_EFFECT_CODE;
+				//}
+				if (aeEffectCode[i] != INVALID_SYSTEM_EFFECT_CODE)
+					hasBuffable = true;
 			}
-		}
-		// Handle direct heal instantly and do not register as a buff
-		bool hasBuffable = false;
-		for (int i = 0; i < NTL_MAX_EFFECT_IN_SKILL; ++i)
-		{
-			//if (aeEffectCode[i] == ACTIVE_DIRECT_HEAL)
-			//{
-			//	float amt = 0.0f;
-			//	CalcDirectHeal(pPlayer, pSkillTbldat, (BYTE)i, amt);
-			//	if (amt != 0.0f)
-			//	{
-			//		tgt->UpdateCurLP((int)amt, true, false);
-			//		tgt->SendEffectAffected(g_pTableContainer->GetSystemEffectTable()->GetEffectTblidx(aeEffectCode[i]), DBO_OBJECT_SOURCE_SKILL, pSkillTbldat->tblidx, amt, 0.0f, pPlayer->GetID());
-			//	}
-			//	aeEffectCode[i] = INVALID_SYSTEM_EFFECT_CODE;
-			//}
-			if (aeEffectCode[i] != INVALID_SYSTEM_EFFECT_CODE)
-				hasBuffable = true;
-		}
-		DWORD dwDurationInMs = (DWORD)(nSeconds * 1000);
-		if (hasBuffable)
-			tgt->GetBuffManager()->RegisterBuff(dwDurationInMs, aeEffectCode, aBuffParameter, INVALID_HOBJECT, BUFF_TYPE_BLESS, pSkillTbldat);
-	};
+			DWORD dwDurationInMs = (DWORD)(nSeconds * 1000);
+			if (hasBuffable)
+				tgt->GetBuffManager()->RegisterBuff(dwDurationInMs, aeEffectCode, aBuffParameter, INVALID_HOBJECT, BUFF_TYPE_BLESS, pSkillTbldat);
+		};
 
 	if (fRadius > 0.0f && cTarget->GetCurWorldCell())
 	{
@@ -705,7 +1801,19 @@ ACMD(do_addmob)
 {
 	pToken->PopToPeek();
 	std::wstring strToken = pToken->PeekNextToken(NULL, &iLine);
-	TBLIDX MobId = (TBLIDX)atof(ws2s(strToken).c_str());
+	TBLIDX MobId = INVALID_TBLIDX;
+	// Try numeric first
+	{
+		std::string as = ws2s(strToken);
+		bool allDigits = !as.empty() && std::all_of(as.begin(), as.end(), [](unsigned char ch) { return isdigit(ch); });
+		if (allDigits) MobId = (TBLIDX)atoi(as.c_str());
+	}
+	// If not numeric, try resolve by name via ArenaManager
+	if (MobId == INVALID_TBLIDX)
+	{
+		unsigned int id = g_pArenaManager->ResolveMobIdByName(strToken);
+		if (id != 0) MobId = (TBLIDX)id;
+	}
 
 	sMOB_TBLDAT* pMOBTblData = (sMOB_TBLDAT*)g_pTableContainer->GetMobTable()->FindData(MobId);
 
@@ -869,7 +1977,7 @@ ACMD(do_addnpc)
 			printf("npc not found in world\n");
 		}
 	}
-	else ERR_LOG(LOG_GENERAL, "npc not found %u. GM %u", npcid, pPlayer->GetCharID());
+	else { ERR_LOG(LOG_SYSTEM, _T("[GENERAL] npc not found %u. GM %u"), npcid, pPlayer->GetCharID()); }
 }
 
 ACMD(do_additem)
@@ -978,13 +2086,13 @@ ACMD(do_additem_group)
 
 	// Helper lambda to give item to one player
 	auto giveItemTo = [&](CPlayer* target)
-	{
-		if (!target || !target->IsInitialized()) return;
-		if (target->GetPlayerItemContainer()->CountEmptyInventory() >= 1)
 		{
-			g_pItemManager->CreateItem(target, ItemId, amount, INVALID_BYTE, INVALID_BYTE, pTblData->Item_Option_Tblidx == INVALID_TBLIDX);
-		}
-	};
+			if (!target || !target->IsInitialized()) return;
+			if (target->GetPlayerItemContainer()->CountEmptyInventory() >= 1)
+			{
+				g_pItemManager->CreateItem(target, ItemId, amount, INVALID_BYTE, INVALID_BYTE, pTblData->Item_Option_Tblidx == INVALID_TBLIDX);
+			}
+		};
 
 	if (fRange > 0.0f && pTarget->GetCurWorldCell())
 	{
@@ -1018,25 +2126,25 @@ ACMD(do_sessioninfo)
 		Displays current vs max sessions, memory usage, and connection statistics
 	*/
 	CGameServer* app = (CGameServer*)g_pApp;
-	
+
 	// Get current session counts from the network
 	int currentSessions = app->GetNetwork()->GetSessionList()->GetCurCount();
 	int maxSessions = app->GetNetwork()->GetSessionList()->GetMaxCount();
 	int configMaxSessions = app->m_config.nMaxConnection;
-	
+
 	// Get current player count from ObjectManager
 	size_t playerCount = g_pObjectManager->GetPlayerCount();
-	
+
 	// Identify server instance by port/config
 	WORD serverPort = app->m_config.wClientAcceptPort;
 	const char* instanceType = "Unknown";
 	if (serverPort == 30000) instanceType = "Channel 0";
-	else if (serverPort == 30001) instanceType = "Channel 1"; 
+	else if (serverPort == 30001) instanceType = "Channel 1";
 	else if (serverPort == 30009) instanceType = "Budokai Tournament";
-	
+
 	// Format the response message with multi-instance awareness
 	char szMessage[1500];
-	sprintf_s(szMessage, sizeof(szMessage), 
+	sprintf_s(szMessage, sizeof(szMessage),
 		"[SESSION INFO - %s (Port: %d)]\n"
 		"Current Sessions: %d\n"
 		"Max Session Capacity: %d\n"
@@ -1059,28 +2167,28 @@ ACMD(do_sessioninfo)
 		currentSessions - (int)playerCount,
 		(serverPort == 30009) ? "BUDOKAI SERVER - Monitor tournament session cleanup!" : "Regular game channel",
 		(currentSessions > (int)playerCount + 15) ? "HIGH SESSION OVERHEAD - Investigate cleanup!" :
-		(currentSessions > (int)playerCount + 10) ? "MODERATE SESSION OVERHEAD - Monitor closely" : 
+		(currentSessions > (int)playerCount + 10) ? "MODERATE SESSION OVERHEAD - Monitor closely" :
 		(currentSessions >= configMaxSessions) ? "CRITICAL: Session limit reached!" :
 		"Session levels appear normal"
 	);
-	
+
 	// Send system message to the GM
 	CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
 	sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
 	res->wOpCode = GU_SYSTEM_DISPLAY_TEXT;
 	res->byDisplayType = SERVER_TEXT_SYSTEM;
-	
+
 	// Convert to wide string
 	std::string message(szMessage);
 	std::wstring wideMessage(message.begin(), message.end());
 	wcscpy_s(res->awchMessage, NTL_MAX_LENGTH_OF_CHAT_MESSAGE + 1, wideMessage.c_str());
-	
+
 	packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
 	app->Send(pPlayer->GetClientSessionID(), &packet);
-	
+
 	// Also log to console for server admin
-	NTL_PRINT(PRINT_APP, "GM %u requested session info: %d/%d sessions active (%.1f%% utilization)", 
-		pPlayer->GetCharID(), currentSessions, configMaxSessions, 
+	NTL_PRINT(PRINT_APP, _T("GM %u requested session info: %d/%d sessions active (%.1f%% utilization)"),
+		pPlayer->GetCharID(), currentSessions, configMaxSessions,
 		configMaxSessions > 0 ? (float)currentSessions / configMaxSessions * 100.0f : 0.0f);
 }
 
@@ -1092,21 +2200,21 @@ ACMD(do_sessioncleanup)
 		of sessions that may be stuck or not properly removed
 	*/
 	CGameServer* app = (CGameServer*)g_pApp;
-	
+
 	// Get session counts before cleanup
 	int sessionsBefore = app->GetNetwork()->GetSessionList()->GetCurCount();
-	
+
 	// Force session list validation/cleanup
 	DWORD currentTime = GetTickCount();
 	app->GetNetwork()->GetSessionList()->ValidCheck(currentTime);
-	
+
 	// Get session counts after cleanup
 	int sessionsAfter = app->GetNetwork()->GetSessionList()->GetCurCount();
 	int sessionsRemoved = sessionsBefore - sessionsAfter;
-	
+
 	// Format the response message
 	char szMessage[512];
-	sprintf_s(szMessage, sizeof(szMessage), 
+	sprintf_s(szMessage, sizeof(szMessage),
 		"[SESSION CLEANUP COMPLETE]\n"
 		"Sessions before cleanup: %d\n"
 		"Sessions after cleanup: %d\n"
@@ -1117,23 +2225,23 @@ ACMD(do_sessioncleanup)
 		sessionsRemoved,
 		app->GetNetwork()->GetSessionList()->GetMaxCount() - sessionsAfter
 	);
-	
+
 	// Send system message to the GM
 	CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
 	sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
 	res->wOpCode = GU_SYSTEM_DISPLAY_TEXT;
 	res->byDisplayType = SERVER_TEXT_SYSTEM;
-	
+
 	// Convert to wide string
 	std::string message(szMessage);
 	std::wstring wideMessage(message.begin(), message.end());
 	wcscpy_s(res->awchMessage, NTL_MAX_LENGTH_OF_CHAT_MESSAGE + 1, wideMessage.c_str());
-	
+
 	packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
 	app->Send(pPlayer->GetClientSessionID(), &packet);
-	
+
 	// Also log to console for server admin
-	NTL_PRINT(PRINT_APP, "GM %u forced session cleanup: %d sessions removed (%d -> %d)", 
+	NTL_PRINT(PRINT_APP, _T("GM %u forced session cleanup: %d sessions removed (%d -> %d)"),
 		pPlayer->GetCharID(), sessionsRemoved, sessionsBefore, sessionsAfter);
 }
 
@@ -1145,14 +2253,14 @@ ACMD(do_budokaiinfo)
 		including session leak detection related to tournament events
 	*/
 	CGameServer* app = (CGameServer*)g_pApp;
-	
+
 	// Identify server instance
 	WORD serverPort = app->m_config.wClientAcceptPort;
 	bool isBudokaiServer = (serverPort == 30009);
-	
+
 	char szMessage[1500];
 	if (!isBudokaiServer) {
-		sprintf_s(szMessage, sizeof(szMessage), 
+		sprintf_s(szMessage, sizeof(szMessage),
 			"[BUDOKAI INFO]\n"
 			"Current server port: %d\n"
 			"This is NOT the Budokai server instance\n"
@@ -1160,15 +2268,16 @@ ACMD(do_budokaiinfo)
 			"Use this command on the tournament server",
 			serverPort
 		);
-	} else {
+	}
+	else {
 		// Get session information
 		int currentSessions = app->GetNetwork()->GetSessionList()->GetCurCount();
 		int maxSessions = app->GetNetwork()->GetSessionList()->GetMaxCount();
 		int configMaxSessions = app->m_config.nMaxConnection;
 		size_t playerCount = g_pObjectManager->GetPlayerCount();
 		int sessionOverhead = currentSessions - (int)playerCount;
-		
-		sprintf_s(szMessage, sizeof(szMessage), 
+
+		sprintf_s(szMessage, sizeof(szMessage),
 			"[BUDOKAI TOURNAMENT SERVER]\n"
 			"Server Port: %d (Confirmed)\n"
 			"Current Sessions: %d\n"
@@ -1197,23 +2306,23 @@ ACMD(do_budokaiinfo)
 			"NORMAL: Session levels appear healthy"
 		);
 	}
-	
+
 	// Send system message to the GM
 	CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
 	sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
 	res->wOpCode = GU_SYSTEM_DISPLAY_TEXT;
 	res->byDisplayType = SERVER_TEXT_SYSTEM;
-	
+
 	// Convert to wide string
 	std::string message(szMessage);
 	std::wstring wideMessage(message.begin(), message.end());
 	wcscpy_s(res->awchMessage, NTL_MAX_LENGTH_OF_CHAT_MESSAGE + 1, wideMessage.c_str());
-	
+
 	packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
 	app->Send(pPlayer->GetClientSessionID(), &packet);
-	
+
 	// Also log to console
-	NTL_PRINT(PRINT_APP, "GM %u requested Budokai info on port %d", pPlayer->GetCharID(), serverPort);
+	NTL_PRINT(PRINT_APP, _T("GM %u requested Budokai info on port %d"), pPlayer->GetCharID(), serverPort);
 }
 
 ACMD(do_addmasteritem)
@@ -1991,6 +3100,76 @@ ACMD(do_setclass)
 	}
 
 	pPlayer->UpdateClass(byClass);
+}
+
+ACMD(do_changeclass)
+{
+	// Syntax: @changeclass <class> [name]
+	pToken->PopToPeek();
+	std::wstring strToken = pToken->PeekNextToken(NULL, &iLine);
+	BYTE byClass = (BYTE)atof(ws2s(strToken).c_str());
+
+	pToken->PopToPeek();
+	strToken = pToken->PeekNextToken(NULL, &iLine);
+
+	CPlayer* target = pPlayer;
+
+	if (!strToken.empty())
+	{
+		std::wstring name = std::wstring(strToken.begin(), strToken.end());
+		const wchar_t* wname = name.c_str();
+
+		CPlayer* found = g_pObjectManager->FindByName(wname);
+		if (found && found->IsInitialized()) {
+			target = found;
+		}
+		else
+		{
+			ERR_LOG(LOG_GENERAL, "Player %s not found", ws2s(name).c_str());
+			return;
+		}
+	}
+
+	if (!target || !target->IsInitialized())
+		return;
+
+	// Prevent during transformations
+	if (target->GetAspectStateId() != ASPECTSTATE_INVALID)
+		return;
+
+	// Validate class for target race/gender
+	sPC_TBLDAT* pcdata = (sPC_TBLDAT*)g_pTableContainer->GetPcTable()->GetPcTbldat(target->GetTbldat()->byRace, byClass, target->GetTbldat()->byGender);
+	if (!pcdata)
+	{
+		// notify GM that class is invalid for target
+		CNtlStringW msg;
+		CNtlPacket packetMsg(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+		sGU_SYSTEM_DISPLAY_TEXT* resMsg = (sGU_SYSTEM_DISPLAY_TEXT*)packetMsg.GetPacketData();
+		resMsg->wOpCode = GU_SYSTEM_DISPLAY_TEXT;
+		resMsg->byDisplayType = SERVER_TEXT_SYSTEM;
+		resMsg->wMessageLengthInUnicode = (WORD)msg.Format(L"Invalid class %u for %s (race=%u gender=%u)", byClass, target->GetCharName(), target->GetTbldat()->byRace, target->GetTbldat()->byGender);
+		NTL_SAFE_WCSCPY(resMsg->awchMessage, msg.c_str());
+		pPlayer->SendPacket(&packetMsg);
+		return;
+	}
+
+	// Set pending class to be applied after skill reset completes
+	target->SetPendingClassChange(byClass);
+	// Ensure no cost charged for this GM-driven reset
+	target->SetSkipNextSkillResetCost(true);
+
+	// Trigger a skill reset using the same flow as @resetskills
+	CGameServer* app = (CGameServer*)g_pApp;
+
+	CNtlPacket pQry(sizeof(sGQ_SKILL_INIT_REQ));
+	sGQ_SKILL_INIT_REQ* rQry = (sGQ_SKILL_INIT_REQ*)pQry.GetPacketData();
+	rQry->wOpCode = GQ_SKILL_INIT_REQ;
+	rQry->handle = target->GetID();
+	rQry->charId = target->GetCharID();
+	rQry->dwSP = (DWORD)target->GetLevel() - 1; // base SP after full reset
+	rQry->bySkillResetMethod = 0; // normal reset path to receive RES
+	pQry.SetPacketLen(sizeof(sGQ_SKILL_INIT_REQ));
+	app->SendTo(app->GetQueryServerSession(), &pQry);
 }
 
 ACMD(do_dc)
@@ -2856,12 +4035,12 @@ ACMD(do_startevent)
 	if (Type == 0)
 	{
 		g_pHoneyBeeEvent->StartEvent(Hours);
-		NTL_PRINT(PRINT_APP, "Honey Bee Event Started");
+		NTL_PRINT(PRINT_APP, _T("Honey Bee Event Started"));
 	}
 	if (Type == 1)
 	{
 		g_pFairyEvent->StartEvent(Hours);
-		NTL_PRINT(PRINT_APP, "Fairy Event Started");
+		NTL_PRINT(PRINT_APP, _T("Fairy Event Started"));
 	}
 }
 
@@ -2876,12 +4055,12 @@ ACMD(do_stophoneybee)
 	if (Type == 0)
 	{
 		g_pHoneyBeeEvent->EndEvent();
-		NTL_PRINT(PRINT_APP, "Honey Bee Event End");
+		NTL_PRINT(PRINT_APP, _T("Honey Bee Event End"));
 	}
 	if (Type == 1)
 	{
 		g_pFairyEvent->EndEvent();
-		NTL_PRINT(PRINT_APP, "Fairy Event End");
+		NTL_PRINT(PRINT_APP, _T("Fairy Event End"));
 	}
 }
 

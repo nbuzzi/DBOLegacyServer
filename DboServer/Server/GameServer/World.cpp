@@ -52,6 +52,7 @@ void CWorld::Init()
 	m_hNaviInstance = NULL;
 
 	m_hTriggerObjectOffset = 1;
+	m_ruleOverride = INVALID_GAMERULE;
 }
 
 int CWorld::Create(WORLDID worldID, sWORLD_TBLDAT* pTbldat, CWorldZoneTable* pWorldZoneTable)
@@ -378,7 +379,13 @@ void CWorld::SpawnNpcMob()
 						CNpc* pNpc = (CNpc*)g_pObjectManager->CreateCharacter(OBJTYPE_NPC);
 						if (pNpc)
 						{
-							if (!pNpc->CreateDataAndSpawn(GetID(), pNPCTblData, pNPCSpwnTblData, false, SPAWN_FUNC_FLAG_NO_SPAWN_WAIT))
+							// In dynamic worlds we still want spawned entries to respawn after death.
+							// Use both flags: allow immediate spawn without wait and enable future respawn.
+							BYTE bySpawnFlag = 0;
+							BIT_FLAG_SET(bySpawnFlag, SPAWN_FUNC_FLAG_RESPAWN);
+							BIT_FLAG_SET(bySpawnFlag, SPAWN_FUNC_FLAG_NO_SPAWN_WAIT);
+
+							if (!pNpc->CreateDataAndSpawn(GetID(), pNPCTblData, pNPCSpwnTblData, false, bySpawnFlag))
 							{
 								ERR_LOG(LOG_SYSTEM, "Failed to create NPC. Tblidx %u World %u spawn location %f %f %f", pNPCTblData->tblidx, pWorldTblData->tblidx, pNPCSpwnTblData->vSpawn_Loc.x, pNPCSpwnTblData->vSpawn_Loc.y, pNPCSpwnTblData->vSpawn_Loc.z);
 								delete pNpc;
@@ -411,7 +418,13 @@ void CWorld::SpawnNpcMob()
 						CMonster* pMob = (CMonster*)g_pObjectManager->CreateCharacter(OBJTYPE_MOB);
 						if (pMob)
 						{
-							if (!pMob->CreateDataAndSpawn(GetID(), pMOBTblData, pMOBSpwnTblData, false, SPAWN_FUNC_FLAG_NO_SPAWN_WAIT))
+							// In dynamic worlds we still want spawned entries to respawn after death.
+							// Use both flags: allow immediate spawn without wait and enable future respawn.
+							BYTE bySpawnFlag = 0;
+							BIT_FLAG_SET(bySpawnFlag, SPAWN_FUNC_FLAG_RESPAWN);
+							BIT_FLAG_SET(bySpawnFlag, SPAWN_FUNC_FLAG_NO_SPAWN_WAIT);
+
+							if (!pMob->CreateDataAndSpawn(GetID(), pMOBTblData, pMOBSpwnTblData, false, bySpawnFlag))
 							{
 								ERR_LOG(LOG_SYSTEM, "Failed to create monster. Tblidx %u World %u spawn location %f %f %f", pMOBTblData->tblidx, pWorldTblData->tblidx, pMOBSpwnTblData->vSpawn_Loc.x, pMOBSpwnTblData->vSpawn_Loc.y, pMOBSpwnTblData->vSpawn_Loc.z);
 								delete pMob;
@@ -503,7 +516,8 @@ int CWorld::CopyToInfo(sWORLD_INFO* pWorldInfo)
 	pWorldInfo->worldID = GetID();
 	pWorldInfo->tblidx = GetIdx();
 	pWorldInfo->hTriggerObjectOffset = m_hTriggerObjectOffset;
-	pWorldInfo->sRuleInfo.byRuleType = GetTbldat()->byWorldRuleType;
+	// Reflect any runtime rule override so the client behaves accordingly (e.g., Arena as RankBattle)
+	pWorldInfo->sRuleInfo.byRuleType = (BYTE)GetRuleType();
 
 	if (GetTbldat()->byWorldRuleType == GAMERULE_CCBATTLEDUNGEON)
 	{
@@ -842,6 +856,8 @@ eGAMERULE_TYPE CWorld::GetRuleType()
 {
 	if (m_pTbldat)
 	{
+		if (m_ruleOverride != INVALID_GAMERULE)
+			return m_ruleOverride;
 		return (eGAMERULE_TYPE)m_pTbldat->byWorldRuleType;
 	}
 	else

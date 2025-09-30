@@ -122,6 +122,10 @@ bool CHelperNpcManager::LoadConfig(CNtlIniFile& file)
 	file.Read("HELPER_NPC", "ResurrectSkillTblidx", m_config.resurrectSkillTblidx);
 	file.Read("HELPER_NPC", "RebuffCooldownMs", m_config.dwRebuffCooldownMs);
 	file.Read("HELPER_NPC", "RebuffMinRemainingMs", m_config.dwRebuffMinRemainingMs);
+	// Healer responsiveness
+	file.Read("HELPER_NPC", "HealScanCooldownMs", m_config.dwHealScanCooldownMs);
+	file.Read("HELPER_NPC", "ResurrectScanCooldownMs", m_config.dwResurrectScanCooldownMs);
+	file.Read("HELPER_NPC", "SkillTryCooldownMs", m_config.dwSkillTryCooldownMs);
 	// Tank aggro enforcement (global defaults)
 	{
 		int v = m_config.bEnforceTankAggro ? 1 : 0;
@@ -513,7 +517,7 @@ bool CHelperNpcManager::LoadRoleSection(CNtlIniFile& file, const char* sectionNa
 			outRole.cfg.byMaxBuffsPerTargetPerAudit = 5; // Allow multiple buffs per person
 		// Ensure rebuff is enabled for BUFFERs
 		if (outRole.cfg.dwRebuffCooldownMs == 0)
-			outRole.cfg.dwRebuffCooldownMs = 5000; // Check every 5 seconds
+			outRole.cfg.dwRebuffCooldownMs = 2000; // Check every 2 seconds
 	}
 
 	// Special handling for HEALER role to increase healing coverage
@@ -526,7 +530,7 @@ bool CHelperNpcManager::LoadRoleSection(CNtlIniFile& file, const char* sectionNa
 			outRole.cfg.byMaxBuffsPerTargetPerAudit = 2; // Allow multiple heals per person
 		// Ensure rebuff is enabled for HEALERs (healing skills use same system)
 		if (outRole.cfg.dwRebuffCooldownMs == 0)
-			outRole.cfg.dwRebuffCooldownMs = 1000; // Check every 1 second for faster healing response
+			outRole.cfg.dwRebuffCooldownMs = 500; // Check every 0.5 seconds for faster healing response
 	}
 
 	// Parse covered class IDs
@@ -592,6 +596,9 @@ int CHelperNpcManager::LoadConfigSection(CNtlIniFile& file, const char* sectionN
 	if (file.Read(sectionName, "ResurrectSkillTblidx", out.resurrectSkillTblidx)) ++readCount;
 	if (file.Read(sectionName, "RebuffCooldownMs", out.dwRebuffCooldownMs)) ++readCount;
 	if (file.Read(sectionName, "RebuffMinRemainingMs", out.dwRebuffMinRemainingMs)) ++readCount;
+	if (file.Read(sectionName, "HealScanCooldownMs", out.dwHealScanCooldownMs)) ++readCount;
+	if (file.Read(sectionName, "ResurrectScanCooldownMs", out.dwResurrectScanCooldownMs)) ++readCount;
+	if (file.Read(sectionName, "SkillTryCooldownMs", out.dwSkillTryCooldownMs)) ++readCount;
 	{ int v = out.bPrioritizeForcedSkills ? 1 : 0; if (file.Read(sectionName, "PrioritizeForcedSkills", v)) { out.bPrioritizeForcedSkills = (v != 0); ++readCount; } }
 	// Tank aggro enforcement overrides
 	{ int v = out.bEnforceTankAggro ? 1 : 0; if (file.Read(sectionName, "EnforceTankAggro", v)) { out.bEnforceTankAggro = (v != 0); ++readCount; } }
@@ -710,6 +717,14 @@ bool CHelperNpcManager::SpawnIfAllowed(CPlayer* pLeader, CWorld* pWorld, const s
 	if (pLeader->GetParty() && pLeader->GetParty()->GetPartyLeaderID() != pLeader->GetID())
 	{
 		VLog(cfg.bVerboseLogs, "HelperNPC: skip - player %u is not party leader (%u)", SAFE_ID(pLeader), pLeader->GetParty()->GetPartyLeaderID());
+		return false;
+	}
+
+	// Respect world suppression toggle
+	if (IsWorldSuppressed(pWorld->GetID()))
+	{
+		VLog(cfg.bVerboseLogs, "HelperNPC: suppressed in world %u", SAFE_ID(pWorld));
+		DespawnAllHelpersForLeaderInWorld(pLeader, pWorld);
 		return false;
 	}
 
@@ -1226,7 +1241,7 @@ void CHelperNpcManager::OnLeaderAttackEnd(CPlayer* pLeader)
 		return;
 
 	// If helper has no aggro and no current target, resume following leader
-	if (pHelper->GetTargetListManager()->GetAggroCount() == 0 && pHelper->GetTargetHandle() == INVALID_HOBJECT)
+	if (pHelper->GetTargetListManager() && pHelper->GetTargetListManager()->GetAggroCount() == 0 && pHelper->GetTargetHandle() == INVALID_HOBJECT)
 	{
 		sVECTOR3 vLeaderLoc;
 		pLeader->GetCurLoc().CopyTo(vLeaderLoc);
@@ -1333,6 +1348,13 @@ void CHelperNpcManager::TickWatchdog(DWORD dwNow)
 		CWorld* pWorld = pLeader->GetCurWorld();
 		if (!pWorld)
 			continue;
+
+		// World suppression check
+		if (IsWorldSuppressed(pWorld->GetID()))
+		{
+			DespawnAllHelpersForLeaderInWorld(pLeader, pWorld);
+			continue;
+		}
 
 		// Only allow helpers inside instance/dungeon-like worlds (HUNT/CCBATTLEDUNGEON/TIMEQUEST or extra lists)
 		eGAMERULE_TYPE rule = pWorld->GetRuleType();
@@ -1453,6 +1475,13 @@ void CHelperNpcManager::EnsureHelperForLeaderNow(CPlayer* pLeader)
 		}
 	}
 
+	// World suppression check
+	if (IsWorldSuppressed(pWorld->GetID()))
+	{
+		DespawnAllHelpersForLeaderInWorld(pLeader, pWorld);
+		return;
+	}
+
 	// Choose config by world rule type, with allowlists
 	const sHELPER_NPC_CONFIG* pCfg = &m_config;
 	eGAMERULE_TYPE rule = pWorld->GetRuleType();
@@ -1518,6 +1547,29 @@ void CHelperNpcManager::OnLeaderLeaveWorld(CPlayer* pLeader, CWorld* pWorld)
 	// Despawn helpers whenever the leader leaves a world. If it's a dungeon world, helpers should not persist once leader exits.
 	DespawnAllHelpersForLeaderInWorld(pLeader, pWorld);
 	VLog(m_config.bVerboseLogs, "HelperNPC: leader %u left world %u - despawned helpers in that world", SAFE_ID(pLeader), SAFE_ID(pWorld));
+}
+
+void CHelperNpcManager::SetWorldSuppressed(WORLDID worldId, bool suppressed)
+{
+	if (suppressed) m_suppressedWorlds.insert(worldId);
+	else m_suppressedWorlds.erase(worldId);
+}
+
+bool CHelperNpcManager::IsWorldSuppressed(WORLDID worldId) const
+{
+	return m_suppressedWorlds.find(worldId) != m_suppressedWorlds.end();
+}
+
+void CHelperNpcManager::DespawnAllHelpersInWorld(CWorld* pWorld)
+{
+	if (!pWorld) return;
+	// For each leader, despawn helpers in this world
+	for (const auto& kv : m_mapLeaderToHelper)
+	{
+		CPlayer* pLeader = (CPlayer*)g_pObjectManager->GetPC(kv.first);
+		if (pLeader)
+			DespawnAllHelpersForLeaderInWorld(pLeader, pWorld);
+	}
 }
 
 void CHelperNpcManager::EvaluateAndSpawnRoleHelpers(CPlayer* pLeader, CWorld* pWorld)
@@ -1761,6 +1813,13 @@ void CHelperNpcManager::OnPartyMemberJoined(CParty* pParty, CPlayer* pNewMember)
 	if (!pLeader || !pLeader->IsInitialized()) return;
 	CWorld* pWorld = pLeader->GetCurWorld();
 	if (!pWorld) return;
+	// Ensure we are in an instance-like world (UD/BD/TMQ or allowlisted extras)
+	eGAMERULE_TYPE rule = pWorld->GetRuleType();
+	WORLDID wid = pWorld->GetID();
+	bool bUD = (rule == GAMERULE_HUNT) || (this->m_extraUDWorldIDs.find(wid) != this->m_extraUDWorldIDs.end());
+	bool bBD = (rule == GAMERULE_CCBATTLEDUNGEON) || (this->m_extraBDWorldIDs.find(wid) != this->m_extraBDWorldIDs.end());
+	bool bTMQ = (rule == GAMERULE_TIMEQUEST) || (this->m_extraTMQWorldIDs.find(wid) != this->m_extraTMQWorldIDs.end());
+	if (!bUD && !bBD && !bTMQ) return;
 
 	// Determine the role coverage impact of the new member
 	BYTE cls = pNewMember->GetClass();

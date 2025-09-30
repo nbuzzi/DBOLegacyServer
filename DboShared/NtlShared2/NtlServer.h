@@ -121,8 +121,6 @@ struct sCHAT_SERVERCONFIG
 
 	int				LoadTableFormat;
 	CNtlString		TablePath;
-
-	BOOL            bDisableDojoWar;
 };
 
 struct sCHAR_SERVERCONFIG

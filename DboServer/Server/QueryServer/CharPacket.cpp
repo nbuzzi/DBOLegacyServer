@@ -25,8 +25,10 @@ void CCharServerSession::RecvCreateCharReq(CNtlPacket * pPacket, CQueryServer* a
 {
 	sCQ_CHARACTER_ADD_REQ * req = (sCQ_CHARACTER_ADD_REQ*)pPacket->GetPacketData();
 
-	//check if char name already exist
-	smart_ptr<QueryResult> namecheck = GetCharDB.Query("SELECT CharID FROM characters WHERE CharName='%ls'", req->awchCharName);
+	// Check if char name already exists (use UTF-8 + escape)
+	std::string newNameUtf8 = ws2s(req->awchCharName);
+	std::string newNameEsc = GetCharDB.EscapeString(newNameUtf8);
+	smart_ptr<QueryResult> namecheck = GetCharDB.Query("SELECT CharID FROM characters WHERE CharName='%s'", newNameEsc.c_str());
 	if (namecheck)
 	{
 		CNtlPacket packet(sizeof(sQC_CHARACTER_ADD_RES));

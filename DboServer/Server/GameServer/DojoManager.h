@@ -93,9 +93,6 @@ public:
 	CDojoManager();
 	virtual ~CDojoManager();
 	
-	// Manual Dojo Event Control
-	void StartDojoEvent();
-	void StopDojoEvent();
 
 private:
 
@@ -131,10 +128,15 @@ public:
 private:
 
 	DWORD							m_dwNextUpdateTick;
+	bool							m_bManualMode; // when true, TickProcess runs regardless of Sunday window
 
 public:
 
 	void							TickProcess(DWORD dwTickDiff);
+
+	// Manual mode toggle for GM control outside normal Sunday window
+	inline void						SetManualMode(bool on) { m_bManualMode = on; }
+	inline bool						IsManualMode() const { return m_bManualMode; }
 
 };
 

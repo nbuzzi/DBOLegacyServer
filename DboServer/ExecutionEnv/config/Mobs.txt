@@ -1,0 +1,4988 @@
+@addmob 281106 jeice
+@addmob 33134101 freezer33131201
+@addmob 33531901 Goku ginyu
+@addmob 37122101 Brainwashed Recoome
+@addmob 37122201 Recoome
+@addmob 3691101 Guldo
+@addmob 3691102 Guldo
+@addmob 3691103 Guldo
+@addmob 1541101 Burter
+@addmob 1541102 Burter
+@addmob 1541103 Burter
+@addmob 3531901 Captain Ginyu
+@addmob 3531902 Captain Ginyu
+@addmob 3531903 Captain Ginyu
+@addmob 38812101 E Type Energy Amplification
+@addmob 38812104 S Type Energy Amplification
+@addmob 38812107 C Type Energy Amplification
+@addmob 38812110 B Type Energy Amplification
+@addmob 38812113 H Type Energy Amplification
+@addmob 3521101 Kid Goku
+@addmob 3531801 Goku
+@addmob 3531802 Goku
+@addmob 5682206 Ozaru Vegeta
+@addmob 5683101 Ozaru Raditz
+@addmob 5684101 Ozaru Nappa
+@addmob 5691101 Mira
+@addmob 5691102 Mira
+@addmob 5691103 Mira
+@addmob 5691104 Mira
+@addmob 5691105 Mira
+@addmob 5691106 Mira
+@addmob 5711107 Nappa
+@addmob 44681201 Master Roshi
+@addmob 44982101 Krillin
+@addmob 44681201 Roshi
+@addmob 4801201 Immortal Turtle Hermit
+@addmob 4801202 Immortal Turtle Hermit
+@addmob 4801203 Immortal Turtle Hermit
+@addmob 5511101 Magic Cube
+@addmob 5511201 Magic Cube
+@addmob 5512101 Magic Cube
+@addmob 5512201 Magic Cube
+@addmob 5513101 Magic Cube
+@addmob 5514101 Magic Cube
+@addmob 5515101 Magic Cube
+@addmob 5515104 Magic Cube
+@addmob 5515107 Magic Cube
+@addmob 5515110 Magic Cube
+@addmob 5515113 Magic Cube
+@addmob 5515116 Magic Cube
+@addmob 5681201 Son Gohan (Great Ape)
+@addmob 5681202 Son Gohan (Great Ape)
+@addmob 5681203 Son Gohan (Great Ape)
+@addmob 5681204 Son Gohan (Great Ape)
+@addmob 5681205 Son Gohan (Great Ape)
+@addmob 5681206 Son Gohan (Great Ape)
+@addmob 5681207 Brainwashed Giant Great Ape
+@addmob 5681208 Brainwashed Giant Great Ape
+@addmob 5681209 Brainwashed Giant Great Ape
+@addmob 5681210 Brainwashed Giant Great Ape
+@addmob 5681211 Brainwashed Giant Great Ape
+@addmob 5681212 Brainwashed Giant Great Ape
+@addmob 5681213 Brainwashed Giant Great Ape
+@addmob 5681216 Brainwashed Giant Super Great Ape
+@addmob 5702104 Sky Mushroom
+@addmob 5702107 Sky Mushroom
+@addmob 5702108 Sky Mushroom
+@addmob 5702109 Sky Mushroom
+@addmob 1612101 Masked Man
+@addmob 1612102 Masked Man
+@addmob 1612103 Masked Man
+@addmob 1612104 Masked Man
+@addmob 1612105 Masked Man
+@addmob 1612106 Masked Man
+@addmob 1612107 Masked Man
+@addmob 1612108 Masked Man
+@addmob 1612109 Masked Man
+@addmob 1612110 Masked Man
+@addmob 1612111 Masked Man
+@addmob 1612112 Masked Man
+@addmob 1612113 Masked Man
+@addmob 1612114 Masked Man
+@addmob 1612115 Masked Man
+@addmob 15685101  Mira ape
+@addmob 3101101 Freeze Generator
+@addmob 3101102 Freeze Generator
+@addmob 3101103 Freeze Generator
+@addmob 3101104 Freeze Generator
+@addmob 3101105 Freeze Generator
+@addmob 3101106 Freeze Generator
+@addmob 31243101 Brainwashed Advanced Guard
+@addmob 31261101 Brainwashed Special Guard
+@addmob 31283101 Mira's Training Drill Sergeant
+@addmob 3131101 Frieza
+@addmob 3131102 Frieza
+@addmob 3131103 Frieza
+@addmob 3132101 Frieza
+@addmob 3132102 Frieza
+@addmob 3132103 Frieza
+@addmob 31415201 Brainwashed Explosive Bean Saibaman
+@addmob 31581701 Vegeta
+@addmob 31654201 Taek
+@addmob 31682501 Teek
+@addmob 31753401 Time Crystal
+@addmob 31753404 Time Crystal
+@addmob 31753407 Time Crystal
+@addmob 31753410 Time Crystal
+@addmob 31753413 Time Crystal
+@addmob 31753416 Time Crystal
+@addmob 31753419 Time Crystal
+@addmob 31815101 Flying Bomb
+@addmob 31815104 Flying Warhead
+@addmob 31851401 Brainwashed Buonean Cutter
+@addmob 31852201 Brainwashed Attack Assistant
+@addmob 31853501 Toku
+@addmob 31853601 Toku
+@addmob 3211101 Dragon Frog
+@addmob 3211102 Dragon Frog
+@addmob 3211103 Dragon Frog
+@addmob 3211104 Cattle Dragon Frog
+@addmob 3211105 Cattle Dragon Frog
+@addmob 3211106 Cattle Dragon Frog
+@addmob 3211107 Huge Dragon Frog
+@addmob 3211108 Huge Dragon Frog
+@addmob 3211109 Huge Dragon Frog
+@addmob 3211110 King Dragon Frog
+@addmob 3211111 King Dragon Frog
+@addmob 3211112 King Dragon Frog
+@addmob 3211113 Strange Dragon Frog
+@addmob 3211114 Strange Dragon Frog
+@addmob 3211115 Strange Dragon Frog
+@addmob 3211116 Long Tongue Dragon Frog
+@addmob 3211117 Long Tongue Dragon Frog
+@addmob 3211118 Long Tongue Dragon Frog
+@addmob 3211119 Dragon Frog
+@addmob 3211120 Dragon Frog
+@addmob 3211121 Dragon Frog
+@addmob 3211122 Strong Dragon Frog
+@addmob 3211123 Strong Dragon Frog
+@addmob 3211124 Strong Dragon Frog
+@addmob 3211125 Dolphin Frog
+@addmob 3211126 Dolphin Frog
+@addmob 3211127 Dolphin Frog
+@addmob 3211128 RP Special Frog
+@addmob 3211129 RP Special Frog
+@addmob 3211130 RP Special Frog
+@addmob 3211131 Fortress Toxic Frog
+@addmob 3211132 Fortress Toxic Frog
+@addmob 3211133 Fortress Toxic Frog
+@addmob 3211134 Rock Frog
+@addmob 3211135 Rock Frog
+@addmob 3211136 Rock Frog
+@addmob 3211137 Water Frog
+@addmob 3211138 Water Frog
+@addmob 3211139 Water Frog
+@addmob 3211140 Fat Dragon Frog
+@addmob 3211141 Fat Dragon Frog
+@addmob 3211142 Fat Dragon Frog
+@addmob 3211143 Pet Frog
+@addmob 3211144 Pet Frog
+@addmob 3211145 Pet Frog
+@addmob 3211146 Biological Mutant Frog
+@addmob 3211149 Brainwashed Frog
+@addmob 3211152 King Frog
+@addmob 3212101 Scorched Frog
+@addmob 3212102 Scorched Frog
+@addmob 3212103 Scorched Frog
+@addmob 3212104 Shiny Scorched Frog
+@addmob 3212105 Shiny Scorched Frog
+@addmob 3212106 Shiny Scorched Frog
+@addmob 3212107 Charcoal Frog
+@addmob 3212108 Charcoal Frog
+@addmob 3212109 Charcoal Frog
+@addmob 3212110 Black Frog
+@addmob 3212111 Black Frog
+@addmob 3212112 Black Frog
+@addmob 3212113 Fire Scorched Frog
+@addmob 3212114 Fire Scorched Frog
+@addmob 3212115 Fire Scorched Frog
+@addmob 3212116 Magma Scorched Frog
+@addmob 3212117 Magma Scorched Frog
+@addmob 3212118 Magma Scorched Frog
+@addmob 3212119 Monstrous Scorched Frog
+@addmob 3212120 Monstrous Scorched Frog
+@addmob 3212121 Monstrous Scorched Frog
+@addmob 3212122 Scorched Toxic Frog
+@addmob 3212123 Scorched Toxic Frog
+@addmob 3212124 Scorched Toxic Frog
+@addmob 3212125 Huge Magma Scorched Frog
+@addmob 3212126 Huge Magma Scorched Frog
+@addmob 3212127 Huge Magma Scorched Frog
+@addmob 3212128 Huge Scorched Toxic Frog
+@addmob 3212129 Huge Scorched Toxic Frog
+@addmob 3212130 Huge Scorched Toxic Frog
+@addmob 3212131 Monster Follower
+@addmob 3212132 Monster Follower
+@addmob 3212133 Monster Follower
+@addmob 3212134 Coke Frog
+@addmob 3212135 Coke Frog
+@addmob 3212136 Coke Frog
+@addmob 3212137 Super Coke Frog
+@addmob 3212138 Super Coke Frog
+@addmob 3212139 Super Coke Frog
+@addmob 3212140 Magma Frog
+@addmob 3212141 Magma Frog
+@addmob 3212142 Magma Frog
+@addmob 3212143 Lava Frog
+@addmob 3212144 Lava Frog
+@addmob 3212145 Lava Frog
+@addmob 3212146 Brainwashed Frog
+@addmob 3213101 Toxic Frog
+@addmob 3213102 Toxic Frog
+@addmob 3213103 Toxic Frog
+@addmob 3213104 King Toxic Frog
+@addmob 3213105 King Toxic Frog
+@addmob 3213106 King Toxic Frog
+@addmob 3213107 Mutant Sea Monster
+@addmob 3213110 Oil Frog
+@addmob 3213111 Oil Frog
+@addmob 3213112 Oil Frog
+@addmob 3213113 Brainwashed Frog
+@addmob 32642101 Brainwashed Dodoria
+@addmob 3281101 Jeice
+@addmob 3281102 Jeice
+@addmob 3281103 Jeice
+@addmob 3281104 Jeice
+@addmob 3281105 Jeice
+@addmob 3281106 Jeice
+@addmob 32811101 Dodoria's Energy Essence
+@addmob 32912101 Surveillance Eye
+@addmob 32914101 Healing Eye
+@addmob 3311101 Odd Giran
+@addmob 3311102 Odd Giran
+@addmob 3311103 Odd Giran
+@addmob 3311201 Giran Lara
+@addmob 3311202 Giran Lara
+@addmob 3311203 Giran Lara
+@addmob 3311204 Kira Giran
+@addmob 3311205 Kira Giran
+@addmob 3311206 Kira Giran
+@addmob 3311207 Giran Kidan
+@addmob 3311208 Giran Kidan
+@addmob 3311209 Giran Kidan
+@addmob 3312101 Grangie
+@addmob 3312102 Grangie
+@addmob 3312103 Grangie
+@addmob 3312201 Graham Giran
+@addmob 3312202 Graham Giran
+@addmob 3312203 Graham Giran
+@addmob 3312204 Trangie
+@addmob 3312205 Trangie
+@addmob 3312206 Trangie
+@addmob 3312207 Terra Giran
+@addmob 3312208 Terra Giran
+@addmob 3312209 Terra Giran
+@addmob 33131201 Frieza
+@addmob 33132101 Frieza (Second Form)
+@addmob 33133101 Frieza (Second Form)
+@addmob 33134101 Frieza (Final Form)
+@addmob 33211101 Brainwashed Frog
+@addmob 33212101 Brainwashed Frog
+@addmob 33213101 Brainwashed Frog
+@addmob 33281101 Jeice
+@addmob 33421201 Ginyu Frog
+@addmob 33421301 Ginyu Frog
+@addmob 33421401 Ginyu Frog
+@addmob 33431101 Giant Ginyu Frog
+@addmob 33531901 Ginyu Goku
+@addmob 33622101 Resin Raider
+@addmob 33651101 Laser Cannon
+@addmob 3411201 Young Giran
+@addmob 3411202 Young Giran
+@addmob 3411203 Young Giran
+@addmob 3411204 Giran Practitioner
+@addmob 3411205 Giran Practitioner
+@addmob 3411206 Giran Practitioner
+@addmob 3411207 Giran Descendant
+@addmob 3411208 Giran Descendant
+@addmob 3411209 Giran Descendant
+@addmob 3411210 Giran Group Soldier
+@addmob 3411211 Giran Group Soldier
+@addmob 3411212 Giran Group Soldier
+@addmob 3411215 Giran Descendant
+@addmob 3421101 Captain Ginyu
+@addmob 3421102 Captain Ginyu
+@addmob 3421103 Captain Ginyu
+@addmob 3431101 Captain Ginyu
+@addmob 3431102 Captain Ginyu
+@addmob 3431103 Captain Ginyu
+@addmob 3431104 Brainwashed Ginyu Frog
+@addmob 3431105 Brainwashed Ginyu Frog
+@addmob 3431106 Brainwashed Ginyu Frog
+@addmob 3431107 Mega Ginyu Frog
+@addmob 3431108 Mega Ginyu Frog
+@addmob 3431109 Mega Ginyu Frog
+@addmob 34542101 Brainwashed Zarbon
+@addmob 34561101 Brainwashed Transformed Zarbon 
+@addmob 34611101 Android 8000 MK2
+@addmob 34612101 Android 8000
+@addmob 34613101 Mira Soldier
+@addmob 34652101 Bred Samaro
+@addmob 3501101 Beetle
+@addmob 3501102 Beetle
+@addmob 3501103 Beetle
+@addmob 3501104 Sand Beetle
+@addmob 3501107 Scary Beetle
+@addmob 3501108 Scary Beetle
+@addmob 3501109 Scary Beetle
+@addmob 3501110 Gundam Beetle
+@addmob 3501111 Gundam Beetle
+@addmob 3501112 Gundam Beetle
+@addmob 3501113 Sawtooth Beetle
+@addmob 3501114 Sawtooth Beetle
+@addmob 3501115 Sawtooth Beetle
+@addmob 3501116 Crewe Beetle
+@addmob 3501117 Crewe Beetle
+@addmob 3501118 Crewe Beetle
+@addmob 3501119 Investigation Beetle
+@addmob 3501120 Investigation Beetle
+@addmob 3501121 Investigation Beetle
+@addmob 3501125 Solitary Beetle
+@addmob 3501126 Solitary Beetle
+@addmob 3501127 Solitary Beetle
+@addmob 3501128 Stag Beetle
+@addmob 3501129 Stag Beetle
+@addmob 3501130 Stag Beetle
+@addmob 3501131 Amoeba
+@addmob 3501132 Amoeba
+@addmob 3501133 Amoeba
+@addmob 3501134 Scar Beetle
+@addmob 3501135 Scar Beetle
+@addmob 3501136 Scar Beetle
+@addmob 3501137 Litterbug
+@addmob 3501138 Litterbug
+@addmob 3501139 Litterbug
+@addmob 3501140 Observe Beetle
+@addmob 3501141 Observe Beetle
+@addmob 3501142 Observe Beetle
+@addmob 3501143 Sampling Beetle
+@addmob 3501144 Sampling Beetle
+@addmob 3501145 Sampling Beetle
+@addmob 3501146 Iron Beetle
+@addmob 3501149 Zanda Beetle
+@addmob 3501152 Beetle
+@addmob 3502101 Rustle Beetle
+@addmob 3502102 Rustle Beetle
+@addmob 3502103 Rustle Beetle
+@addmob 3502104 Yegu Beetle
+@addmob 3502107 Flying Beetle
+@addmob 3502108 Flying Beetle
+@addmob 3502109 Flying Beetle
+@addmob 3502110 Kimji Lerius
+@addmob 3502111 Kimji Lerius
+@addmob 3502112 Kimji Lerius
+@addmob 3502113 Iron Claw Beetle
+@addmob 3502114 Iron Claw Beetle
+@addmob 3502115 Iron Claw Beetle
+@addmob 3502116 Toxic Beetle
+@addmob 3502117 Toxic Beetle
+@addmob 3502118 Toxic Beetle
+@addmob 3502119 Mushroom Stag Beetle
+@addmob 3502120 Mushroom Stag Beetle
+@addmob 3502121 Mushroom Stag Beetle
+@addmob 3502122 Brainwashed Beetle
+@addmob 3502123 Brainwashed Beetle
+@addmob 3502124 Brainwashed Beetle
+@addmob 3502125 Super Stag Beetle
+@addmob 3502126 Super Stag Beetle
+@addmob 3502127 Super Stag Beetle
+@addmob 3502128 Dynamic Beetle
+@addmob 3502129 Dynamic Beetle
+@addmob 3502130 Dynamic Beetle
+@addmob 3502131 Dynamic Beetle
+@addmob 3502132 Dynamic Beetle
+@addmob 3502133 Dynamic Beetle
+@addmob 3502134 Dynamic Beetle Larvae
+@addmob 3502135 Dynamic Beetle Larvae
+@addmob 3502136 Dynamic Beetle Larvae
+@addmob 3502137 Dynamic Beetle Larvae
+@addmob 3502138 Dynamic Beetle Larvae
+@addmob 3502139 Dynamic Beetle Larvae
+@addmob 3503101 Mushroom Kaktugi
+@addmob 3503102 Mushroom Kaktugi
+@addmob 3503103 Mushroom Kaktugi
+@addmob 3503104 Cabri Bettle
+@addmob 3503107 Toadstool Beetle
+@addmob 3503108 Toadstool Beetle
+@addmob 3503109 Toadstool Beetle
+@addmob 3503110 Edgy Beetle
+@addmob 3503111 Edgy Beetle
+@addmob 3503112 Edgy Beetle
+@addmob 3503113 Ceramic Beetle
+@addmob 3503114 Ceramic Beetle
+@addmob 3503115 Ceramic Beetle
+@addmob 3503116 Toxic Mushroom Kaktugi
+@addmob 3503117 Toxic Mushroom Kaktugi
+@addmob 3503118 Toxic Mushroom Kaktugi
+@addmob 3503119 Toadstool Stag Beetle
+@addmob 3503120 Toadstool Stag Beetle
+@addmob 3503121 Toadstool Stag Beetle
+@addmob 3503122 Rice Beetle
+@addmob 3503123 Rice Beetle
+@addmob 3503124 Rice Beetle
+@addmob 3503125 Pollution Beetle
+@addmob 3503126 Pollution Beetle
+@addmob 3503127 Pollution Beetle
+@addmob 3503128 Experimental Deformation Beetle
+@addmob 3503129 Experimental Deformation Beetle
+@addmob 3503130 Experimental Deformation Beetle
+@addmob 3503131 Murderous Charge Beetle
+@addmob 3503134 Poisonous Toadstool Beetle
+@addmob 3503137 Pure Majin Guard
+@addmob 3503140 Iron Beetle
+@addmob 3504101 Mecha Beetle
+@addmob 3504102 Mecha Beetle
+@addmob 3504103 Mecha Beetle
+@addmob 3504104 Semi-Finished Mecha Beetle
+@addmob 3504105 Semi-Finished Mecha Beetle
+@addmob 3504106 Semi-Finished Mecha Beetle
+@addmob 3504107 Mega Beetle
+@addmob 3521101 Kid Goku
+@addmob 3531801 Goku
+@addmob 3531802 Goku
+@addmob 3531803 Goku
+@addmob 3531901 Captain Ginyu
+@addmob 3531902 Captain Ginyu
+@addmob 3531903 Captain Ginyu
+@addmob 3571101 Giant Mushroom Stump
+@addmob 3571102 Giant Mushroom Stump
+@addmob 3571103 Giant Mushroom Stump
+@addmob 35813301 Time Invader Saibaman
+@addmob 3591101 Hovering Robot
+@addmob 3591102 Hovering Robot
+@addmob 3591103 Hovering Robot
+@addmob 3591104 Hovering Robot
+@addmob 3591105 Hovering Robot
+@addmob 3591106 Hovering Robot
+@addmob 3591107 Oil Field Supervising Robot
+@addmob 3591108 Oil Field Supervising Robot
+@addmob 3591109 Oil Field Supervising Robot
+@addmob 3591110 European Robot
+@addmob 3591113 Job Commanding Robot
+@addmob 3591116 Guardian Robot
+@addmob 3592101 Balbario Machine
+@addmob 3592104 FR Landing Command Robot
+@addmob 3592107 Repaired Battle Robot
+@addmob 3593101 FR Mushrooms Surveillance Robot
+@addmob 3593104 FR Robot Manufacturer 
+@addmob 3603101 Uncle Howie
+@addmob 3603102 Uncle Howie
+@addmob 3603103 Uncle Howie
+@addmob 3604101 Renee
+@addmob 3604102 Renee
+@addmob 3604103 Renee
+@addmob 3604104 Duoke's Afterimage
+@addmob 3604105 Duoke's Afterimage
+@addmob 3604106 Duoke's Afterimage
+@addmob 3611101 Mother Cuckoo Chicken
+@addmob 3611102 Mother Cuckoo Chicken
+@addmob 3611103 Mother Cuckoo Chicken
+@addmob 3611104 Go Cuckoo Chicken
+@addmob 3611105 Go Cuckoo Chicken
+@addmob 3611106 Go Cuckoo Chicken
+@addmob 3611119 Chief Cuckoo Chicken
+@addmob 3611120 Chief Cuckoo Chicken
+@addmob 3611121 Chief Cuckoo Chicken
+@addmob 3611122 Growling Cuckoo Chicken
+@addmob 3611123 Growling Cuckoo Chicken
+@addmob 3611124 Growling Cuckoo Chicken
+@addmob 3611125 Flame Cuckoo Chicken
+@addmob 3611201 Solitary Cuckoo Chicken
+@addmob 3611202 Solitary Cuckoo Chicken
+@addmob 3611203 Solitary Cuckoo Chicken
+@addmob 3611204 Giant Cuckoo Chicken
+@addmob 3611205 Giant Cuckoo Chicken
+@addmob 3611206 Giant Cuckoo Chicken
+@addmob 3611207 Prince Cuckoo Chicken
+@addmob 3611208 Prince Cuckoo Chicken
+@addmob 3611209 Prince Cuckoo Chicken
+@addmob 3612101 Coke Turkey
+@addmob 3612102 Coke Turkey
+@addmob 3612103 Coke Turkey
+@addmob 3612104 Wild Turkey
+@addmob 3612105 Wild Turkey
+@addmob 3612106 Wild Turkey
+@addmob 3612107 Coke Turkey
+@addmob 3612108 Coke Turkey
+@addmob 3612109 Coke Turkey
+@addmob 3612110 Mr. Chicken
+@addmob 3612113 Perry Turkey
+@addmob 3612201 Kingbune Turkey
+@addmob 3612202 Kingbune Turkey
+@addmob 3612203 Kingbune Turkey
+@addmob 3612204 Toughbune Turkey
+@addmob 3612205 Toughbune Turkey
+@addmob 3612206 Toughbune Turkey
+@addmob 3613101 Camel Bird
+@addmob 3613102 Camel Bird
+@addmob 3613103 Camel Bird
+@addmob 3613104 Giant Camel Bird
+@addmob 3613105 Giant Camel Bird
+@addmob 3613106 Giant Camel Bird
+@addmob 3613107 Desert Camel Bird
+@addmob 3613108 Desert Camel Bird
+@addmob 3613109 Desert Camel Bird
+@addmob 3613110 Gooes Cuckoo Chicken
+@addmob 3613201 Wild Race Bird
+@addmob 3613202 Wild Race Bird
+@addmob 3613203 Wild Race Bird
+@addmob 3613204 Gray Bird
+@addmob 3613205 Gray Bird
+@addmob 3613206 Gray Bird
+@addmob 3613207 Wild Road Runner
+@addmob 3613208 Wild Road Runner
+@addmob 3613209 Wild Road Runner
+@addmob 3613210 Total Cuckoo Chicken
+@addmob 3613301 Violent Camel Bird
+@addmob 3613302 Violent Camel Bird
+@addmob 3613303 Violent Camel Bird
+@addmob 3613304 Titan Cuckoo Chicken
+@addmob 3621101 Kettle Waste Tranporter
+@addmob 3621104 Gunrider
+@addmob 3621107 Kettlean Experiment Supervising Soldier
+@addmob 3621110 Gooris Gas Facility Supervisor 
+@addmob 3621111 Gooris Gas Facility Supervisor 
+@addmob 3621112 Gooris Gas Facility Supervisor 
+@addmob 3622101 Fool Shooter 
+@addmob 3622102 Fool Shooter
+@addmob 3622103 Fool Shooter
+@addmob 3622104 Apprentice Patroller 
+@addmob 3622105 Apprentice Patroller 
+@addmob 3622106 Apprentice Patroller 
+@addmob 3622107 Kettlean Experiment Supervising Soldier
+@addmob 3622110 Motivated Gunrider
+@addmob 3622113 Legene Rider
+@addmob 3623104 Fortress Watchman Shooter
+@addmob 3623105 Fortress Watchman Shooter
+@addmob 3623106 Fortress Watchman Shooter
+@addmob 3623107 Kettlean Experiment Supervising Soldier
+@addmob 3623108 Frieza's Picked Sniper
+@addmob 3623111 Kettlean Patrolling Officer
+@addmob 3631101 Cloned Dr. Gero
+@addmob 3631102 Cloned Dr. Gero
+@addmob 3631103 Cloned Dr. Gero
+@addmob 3651107 Laser Ground cannon
+@addmob 3651108 Laser Ground cannon
+@addmob 3651109 Laser Ground cannon
+@addmob 3651110 Laser Ground cannon
+@addmob 3651111 Laser Ground cannon
+@addmob 3651112 Laser Ground cannon
+@addmob 3651113 Laser Air Artillery
+@addmob 3651119 Laser Cannon
+@addmob 3651120 Laser Cannon
+@addmob 3651121 Laser Anti-Aircraft Cannon
+@addmob 3651122 Mira's Invading-Purposed Cannon
+@addmob 3652201 Gas Safety Gun
+@addmob 3661101 Hover Laser
+@addmob 3661102 Hover Laser
+@addmob 3661103 Hover Laser
+@addmob 3661104 Hover Laser
+@addmob 3661105 Hover Laser
+@addmob 3661106 Hover Laser
+@addmob 36691201 Brainwashed Assistant
+@addmob 36811201 Young Brainwashed Explosive Saibaman
+@addmob 3691101 Guldo
+@addmob 3691102 Guldo
+@addmob 3691103 Guldo
+@addmob 36911101 Brainwashed Cui
+@addmob 3711101 Bingri
+@addmob 3711102 Bingri
+@addmob 3711103 Bingri
+@addmob 37111401 Reginean Attacker
+@addmob 37111404 Reginean Attacker
+@addmob 37111407 Reginean Stalker
+@addmob 37111410 Reginean Stalker
+@addmob 37111413 Reginean Scavenger
+@addmob 37112401 Tosterian Emergency Unit
+@addmob 37112501 Tosterian Emergency Unit Elite
+@addmob 37113201 Kettlean Fighter
+@addmob 37113204 Kettlean Fighter
+@addmob 37113207 Kettlean Battler
+@addmob 37113210 Kettlean Battler
+@addmob 37113213 Kettlean Warlord
+@addmob 37113301 Kettlean Warlord
+@addmob 37114101 Kettlean Medic
+@addmob 37114104 Kettlean Assistant
+@addmob 37114107 Mira's Medic
+@addmob 37114201 Mira's Supervisor
+@addmob 37114301 Kettlean Blitz Unit
+@addmob 37114304 Kettlean Blitz Unit Elite
+@addmob 37114305 Kettlean Blitz Unit Elite
+@addmob 37114306 Kettlean Blitz Unit Elite
+@addmob 37114401 Kettlean Destroyer
+@addmob 37114501 Amplification Equipment Manager
+@addmob 37115101 Mira's Double-Gun Shooter
+@addmob 37115104 Enthusiastic Gun Rider
+@addmob 37115107 Enthusiastic Gun Rider
+@addmob 3712101 Furry Bingri
+@addmob 3712102 Furry Bingri
+@addmob 3712103 Furry Bingri
+@addmob 37122101 Brainwashed Recoome
+@addmob 37122201 Recoome
+@addmob 3713101 White-Eye Bingri
+@addmob 3713102 White-Eye Bingri
+@addmob 3713103 White-Eye Bingri
+@addmob 37171301 Recovery Assistant
+@addmob 37171304 Senior Medic
+@addmob 3751101 Ox King
+@addmob 3751102 Ox King
+@addmob 3751103 Ox King
+@addmob 37771101 Mira's Scouting Robot
+@addmob 37771104 Mira's Security Robot Mk2
+@addmob 37771107 Mira's Security Robot Mk3
+@addmob 37772101 Mira's Surveillance Robot
+@addmob 37773101 Mira's Elite Security Robot Mk3
+@addmob 3811101 Hagel
+@addmob 3811102 Hagel
+@addmob 3811103 Hagel
+@addmob 3811104 Perfect Hagel
+@addmob 3811105 Perfect Hagel
+@addmob 3811106 Perfect Hagel
+@addmob 3812101 Fire Hagel
+@addmob 3812102 Fire Hagel
+@addmob 3812103 Fire Hagel
+@addmob 3812104 Inferno Hagel
+@addmob 3812105 Inferno Hagel
+@addmob 3812106 Inferno Hagel
+@addmob 38131101 Mira's Reinforcement Soldier
+@addmob 38131301 Mira's Venom Soldier
+@addmob 38811101 Brainwashing Machine
+@addmob 38812101 E Type Energy Amplification
+@addmob 38812104 S Type Energy Amplification
+@addmob 38812107 C Type Energy Amplification
+@addmob 38812110 B Type Energy Amplification
+@addmob 38812113 H Type Energy Amplification
+@addmob 39415401 Brainwashed Red Pants Commander
+@addmob 4 Android Type
+@addmob 4021401 Kammu
+@addmob 4021402 Kammu
+@addmob 4021403 Kammu
+@addmob 4031101 Fastaurs
+@addmob 4031102 Fastaurs
+@addmob 4031103 Fastaurs
+@addmob 4031104 Turbo Fastaurs
+@addmob 4031105 Turbo Fastaurs
+@addmob 4031106 Turbo Fastaurs
+@addmob 4031107 Zet Fastaurs
+@addmob 4031108 Zet Fastaurs
+@addmob 4031109 Zet Fastaurs
+@addmob 4031110 Folloraus
+@addmob 4031111 Folloraus
+@addmob 4031112 Folloraus
+@addmob 4031113 Hudadak Saurs
+@addmob 4031114 Hudadak Saurs
+@addmob 4031115 Hudadak Saurs
+@addmob 4031116 Brainwashed Fastaurs
+@addmob 4031117 Brainwashed Fastaurs
+@addmob 4031118 Brainwashed Fastaurs
+@addmob 4031119 Brainwashed Fastaurs
+@addmob 4031120 Brainwashed Fastaurs
+@addmob 4031121 Brainwashed Fastaurs
+@addmob 4031128 Stone Raptor
+@addmob 4031129 Stone Raptor
+@addmob 4031130 Stone Raptor
+@addmob 4031131 Brainwashed Evilaurs
+@addmob 4031134 Cavesaurs
+@addmob 4031135 Cavesaurs
+@addmob 4031136 Cavesaurs
+@addmob 4031137 Young Hudadak Saurs
+@addmob 4032101 Small Bell Raptor
+@addmob 4032102 Small Bell Raptor
+@addmob 4032103 Small Bell Raptor
+@addmob 4032110 Ancient Fastaurs
+@addmob 4032111 Ancient Fastaurs
+@addmob 4032112 Ancient Fastaurs
+@addmob 4032113 Poko Raptor
+@addmob 4032114 Poko Raptor
+@addmob 4032115 Poko Raptor
+@addmob 4032116 Berserk Raptor
+@addmob 4032117 Berserk Raptor
+@addmob 4032118 Berserk Raptor
+@addmob 4032119 Stone Berserk Raptor
+@addmob 4032120 Stone Berserk Raptor
+@addmob 4032121 Stone Berserk Raptor
+@addmob 4032122 Sand Raptor
+@addmob 4032123 Sand Raptor
+@addmob 4032124 Sand Raptor
+@addmob 4032125 Big Hallsaurs
+@addmob 4032126 Big Hallsaurs
+@addmob 4032127 Big Hallsaurs
+@addmob 4032128 Kangaroo Hunter
+@addmob 4032129 Kangaroo Hunter
+@addmob 4032130 Kangaroo Hunter
+@addmob 4032131 Stoopedsaurs
+@addmob 4032132 Stoopedsaurs
+@addmob 4032133 Stoopedsaurs
+@addmob 4032146 Half-Dried Raptor
+@addmob 4032147 Half-Dried Raptor
+@addmob 4032148 Half-Dried Raptor
+@addmob 4033107 Big Footsaurs
+@addmob 4033108 Big Footsaurs
+@addmob 4033109 Big Footsaurs
+@addmob 4073101 Ascetic Fighter
+@addmob 4073102 Ascetic Fighter
+@addmob 4073103 Ascetic Fighter
+@addmob 4101101 General White Jr.
+@addmob 4101102 General White Jr.
+@addmob 4101103 General White Jr.
+@addmob 4131101 Delinquent Martial Artist
+@addmob 4131102 Delinquent Martial Artist
+@addmob 4131103 Delinquent Martial Artist
+@addmob 4131104 Delinquent Ascetic 
+@addmob 4131105 Delinquent Ascetic 
+@addmob 4131106 Delinquent Ascetic 
+@addmob 4132101 Delinquent Spiritualist
+@addmob 4132102 Delinquent Spiritualist
+@addmob 4132103 Delinquent Spiritualist
+@addmob 4132104 Delinquent Ascetic 
+@addmob 4132105 Delinquent Ascetic 
+@addmob 4132106 Delinquent Ascetic 
+@addmob 41591201 Bear Bandit
+@addmob 41621101 Hungry Bighorn
+@addmob 41671101 Bomb
+@addmob 42171101 Symbol
+@addmob 42171104 Symbol
+@addmob 42171107 Symbol
+@addmob 42401101 Rizard
+@addmob 42501101 Drum
+@addmob 42501104 Drum
+@addmob 4261101 Needle Bee
+@addmob 4261102 Needle Bee
+@addmob 4261103 Needle Bee
+@addmob 4261104 Boong Needle Bee
+@addmob 4261105 Boong Needle Bee
+@addmob 4261106 Boong Needle Bee
+@addmob 4261107 Honey Needle Bee
+@addmob 4261108 Honey Needle Bee
+@addmob 4261109 Honey Needle Bee
+@addmob 4261110 Tech Needle Bee
+@addmob 4261111 Tech Needle Bee
+@addmob 4261112 Tech Needle Bee
+@addmob 4261113 Ground Wasp
+@addmob 4261114 Ground Wasp
+@addmob 4261115 Ground Wasp
+@addmob 4261116 Garden Needle Bee
+@addmob 4261117 Garden Needle Bee
+@addmob 4261118 Garden Needle Bee
+@addmob 4261119 Watcher Needle Bee
+@addmob 4261120 Watcher Needle Bee
+@addmob 4261121 Watcher Needle Bee
+@addmob 4261122 Needle Bee
+@addmob 4261123 Needle Bee
+@addmob 4261124 Needle Bee
+@addmob 4261204 Zet Mach Needle Bee
+@addmob 4261205 Zet Mach Needle Bee
+@addmob 4261206 Zet Mach Needle Bee
+@addmob 4261207 Poisonous Needle Bee
+@addmob 4261208 Poisonous Needle Bee
+@addmob 4261209 Poisonous Needle Bee
+@addmob 4261210 Brainwashed Giant Needle Bee
+@addmob 4261211 Brainwashed Giant Needle Bee
+@addmob 4261212 Brainwashed Giant Needle Bee
+@addmob 4262101 Poisonous Needle Bee
+@addmob 4262102 Poisonous Needle Bee
+@addmob 4262103 Poisonous Needle Bee
+@addmob 4262104 Boong Poisonous Needle Bee
+@addmob 4262105 Boong Poisonous Needle Bee
+@addmob 4262106 Boong Poisonous Needle Bee
+@addmob 4262107 Cyber Needle Bee
+@addmob 4262108 Cyber Needle Bee
+@addmob 4262109 Cyber Needle Bee
+@addmob 4262110 Lance Moqui
+@addmob 4262111 Lance Moqui
+@addmob 4262112 Lance Moqui
+@addmob 4262113 Bloody Needle Queen Bee
+@addmob 4262114 Bloody Needle Queen Bee
+@addmob 4262115 Bloody Needle Queen Bee
+@addmob 4262116 Garden Poisonous Needle Bee
+@addmob 4262117 Garden Poisonous Needle Bee
+@addmob 4262118 Garden Poisonous Needle Bee
+@addmob 4262119 Chasing Needle Bee
+@addmob 4262120 Chasing Needle Bee
+@addmob 4262121 Chasing Needle Bee
+@addmob 4262122 Hot Tempered Needle Bee
+@addmob 4262123 Hot Tempered Needle Bee
+@addmob 4262124 Hot Tempered Needle Bee
+@addmob 4262125 Mach Needle Bee
+@addmob 4262128 Bombing Needle Bee
+@addmob 4262131 Bubble Hiccup Bee
+@addmob 4262134 Hot Tempered Needle Bee
+@addmob 4262204 [?]	
+@addmob 4262205 [?]	
+@addmob 4262206 Zarbon 
+@addmob 4262301 Poisonous Bloody Needle Bee
+@addmob 4262302 Poisonous Bloody Needle Bee
+@addmob 4262303 Poisonous Bloody Needle Bee
+@addmob 4263101 Sting Poisonous Needle Bee
+@addmob 4263102 Sting Poisonous Needle Bee
+@addmob 4263103 Sting Poisonous Needle Bee
+@addmob 4263104 Spring Needle Bee
+@addmob 4263105 Spring Needle Bee
+@addmob 4263106 Spring Needle Bee
+@addmob 4263107 Angler Poisonous Needle Bee
+@addmob 4263108 Angler Poisonous Needle Bee
+@addmob 4263109 Angler Poisonous Needle Bee
+@addmob 4263110 Needle Bee
+@addmob 4263111 Needle Bee
+@addmob 4263112 Needle Bee
+@addmob 4263113 Poisonous Needle Bee
+@addmob 4263114 Poisonous Needle Bee
+@addmob 4263115 Poisonous Needle Bee
+@addmob 4263116 Stubborn Bee  
+@addmob 4264101 Mecha Hornet
+@addmob 4264102 Mecha Hornet
+@addmob 4264103 Mecha Hornet
+@addmob 4264104 Unfinished Mecha Hornet
+@addmob 4264105 Unfinished Mecha Hornet
+@addmob 4264106 Unfinished Mecha Hornet
+@addmob 4311101 Weasel
+@addmob 4311102 Weasel
+@addmob 4311103 Weasel
+@addmob 4311104 Large Weasel
+@addmob 4311105 Large Weasel
+@addmob 4311106 Large Weasel
+@addmob 4311107 Dirty Weasel
+@addmob 4311108 Dirty Weasel
+@addmob 4311109 Dirty Weasel
+@addmob 4311110 Trainee Weasel
+@addmob 4311111 Trainee Weasel
+@addmob 4311112 Trainee Weasel
+@addmob 4311113 Dirty Weasel
+@addmob 4311201 White Weasel
+@addmob 4311202 White Weasel
+@addmob 4311203 White Weasel
+@addmob 4311204 Polar Weasel
+@addmob 4311205 Polar Weasel
+@addmob 4311206 Polar Weasel
+@addmob 4311301 Yellow Tailed Weasel
+@addmob 4311302 Yellow Tailed Weasel
+@addmob 4311303 Yellow Tailed Weasel
+@addmob 4311304 Bad Weasel
+@addmob 4311305 Bad Weasel
+@addmob 4311306 Bad Weasel
+@addmob 4311307 Mugus Fox
+@addmob 43261101 Fresh Fish
+@addmob 43261201 Rotten Fish
+@addmob 43521101 Kid Goku
+@addmob 43521201 Kid Goku
+@addmob 44681201 Master Roshi
+@addmob 44982101 Krillin
+@addmob 4511101 Jaguar Soldier
+@addmob 4511102 Jaguar Soldier
+@addmob 4511103 Jaguar Soldier
+@addmob 4511104 Jaguar Hot-wing Troopie
+@addmob 4511105 Jaguar Hot-wing Troopie
+@addmob 4511106 Jaguar Hot-wing Troopie
+@addmob 4511110 Yahoi West Champion
+@addmob 4511111 Yahoi West Champion
+@addmob 4511112 Yahoi West Champion
+@addmob 4511113 Jaguar Guerrilla Unit 
+@addmob 4511114 Jaguar Guerrilla Unit 
+@addmob 4511115 Jaguar Guerrilla Unit 
+@addmob 4511116 Mad-Punch Drill Sergeant
+@addmob 4511117 Mad-Punch Drill Sergeant
+@addmob 4511118 Mad-Punch Drill Sergeant
+@addmob 4511119 Jaguar Sergeant
+@addmob 4511120 Jaguar Sergeant
+@addmob 4511121 Jaguar Sergeant
+@addmob 4511122 Sergeant Backhand 
+@addmob 4511123 Sergeant Backhand 
+@addmob 4511124 Sergeant Backhand 
+@addmob 4511125 Zude Subordinate
+@addmob 4511126 Zude Subordinate
+@addmob 4511127 Zude Subordinate
+@addmob 4511128 Red Pants Army Royal Guard
+@addmob 4511129 Red Pants Army Royal Guard
+@addmob 4511130 Red Pants Army Royal Guard
+@addmob 4511131 General Brooklyne Guard
+@addmob 4511132 General Brooklyne Guard
+@addmob 4511133 General Brooklyne Guard
+@addmob 4511134 Puma Plunderer
+@addmob 4511135 Puma Plunderer
+@addmob 4511136 Puma Plunderer
+@addmob 4511137 Poisoned Red Pants Soldier
+@addmob 4512101 Puma Scouter
+@addmob 4512102 Puma Scouter
+@addmob 4512103 Puma Scouter
+@addmob 4512104 Puma Hot-Wing Troopie
+@addmob 4512105 Puma Hot-Wing Troopie
+@addmob 4512106 Puma Hot-Wing Troopie
+@addmob 4512107 Thunder Fist
+@addmob 4512108 Thunder Fist
+@addmob 4512109 Thunder Fist
+@addmob 4512110 Puma Elite Troop
+@addmob 4512111 Puma Elite Troop
+@addmob 4512112 Puma Elite Troop
+@addmob 4512113 Megaton Fist
+@addmob 4512114 Megaton Fist
+@addmob 4512115 Megaton Fist
+@addmob 4512116 Puma Plunderer[Not-Use]
+@addmob 4512117 Puma Plunderer[Not-Use]
+@addmob 4512118 Puma Plunderer[Not-Use]
+@addmob 4512119 Plunderer 1
+@addmob 4512120 Plunderer 1
+@addmob 4512121 Plunderer 1
+@addmob 4512122 Plunderer 2
+@addmob 4512123 Plunderer 2
+@addmob 4512124 Plunderer 2
+@addmob 4512125 Red Pants Assassin
+@addmob 4512126 Red Pants Assassin
+@addmob 4512127 Red Pants Assassin
+@addmob 4512128 Waste Transporter
+@addmob 4512129 Waste Transporter
+@addmob 4512130 Waste Transporter
+@addmob 4512131 Middle-Level RP Prisoner
+@addmob 4512134 Red Pants Bombing Soldier
+@addmob 4512137 Poisoned Red Pants Soldier
+@addmob 4513101 Tiger Raider
+@addmob 4513102 Tiger Raider
+@addmob 4513103 Tiger Raider
+@addmob 4513104 Tiger Suicide Corps
+@addmob 4513105 Tiger Suicide Corps
+@addmob 4513106 Tiger Suicide Corps
+@addmob 4513107 Tiger Guerrilla Unit  
+@addmob 4513108 Tiger Guerrilla Unit  
+@addmob 4513109 Tiger Guerrilla Unit  
+@addmob 4513110 Trabolta
+@addmob 4513111 Trabolta
+@addmob 4513112 Trabolta
+@addmob 4513113 Tiger Plunderer
+@addmob 4513114 Tiger Plunderer
+@addmob 4513115 Tiger Plunderer
+@addmob 4513116 Tiger Deserter
+@addmob 4513117 Tiger Deserter
+@addmob 4513118 Tiger Deserter
+@addmob 4513119 Tiger Advance Party
+@addmob 4513120 Tiger Advance Party
+@addmob 4513121 Tiger Advance Party
+@addmob 4513122 Jaguar Operation Troop
+@addmob 4513123 Jaguar Operation Troop
+@addmob 4513124 Jaguar Operation Troop
+@addmob 4513125 Trabolta Junior
+@addmob 4513126 Trabolta Junior
+@addmob 4513127 Trabolta Junior
+@addmob 4513128 3rd Trabolta
+@addmob 4513129 3rd Trabolta
+@addmob 4513130 3rd Trabolta
+@addmob 4513131 Captain Trabolta
+@addmob 4513132 Captain Trabolta
+@addmob 4513133 Captain Trabolta
+@addmob 4513134 Major Bartow's Right Hand
+@addmob 4513135 Major Bartow's Right Hand
+@addmob 4513136 Major Bartow's Right Hand
+@addmob 4513137 Budokai Fighter
+@addmob 4513138 Budokai Fighter
+@addmob 4513139 Budokai Fighter
+@addmob 4513140 Great Bruce
+@addmob 4513141 Great Bruce
+@addmob 4513142 Great Bruce
+@addmob 4513143 Deserter Rudin
+@addmob 4513144 Deserter Rudin
+@addmob 4513145 Deserter Rudin
+@addmob 4513146 Budokai Fighter
+@addmob 4513147 Budokai Fighter
+@addmob 4513148 Budokai Fighter
+@addmob 4513149 Mine Cleaner
+@addmob 4513150 Mine Cleaner
+@addmob 4513151 Mine Cleaner
+@addmob 4514101 SFC Steven Jaguar 
+@addmob 4514102 SFC Steven Jaguar 
+@addmob 4514103 SFC Steven Jaguar 
+@addmob 4531101 Jamming Robot
+@addmob 4531102 Jamming Robot
+@addmob 4531103 Jamming Robot
+@addmob 4531104 Jamming Robot
+@addmob 4531105 Jamming Robot
+@addmob 4531106 Jamming Robot
+@addmob 4531107 Jamming Robot
+@addmob 4531108 Jamming Robot
+@addmob 4531109 Jamming Robot
+@addmob 4531110 Mira's Motor Helicopter 
+@addmob 4541101 Zarbon
+@addmob 4541102 Zarbon
+@addmob 4541103 Zarbon
+@addmob 4541201 Zarbon
+@addmob 4541202 Zarbon
+@addmob 4541203 Zarbon
+@addmob 4542101 Zarbon
+@addmob 4542102 Zarbon
+@addmob 4542103 Zarbon
+@addmob 4542104 Brainwashed Zarbon
+@addmob 4542105 Brainwashed Zarbon
+@addmob 4542106 Brainwashed Zarbon
+@addmob 4551101 Android 9
+@addmob 4551102 Android 9
+@addmob 4551103 Android 9
+@addmob 4561101 Zarbon
+@addmob 4561102 Zarbon
+@addmob 4561103 Zarbon
+@addmob 4561104 Strong Brainwashed Zarbon
+@addmob 4561105 Strong Brainwashed Zarbon
+@addmob 4561106 Strong Brainwashed Zarbon
+@addmob 45681101 Goku (Great Ape)
+@addmob 4581101 Camp Wickander
+@addmob 4584101 Android 19000 SP
+@addmob 4584102 Android 19000 SP
+@addmob 4584103 Android 19000 SP
+@addmob 4584104 Android 19000 SP
+@addmob 4584105 Android 19000 SP
+@addmob 4584106 Android 19000 SP
+@addmob 4611101 Android 8000
+@addmob 4611104 Android 8000
+@addmob 4611107 Android 8000 MK2
+@addmob 4611110 Inferior Android 8000
+@addmob 4611111 Inferior Android 8000
+@addmob 4611112 Inferior Android 8000
+@addmob 4611113 Android 8000 Platoon leader
+@addmob 4611114 Android 8000 Platoon leader
+@addmob 4611115 Android 8000 Platoon leader
+@addmob 4611116 Android Bodyguard
+@addmob 4611117 Android Bodyguard
+@addmob 4611118 Android Bodyguard
+@addmob 4611119 Foreman Android
+@addmob 4611120 Foreman Android
+@addmob 4611121 Foreman Android
+@addmob 4611122 Android Soldier
+@addmob 4611201 Android 8000 MK2
+@addmob 4611202 Android 8000 MK2
+@addmob 4611203 Android 8000 MK2
+@addmob 4611204 Android 8000 MK2
+@addmob 4611205 Android 8000 MK2
+@addmob 4611206 Android 8000 MK2
+@addmob 4611207 Android 8000 MK2
+@addmob 4611208 Android 8000 MK2
+@addmob 4611209 Android 8000 MK2
+@addmob 4611210 Android 8000 MK2
+@addmob 4611211 Android 8000 MK2
+@addmob 4611212 Android 8000 MK2
+@addmob 4611213 Android 8000 MK2
+@addmob 4611214 Android 8000 MK2
+@addmob 4611215 Android 8000 MK2
+@addmob 4611216 Android 8000 MK2
+@addmob 4611217 Android 8000 MK2
+@addmob 4611218 Android 8000 MK2
+@addmob 4611219 Biochemical Supply Soldiers
+@addmob 4611220 Biochemical Supply Soldiers
+@addmob 4611221 Biochemical Supply Soldiers
+@addmob 4611222 Middle Management Officer
+@addmob 4611225 Middle Collector Soldier
+@addmob 4611228 Mira's Military Captain
+@addmob 4611229 Mira's Military Captain
+@addmob 4611230 Mira's Military Captain
+@addmob 4611231 Mira's Military Captain
+@addmob 4611232 Mira's Military Captain
+@addmob 4611233 Mira's Military Captain
+@addmob 4611234 Intruder Eliminating Android
+@addmob 4611235 Intruder Eliminating Android
+@addmob 4611236 Intruder Eliminating Android
+@addmob 4611237 Soldier Recruiting Android
+@addmob 4612101 Android 8000
+@addmob 4612102 Android 8000
+@addmob 4612103 Android 8000
+@addmob 4612104 Android 8000
+@addmob 4612105 Android 8000
+@addmob 4612106 Android 8000
+@addmob 4612107 Android 8000
+@addmob 4612108 Android 8000
+@addmob 4612109 Android 8000
+@addmob 4612110 Android 8000
+@addmob 4612111 Android 8000
+@addmob 4612112 Android 8000
+@addmob 4612113 Android 8000
+@addmob 4612114 Android 8000
+@addmob 4612115 Android 8000
+@addmob 4612116 Android 8000
+@addmob 4612117 Android 8000
+@addmob 4612118 Android 8000
+@addmob 4612119 Head Exploration Android
+@addmob 4612120 Head Exploration Android
+@addmob 4612121 Head Exploration Android
+@addmob 4612122 Prison Managing Android
+@addmob 4612125 Palace Guarding Android
+@addmob 4612134 Biochemical Sub Captain
+@addmob 4612135 Biochemical Sub Captain
+@addmob 4612136 Biochemical Sub Captain
+@addmob 4612137 Android Corporal
+@addmob 4612138 Android Corporal
+@addmob 4612139 Android Corporal
+@addmob 4612140 Android Commander
+@addmob 4612141 Android Commander
+@addmob 4612142 Android Commander
+@addmob 4612143 Android 8000 MX
+@addmob 4612144 Android 8000 MX
+@addmob 4612145 Android 8000 MX
+@addmob 4612146 Air Defense Android
+@addmob 4613101 High Level Prisoner Guard
+@addmob 4613104 Camp Corporal Guard
+@addmob 4613107 Mira's Army Supervising Soldier 
+@addmob 4613108 Mira's Army Supervising Soldier 
+@addmob 4613109 Mira's Army Supervising Soldier 
+@addmob 4621101 Android 16
+@addmob 4621102 Android 16
+@addmob 4621103 Android 16
+@addmob 4621104 Android 16
+@addmob 4621105 Android 16
+@addmob 4621106 Android 16
+@addmob 4651101 Samaro
+@addmob 4651102 Samaro
+@addmob 4651103 Samaro
+@addmob 4651104 Big Samaro
+@addmob 4651105 Big Samaro
+@addmob 4651106 Big Samaro
+@addmob 4651107 Chain Samaro
+@addmob 4651108 Chain Samaro
+@addmob 4651109 Chain Samaro
+@addmob 4651110 Guardian Samaro 
+@addmob 4651111 Guardian Samaro 
+@addmob 4651112 Guardian Samaro 
+@addmob 4652101 Saw Samaro
+@addmob 4652102 Saw Samaro
+@addmob 4652103 Saw Samaro
+@addmob 4652104 Big Saw Samaro
+@addmob 4652105 Big Saw Samaro
+@addmob 4652106 Big Saw Samaro
+@addmob 4652107 Deer Horn Mantis 
+@addmob 4652108 Deer Horn Mantis 
+@addmob 4652109 Deer Horn Mantis 
+@addmob 4652110 Sickle Samaro
+@addmob 4652111 Sickle Samaro
+@addmob 4652112 Sickle Samaro
+@addmob 4652113 Cobalt Samaro
+@addmob 4652114 Cobalt Samaro
+@addmob 4652115 Cobalt Samaro
+@addmob 4652116 Bred Samaro 
+@addmob 4652117 Bred Samaro 
+@addmob 4652118 Bred Samaro 
+@addmob 4652122 Kun Samaro
+@addmob 4652301 Poisonous Saw Samaro
+@addmob 4652302 Poisonous Saw Samaro
+@addmob 4652303 Poisonous Saw Samaro
+@addmob 4652304 Kiri Addicted Mantis
+@addmob 4653101 Origin Samaro
+@addmob 4653102 Origin Samaro
+@addmob 4653103 Origin Samaro
+@addmob 4653104 Fossil Samaro
+@addmob 4653105 Fossil Samaro
+@addmob 4653106 Fossil Samaro
+@addmob 4653107 Porunga Samaro
+@addmob 4653108 Porunga Samaro
+@addmob 4653109 Porunga Samaro
+@addmob 4653110 Samaro Under-Experiment
+@addmob 4653111 Samaro Under-Experiment
+@addmob 4653112 Samaro Under-Experiment
+@addmob 4653113 Samaro Sampling
+@addmob 4653114 Samaro Sampling
+@addmob 4653115 Samaro Sampling
+@addmob 4653116 Watchman Samaro
+@addmob 4653117 Watchman Samaro
+@addmob 4653118 Watchman Samaro
+@addmob 4653119 Deer Horn Mantis [Not-use]
+@addmob 4653120 Deer Horn Mantis [Not-use]
+@addmob 4653121 Deer Horn Mantis [Not-use]
+@addmob 4653122 Green Samaro
+@addmob 4653123 Green Samaro
+@addmob 4653124 Green Samaro
+@addmob 4653125 Korine Samaro
+@addmob 4653126 Korine Samaro
+@addmob 4653127 Korine Samaro
+@addmob 4654101 Mecha Samaro
+@addmob 4654102 Mecha Samaro
+@addmob 4654103 Mecha Samaro
+@addmob 4654104 Slasher
+@addmob 4654105 Slasher
+@addmob 4654106 Slasher
+@addmob 4654107 Unfinished Mecha Samaro
+@addmob 4654108 Unfinished Mecha Samaro
+@addmob 4654109 Unfinished Mecha Samaro
+@addmob 46661101 Devil King Piccolo
+@addmob 46661104 Devil King Piccolo
+@addmob 47102101 Rock
+@addmob 4711101 Kaboong
+@addmob 4711102 Kaboong
+@addmob 4711103 Kaboong
+@addmob 4711104 King Kaboong
+@addmob 4711105 King Kaboong
+@addmob 4711106 King Kaboong
+@addmob 4711107 Queen Kaboong
+@addmob 4711108 Queen Kaboong
+@addmob 4711109 Queen Kaboong
+@addmob 4711110 Cell Kaboong
+@addmob 4711111 Cell Kaboong
+@addmob 4711112 Cell Kaboong
+@addmob 4711113 Leading Kaboong [Not-use]
+@addmob 4711114 Leading Kaboong [Not-use]
+@addmob 4711115 Leading Kaboong [Not-use]
+@addmob 4711116 Super Big Kaboong
+@addmob 4711117 Super Big Kaboong
+@addmob 4711118 Super Big Kaboong
+@addmob 4711119 Violent King Kaboong
+@addmob 4711120 Violent King Kaboong
+@addmob 4711121 Violent King Kaboong
+@addmob 4711122 Boong Blood Mania
+@addmob 4711123 Boong Blood Mania
+@addmob 4711124 Boong Blood Mania
+@addmob 4711125 Brainwashed Giant Kaboong
+@addmob 4711126 Brainwashed Giant Kaboong
+@addmob 4711127 Brainwashed Giant Kaboong
+@addmob 4711128 Porunga Kaboong
+@addmob 4711129 Porunga Kaboong
+@addmob 4711130 Porunga Kaboong
+@addmob 4711131 Kaboong from Test 
+@addmob 4711132 Kaboong from Test 
+@addmob 4711133 Kaboong from Test 
+@addmob 4711134 Grind Kaboong
+@addmob 4711137 Waterway Kaboong
+@addmob 4712101 Thin Thing Kaboong
+@addmob 4712102 Thin Thing Kaboong
+@addmob 4712103 Thin Thing Kaboong
+@addmob 4712104 Small-Minded Kaboong
+@addmob 4712105 Small-Minded Kaboong
+@addmob 4712106 Small-Minded Kaboong
+@addmob 4712107 Sticky Kaboong
+@addmob 4712108 Sticky Kaboong
+@addmob 4712109 Sticky Kaboong
+@addmob 4712110 Big Kaboong
+@addmob 4712111 Big Kaboong
+@addmob 4712112 Big Kaboong
+@addmob 4712113 Supervising Kaboong
+@addmob 4712114 Supervising Kaboong
+@addmob 4712115 Supervising Kaboong
+@addmob 4712116 Poisonous Blood Kaboong
+@addmob 4712117 Poisonous Blood Kaboong
+@addmob 4712118 Poisonous Blood Kaboong
+@addmob 4712119 Leading Kaboong
+@addmob 4712120 Leading Kaboong
+@addmob 4712121 Leading Kaboong
+@addmob 4713101 Red Kaboong
+@addmob 4713102 Red Kaboong
+@addmob 4713103 Red Kaboong
+@addmob 4713104 Bloody Kaboong
+@addmob 4713105 Bloody Kaboong
+@addmob 4713106 Bloody Kaboong
+@addmob 4713107 Dune Kaboong
+@addmob 4713108 Dune Kaboong
+@addmob 4713109 Dune Kaboong
+@addmob 4713110 Boong Flying Kaboong
+@addmob 4713111 Boong Flying Kaboong
+@addmob 4713112 Boong Flying Kaboong
+@addmob 4713113 Slash Kaboong
+@addmob 4713114 Slash Kaboong
+@addmob 4713115 Slash Kaboong
+@addmob 4713116 Blood Kaboong Master
+@addmob 4713117 Blood Kaboong Master
+@addmob 4713118 Blood Kaboong Master
+@addmob 4713119 Boong Blood King
+@addmob 4713120 Boong Blood King
+@addmob 4713121 Boong Blood King
+@addmob 4713122 Poison Kaboong
+@addmob 4713123 Poison Kaboong
+@addmob 4713124 Poison Kaboong
+@addmob 4713125 Poison Kaboong
+@addmob 4713126 Poison Kaboong
+@addmob 4713127 Poison Kaboong
+@addmob 4713128 Fireblood Kaboong
+@addmob 4801101 Teacher Pheasant
+@addmob 4801102 Teacher Pheasant
+@addmob 4801103 Teacher Pheasant
+@addmob 4801201 Immortal Turtle Hermit
+@addmob 4801202 Immortal Turtle Hermit
+@addmob 4801203 Immortal Turtle Hermit
+@addmob 4811101 Colonel Kiri
+@addmob 4811102 Colonel Kiri
+@addmob 4811103 Colonel Kiri
+@addmob 4811104 Defeated Kiri Officer
+@addmob 4811105 Defeated Kiri Officer
+@addmob 4811106 Defeated Kiri Officer
+@addmob 4811107 Budokai Fighter
+@addmob 4811108 Budokai Fighter
+@addmob 4811109 Budokai Fighter
+@addmob 4811110 Giraffe Army Leader
+@addmob 4811111 Giraffe Army Leader
+@addmob 4811112 Giraffe Army Leader
+@addmob 4812101 Kiri Survivor
+@addmob 4812102 Kiri Survivor
+@addmob 4812103 Kiri Survivor
+@addmob 4812104 Kiri Deserter
+@addmob 4812105 Kiri Deserter
+@addmob 4812106 Kiri Deserter
+@addmob 4812107 Kiri Last Battle Team
+@addmob 4812108 Kiri Last Battle Team
+@addmob 4812109 Kiri Last Battle Team
+@addmob 4812110 Giraffe Soldier
+@addmob 4812111 Giraffe Soldier
+@addmob 4812112 Giraffe Soldier
+@addmob 4812113 Special Force Giraffe
+@addmob 4812114 Special Force Giraffe
+@addmob 4812115 Special Force Giraffe
+@addmob 4812201 Kiri Royal Guard
+@addmob 4812202 Kiri Royal Guard
+@addmob 4812203 Kiri Royal Guard
+@addmob 4812204 Kiri Royal Guard SFC
+@addmob 4812205 Kiri Royal Guard SFC
+@addmob 4812206 Kiri Royal Guard SFC
+@addmob 4812207 Kiri Hot-Wind Troop
+@addmob 4812208 Kiri Hot-Wind Troop
+@addmob 4812209 Kiri Hot-Wind Troop
+@addmob 4812210 Gooris Kiri Supervisor
+@addmob 4812211 Gooris Kiri Supervisor
+@addmob 4812212 Gooris Kiri Supervisor
+@addmob 4813104 Defeated Giraffe Soldier
+@addmob 4813105 Defeated Giraffe Soldier
+@addmob 4813106 Defeated Giraffe Soldier
+@addmob 4813107 Kiri Worker
+@addmob 4813108 Kiri Worker
+@addmob 4813109 Kiri Worker
+@addmob 4813110 Kiri Worker
+@addmob 4813111 Kiri Worker
+@addmob 4813112 Kiri Worker
+@addmob 4813116 Mou Champ
+@addmob 4813117 Mou Champ
+@addmob 4813118 Mou Champ
+@addmob 4813204 Kiri Bandit
+@addmob 4813205 Kiri Bandit
+@addmob 4813206 Kiri Bandit
+@addmob 4813207 Kiri Bandit Leader
+@addmob 4813208 Kiri Bandit Leader
+@addmob 4813209 Kiri Bandit Leader
+@addmob 4813210 Middle-Level RP Prisoner
+@addmob 4813213 Classic Kiri Scouter
+@addmob 4813214 Classic Kiri Scouter
+@addmob 4813215 Classic Kiri Scouter
+@addmob 4813301 Wandering Deserter
+@addmob 4813302 Wandering Deserter
+@addmob 4813303 Wandering Deserter
+@addmob 48151101 Pulnarodon's Friend
+@addmob 48151104 Pulnarodon
+@addmob 48151201 Pulnarodon
+@addmob 48201101 Tambourine 
+@addmob 48201104 Tambourine 
+@addmob 48201107 Tambourine 
+@addmob 48201200 Tambourine 
+@addmob 48201401 Tambourine 
+@addmob 48211101 Starved Pulnasaurs
+@addmob 4831101 Margret's Bodyguard
+@addmob 48441101 Bandit
+@addmob 48471101 Boar Bandit
+@addmob 4851101 Bebe Devilman
+@addmob 4851102 Bebe Devilman
+@addmob 4851103 Bebe Devilman
+@addmob 4852101 Hard Bebe Devilman
+@addmob 4852102 Hard Bebe Devilman
+@addmob 4852103 Hard Bebe Devilman
+@addmob 4853101 Angel Bebe Devilman
+@addmob 4853102 Angel Bebe Devilman
+@addmob 4853103 Angel Bebe Devilman
+@addmob 4881107 Tamtam Child Dragon
+@addmob 4881108 Tamtam Child Dragon
+@addmob 4881109 Tamtam Child Dragon
+@addmob 4881110 Child Dragon
+@addmob 4881111 Child Dragon
+@addmob 4881112 Child Dragon
+@addmob 4881113 Poko Child Dragon
+@addmob 4881114 Poko Child Dragon
+@addmob 4881115 Poko Child Dragon
+@addmob 4881116 Ace Child Dragon
+@addmob 4881117 Ace Child Dragon
+@addmob 4881118 Ace Child Dragon
+@addmob 4881119 Evil Dragon of Trials
+@addmob 4881120 Evil Dragon of Trials
+@addmob 4881121 Evil Dragon of Trials
+@addmob 4881122 Minimum Dragon
+@addmob 4881123 Minimum Dragon
+@addmob 4881124 Minimum Dragon
+@addmob 4881125 Ancient Drake
+@addmob 4881126 Ancient Drake
+@addmob 4881127 Ancient Drake
+@addmob 4881128 Valley Dragon
+@addmob 4882110 Divine Water Guard Dragon
+@addmob 4882111 Divine Water Guard Dragon
+@addmob 4882112 Divine Water Guard Dragon
+@addmob 4882113 Guardian Dragon Hatchling 
+@addmob 4882114 Guardian Dragon Hatchling 
+@addmob 4882115 Guardian Dragon Hatchling 
+@addmob 4882116 Ancient Child Dragon
+@addmob 4883101 Divine Water Guard Dragon
+@addmob 4883102 Divine Water Guard Dragon
+@addmob 4883103 Divine Water Guard Dragon
+@addmob 4883104 Divine Water Guard Dragon for Training
+@addmob 4883105 Divine Water Guard Dragon for Training
+@addmob 4883106 Divine Water Guard Dragon for Training
+@addmob 4883107 Ancient Magic Dragon
+@addmob 48911101 Wolf
+@addmob 48911201 Starved Wolf
+@addmob 48911204 Starved Wolf
+@addmob 48912101 Wolf of Bandit
+@addmob 48912104 Hungry Wolf
+@addmob 48912201 Wolf of Bandit
+@addmob 48913101 Hungry Wolf Leader
+@addmob 48913201 Hungry Cur
+@addmob 4911101 Kowanga
+@addmob 4911102 Kowanga
+@addmob 4911103 Kowanga
+@addmob 4911104 Big Kowanga
+@addmob 4911105 Big Kowanga
+@addmob 4911106 Big Kowanga
+@addmob 4911107 King Kowanga
+@addmob 4911108 King Kowanga
+@addmob 4911109 King Kowanga
+@addmob 4911110 Kowanga
+@addmob 4911111 Kowanga
+@addmob 4911112 Kowanga
+@addmob 4911113 Forest Kowanga
+@addmob 4912101 Demon Squirrel
+@addmob 4912102 Demon Squirrel
+@addmob 4912103 Demon Squirrel
+@addmob 4912104 Big Demon Squirrel
+@addmob 4912105 Big Demon Squirrel
+@addmob 4912106 Big Demon Squirrel
+@addmob 4912107 Large Squirrel
+@addmob 4912108 Large Squirrel
+@addmob 4912109 Large Squirrel
+@addmob 4912110 Angry Demon Squirrel
+@addmob 4912111 Angry Demon Squirrel
+@addmob 4912112 Angry Demon Squirrel
+@addmob 4912113 Mighty Demon Squirrel
+@addmob 4912114 Mighty Demon Squirrel
+@addmob 4912115 Mighty Demon Squirrel
+@addmob 4913101 Sasabi
+@addmob 4913102 Sasabi
+@addmob 4913103 Sasabi
+@addmob 4913104 Purple Squirrel
+@addmob 4913105 Purple Squirrel
+@addmob 4913106 Purple Squirrel
+@addmob 4913107 Royal Squirrel
+@addmob 4913108 Royal Squirrel
+@addmob 4913109 Royal Squirrel
+@addmob 4913110 Dera Sasabi
+@addmob 4913111 Dera Sasabi
+@addmob 4913112 Dera Sasabi
+@addmob 4913113 Dark Sasabi
+@addmob 4913114 Dark Sasabi
+@addmob 4913115 Dark Sasabi
+@addmob 4913116 Max Sasabi
+@addmob 4913117 Max Sasabi
+@addmob 4913118 Max Sasabi
+@addmob @addmob Robot Type
+@addmob 5011101 Korin
+@addmob 5011102 Korin
+@addmob 5011103 Korin
+@addmob 5011201 Korin's Hallucination
+@addmob 5011202 Korin's Hallucination
+@addmob 5011203 Korin's Hallucination
+@addmob 51311101 Frieza's Field Battle Soldier
+@addmob 51311301 Frieza's Intel Scout
+@addmob 51732101 Captain Nanami
+@addmob 51762601 Captain Terrence
+@addmob 51822401 Frieza's Guerrilla Sapper
+@addmob 5211101 Fan Saibaman
+@addmob 5211102 Fan Saibaman
+@addmob 5211103 Fan Saibaman
+@addmob 5211110 Wind Saibaman
+@addmob 5211111 Wind Saibaman
+@addmob 5211112 Wind Saibaman
+@addmob 5211113 Chloroplast Saibaman
+@addmob 5211114 Chloroplast Saibaman
+@addmob 5211115 Chloroplast Saibaman
+@addmob 5211201 Dark Fan Saibaman
+@addmob 5211202 Dark Fan Saibaman
+@addmob 5211203 Dark Fan Saibaman
+@addmob 5211204 Poisonous Dark Fan Saibaman
+@addmob 5212101 Big Fan Saibaman
+@addmob 5212102 Big Fan Saibaman
+@addmob 5212103 Big Fan Saibaman
+@addmob 5212104 Giant Fan Saibaman
+@addmob 5212105 Giant Fan Saibaman
+@addmob 5212106 Giant Fan Saibaman
+@addmob 5212107 Head-Wind Saibaman
+@addmob 5212108 Head-Wind Saibaman
+@addmob 5212109 Head-Wind Saibaman
+@addmob 5212110 Frost-Wind Saibaman
+@addmob 5212111 Frost-Wind Saibaman
+@addmob 5212112 Frost-Wind Saibaman
+@addmob 5212113 Ruins Fan Saibaman
+@addmob 5212114 Ruins Fan Saibaman
+@addmob 5212115 Ruins Fan Saibaman
+@addmob 5213101 King Fan Saibaman
+@addmob 5213102 King Fan Saibaman
+@addmob 5213103 King Fan Saibaman
+@addmob 5213104 Water Fan Saibaman
+@addmob 5213105 Water Fan Saibaman
+@addmob 5213106 Water Fan Saibaman
+@addmob 5213107 Whirlwind Saibaman
+@addmob 5213108 Whirlwind Saibaman
+@addmob 5213109 Whirlwind Saibaman
+@addmob 5213110 Sting-Fan Saibaman
+@addmob 5213111 Sting-Fan Saibaman
+@addmob 5213112 Sting-Fan Saibaman
+@addmob 5213113 Sharp-Fan Saibaman
+@addmob 5213114 Sharp-Fan Saibaman
+@addmob 5213115 Sharp-Fan Saibaman
+@addmob 5213116 Needle-Fan Saibaman
+@addmob 5213117 Needle-Fan Saibaman
+@addmob 5213118 Needle-Fan Saibaman
+@addmob 5214101 Brainwashed Fan Saibaman
+@addmob 5214102 Brainwashed Fan Saibaman
+@addmob 5214103 Brainwashed Fan Saibaman
+@addmob 5214104 Brainwashed Fan Saibaman
+@addmob 5214105 Brainwashed Fan Saibaman
+@addmob 5214106 Brainwashed Fan Saibaman
+@addmob 5214107 Brainwashed Fan Saibaman
+@addmob 5214108 Brainwashed Fan Saibaman
+@addmob 5214109 Brainwashed Fan Saibaman
+@addmob 52914201 Guard Robot Alerty X
+@addmob 52914301 Guard Robot Alerty
+@addmob 52914304 Guard Robot Alerty S
+@addmob 52914401 Guard Robot Alerty
+@addmob 52914404 Guard Robot Alerty S
+@addmob 52914501 Guard Robot Alerty X
+@addmob 5311101 Laser Curtain Controller 
+@addmob 5311102 Laser Curtain Controller
+@addmob 5311103 Laser Curtain Controller
+@addmob 5311104 Laser Curtain Controller
+@addmob 5311105 Laser Curtain Controller
+@addmob 5311106 Laser Curtain Controller
+@addmob 53592101 Frieza's Field Robot
+@addmob 53593101 Frieza's Guerrilla Robot
+@addmob 53593104 Frieza's Guerrilla Robot
+@addmob 53661101 Patrol Robot Securit
+@addmob 53661104 Patrol Robot Securit
+@addmob 53661107 Patrol Robot Securit S
+@addmob 53661110 Patrol Robot Securit S
+@addmob 53661301 Frieza's Intel Supply Soldier
+@addmob 53661304 Frieza's Field Batter Signalman
+@addmob 5401101 Mud Majin for Training
+@addmob 5401102 Mud Majin for Training
+@addmob 5401103 Mud Majin for Training
+@addmob 5402101 Mud Majin for Training
+@addmob 5402102 Mud Majin for Training
+@addmob 5402103 Mud Majin for Training
+@addmob 5403101 Mud Majin for Training
+@addmob 5403102 Mud Majin for Training
+@addmob 5403103 Mud Majin for Training
+@addmob 5411101 Mysterious EM Wave Starter
+@addmob 5411102 Mysterious EM Wave Starter
+@addmob 5411103 Mysterious EM Wave Starter
+@addmob 5511101 Magic Cube
+@addmob 5511201 Magic Cube
+@addmob 5512101 Magic Cube
+@addmob 5512201 Magic Cube
+@addmob 5513101 Magic Cube
+@addmob 5514101 Magic Cube
+@addmob 5515101 Magic Cube
+@addmob 5515104 Magic Cube
+@addmob 5515107 Magic Cube
+@addmob 5515110 Magic Cube
+@addmob 5515113 Magic Cube
+@addmob 5515116 Magic Cube
+@addmob 55661101 Frieza's Guerrilla Scout
+@addmob 55661104 Frieza's Guerrilla Scout
+@addmob 55663101 Frieza's Intel Battler
+@addmob 5611101 Helmet Soldier
+@addmob 5611102 Helmet Soldier
+@addmob 5611103 Helmet Soldier
+@addmob 5611104 Helmet Dog
+@addmob 5611105 Helmet Dog
+@addmob 5611106 Helmet Dog
+@addmob 5611107 Helmet Training Sergeant
+@addmob 5611108 Helmet Training Sergeant
+@addmob 5611109 Helmet Training Sergeant
+@addmob 5611110 SFC Angry Helmet
+@addmob 5611111 SFC Angry Helmet
+@addmob 5611112 SFC Angry Helmet
+@addmob 5611113 Bull Bull Harvest Supervisor
+@addmob 5611114 Bull Bull Harvest Supervisor
+@addmob 5611115 Bull Bull Harvest Supervisor
+@addmob 5611116 Bow Soldier
+@addmob 5611117 Bow Soldier
+@addmob 5611118 Bow Soldier
+@addmob 5611119 Bow Raider
+@addmob 5611120 Bow Raider
+@addmob 5611121 Bow Raider
+@addmob 5611122 Bow Captain
+@addmob 5611123 Bow Captain
+@addmob 5611124 Bow Captain
+@addmob 5611125 All-Mine Plunderer Leader
+@addmob 5611126 All-Mine Plunderer Leader
+@addmob 5611127 All-Mine Plunderer Leader
+@addmob 5611128 Helmet Plunderer
+@addmob 5611129 Helmet Plunderer
+@addmob 5611130 Helmet Plunderer
+@addmob 5611131 Wild Helmet Fighter
+@addmob 5611132 Wild Helmet Fighter
+@addmob 5611133 Wild Helmet Fighter
+@addmob 5611134 Death Helmet Supply Unit
+@addmob 5611135 Death Helmet Supply Unit
+@addmob 5611136 Death Helmet Supply Unit
+@addmob 5611137 Death Helmet Blood Force
+@addmob 5611138 Death Helmet Blood Force
+@addmob 5611139 Death Helmet Blood Force
+@addmob 5611140 Death Helmet Advance Party
+@addmob 5611141 Death Helmet Advance Party
+@addmob 5611142 Death Helmet Advance Party
+@addmob 5611143 Guerrilla Leader Mug
+@addmob 5611144 Guerrilla Leader Mug
+@addmob 5611145 Guerrilla Leader Mug
+@addmob 5611146 Colonel Due's Subordinate
+@addmob 5611147 Colonel Due's Subordinate
+@addmob 5611148 Colonel Due's Subordinate
+@addmob 5611152 Deserter Zimoto
+@addmob 5611153 Deserter Zimoto
+@addmob 5611154 Deserter Zimoto
+@addmob 5611155 Guardian Soldier
+@addmob 5611156 Guardian Soldier
+@addmob 5611157 Guardian Soldier
+@addmob 5611158 Helmet Breeder
+@addmob 5611159 Helmet Breeder
+@addmob 5611160 Helmet Breeder
+@addmob 5611161 Red Mung Patrol 
+@addmob 5611162 Red Mung Patrol
+@addmob 5611163 Red Mung Patrol
+@addmob 5611164 Red Mung Senior 
+@addmob 5611165 Red Mung Senior 
+@addmob 5611166 Red Mung Senior 
+@addmob 5611167 Red Armband Maintenance Soldier
+@addmob 5611168 Red Armband Maintenance Soldier
+@addmob 5611169 Red Armband Maintenance Soldier
+@addmob 5611170 Red Armband Officer
+@addmob 5611171 Red Armband Officer
+@addmob 5611172 Red Armband Officer
+@addmob 5611173 Helmet Senior Patrol 
+@addmob 5611174 Helmet Senior Patrol 
+@addmob 5611175 Helmet Senior Patrol 
+@addmob 5611176 Mung Squad Leader 
+@addmob 5611177 Mung Squad Leader 
+@addmob 5611178 Mung Squad Leader 
+@addmob 5611179 Waterway Chief Inspector
+@addmob 5611180 Waterway Chief Inspector
+@addmob 5611181 Waterway Chief Inspector
+@addmob 5611182 Death Helmet Patrol
+@addmob 5611183 Death Helmet Patrol
+@addmob 5611184 Death Helmet Patrol
+@addmob 5611185 Angry Helmet Sapper
+@addmob 5611188 Red Pants Despatch
+@addmob 5611201 Traitor Ura
+@addmob 5611202 Traitor Ura
+@addmob 5611203 Traitor Ura
+@addmob 5611204 Extraction Creature Investigator 
+@addmob 5611205 Extraction Creature Investigator 
+@addmob 5611206 Extraction Creature Investigator 
+@addmob 5612101 Helmet Raider
+@addmob 5612102 Helmet Raider
+@addmob 5612103 Helmet Raider
+@addmob 5612104 Helmet Bare-hand Fighter
+@addmob 5612105 Helmet Bare-hand Fighter
+@addmob 5612106 Helmet Bare-hand Fighter
+@addmob 5612107 Helmet Sapper
+@addmob 5612108 Helmet Sapper
+@addmob 5612109 Helmet Sapper
+@addmob 5612110 Bow Advance Party
+@addmob 5612111 Bow Advance Party
+@addmob 5612112 Bow Advance Party
+@addmob 5612113 Bow Elite Unit
+@addmob 5612114 Bow Elite Unit
+@addmob 5612115 Bow Elite Unit
+@addmob 5612116 Advanced Helmet Plunderer
+@addmob 5612117 Advanced Helmet Plunderer
+@addmob 5612118 Advanced Helmet Plunderer
+@addmob 5612119 Shaking Dark Soldier
+@addmob 5612120 Shaking Dark Soldier
+@addmob 5612121 Shaking Dark Soldier
+@addmob 5612122 Kung MP Chief
+@addmob 5612123 Kung MP Chief
+@addmob 5612124 Kung MP Chief
+@addmob 5612125 Helmet Assault Unit
+@addmob 5612126 Helmet Assault Unit
+@addmob 5612127 Helmet Assault Unit
+@addmob 5612128 Guard Sergeant 
+@addmob 5612129 Guard Sergeant 
+@addmob 5612130 Guard Sergeant 
+@addmob 5612131 Red Pants Deserter
+@addmob 5612132 Red Pants Deserter
+@addmob 5612133 Red Pants Deserter
+@addmob 5612134 Mung Guerrilla Unit  
+@addmob 5612135 Mung Guerrilla Unit  
+@addmob 5612136 Mung Guerrilla Unit  
+@addmob 5612137 Low-Level RP Prisoner
+@addmob 5612140 Helmet Assistant Soldier
+@addmob 5612141 Helmet Assistant Soldier
+@addmob 5612142 Helmet Assistant Soldier
+@addmob 5612143 Helmet Defense Unit
+@addmob 5612144 Helmet Defense Unit
+@addmob 5612145 Helmet Defense Unit
+@addmob 5612146 Red Mung Private
+@addmob 5612147 Red Mung Private
+@addmob 5612148 Red Mung Private
+@addmob 5612149 Lower Patrol Dog
+@addmob 5612150 Lower Patrol Dog
+@addmob 5612151 Mung Low-Level Patrol
+@addmob 5612152 Mung Low-Level Private
+@addmob 5612153 Mung Low-Level Private
+@addmob 5612154 Mung Low-Level Private
+@addmob 5612155 Mung Starting-Level Private
+@addmob 5612156 Mung Starting-Level Private
+@addmob 5612157 Mung Starting-Level Private
+@addmob 5612158 Red Starting-Level Patrol
+@addmob 5612159 Red Starting-Level Patrol
+@addmob 5612160 Red Starting-Level Patrol
+@addmob 5612161 Waterway Sentry Squad Leader
+@addmob 5612162 Waterway Sentry Squad Leader
+@addmob 5612163 Waterway Sentry Squad Leader
+@addmob 5612164 Waterway Worker Squad Leader
+@addmob 5612165 Waterway Worker Squad Leader
+@addmob 5612166 Waterway Worker Squad Leader
+@addmob 5612167 Red Pants Deserter
+@addmob 5612201 Billboard Destroyer
+@addmob 5612202 Billboard Destroyer
+@addmob 5612203 Billboard Destroyer
+@addmob 5612204 Red Pants Military Trainee
+@addmob 5612205 Red Pants Military Trainee
+@addmob 5612206 Red Pants Military Trainee
+@addmob 5612207 Death Helmet Deserter
+@addmob 5612208 Death Helmet Deserter
+@addmob 5612209 Death Helmet Deserter
+@addmob 5612210 Dread Plunderer
+@addmob 5612301 Billboard Destroyer Leader
+@addmob 5612302 Billboard Destroyer Leader
+@addmob 5612303 Billboard Destroyer Leader
+@addmob 5612304 Factory Repair Worker
+@addmob 5612307 Helmet Military Engineer
+@addmob 5612308 Helmet Military Engineer
+@addmob 5612309 Helmet Military Engineer
+@addmob 5612310 Helmet Engineering Worker
+@addmob 5612311 Helmet Engineering Worker
+@addmob 5612312 Helmet Engineering Worker
+@addmob 5612313 Suu, the Guard
+@addmob 5612401 Bribed Bow
+@addmob 5612402 Bribed Bow
+@addmob 5612403 Bribed Bow
+@addmob 5613101 Helmet Guerrilla Unit
+@addmob 5613102 Helmet Guerrilla Unit
+@addmob 5613103 Helmet Guerrilla Unit
+@addmob 5613104 Helmet Bunker Unit Soldier
+@addmob 5613105 Helmet Bunker Unit Soldier
+@addmob 5613106 Helmet Bunker Unit Soldier
+@addmob 5613107 Helmet Scouter
+@addmob 5613108 Helmet Scouter
+@addmob 5613109 Helmet Scouter
+@addmob 5613110 Helmet New Private 
+@addmob 5613111 Helmet New Private 
+@addmob 5613112 Helmet New Private 
+@addmob 5613113 Frightening Dark Sergeant 
+@addmob 5613114 Frightening Dark Sergeant 
+@addmob 5613115 Frightening Dark Sergeant 
+@addmob 5613116 Honor Guard 
+@addmob 5613117 Honor Guard 
+@addmob 5613118 Honor Guard 
+@addmob 5613119 Deserter Supervisor 
+@addmob 5613120 Deserter Supervisor
+@addmob 5613121 Deserter Supervisor
+@addmob 5613122 Angry Helmet Sentry
+@addmob 5613123 Angry Helmet Sentry
+@addmob 5613124 Angry Helmet Sentry
+@addmob 5613125 Remaining Helmets Sentry 
+@addmob 5613126 Remaining Helmets Sentry
+@addmob 5613127 Remaining Helmets Sentry
+@addmob 5613128 Helmet Patrol 
+@addmob 5613129 Helmet Patrol 
+@addmob 5613130 Helmet Patrol 
+@addmob 5613131 Red Mung Company Commander
+@addmob 5613132 Red Mung Company Commander
+@addmob 5613133 Red Mung Company Commander
+@addmob 5613134 Helmet Lightening War Unit
+@addmob 5613135 Helmet Lightening War Unit
+@addmob 5613136 Helmet Lightening War Unit
+@addmob 5613137 Helmet Watchman
+@addmob 5613138 Helmet Watchman
+@addmob 5613139 Helmet Watchman
+@addmob 5613140 Advanced Hippo Supervisor
+@addmob 5613141 Advanced Hippo Supervisor
+@addmob 5613142 Advanced Hippo Supervisor
+@addmob 5613143 Angry Helmet Supply Unit Soldier
+@addmob 5613146 Angry Helmet Guard
+@addmob 5613149 Angry Helmet Sentry
+@addmob 5614101 Underground Base Supervising Officer
+@addmob 5614102 Underground Base Supervising Officer
+@addmob 5614103 Underground Base Supervising Officer
+@addmob 5615101 Mushroom Gang Scout
+@addmob 5615104 Mushroom Gang Warrior
+@addmob 5615107 Mushroom Gang Imposter
+@addmob 5615110 Mushroom Gang Raider
+@addmob 5615113 Mushroom Gang Bully
+@addmob 5651101 Big-Eared Rabbit
+@addmob 5651102 Big-Eared Rabbit
+@addmob 5651103 Big-Eared Rabbit
+@addmob 5651104 Strange-Eared Rabbit
+@addmob 5651105 Strange-Eared Rabbit
+@addmob 5651106 Strange-Eared Rabbit
+@addmob 5651107 Teeth Big-Eared Rabbit
+@addmob 5651108 Teeth Big-Eared Rabbit
+@addmob 5651109 Teeth Big-Eared Rabbit
+@addmob 5651110 King Big-Eared Rabbit
+@addmob 5651111 King Big-Eared Rabbit
+@addmob 5651112 King Big-Eared Rabbit
+@addmob 5651113 Crazy Snow-Field Rabbit
+@addmob 5651114 Crazy Snow-Field Rabbit
+@addmob 5651115 Crazy Snow-Field Rabbit
+@addmob 5652101 Devilish Rabbit
+@addmob 5652102 Young Big-Eared Rabbit
+@addmob 5652103 Young Big-Eared Rabbit
+@addmob 5652104 Strong Big-Eared Rabbit
+@addmob 5652105 Strong Big-Eared Rabbit
+@addmob 5652106 Strong Big-Eared Rabbit
+@addmob 5652107 Teeth Young Big-Eared Rabbit
+@addmob 5652108 Teeth Young Big-Eared Rabbit
+@addmob 5652109 Teeth Young Big-Eared Rabbit
+@addmob 5652110 Tiger-Eared Rabbit
+@addmob 5652111 Tiger-Eared Rabbit
+@addmob 5652112 Tiger-Eared Rabbit
+@addmob 5652113 King Young Big-Eared Rabbit
+@addmob 5652114 King Young Big-Eared Rabbit
+@addmob 5652115 King Young Big-Eared Rabbit
+@addmob 5653101 Devil Big-Eared Rabbit
+@addmob 5653102 Devil Big-Eared Rabbit
+@addmob 5653103 Devil Big-Eared Rabbit
+@addmob 5653104 Large-Eared Rabbit Boss
+@addmob 5653105 Large-Eared Rabbit Boss
+@addmob 5653106 Large-Eared Rabbit Boss
+@addmob 5653107 Donkey-Eared Rabbit
+@addmob 5653108 Donkey-Eared Rabbit
+@addmob 5653109 Donkey-Eared Rabbit
+@addmob 5653110 Black-Eared Rabbit
+@addmob 5653111 Black-Eared Rabbit
+@addmob 5653112 Black-Eared Rabbit
+@addmob 5653113 Teeth Devil-Eared Rabbit
+@addmob 5653114 Teeth Devil-Eared Rabbit
+@addmob 5653115 Teeth Devil-Eared Rabbit
+@addmob 5653116 King Devil-Eared Rabbit
+@addmob 5653117 King Devil-Eared Rabbit
+@addmob 5653118 King Devil-Eared Rabbit
+@addmob 5654101 Mighty Big-Eared Rabbit
+@addmob 5654104 Small Mighty Big-Eared Rabbit
+@addmob 5654107 Small Mighty Big-Eared Rabbit
+@addmob 5654110 Small Mighty Big-Eared Rabbit
+@addmob 5654113 Small Mighty Big-Eared Rabbit
+@addmob 5661201 Kankan
+@addmob 5661202 Kankan
+@addmob 5661203 Kankan
+@addmob 5662101 Osamu
+@addmob 5662102 Osamu
+@addmob 5662103 Osamu
+@addmob 56691101 Frieza's Intel Signalman
+@addmob 56691301 Frieza's Field Battle Guerrilla
+@addmob 56691304 Frieza's Field Battle Guerrilla
+@addmob 5671101 Kimi
+@addmob 5671102 Kimi
+@addmob 5671103 Kimi
+@addmob 5671104 Momoko
+@addmob 5671105 Momoko
+@addmob 5671106 Momoko
+@addmob 5681201 Son Gohan (Great Ape)
+@addmob 5681202 Son Gohan (Great Ape)
+@addmob 5681203 Son Gohan (Great Ape)
+@addmob 5681204 Son Gohan (Great Ape)
+@addmob 5681205 Son Gohan (Great Ape)
+@addmob 5681206 Son Gohan (Great Ape)
+@addmob 5681207 Brainwashed Giant Great Ape
+@addmob 5681208 Brainwashed Giant Great Ape
+@addmob 5681209 Brainwashed Giant Great Ape
+@addmob 5681210 Brainwashed Giant Great Ape
+@addmob 5681211 Brainwashed Giant Great Ape
+@addmob 5681212 Brainwashed Giant Great Ape
+@addmob 5681213 Brainwashed Giant Great Ape
+@addmob 5681216 Brainwashed Giant Super Great Ape
+@addmob 5682101 Ozaru Vegeta
+@addmob 5682102 Ozaru Vegeta
+@addmob 5682103 Ozaru Vegeta
+@addmob 5682104 Ozaru Vegeta
+@addmob 5682105 Ozaru Vegeta
+@addmob 5682106 Ozaru Vegeta
+@addmob 5682107 Ozaru Vegeta
+@addmob 5682201 Ozaru Vegeta
+@addmob 5682202 Ozaru Vegeta
+@addmob 5682203 Ozaru Vegeta
+@addmob 5682204 Ozaru Vegeta
+@addmob 5682205 Ozaru Vegeta
+@addmob 5682206 Ozaru Vegeta
+@addmob 5683101 Ozaru Raditz
+@addmob 5684101 Ozaru Nappa
+@addmob 5691101 Mira
+@addmob 5691102 Mira
+@addmob 5691103 Mira
+@addmob 5691104 Mira
+@addmob 5691105 Mira
+@addmob 5691106 Mira
+@addmob 5701101 Giant Mushroom Tree
+@addmob 5701102 Giant Mushroom Tree
+@addmob 5701103 Giant Mushroom Tree
+@addmob 5702101 Little Mushroom Jellyfish
+@addmob 5702102 Little Mushroom Jellyfish
+@addmob 5702103 Little Mushroom Jellyfish
+@addmob 5702104 Sky Mushroom
+@addmob 5702107 Sky Mushroom
+@addmob 5702108 Sky Mushroom
+@addmob 5702109 Sky Mushroom
+@addmob 5711101 Nappa
+@addmob 5711102 Nappa
+@addmob 5711103 Nappa
+@addmob 5711104 Nappa
+@addmob 5711105 Nappa
+@addmob 5711106 Nappa
+@addmob 5711107 Nappa
+@addmob 57131101 Frieza's Guerrilla Medic
+@addmob 5722101 Field Artillery
+@addmob 5722102 Field Artillery
+@addmob 5722103 Field Artillery
+@addmob 5722104 Being made Field Artillery
+@addmob 5722105 Being made Field Artillery
+@addmob 5722106 Being made Field Artillery
+@addmob 5722107 Improved Artillery
+@addmob 5722108 Improved Artillery
+@addmob 5722109 Improved Artillery
+@addmob 5731201 Jean
+@addmob 5731202 Jean
+@addmob 5731203 Jean
+@addmob 5731501 Warrior Carrara
+@addmob 5731502 Warrior Carrara
+@addmob 5731503 Warrior Carrara
+@addmob 5732101 Saimbe
+@addmob 5741101 Giant Insect Nest
+@addmob 5741102 Giant Insect Nest
+@addmob 5741103 Giant Insect Nest
+@addmob 5741104 Giant Insect Nest
+@addmob 5761107 Armored Saibaman
+@addmob 5761108 Armored Saibaman
+@addmob 5761109 Armored Saibaman
+@addmob 5761110 High Performance Saibaman
+@addmob 5761111 High Performance Saibaman
+@addmob 5761112 High Performance Saibaman
+@addmob 5761113 Umbrella Saibaman
+@addmob 5761114 Umbrella Saibaman
+@addmob 5761115 Umbrella Saibaman
+@addmob 5761116 Peaceful Saibaman
+@addmob 5761117 Peaceful Saibaman
+@addmob 5761118 Peaceful Saibaman
+@addmob 5762101 Moss Saibaman
+@addmob 5762102 Moss Saibaman
+@addmob 5762103 Moss Saibaman
+@addmob 5762104 Armored Eye Saibaman
+@addmob 5762105 Armored Eye Saibaman
+@addmob 5762106 Armored Eye Saibaman
+@addmob 5762107 Wooker Saibaman
+@addmob 5763101 Putt-Putt Saibaman
+@addmob 5763104 Deputy Saibaman
+@addmob 5763107 Deputy Saibaman
+@addmob 5764101 Air Defense Saibaman
+@addmob 5764102 Air Defense Saibaman
+@addmob 5764103 Air Defense Saibaman
+@addmob 5765101 Giant Umbrella Saibaman
+@addmob 57711101 Frieza's Intel Patrol
+@addmob 57711301 Frieza's Guerrilla Battler
+@addmob 5774201 Dark Namekian
+@addmob 5774202 Dark Namekian
+@addmob 5774203 Dark Namekian
+@addmob 5781201 Evil Alter Ego
+@addmob 5781202 Evil Alter Ego
+@addmob 5781203 Evil Alter Ego
+@addmob 5781204 Narak Invader General 
+@addmob 5791101 Narak Thief
+@addmob 5791102 Narak Thief
+@addmob 5791103 Narak Thief
+@addmob 5791104 Narak Devil Practitioner
+@addmob 5791105 Narak Devil Practitioner
+@addmob 5791106 Narak Devil Practitioner
+@addmob 5791107 Narak Warrior
+@addmob 5791110 Black Warrior
+@addmob 5791113 Narak Invasion Team
+@addmob 5811101 Creepy Saibaman
+@addmob 5811102 Creepy Saibaman
+@addmob 5811103 Creepy Saibaman
+@addmob 5811104 Big Creepy Saibaman
+@addmob 5811105 Big Creepy Saibaman
+@addmob 5811106 Big Creepy Saibaman
+@addmob 5811107 Big Creepy Saibaman
+@addmob 5811108 Big Creepy Saibaman
+@addmob 5811109 Big Creepy Saibaman
+@addmob 5811110 Giant Creepy Saibaman
+@addmob 5811111 Giant Creepy Saibaman
+@addmob 5811112 Giant Creepy Saibaman
+@addmob 5811125 Creepy Snake Saibaman
+@addmob 5811126 Creepy Snake Saibaman
+@addmob 5811127 Creepy Snake Saibaman
+@addmob 5811128 Marked Saibaman
+@addmob 5811129 Marked Saibaman
+@addmob 5811130 Marked Saibaman
+@addmob 5811131 Creepy Water Saibaman
+@addmob 5811132 Creepy Water Saibaman
+@addmob 5811133 Creepy Water Saibaman
+@addmob 5811134 Giant Creepy Snake Saibaman
+@addmob 5811135 Giant Creepy Snake Saibaman
+@addmob 5811136 Giant Creepy Snake Saibaman
+@addmob 5811201 Lettuce Saibaman
+@addmob 5811202 Lettuce Saibaman
+@addmob 5811203 Lettuce Saibaman
+@addmob 5811204 Smoky Saibaman
+@addmob 5811205 Smoky Saibaman
+@addmob 5811206 Smoky Saibaman
+@addmob 5811207 Giant Creepy Snake Saibaman
+@addmob 5811208 Giant Creepy Snake Saibaman
+@addmob 5811209 Giant Creepy Snake Saibaman
+@addmob 5811210 Spotted Saibaman
+@addmob 5811211 Spotted Saibaman
+@addmob 5811212 Spotted Saibaman
+@addmob 5811213 Burrow Saibaman
+@addmob 5811214 Burrow Saibaman
+@addmob 5811215 Burrow Saibaman
+@addmob 5811216 Strange Vine Saibaman
+@addmob 5812101 Curling Saibaman
+@addmob 5812102 Curling Saibaman
+@addmob 5812103 Curling Saibaman
+@addmob 5812104 King Saibaman
+@addmob 5812105 King Saibaman
+@addmob 5812106 King Saibaman
+@addmob 5812107 Sea Saibaman
+@addmob 5812108 Sea Saibaman
+@addmob 5812109 Sea Saibaman
+@addmob 5812110 East Bristol Saibaman
+@addmob 5812113 Poisonous Saibaman
+@addmob 5812201 Large Curly Saibaman
+@addmob 5812202 Large Saibaman
+@addmob 5812203 Large Saibaman
+@addmob 5812204 White Snake Saibaman
+@addmob 5812205 White Snake Saibaman
+@addmob 5812206 White Snake Saibaman
+@addmob 5812207 Python Saibaman
+@addmob 5812208 Python Saibaman
+@addmob 5812209 Python Saibaman
+@addmob 5812210 Arctic Saibaman
+@addmob 5812211 Arctic Saibaman
+@addmob 5812212 Arctic Saibaman
+@addmob 5812216 Red Beak Saibaman
+@addmob 5812301 Gray Saibaman
+@addmob 5812302 Gray Saibaman
+@addmob 5812303 Gray Saibaman
+@addmob 5812304 King Gray Saibaman
+@addmob 5812305 King Gray Saibaman
+@addmob 5812306 King Gray Saibaman
+@addmob 5812307 Ancient Starfish Saibaman
+@addmob 5812308 Ancient Starfish Saibaman
+@addmob 5812309 Ancient Starfish Saibaman
+@addmob 5812310 Black Beak Saibaman
+@addmob 5812313 Contaminated Saibaman
+@addmob 5813101 Slippery Saibaman
+@addmob 5813102 Slippery Saibaman
+@addmob 5813103 Slippery Saibaman
+@addmob 5813104 Peristaltic Saibaman
+@addmob 5813105 Peristaltic Saibaman
+@addmob 5813106 Peristaltic Saibaman
+@addmob 5813107 Bizarre Saibaman
+@addmob 58131101 Captain Smith
+@addmob 58131301 Frieza's Battle Assault Team
+@addmob 5813201 Sticky Saibaman
+@addmob 5813202 Sticky Saibaman
+@addmob 5813203 Sticky Saibaman
+@addmob 5813204 Kinder Saibaman
+@addmob 5813205 Kinder Saibaman
+@addmob 5813206 Kinder Saibaman
+@addmob 5813207 Darting Wiggling Saibaman
+@addmob 5813208 Darting Wiggling Saibaman
+@addmob 5813209 Darting Wiggling Saibaman
+@addmob 5813301 Glossy Wiggling Saibaman
+@addmob 5813302 Glossy Wiggling Saibaman
+@addmob 5813303 Glossy Wiggling Saibaman
+@addmob 5813304 Smooth Wiggling Saibaman
+@addmob 5813305 Smooth Wiggling Saibaman
+@addmob 5813306 Smooth Wiggling Saibaman
+@addmob 5813307 Soft Wiggling Saibaman
+@addmob 5813308 Soft Wiggling Saibaman
+@addmob 5813309 Soft Wiggling Saibaman
+@addmob 5813310 Time Breaker Saibaman
+@addmob 5813311 Time Breaker Saibaman
+@addmob 5813312 Time Breaker Saibaman
+@addmob 5817101 Brainwashed Wiggling Saibaman
+@addmob 5817102 Brainwashed Wiggling Saibaman
+@addmob 5817103 Brainwashed Wiggling Saibaman
+@addmob 5817104 Brainwashed Wiggling Saibaman
+@addmob 5817105 Brainwashed Wiggling Saibaman
+@addmob 5817106 Brainwashed Wiggling Saibaman
+@addmob 5817107 Brainwashed Wiggling Saibaman
+@addmob 5817108 Brainwashed Wiggling Saibaman
+@addmob 5817109 Brainwashed Wiggling Saibaman
+@addmob 5817110 Brainwashed Wiggling Saibaman
+@addmob 5817111 Brainwashed Wiggling Saibaman
+@addmob 5817112 Brainwashed Wiggling Saibaman
+@addmob 5817113 Brainwashed Wiggling Saibaman
+@addmob 5817114 Brainwashed Wiggling Saibaman
+@addmob 5817115 Brainwashed Wiggling Saibaman
+@addmob 5817116 Brainwashed Wiggling Saibaman
+@addmob 5817117 Brainwashed Wiggling Saibaman
+@addmob 5817118 Brainwashed Wiggling Saibaman
+@addmob 5817119 Brainwashed Wiggling Saibaman
+@addmob 5817122 Brainwashed Wiggling Saibaman
+@addmob 5871101 Narak Soldier
+@addmob 5871102 Narak Soldier
+@addmob 5871103 Narak Soldier
+@addmob 5871104 Narak Royal Guard
+@addmob 5871107 Narak Invader
+@addmob 5872101 Narak Assassin Chief
+@addmob 5872102 Narak Assassin Chief
+@addmob 5872103 Narak Assassin Chief
+@addmob 5872104 Warrior of Chaos
+@addmob 5872107 Narak Garden Guard
+@addmob 5872110 Narak Special Force
+@addmob 5873101 Narak Assassin
+@addmob 5873102 Narak Assassin
+@addmob 5873103 Narak Assassin
+@addmob 5873104 Narak Shadow Knight Trainee
+@addmob 5873105 Narak Shadow Knight Trainee
+@addmob 5873106 Narak Shadow Knight Trainee
+@addmob 5873107 Narak Recluse
+@addmob 5873110 Dark Devil Warrior
+@addmob 5881101 Della
+@addmob 5882101 Narak Defense Warrior
+@addmob 5891101 Narak Fire Shaman 
+@addmob 5892101 Narak Ground Shaman
+@addmob 5931101 Evil Ego
+@addmob 5931102 Evil Ego
+@addmob 5931103 Evil Ego
+@addmob 5931104 Narak Dark Hermit
+@addmob 5931107 Narak Dark Berserker 
+@addmob 5942201 Shuneshune
+@addmob 5943101 Harutz
+@addmob 5943102 Harutz
+@addmob 5943103 Harutz
+@addmob 5943104 Harutz
+@addmob 5943105 Harutz
+@addmob 5943106 Harutz
+@addmob 5943107 Harutz Mini
+@addmob 5943108 Harutz Mini
+@addmob 5943109 Harutz Mini
+@addmob 5943110 Harutz Mini
+@addmob 5943111 Harutz Mini
+@addmob 5943112 Harutz Mini
+@addmob 5943113 Harutz Minimini
+@addmob 5943114 Harutz Minimini
+@addmob 5943115 Harutz Minimini
+@addmob 5943116 Harutz Minimini
+@addmob 5943117 Harutz Minimini
+@addmob 5943118 Harutz Minimini
+@addmob 5951101 Mai Stone Statue
+@addmob 5951102 Mai Stone Statue
+@addmob 5951103 Mai Stone Statue
+@addmob 5951104 Mai Stone Statue
+@addmob 5951105 Mai Stone Statue
+@addmob 5951106 Mai Stone Statue
+@addmob 5951107 Archie
+@addmob 5951108 Archie
+@addmob 5951109 Archie
+@addmob 5951110 Archie
+@addmob 5951111 Archie
+@addmob 5951112 Archie
+@addmob 6 Shenron Type
+@addmob 6011101 OK Robot
+@addmob 6011102 OK Robot
+@addmob 6011103 OK Robot
+@addmob 6011104 Nuisance Robot
+@addmob 6011105 Nuisance Robot
+@addmob 6011106 Nuisance Robot
+@addmob 6011107 OK Patrol Robot
+@addmob 6011108 OK Patrol Robot
+@addmob 6011109 OK Patrol Robot
+@addmob 6011110 Breeding Robot
+@addmob 6011111 Breeding Robot
+@addmob 6011112 Breeding Robot
+@addmob 6011113 Pellet Robot
+@addmob 6011114 Pellet Robot
+@addmob 6011115 Pellet Robot
+@addmob 6011116 Violent Robot A
+@addmob 6011117 Violent Robot A
+@addmob 6011118 Violent Robot A
+@addmob 6011119 Violent Robot D
+@addmob 6011120 Violent Robot D
+@addmob 6011121 Violent Robot D
+@addmob 6011122 Peria
+@addmob 6011123 Peria
+@addmob 6011124 Peria
+@addmob 6011125 Defense Unit Paul
+@addmob 6011126 Defense Unit Paul
+@addmob 6011127 Defense Unit Paul
+@addmob 6011128 Defense Unit Pippi
+@addmob 6011129 Defense Unit Pippi
+@addmob 6011130 Defense Unit Pippi
+@addmob 6011131 Defense Unit Puff
+@addmob 6011132 Defense Unit Puff
+@addmob 6011133 Defense Unit Puff
+@addmob 6011134 Battle Robot
+@addmob 6011137 Defense Unit Kaka
+@addmob 6011138 Defense Unit Kaka
+@addmob 6011139 Defense Unit Kaka
+@addmob 6011140 Spring Water Manager Robot
+@addmob 6011141 Spring Water Manager Robot
+@addmob 6011142 Spring Water Manager Robot
+@addmob 6011143 Field Scout Robot
+@addmob 6011144 Field Scout Robot
+@addmob 6011145 Field Scout Robot
+@addmob 6011201 Troubled Robot
+@addmob 6011202 Troubled Robot
+@addmob 6011203 Troubled Robot
+@addmob 6011204 Wandering Robot
+@addmob 6011205 Wandering Robot
+@addmob 6011206 Wandering Robot
+@addmob 6011207 Strange EM Wave Robot
+@addmob 6011208 Strange EM Wave Robot
+@addmob 6011209 Strange EM Wave Robot
+@addmob 6011210 Old-Style Supervising Robot
+@addmob 6011211 Old-Style Supervising Robot
+@addmob 6011212 Old-Style Supervising Robot
+@addmob 6011213 Damaged Supervising Robot
+@addmob 6011214 Damaged Supervising Robot
+@addmob 6011215 Damaged Supervising Robot
+@addmob 6011216 Wandering Supervising Robot
+@addmob 6011217 Wandering Supervising Robot
+@addmob 6011218 Wandering Supervising Robot
+@addmob 6011219 Ghost Guarding Robot
+@addmob 6011220 Ghost Guarding Robot
+@addmob 6011221 Ghost Guarding Robot
+@addmob 6011222 Super Supervising Robot
+@addmob 6011223 Super Supervising Robot
+@addmob 6011224 Super Supervising Robot
+@addmob 6011225 Cleaning Robot
+@addmob 6011226 Cleaning Robot
+@addmob 6011227 Cleaning Robot
+@addmob 6011228 Weapon Dealer Robot
+@addmob 6011229 Weapon Dealer Robot
+@addmob 6011230 Weapon Dealer Robot
+@addmob 6011231 Bold Management Robot
+@addmob 6011232 Bold Management Robot
+@addmob 6011233 Bold Management Robot
+@addmob 6011234 Violent Robot B
+@addmob 6011235 Violent Robot B
+@addmob 6011236 Violent Robot B
+@addmob 6011237 Wild Experimental Robot
+@addmob 6011238 Wild Experimental Robot
+@addmob 6011239 Wild Experimental Robot
+@addmob 6011240 Robot Officer
+@addmob 6011241 Robot Officer
+@addmob 6011242 Robot Officer
+@addmob 6011243 Robot Dealer
+@addmob 6011244 Robot Dealer
+@addmob 6011245 Robot Dealer
+@addmob 6011246 Robot Guard 
+@addmob 6011247 Robot Guard 
+@addmob 6011248 Robot Guard 
+@addmob 681313220 Small Treasure Chest
+@addmob 681313230 Huge Treasure Chest
+@addmob 6011249 Paladin Robot Guard 
+@addmob 6011250 Paladin Robot Guard 
+@addmob 6011251 Paladin Robot Guard 
+@addmob 6011252 Repaired Battle Robot
+@addmob 6011255 Mine Repair Robot
+@addmob 6011256 Mine Repair Robot
+@addmob 6011257 Mine Repair Robot
+@addmob 6011258 Sea Scout Robot
+@addmob 6011259 Sea Scout Robot
+@addmob 6011260 Sea Scout Robot
+@addmob 6011261 Field Repair Robot
+@addmob 6011262 Field Repair Robot
+@addmob 6011263 Field Repair Robot
+@addmob 6011264 Ricci Lee
+@addmob 6011265 Ricci Lee
+@addmob 6011266 Ricci Lee
+@addmob 6011267 Castle Management Robot
+@addmob 6011301 Broken Vagabond Robot
+@addmob 6011302 Broken Vagabond Robot
+@addmob 6011303 Broken Vagabond Robot
+@addmob 6011304 Transport Vehicle Robot
+@addmob 6011305 Transport Vehicle Robot
+@addmob 6011306 Transport Vehicle Robot
+@addmob 6011307 Insect Breeding Robot
+@addmob 6011308 Insect Breeding Robot
+@addmob 6011309 Insect Breeding Robot
+@addmob 6011310 Poisoning Robot
+@addmob 6011311 Poisoning Robot
+@addmob 6011312 Poisoning Robot
+@addmob 6011313 Investigation Robot
+@addmob 6012101 Automated Robot
+@addmob 6012102 Automated Robot
+@addmob 6012103 Automated Robot
+@addmob 6012104 Stubborn Robot
+@addmob 6012105 Stubborn Robot
+@addmob 6012106 Stubborn Robot
+@addmob 6012107 Automated Robot Patrol
+@addmob 6012108 Automated Robot Patrol
+@addmob 6012109 Automated Robot Patrol
+@addmob 6012110 Guard Robot Alpha
+@addmob 6012111 Guard Robot Alpha
+@addmob 6012112 Guard Robot Alpha
+@addmob 6012113 Violent Robot C
+@addmob 6012114 Violent Robot C
+@addmob 6012115 Violent Robot C
+@addmob 6012116 Mushroom Robot
+@addmob 6012117 Mushroom Robot
+@addmob 6012118 Mushroom Robot
+@addmob 6012119 Mushroom Transport Robot
+@addmob 6012120 Mushroom Transport Robot
+@addmob 6012121 Mushroom Transport Robot
+@addmob 6012122 Guard Robot Beta
+@addmob 6012123 Guard Robot Beta
+@addmob 6012124 Guard Robot Beta
+@addmob 6012125 Noisy Robot
+@addmob 6012126 Noisy Robot
+@addmob 6012127 Noisy Robot
+@addmob 6012128 Kiri Management Robot
+@addmob 6012131 Assault-Type Robot
+@addmob 6012137 Standby Guard Robot
+@addmob 6012138 Standby Guard Robot
+@addmob 6012139 Standby Guard Robot
+@addmob 6012140 Maintenance Robot
+@addmob 6012141 Maintenance Robot
+@addmob 6012142 Maintenance Robot
+@addmob 6012143 New Kiri Robot
+@addmob 6012201 Auto Theft Robot
+@addmob 6012202 Auto Theft Robot
+@addmob 6012203 Auto Theft Robot
+@addmob 6012204 Rusty Automated Robot
+@addmob 6012205 Rusty Automated Robot
+@addmob 6012206 Rusty Automated Robot
+@addmob 6012210 Automated Thief Robot
+@addmob 6012211 Automated Thief Robot
+@addmob 6012212 Automated Thief Robot
+@addmob 6012213 Runaway Supervision Robot
+@addmob 6012214 Runaway Supervision Robot
+@addmob 6012215 Runaway Supervision Robot
+@addmob 6012216 Abandoned Guard Robot
+@addmob 6012222 Fuel Surveillance Robot
+@addmob 6012223 Fuel Surveillance Robot
+@addmob 6012224 Fuel Surveillance Robot
+@addmob 6012225 Confused Guard Robot
+@addmob 6012226 Confused Guard Robot
+@addmob 6012227 Confused Guard Robot
+@addmob 6012228 Patrol Guard Robot
+@addmob 6012229 Patrol Guard Robot
+@addmob 6012230 Patrol Guard Robot
+@addmob 6012231 Kiri-Robot
+@addmob 6012232 Kiri-Robot
+@addmob 6012233 Kiri-Robot
+@addmob 6012234 Broken Shooting Robot
+@addmob 6012235 Broken Shooting Robot
+@addmob 6012236 Broken Shooting Robot
+@addmob 6012237 Dirty Smelly Kiri Robot
+@addmob 6012238 Dirty Smelly Kiri Robot
+@addmob 6012239 Dirty Smelly Kiri Robot
+@addmob 6012240 Dirty Smelly Kiri Robot
+@addmob 6013101 Monkey Robot
+@addmob 6013102 Monkey Robot
+@addmob 6013103 Monkey Robot
+@addmob 6013104 Ghost Robot
+@addmob 6013105 Ghost Robot
+@addmob 6013106 Ghost Robot
+@addmob 6013107 MX-06J
+@addmob 6013108 MX-06J
+@addmob 6013109 MX-06J
+@addmob 6013110 R-Type Oil Licker Robot
+@addmob 6013111 R-Type Oil Licker Robot
+@addmob 6013112 R-Type Oil Licker Robot
+@addmob 6013113 Overseer Robot
+@addmob 6013114 Overseer Robot
+@addmob 6013115 Overseer Robot
+@addmob 6013116 Police Robot
+@addmob 6013117 Police Robot
+@addmob 6013118 Police Robot
+@addmob 6013119 Magnetic Field Robot King
+@addmob 6013120 Magnetic Field Robot King
+@addmob 6013121 Magnetic Field Robot King
+@addmob 6013122 Dispatched Robot A
+@addmob 6013123 Dispatched Robot A
+@addmob 6013124 Dispatched Robot A
+@addmob 6013201 Troubled Robot King
+@addmob 6013202 Troubled Robot King
+@addmob 6013203 Troubled Robot King
+@addmob 6013204 P-Type Suction Robot
+@addmob 6013205 P-Type Suction Robot
+@addmob 6013206 P-Type Suction Robot
+@addmob 6013207 MX-06S
+@addmob 6013208 MX-06S
+@addmob 6013209 MX-06S
+@addmob 6013210 Weapon Smuggling Robot
+@addmob 6013211 Weapon Smuggling Robot
+@addmob 6013212 Weapon Smuggling Robot
+@addmob 6013213 O-Type Oil Shock Robot
+@addmob 6013214 O-Type Oil Shock Robot
+@addmob 6013215 O-Type Oil Shock Robot
+@addmob 6013216 Guardian Robot
+@addmob 6013217 Guardian Robot
+@addmob 6013218 Guardian Robot
+@addmob 6013301 MX-06F
+@addmob 6013302 MX-06F
+@addmob 6013303 MX-06F
+@addmob 6013304 Abandoned Battle Robot
+@addmob 6013307 Mushroom Plunderer Robot
+@addmob 6014101 Laser Guard
+@addmob 6014102 Laser Guard
+@addmob 6014103 Laser Guard
+@addmob 6014104 Super Laser Guard
+@addmob 6014105 Super Laser Guard
+@addmob 6014106 Super Laser Guard
+@addmob 6014107 Laser Guard
+@addmob 6014108 Laser Guard
+@addmob 6014109 Laser Guard
+@addmob 6014110 Super Laser Guard
+@addmob 6014111 Super Laser Guard
+@addmob 6014112 Super Laser Guard
+@addmob 6014113 Lost Laser Guard
+@addmob 6014114 Lost Laser Guard
+@addmob 6014115 Lost Laser Guard
+@addmob 6014116 Inspector Robot
+@addmob 6014117 Inspector Robot
+@addmob 6014118 Inspector Robot
+@addmob 6014119 Renovated Laser Guard
+@addmob 6014120 Renovated Laser Guard
+@addmob 6014121 Renovated Laser Guard
+@addmob 6014122 Prison Laser Guard
+@addmob 6014125 Laser Guard
+@addmob 6014126 Laser Guard
+@addmob 6014127 Laser Guard
+@addmob 6014128 Super Laser Guard
+@addmob 6014129 Super Laser Guard
+@addmob 6014130 Super Laser Guard
+@addmob 6014131 Renovated Laser Guard
+@addmob 6211101 Mole Cricket 
+@addmob 6211102 Mole Cricket 
+@addmob 6211103 Mole Cricket 
+@addmob 6211104 Lonely Mole Cricket 
+@addmob 6211105 Lonely Mole Cricket
+@addmob 6211106 Lonely Mole Cricket
+@addmob 6211107 Wagu Mole Cricket
+@addmob 6211110 Mailed Mole Cricket
+@addmob 6211111 Mailed Mole Cricket
+@addmob 6211112 Mailed Mole Cricket
+@addmob 6211113 Drum Mole Cricket
+@addmob 6211114 Drum Mole Cricket
+@addmob 6211115 Drum Mole Cricket
+@addmob 6211116 Yoy Mole Cricket
+@addmob 6211117 Yoy Mole Cricket
+@addmob 6211118 Yoy Mole Cricket
+@addmob 6211119 Armored Mole Cricket
+@addmob 6211120 Armored Mole Cricket
+@addmob 6211121 Armored Mole Cricket
+@addmob 6211122 Bulldozer Mole Cricket
+@addmob 6211123 Bulldozer Mole Cricket
+@addmob 6211124 Bulldozer Mole Cricket
+@addmob 6211125 Great Mole Cricket
+@addmob 6211126 Great Mole Cricket
+@addmob 6211127 Great Mole Cricket
+@addmob 6211128 Champ Mole Cricket
+@addmob 6211129 Champ Mole Cricket
+@addmob 6211130 Champ Mole Cricket
+@addmob 6211131 Metal Mole Cricket
+@addmob 6211132 Metal Mole Cricket
+@addmob 6211133 Metal Mole Cricket
+@addmob 6211134 Mole Cricket Ranger
+@addmob 6211135 Mole Cricket Ranger
+@addmob 6211136 Mole Cricket Ranger
+@addmob 6211137 Wandering Mole Cricket
+@addmob 6211138 Wandering Mole Cricket
+@addmob 6211139 Wandering Mole Cricket
+@addmob 6211140 Fierce Bristol Mole Cricket
+@addmob 6211143 Bristol Mole Cricket
+@addmob 6211146 Maen Mole Cricket
+@addmob 6211201 Tyrant Mole Cricket
+@addmob 6211204 King Mole Cricket
+@addmob 6211205 King Mole Cricket
+@addmob 6211206 King Mole Cricket
+@addmob 6211207 Unfinished Mecha Mole Cricket
+@addmob 6211208 Unfinished Mecha Mole Cricket
+@addmob 6211209 Unfinished Mecha Mole Cricket
+@addmob 6211210 Uncompleted Mecha Mole Cricket
+@addmob 6211211 Uncompleted Mecha Mole Cricket
+@addmob 6211212 Uncompleted Mecha Mole Cricket
+@addmob 6211213 Renovated Mecha Mole Cricket
+@addmob 6211214 Renovated Mecha Mole Cricket
+@addmob 6211215 Renovated Mecha Mole Cricket
+@addmob 6211216 Chaos Mole Cricket
+@addmob 6211217 Chaos Mole Cricket
+@addmob 6211218 Chaos Mole Cricket
+@addmob 6211219 Grip Bristol Mole Cricket
+@addmob 6211222 Heavy Kung Bug
+@addmob 6212101 Big Horn Mole Cricket
+@addmob 6212102 Big Horn Mole Cricket
+@addmob 6212103 Big Horn Mole Cricket
+@addmob 6212104 Weird Mole Cricket
+@addmob 6212107 Emperor Mole Cricket
+@addmob 6212108 Emperor Mole Cricket
+@addmob 6212109 Emperor Mole Cricket
+@addmob 6212110 Drameulan 
+@addmob 6212111 Drameulan 
+@addmob 6212112 Drameulan 
+@addmob 6212113 Steam Mole Cricket
+@addmob 6212114 Steam Mole Cricket
+@addmob 6212115 Steam Mole Cricket
+@addmob 6212116 Star Mole Cricket
+@addmob 6212117 Star Mole Cricket
+@addmob 6212118 Star Mole Cricket
+@addmob 6212119 Waterway Mole Cricket
+@addmob 6212120 Waterway Mole Cricket
+@addmob 6212121 Waterway Mole Cricket
+@addmob 6212122 Lost Drameulan
+@addmob 6212123 Lost Drameulan
+@addmob 6212124 Lost Drameulan
+@addmob 6212125 Crater Mole Cricket 
+@addmob 6212126 Crater Mole Cricket 
+@addmob 6212127 Crater Mole Cricket 
+@addmob 6212128 Plated Mole Cricket
+@addmob 6212129 Plated Mole Cricket
+@addmob 6212130 Plated Mole Cricket
+@addmob 6212131 Tank Mole Cricket
+@addmob 6212132 Tank Mole Cricket
+@addmob 6212133 Tank Mole Cricket
+@addmob 6212134 Monster Insect
+@addmob 6212135 Monster Insect
+@addmob 6212136 Monster Insect
+@addmob 6212137 Sampling Mole Cricket
+@addmob 6212138 Sampling Mole Cricket
+@addmob 6212139 Sampling Mole Cricket
+@addmob 6212140 Renovated Mole Cricket
+@addmob 6212141 Renovated Mole Cricket
+@addmob 6212142 Renovated Mole Cricket
+@addmob 6212143 Renovated Mole Cricket
+@addmob 6212144 Renovated Mole Cricket
+@addmob 6212145 Renovated Mole Cricket
+@addmob 6212146 Dark Iron-Armored Mole Cricket
+@addmob 6212147 Dark Iron-Armored Mole Cricket
+@addmob 6212148 Dark Iron-Armored Mole Cricket
+@addmob 6212149 Cast Iron Mole Cricket
+@addmob 6212150 Cast Iron Mole Cricket
+@addmob 6212151 Cast Iron Mole Cricket
+@addmob 6212152 Galburi Mole Cricket
+@addmob 6212155 Mushroom Mole Cricket
+@addmob 6212158 Gulp Mole Cricket
+@addmob 6212159 East Bristol Mole Cricket
+@addmob 6212204 Hercules Beetle
+@addmob 6212205 Hercules Beetle
+@addmob 6212206 Hercules Beetle
+@addmob 6212207 Guard Mold Cricket
+@addmob 6212208 Guard Mold Cricket
+@addmob 6212209 Guard Mold Cricket
+@addmob 6212210 Excited Mold Cricket
+@addmob 6212211 Excited Mold Cricket
+@addmob 6212212 Excited Mold Cricket
+@addmob 6213101 Ground Kang Kang
+@addmob 6213104 Bristol Monster King
+@addmob 6213107 Bristol Monster King
+@addmob 6213204 Undead Mole Cricket
+@addmob 6213205 Undead Mole Cricket
+@addmob 6213206 Undead Mole Cricket
+@addmob 6411101 Colonel Due
+@addmob 6411102 Colonel Due
+@addmob 6411103 Colonel Due
+@addmob 6411104 RP Laundry Unit
+@addmob 6411105 RP Laundry Unit
+@addmob 6411106 RP Laundry Unit
+@addmob 6411107 Airborne Troop Wallus
+@addmob 6411108 Airborne Troop Wallus
+@addmob 6411109 Airborne Troop Wallus
+@addmob 6411110 Infantry Wallus
+@addmob 6411111 Infantry Wallus
+@addmob 6411112 Infantry Wallus
+@addmob 6412101 Deserter Wallus
+@addmob 6412102 Deserter Wallus
+@addmob 6412103 Deserter Wallus
+@addmob 6412104 Angry Deserter Wallus
+@addmob 6412105 Angry Deserter Wallus
+@addmob 6412106 Angry Deserter Wallus 
+@addmob 6412107 Navy Wallus Remnant
+@addmob 6412108 Navy Wallus Remnant
+@addmob 6412109 Navy Wallus Remnant
+@addmob 6412110 Navy Wallus Remnant
+@addmob 6412111 Navy Wallus Remnant
+@addmob 6412112 Navy Wallus Remnant
+@addmob 6412113 Advanced Party Wallus 
+@addmob 6412114 Advanced Party Wallus 
+@addmob 6412115 Advanced Party Wallus
+@addmob 6412116 Chemical Processing Soldier
+@addmob 6412117 Chemical Processing Soldier
+@addmob 6412118 Chemical Processing Soldier
+@addmob 6412119 Red Pants Hijacking Soldier
+@addmob 6412120 Red Pants Hijacking Soldier
+@addmob 6412121 Red Pants Hijacking Soldier
+@addmob 6412122 Wallus Sentry
+@addmob 6412123 Wallus Sentry
+@addmob 6412124 Wallus Sentry
+@addmob 6412125 Army Wallus Sentry Remnant
+@addmob 6412126 Army Wallus Sentry Remnant
+@addmob 6412127 Army Wallus Sentry Remnant
+@addmob 6412131 Wallus Cleaning Duty Soldier
+@addmob 6412132 Wallus Cleaning Duty Soldier
+@addmob 6412133 Wallus Cleaning Duty Soldier
+@addmob 6412134 Wallus Soldier for Experiment
+@addmob 6412135 Wallus Soldier for Experiment
+@addmob 6412136 Wallus Soldier for Experiment
+@addmob 6412201 Royal Guard Wallus
+@addmob 6412202 Royal Guard Wallus
+@addmob 6412203 Royal Guard Wallus
+@addmob 6412204 Angry Royal Guard Wallus
+@addmob 6412205 Angry Royal Guard Wallus
+@addmob 6412206 Angry Royal Guard Wallus
+@addmob 6412207 Armageddon Unit Wallus
+@addmob 6412208 Armageddon Unit Wallus
+@addmob 6412209 Armageddon Unit Wallus
+@addmob 6412210 Wallus Pirate
+@addmob 6412211 Wallus Pirate
+@addmob 6412212 Wallus Pirate
+@addmob 6412213 Budokai Fighter
+@addmob 6412214 Budokai Fighter
+@addmob 6412215 Budokai Fighter
+@addmob 6412216 Middle-Level RP Prisoner
+@addmob 6412219 Derk Plunderer Chief 
+@addmob 6412220 Derk Plunderer Chief 
+@addmob 6412221 Derk Plunderer Chief 
+@addmob 6412401 Red Pants Fishing Champion 
+@addmob 6412402 Red Pants Fishing Champion 
+@addmob 6412403 Red Pants Fishing Champion 
+@addmob 6413101 Adieu Assassin
+@addmob 6413102 Adieu Assassin
+@addmob 6413103 Adieu Assassin
+@addmob 6413107 Gooris Buffalo Watchman
+@addmob 6413108 Gooris Buffalo Watchman
+@addmob 6413109 Gooris Buffalo Watchman
+@addmob 6414201 Wallus Pirate Captain
+@addmob 6415101 Hook the Sentry
+@addmob 6415102 Hook the Sentry
+@addmob 6415103 Hook the Sentry
+@addmob 6415104 Duk the Sentry
+@addmob 6415105 Duk the Sentry
+@addmob 6415106 Duk the Sentry
+@addmob 6415107 Special Force
+@addmob 6415108 Special Force
+@addmob 6415109 Special Force
+@addmob 6415110 Wallus Invader 
+@addmob 6415111 Wallus Invader
+@addmob 6415112 Wallus Invader
+@addmob 6415113 Red Pants Gun Trainee
+@addmob 6415114 Red Pants Gun Trainee
+@addmob 6415115 Red Pants Gun Trainee
+@addmob 6415116 Wallus Guerrilla Unit
+@addmob 6415117 Wallus Guerrilla Unit
+@addmob 6415118 Wallus Guerrilla Unit
+@addmob 6415119 Wallus Rifle Unit
+@addmob 6415120 Wallus Rifle Unit
+@addmob 6415121 Wallus Rifle Unit
+@addmob 6415122 Fortress Sniper Wallus
+@addmob 6415123 Fortress Sniper Wallus
+@addmob 6415124 Fortress Sniper Wallus
+@addmob 6415125 Cuspid Rifleman
+@addmob 6415126 Cuspid Rifleman
+@addmob 6415127 Cuspid Rifleman
+@addmob 6415128 Sniper Wallus
+@addmob 6415129 Sniper Wallus
+@addmob 6415130 Sniper Wallus
+@addmob 6415131 Rifleman for Experiment
+@addmob 6415132 Rifleman for Experiment
+@addmob 6415133 Rifleman for Experiment
+@addmob 6415134 Special Force Wallus
+@addmob 6415135 WSpecial Force Wallus
+@addmob 6415136 WSpecial Force Wallus
+@addmob 6415137 Guriguri First Rifleman
+@addmob 6415140 Underground Base Defender
+@addmob 6415141 Underground Base Defender
+@addmob 6415142 Underground Base Defender
+@addmob 6582101 Pilaf Stone Statue
+@addmob 6582102 Pilaf Stone Statue
+@addmob 6582103 Pilaf Stone Statue
+@addmob 6582104 Pilaf Stone Statue
+@addmob 6582105 Pilaf Stone Statue
+@addmob 6582106 Pilaf Stone Statue
+@addmob 6582107 Archie
+@addmob 6582108 Archie
+@addmob 6582109 Archie
+@addmob 6582110 Archie
+@addmob 6582111 Archie
+@addmob 6582112 Archie
+@addmob 6611101 Bear Soldier
+@addmob 6611102 Bear Soldier
+@addmob 6611103 Bear Soldier
+@addmob 6611104 Aggravated Bear Soldier
+@addmob 6611105 Aggravated Bear Soldier
+@addmob 6611106 Aggravated Bear Soldier
+@addmob 6611107 Bear Guerrilla Unit
+@addmob 6611108 Bear Guerrilla Unit
+@addmob 6611109 Bear Guerrilla Unit
+@addmob 6611110 Teddy Supply Unit
+@addmob 6611111 Teddy Supply Unit
+@addmob 6611112 Teddy Supply Unit
+@addmob 6611113 Bear Instructor
+@addmob 6611114 Bear Instructor
+@addmob 6611115 Bear Instructor
+@addmob 6611116 Bird Thief Bear
+@addmob 6611117 Bird Thief Bear
+@addmob 6611118 Bird Thief Bear
+@addmob 6611119 Teddy Supervising Officer
+@addmob 6611120 Teddy Supervising Officer
+@addmob 6611121 Teddy Supervising Officer
+@addmob 6611122 Big Bear Sentry
+@addmob 6611123 Big Bear Sentry
+@addmob 6611124 Big Bear Sentry
+@addmob 6611201 Defeated Bear Soldier
+@addmob 6611202 Defeated Bear Soldier
+@addmob 6611203 Defeated Bear Soldier
+@addmob 6611204 Bear Soldier Guerrilla
+@addmob 6611205 Bear Soldier Guerrilla
+@addmob 6611206 Bear Soldier Guerrilla
+@addmob 6611207 Gila J
+@addmob 6611208 Gila J
+@addmob 6611209 Gila J
+@addmob 6611210 Bear Slave Soldier
+@addmob 6611211 Bear Slave Soldier
+@addmob 6611212 Bear Slave Soldier
+@addmob 6611213 Campbell
+@addmob 6611214 Campbell
+@addmob 6611215 Campbell
+@addmob 6611216 Teddy Timbering Unit
+@addmob 6611217 Teddy Timbering Unit
+@addmob 6611218 Teddy Timbering Unit
+@addmob 6611219 New Action Actor
+@addmob 6611220 New Action Actor
+@addmob 6611221 New Action Actor
+@addmob 6611222 Bear Sentry
+@addmob 6611223 Bear Sentry
+@addmob 6611224 Bear Sentry
+@addmob 6611228 Helmet Supply Manager
+@addmob 6611229 Helmet Supply Manager
+@addmob 6611230 Helmet Supply Manager
+@addmob 6611231 Helmet Supply Supervisor
+@addmob 6611232 Helmet Supply Supervisor
+@addmob 6611233 Helmet Supply Supervisor
+@addmob 6611301 Billboard Scribbling Gang
+@addmob 6611302 Billboard Scribbling Gang
+@addmob 6611303 Billboard Scribbling Gang
+@addmob 6611401 Billboard Scribbling Leader
+@addmob 6611402 Billboard Scribbling Leader
+@addmob 6611403 Billboard Scribbling Leader
+@addmob 6611501 Wandering Worker
+@addmob 6611502 Wandering Worker
+@addmob 6611503 Wandering Worker
+@addmob 6612101 Panda Royal Guard
+@addmob 6612102 Panda Royal Guard
+@addmob 6612103 Panda Royal Guard
+@addmob 6612104 General Flower
+@addmob 6612105 General Flower
+@addmob 6612106 General Flower
+@addmob 6612107 Panda Armageddon Unit
+@addmob 6612108 Panda Armageddon Unit
+@addmob 6612109 Panda Armageddon Unit
+@addmob 6612110 Remained Army of Panda
+@addmob 6612111 Remained Army of Panda
+@addmob 6612112 Remained Army of Panda
+@addmob 6612113 Panda Grave Robber 
+@addmob 6612114 Panda Grave Robber 
+@addmob 6612115 Panda Grave Robber 
+@addmob 6612116 Panda Special Force
+@addmob 6612117 Panda Special Force
+@addmob 6612118 Panda Special Force
+@addmob 6612119 General Shenmaong
+@addmob 6612120 General Shenmaong
+@addmob 6612121 General Shenmaong
+@addmob 6612122 Panda Thief 
+@addmob 6612123 Panda Thief 
+@addmob 6612124 Panda Thief 
+@addmob 6612125 Hungry Cleaning Soldier
+@addmob 6612126 Hungry Cleaning Soldier
+@addmob 6612127 Hungry Cleaning Soldier
+@addmob 6612128 Chief of Signal Unit
+@addmob 6612129 Chief of Signal Unit
+@addmob 6612130 Chief of Signal Unit
+@addmob 6612201 Panda Hot-Wind Unit
+@addmob 6612202 Panda Hot-Wind Unit
+@addmob 6612203 Panda Hot-Wind Unit
+@addmob 6612204 Panda Plunderer
+@addmob 6612205 Panda Plunderer
+@addmob 6612206 Panda Plunderer
+@addmob 6612207 Panda Shock Trooper
+@addmob 6612208 Panda Shock Trooper
+@addmob 6612209 Panda Shock Trooper
+@addmob 6612210 Panda Deserter
+@addmob 6612211 Panda Deserter
+@addmob 6612212 Panda Deserter
+@addmob 6612213 Panda Wolf Tamer 
+@addmob 6612214 Panda Wolf Tamer 
+@addmob 6612215 Panda Wolf Tamer 
+@addmob 6612216 Panda Avian Tamer
+@addmob 6612217 Panda Avian Tamer
+@addmob 6612218 Panda Avian Tamer
+@addmob 6612219 Smell's Bodyguard 
+@addmob 6612220 Smell's Bodyguard
+@addmob 6612221 Smell's Bodyguard
+@addmob 6612222 General's Royal Guard
+@addmob 6612223 General's Royal Guard
+@addmob 6612224 General's Royal Guard
+@addmob 6612225 General Stripe
+@addmob 6612226 General Stripe
+@addmob 6612227 General Stripe
+@addmob 6612228 General Polka
+@addmob 6612229 General Polka
+@addmob 6612230 General Polka
+@addmob 6612231 Field Artillery Transporter
+@addmob 6612232 Field Artillery Transporter
+@addmob 6612233 Field Artillery Transporter
+@addmob 6612237 Panda Invader Team Leader
+@addmob 6612238 Panda Invader Team Leader
+@addmob 6612239 Panda Invader Team Leader
+@addmob 6612240 Panda Wolf Special Force
+@addmob 6612241 Panda Wolf Special Force
+@addmob 6612242 Panda Wolf Special Force
+@addmob 6613101 North Pole Raider
+@addmob 6613102 North Pole Raider
+@addmob 6613103 North Pole Raider
+@addmob 6613104 Sergeant North Pole Raider
+@addmob 6613105 Sergeant North Pole Raider
+@addmob 6613106 Sergeant North Pole Raider
+@addmob 6613107 North Pole Commander
+@addmob 6613108 North Pole Commander
+@addmob 6613109 North Pole Commander
+@addmob 6613201 North Pole Soldier
+@addmob 6613202 North Pole Soldier
+@addmob 6613203 North Pole Soldier
+@addmob 6613204 Sergeant North Pole Soldier
+@addmob 6613205 Sergeant North Pole Soldier
+@addmob 6613206 Sergeant North Pole Soldier
+@addmob 6613207 Bear Worker
+@addmob 6613208 Bear Worker
+@addmob 6613209 Bear Worker
+@addmob 6613210 North Pole Soldier Sample
+@addmob 6613211 North Pole Soldier Sample
+@addmob 6613212 North Pole Soldier Sample
+@addmob 6613213 Deserted Red Pants Prisoner
+@addmob 6613216 Classic Teddy Strike Force
+@addmob 6613217 Classic Teddy Strike Force
+@addmob 6613218 Classic Teddy Strike Force
+@addmob 6613219 Sergeant White Bear
+@addmob 6613220 Sergeant White Bear
+@addmob 6613221 Sergeant White Bear
+@addmob 6613301 North Pole Junior Soldier
+@addmob 6613302 North Pole Junior Soldier
+@addmob 6613303 North Pole Junior Soldier
+@addmob 6613304 North Pole Senior Soldier
+@addmob 6613305 North Pole Senior Soldier
+@addmob 6613306 North Pole Senior Soldier
+@addmob 6613307 White Bearman
+@addmob 6613308 White Bearman
+@addmob 6613309 White Bearman
+@addmob 6613310 North Pole Deserter
+@addmob 6613311 North Pole Deserter
+@addmob 6613312 North Pole Deserter
+@addmob 6613313 Defeated North Pole Remnant
+@addmob 6613314 Defeated North Pole Remnant
+@addmob 6613315 Defeated North Pole Remnant
+@addmob 6613316 White Bear
+@addmob 6613317 White Bear
+@addmob 6613318 White Bear
+@addmob 6613319 North Pole Worker
+@addmob 6613320 North Pole Worker
+@addmob 6613321 North Pole Worker
+@addmob 6613322 Sweeping Bossman
+@addmob 6613323 Sweeping Bossman
+@addmob 6613324 Sweeping Bossman
+@addmob 6613401 Forced Worker
+@addmob 6614104 Mr. Panda
+@addmob 6614105 Mr. Panda
+@addmob 6614106 Mr. Panda
+@addmob 6614107 Panda Thief Leader
+@addmob 6616101 Supply Soldier Lynn
+@addmob 6616102 Supply Soldier Lynn
+@addmob 6616103 Supply Soldier Lynn
+@addmob 6616104 Bazookaman
+@addmob 6616105 Bazookaman
+@addmob 6616106 Bazookaman
+@addmob 6616107 Bazookaman
+@addmob 6616108 Bazookaman
+@addmob 6616109 Bazookaman
+@addmob 6616110 Guriguri Bazookaman
+@addmob 6617101 Mushroom Gang Fighter
+@addmob 6617104 Mushroom Gang Bully
+@addmob 6617107 Mushroom Gang Worker
+@addmob 6631201 Devil Dragon
+@addmob 6631202 Devil Dragon
+@addmob 6631203 Devil Dragon
+@addmob 6631204 Creature of Evil
+@addmob 6631205 Creature of Evil
+@addmob 6631206 Creature of Evil
+@addmob 6631207 Narak Devil Dragon
+@addmob 6651201 Devil Dragon Leader
+@addmob 6651202 Devil Dragon Leader
+@addmob 6651203 Devil Dragon Leader
+@addmob 6651204 Evil Creature Leader
+@addmob 6651205 Evil Creature Leader
+@addmob 6651206 Evil Creature Leader
+@addmob 6651207 Training-Purpose Devil Dragon
+@addmob 6651208 Training-Purpose Devil Dragon
+@addmob 6651209 Training-Purpose Devil Dragon
+@addmob 6651210 Narak Devil Dragon
+@addmob 6671101 Giant Insect-Eating Plant
+@addmob 6671102 Giant Insect-Eating Plant
+@addmob 6671103 Giant Insect-Eating Plant
+@addmob 6681101 Berserk Buu
+@addmob 6681102 Berserk Buu
+@addmob 6681103 Berserk Buu
+@addmob 6681104 Berserk Buu #3
+@addmob 6681105 Berserk Buu #3
+@addmob 6681106 Berserk Buu #3
+@addmob 6681107 Berserk Buu #2
+@addmob 6681108 Berserk Buu #2
+@addmob 6681109 Berserk Buu #2
+@addmob 6681110 Berserk Buu #1
+@addmob 6681111 Berserk Buu #1
+@addmob 6681112 Berserk Buu #1
+@addmob 6681113 Berserk Buu #4
+@addmob 6681114 Berserk Buu #4
+@addmob 6681115 Berserk Buu #4
+@addmob 6681201 Evil of Inside
+@addmob 6681202 Evil of Inside
+@addmob 6681203 Evil of Inside
+@addmob 6681301 Berserk Buu #4
+@addmob 6681302 Berserk Buu #4
+@addmob 6681303 Berserk Buu #4
+@addmob 6692101 Harutz
+@addmob 6692102 Harutz
+@addmob 6692103 Harutz
+@addmob 6692104 Harutz
+@addmob 6692105 Harutz
+@addmob 6692106 Harutz
+@addmob 6751101 Remodeled Pilaf Machine
+@addmob 6751102 Remodeled Pilaf Machine
+@addmob 6751103 Remodeled Pilaf Machine
+@addmob 6751104 Furious Fixing Machine
+@addmob 6751107 Remodeled Pilaf Machine
+@addmob 6751201 Weapon Master Robot
+@addmob 6751202 Weapon Master Robot
+@addmob 6751203 Weapon Master Robot
+@addmob 6751204 Dispatched Supervising Robot
+@addmob 6752101 Broken Remodeled Pilaf Machine
+@addmob 6752102 Broken Remodeled Pilaf Machine
+@addmob 6752103 Broken Remodeled Pilaf Machine
+@addmob 6752104 Guardian Pilaf Machine
+@addmob 6752107 Guardian Pilaf Machine
+@addmob 6781101 Traiak
+@addmob 6781104 Osoro Flying Dinosaur
+@addmob 6811101 Child Saibaman
+@addmob 6811102 Child Saibaman
+@addmob 6811103 Child Saibaman
+@addmob 6811104 Ax Child Saibaman
+@addmob 6811105 Ax Child Saibaman
+@addmob 6811106 Ax Child Saibaman
+@addmob 6811119 Small Juicy Saibaman
+@addmob 6811120 Small Juicy Saibaman
+@addmob 6811121 Small Juicy Saibaman
+@addmob 6811122 Giant Child Saibaman
+@addmob 6811123 Giant Child Saibaman
+@addmob 6811124 Giant Child Saibaman
+@addmob 6811125 Sweet Scent Saibaman
+@addmob 6811126 Sweet Scent Saibaman
+@addmob 6811127 Sweet Scent Saibaman
+@addmob 6811128 Original Saibaman
+@addmob 6811129 Original Saibaman
+@addmob 6811130 Original Saibaman
+@addmob 6811131 Just-Born Saibaman
+@addmob 6811132 Just-Born Saibaman
+@addmob 6811133 Just-Born Saibaman
+@addmob 6811134 Infant Saibaman
+@addmob 6811135 Infant Saibaman
+@addmob 6811136 Infant Saibaman
+@addmob 6811137 Toddling Saibaman
+@addmob 6811138 Toddling Saibaman
+@addmob 6811139 Toddling Saibaman
+@addmob 6811140 Herb Scent Saibaman
+@addmob 6811141 Herb Scent Saibaman
+@addmob 6811142 Herb Scent Saibaman
+@addmob 6811143 Insect-Eating Saibaman
+@addmob 6811144 Insect-Eating Saibaman
+@addmob 6811145 Insect-Eating Saibaman
+@addmob 6811146 Gas Special Force Saibaman
+@addmob 6811149 Mini Saibaman
+@addmob 6811152 Mini Special Force Saibaman
+@addmob 6811155 Mini Saibaman
+@addmob 6811201 Huge Child Saibaman
+@addmob 6811202 Huge Child Saibaman
+@addmob 6811203 Huge Child Saibaman
+@addmob 6811204 Shadow Child Saibaman
+@addmob 6811205 Shadow Child Saibaman
+@addmob 6811206 Shadow Child Saibaman
+@addmob 6811207 Advanced Original Saibaman
+@addmob 6811208 Advanced Original Saibaman
+@addmob 6811209 Advanced Original Saibaman
+@addmob 6811210 Shady Child Saibaman
+@addmob 6811211 Shady Child Saibaman
+@addmob 6811212 Shady Child Saibaman
+@addmob 6811213 Brainwashed Explosion Saibaman
+@addmob 6811301 Emperor Child Saibaman
+@addmob 6811302 Emperor Child Saibaman
+@addmob 6811303 Emperor Child Saibaman
+@addmob 6811304 Snow Child Saibaman
+@addmob 6811305 Snow Child Saibaman
+@addmob 6811306 Snow Child Saibaman
+@addmob 6811307 Ice Child Saibaman
+@addmob 6811308 Ice Child Saibaman
+@addmob 6811309 Ice Child Saibaman
+@addmob 6811310 Doping Child Saibaman
+@addmob 6811311 Doping Child Saibaman
+@addmob 6811312 Doping Child Saibaman
+@addmob 6811313 Poisonous Child Saibaman
+@addmob 6811314 Poisonous Child Saibaman
+@addmob 6811315 Poisonous Child Saibaman
+@addmob 6811316 Huge Child Saibaman
+@addmob 6811317 Huge Child Saibaman
+@addmob 6811318 Huge Child Saibaman
+@addmob 6811319 Emperor Saibaman
+@addmob 6811320 Emperor Saibaman
+@addmob 6811321 Emperor Saibaman
+@addmob 6811322 Salt Crystal Saibaman
+@addmob 6811323 Salt Crystal Saibaman
+@addmob 6811324 Salt Crystal Saibaman
+@addmob 6811325 Bread Saibaman
+@addmob 6811328 Huge Child Saibaman
+@addmob 6812101 Tiger Saibaman
+@addmob 6812102 Tiger Saibaman
+@addmob 6812103 Tiger Saibaman
+@addmob 6813104 Vally Rock Saibaman
+@addmob 6813107 Tangtang Ball Saibaman
+@addmob 6813108 Tangtang Ball Saibaman
+@addmob 6813109 Tangtang Ball Saibaman
+@addmob 6813110 Tantan Ball Saibaman
+@addmob 6813111 Tantan Ball Saibaman
+@addmob 6813112 Tantan Ball Saibaman
+@addmob 6813113 Tangtang Rock Saibaman
+@addmob 6813114 Tangtang Rock Saibaman
+@addmob 6813115 Tangtang Rock Saibaman
+@addmob 6813116 Tangtang Crag Saibaman
+@addmob 6813117 Tangtang Crag Saibaman
+@addmob 6813118 Tangtang Crag Saibaman
+@addmob 6816110 Dark Child Saibaman
+@addmob 6816111 Dark Child Saibaman
+@addmob 6816112 Dark Child Saibaman
+@addmob 6818101 Brainwashed Child Saibaman
+@addmob 6818102 Brainwashed Child Saibaman
+@addmob 6818103 Brainwashed Child Saibaman
+@addmob 6818104 Brainwashed Child Saibaman
+@addmob 6818105 Brainwashed Child Saibaman
+@addmob 6818106 Brainwashed Child Saibaman
+@addmob 6818107 Brainwashed Child Saibaman
+@addmob 6818108 Brainwashed Child Saibaman
+@addmob 6818109 Brainwashed Child Saibaman
+@addmob 6818110 Brainwashed Huge Child Saibaman
+@addmob 6818111 Brainwashed Huge Child Saibaman
+@addmob 6818112 Brainwashed Huge Child Saibaman
+@addmob 6818113 Brainwashed Child Saibaman
+@addmob 6818114 Brainwashed Child Saibaman
+@addmob 6818115 Brainwashed Child Saibaman
+@addmob 6818116 Brainwashed Child Saibaman
+@addmob 6818117 Brainwashed Child Saibaman
+@addmob 6818118 Brainwashed Child Saibaman
+@addmob 6818119 Brainwashed Child Saibaman
+@addmob 6818120 Brainwashed Child Saibaman
+@addmob 6818121 Brainwashed Child Saibaman
+@addmob 6881101 Queen Saktugi 
+@addmob 6881104 Queen Saktugi 
+@addmob 6911101 Brainwashed Cui
+@addmob 6911102 Brainwashed Cui
+@addmob 6911103 Brainwashed Cui
+@addmob 6911104 Brainwashed Cui
+@addmob 6911105 Brainwashed Cui
+@addmob 6911106 Brainwashed Cui
+@addmob 7 Devil Type
+@addmob 7011101 Raditz
+@addmob 7011102 Raditz
+@addmob 7011103 Raditz
+@addmob 7011104 Raditz
+@addmob 7011105 Raditz
+@addmob 7011106 Raditz
+@addmob 7011107 Raditz
+@addmob 7011108 Raditz
+@addmob 7011109 Raditz
+@addmob 7011110 Raditz
+@addmob 7111101 Reginean
+@addmob 7111102 Reginean
+@addmob 7111103 Reginean
+@addmob 7111104 Special Reginean
+@addmob 7111105 Special Reginean
+@addmob 7111106 Special Reginean
+@addmob 7111107 Suspicious Alien
+@addmob 7111108 Suspicious Alien
+@addmob 7111109 Suspicious Alien
+@addmob 7111110 Reginean Occupation Force
+@addmob 7111111 Reginean Occupation Force
+@addmob 7111112 Reginean Occupation Force
+@addmob 7111113 Frieza's Army Signalman
+@addmob 7111114 Frieza's Army Signalman
+@addmob 7111115 Frieza's Army Signalman
+@addmob 7111116 Reginean Bomber
+@addmob 7111117 Reginean Bomber
+@addmob 7111118 Reginean Bomber
+@addmob 7111119 Field Clinic Guard
+@addmob 7111122 Reginean Defense Unit
+@addmob 7111123 Reginean Defense Unit
+@addmob 7111124 Reginean Defense Unit
+@addmob 7111125 Reginean Supply Unit
+@addmob 7111126 Reginean Supply Unit
+@addmob 7111127 Reginean Supply Unit
+@addmob 7111128 Reginean Intelligence Corps
+@addmob 7111129 Reginean Intelligence Corps
+@addmob 7111130 Reginean Intelligence Corps
+@addmob 7111131 Barbarian Raider
+@addmob 7111132 Barbarian Raider
+@addmob 7111133 Barbarian Raider
+@addmob 7111134 Stolen Property Manager
+@addmob 7111137 Instructor soldier
+@addmob 7111140 Graham Minister
+@addmob 7111201 Elite Reginean
+@addmob 7111202 Elite Reginean
+@addmob 7111203 Elite Reginean
+@addmob 7111204 Special Elite Reginean
+@addmob 7111205 Special Elite Reginean
+@addmob 7111206 Special Elite Reginean
+@addmob 7111207 Surveillance Soldier
+@addmob 7111208 Surveillance Soldier
+@addmob 7111209 Surveillance Soldier
+@addmob 7111210 Reginean Veteran
+@addmob 7111211 Reginean Veteran
+@addmob 7111212 Reginean Veteran
+@addmob 7111213 Captain Sailadeba
+@addmob 7111214 Captain Sailadeba
+@addmob 7111215 Captain Sailadeba
+@addmob 7111216 Reginean Invading Unit
+@addmob 7111219 Reginean Garbage Watchman
+@addmob 7111222 Barbarian Infantryman
+@addmob 7111223 Barbarian Infantryman
+@addmob 7111224 Barbarian Infantryman
+@addmob 7111225 Barbarian Watchman
+@addmob 7111226 Barbarian Watchman
+@addmob 7111227 Barbarian Watchman
+@addmob 7111228 Retired Old Soldier
+@addmob 7111231 Barbario Infantryman
+@addmob 7111301 Reginean Scout
+@addmob 7111302 Reginean Scout
+@addmob 7111303 Reginean Scout
+@addmob 7111304 Reginean Special Scout
+@addmob 7111305 Reginean Special Scout
+@addmob 7111306 Reginean Special Scout
+@addmob 7111310 Brainwashed Kiri Collector
+@addmob 7111311 Brainwashed Kiri Collector
+@addmob 7111312 Brainwashed Kiri Collector
+@addmob 7111313 Field Clinic Manager
+@addmob 7111319 Kankan Watchman
+@addmob 7111322 Wandering Frieza's Invader
+@addmob 7111325 Reginean Gunman
+@addmob 7111401 Reginean Soldier
+@addmob 7111402 Reginean Soldier
+@addmob 7111403 Reginean Soldier
+@addmob 7111404 Reginean Soldier Elite
+@addmob 7111405 Reginean Soldier Elite
+@addmob 7111406 Reginean Soldier Elite
+@addmob 7111407 Reginean Soldier
+@addmob 7111408 Reginean Soldier
+@addmob 7111409 Reginean Soldier
+@addmob 7111410 Reginean Soldier Elite
+@addmob 7111411 Reginean Soldier Elite
+@addmob 7111412 Reginean Soldier Elite
+@addmob 7111413 Reginean Soldier
+@addmob 7111414 Reginean Soldier
+@addmob 7111415 Reginean Soldier
+@addmob 7111416 Reginean Soldier
+@addmob 7111417 Reginean Soldier
+@addmob 7111418 Reginean Soldier
+@addmob 7111419 Reginean Soldier Elite
+@addmob 7111420 Reginean Soldier Elite
+@addmob 7111421 Reginean Soldier Elite
+@addmob 7111422 Reginean Soldier Elite
+@addmob 7111423 Reginean Soldier Elite
+@addmob 7111424 Reginean Soldier Elite
+@addmob 7111425 Reginean Wild Beast Tamer
+@addmob 7111426 Reginean Wild Beast Tamer
+@addmob 7111427 Reginean Wild Beast Tamer
+@addmob 7111428 Reginean Wild Beast Tamer
+@addmob 7111429 Reginean Wild Beast Tamer
+@addmob 7111430 Reginean Wild Beast Tamer
+@addmob 7111431 Reginean Wild Beast Tamer Elite
+@addmob 7111432 Reginean Wild Beast Tamer Elite
+@addmob 7111433 Reginean Wild Beast Tamer Elite
+@addmob 7111434 Reginean Wild Beast Tamer Elite
+@addmob 7111435 Reginean Wild Beast Tamer Elite
+@addmob 7111436 Reginean Wild Beast Tamer Elite
+@addmob 7111437 Reginean Soldier
+@addmob 7111438 Reginean Soldier
+@addmob 7111439 Reginean Soldier
+@addmob 7111440 Reginean Soldier
+@addmob 7111441 Reginean Soldier
+@addmob 7111442 Reginean Soldier
+@addmob 7111443 Reginean Soldier Elite
+@addmob 7111444 Reginean Soldier Elite
+@addmob 7111445 Reginean Soldier Elite
+@addmob 7111446 Reginean Soldier Elite
+@addmob 7111447 Reginean Soldier Elite
+@addmob 7111448 Reginean Soldier Elite
+@addmob 7111449 Brainwashed Reginean Inteligence Corps
+@addmob 7111450 Brainwashed Reginean Inteligence Corps
+@addmob 7111451 Brainwashed Reginean Inteligence Corps
+@addmob 7111452 Brainwashed Reginean Watchman
+@addmob 7111455 Brainwashed Reginean Soldier
+@addmob 7111456 Brainwashed Reginean Soldier
+@addmob 7111457 Brainwashed Reginean Soldier
+@addmob 7111458 Brainwashed Reginean Troopie
+@addmob 7111459 Brainwashed Reginean Troopie
+@addmob 7111460 Brainwashed Reginean Troopie
+@addmob 7111461 Brainwashed Reginean Occupation Force
+@addmob 7111462 Brainwashed Reginean Occupation Force
+@addmob 7111463 Brainwashed Reginean Occupation Force
+@addmob 7111464 Reginean Soldier
+@addmob 7111465 Reginean Soldier
+@addmob 7111466 Reginean Soldier
+@addmob 7111467 Reginean Soldier Elite
+@addmob 7111468 Reginean Soldier Elite
+@addmob 7111469 Reginean Soldier Elite
+@addmob 7111470 Reginean Soldier
+@addmob 7111471 Reginean Soldier
+@addmob 7111472 Reginean Soldier
+@addmob 7111473 Reginean Soldier Elite
+@addmob 7111474 Reginean Soldier Elite
+@addmob 7111475 Reginean Soldier Elite
+@addmob 7111476 Reginean Wild Beast Tamer
+@addmob 7111477 Reginean Wild Beast Tamer
+@addmob 7111478 Reginean Wild Beast Tamer
+@addmob 7111479 Reginean Wild Beast Tamer Elite
+@addmob 7111480 Reginean Wild Beast Tamer Elite
+@addmob 7111481 Reginean Wild Beast Tamer Elite
+@addmob 7111482 Reginean Stalker
+@addmob 7111483 Reginean Stalker
+@addmob 7111484 Reginean Stalker
+@addmob 7111485 Reginean Scavenger
+@addmob 7111486 Reginean Scavenger
+@addmob 7111487 Reginean Scavenger
+@addmob 7111488 Brainwashed Reginean Transportation Unit
+@addmob 7111491 Reginean Wild Beast Tamer
+@addmob 7112101 Tosterian
+@addmob 7112102 Tosterian
+@addmob 7112103 Tosterian
+@addmob 7112104 Awakened Tosterian
+@addmob 7112105 Awakened Tosterian
+@addmob 7112106 Awakened Tosterian
+@addmob 7112107 Varda Commander
+@addmob 7112108 Varda Commander
+@addmob 7112109 Varda Commander
+@addmob 7112110 Tosterian Scouter
+@addmob 7112111 Tosterian Scouter
+@addmob 7112112 Tosterian Scouter
+@addmob 7112113 Brainwashed Bodyguard
+@addmob 7112114 Brainwashed Bodyguard
+@addmob 7112115 Brainwashed Bodyguard
+@addmob 7112116 Tosterian Occupation Force
+@addmob 7112117 Tosterian Occupation Force
+@addmob 7112118 Tosterian Occupation Force
+@addmob 7112119 Tosterian Bomber
+@addmob 7112120 Tosterian Bomber
+@addmob 7112121 Tosterian Bomber
+@addmob 7112122 Injured Tosterian
+@addmob 7112125 Renovated Tosterian Attendant
+@addmob 7112131 Crazy Micsailean
+@addmob 7112140 Computer Operator
+@addmob 7112141 Computer Operator
+@addmob 7112142 Computer Operator
+@addmob 7112143 Tosterian Search Team
+@addmob 7112144 Tosterian Search Team
+@addmob 7112145 Tosterian Search Team
+@addmob 7112146 Tosterian Inspection Team
+@addmob 7112147 Tosterian Inspection Team
+@addmob 7112148 Tosterian Inspection Team
+@addmob 7112149 Tosterian Exploring Unit
+@addmob 7112150 Tosterian Exploring Unit
+@addmob 7112151 Tosterian Exploring Unit
+@addmob 7112152 Picky Team Leader
+@addmob 7112155 Threatening Burglar  
+@addmob 7112158 Graham's Subordinate
+@addmob 7112201 Elite Tosterian
+@addmob 7112202 Elite Tosterian
+@addmob 7112203 Elite Tosterian
+@addmob 7112204 Awakened Elite Tosterian
+@addmob 7112205 Awakened Elite Tosterian
+@addmob 7112206 Awakened Elite Tosterian
+@addmob 7112207 Burglar Unit
+@addmob 7112208 Burglar Unit
+@addmob 7112209 Burglar Unit
+@addmob 7112210 Tosterian Veteran 
+@addmob 7112211 Tosterian Veteran 
+@addmob 7112212 Tosterian Veteran 
+@addmob 7112213 Angry Buonean
+@addmob 7112216 Tosterian Pedy 
+@addmob 7112219 Awakened Tosterian
+@addmob 7112222 Tosterian New Infantryman
+@addmob 7112223 Tosterian New Infantryman
+@addmob 7112224 Tosterian New Infantryman
+@addmob 7112225 Dandy Manager
+@addmob 7112226 Dandy Manager
+@addmob 7112227 Dandy Manager
+@addmob 7112228 Violent Burglar
+@addmob 7112231 Tosterian Rifleman
+@addmob 7112234 Crazy Micsailean
+@addmob 7112301 Tosterian Scout
+@addmob 7112302 Tosterian Scout
+@addmob 7112303 Tosterian Scout
+@addmob 7112304 Awakened Tosterian Scout
+@addmob 7112305 Awakened Tosterian Scout
+@addmob 7112306 Awakened Tosterian Scout
+@addmob 7112307 Demolishing Sinklean
+@addmob 7112310 Tosterian Trash Transporter
+@addmob 7112313 Diseased Tosterian
+@addmob 7112316 Wildish Tosterian
+@addmob 7112319 Treated Buonean
+@addmob 7112325 Tosterian Bomb Remover
+@addmob 7112326 Tosterian Bomb Remover
+@addmob 7112327 Tosterian Bomb Remover
+@addmob 7112328 Tosterian Acting Drill Sergeant
+@addmob 7112329 Tosterian Acting Drill Sergeant
+@addmob 7112330 Tosterian Acting Drill Sergeant
+@addmob 7112331 Quicky Infantryman
+@addmob 7112334 Walgadak Tosterian
+@addmob 7112401 Tosterian Engineer Corps
+@addmob 7112402 Tosterian Engineer Corps
+@addmob 7112403 Tosterian Engineer Corps
+@addmob 7112410 Nuke Land Soldier
+@addmob 7112413 Tosterian Engineer Corps
+@addmob 7112414 Tosterian Engineer Corps
+@addmob 7112415 Tosterian Engineer Corps
+@addmob 7112416 Tosterian Engineer Corps Elite
+@addmob 7112417 Tosterian Engineer Corps Elite
+@addmob 7112418 Tosterian Engineer Corps Elite
+@addmob 7112419 Tosterian Engineer Corps Elite
+@addmob 7112420 Tosterian Engineer Corps Elite
+@addmob 7112421 Tosterian Engineer Corps Elite
+@addmob 7112422 Tosterian Engineer Corps
+@addmob 7112423 Tosterian Engineer Corps
+@addmob 7112424 Tosterian Engineer Corps
+@addmob 7112425 Tosterian Engineer Corps
+@addmob 7112426 Tosterian Engineer Corps
+@addmob 7112427 Tosterian Engineer Corps
+@addmob 7112428 Tosterian Engineer Corps Elite
+@addmob 7112429 Tosterian Engineer Corps Elite
+@addmob 7112430 Tosterian Engineer Corps Elite
+@addmob 7112431 Tosterian Engineer Corps Elite
+@addmob 7112432 Tosterian Engineer Corps Elite
+@addmob 7112433 Tosterian Engineer Corps Elite
+@addmob 7112434 Tosterian Medic
+@addmob 7112435 Tosterian Medic
+@addmob 7112436 Tosterian Medic
+@addmob 7112437 Tosterian Medic
+@addmob 7112438 Tosterian Medic
+@addmob 7112439 Tosterian Medic
+@addmob 7112440 Tosterian Elite Medic
+@addmob 7112441 Tosterian Elite Medic
+@addmob 7112442 Tosterian Elite Medic
+@addmob 7112443 Tosterian Elite Medic
+@addmob 7112444 Tosterian Elite Medic
+@addmob 7112445 Tosterian Elite Medic
+@addmob 7112446 Tosterian Medic
+@addmob 7112447 Tosterian Medic
+@addmob 7112448 Tosterian Medic
+@addmob 7112449 Tosterian Medic
+@addmob 7112450 Tosterian Medic
+@addmob 7112451 Tosterian Medic
+@addmob 7112452 Tosterian Elite Medic
+@addmob 7112453 Tosterian Elite Medic
+@addmob 7112454 Tosterian Elite Medic
+@addmob 7112455 Tosterian Elite Medic
+@addmob 7112456 Tosterian Elite Medic
+@addmob 7112457 Tosterian Elite Medic
+@addmob 7112458 Tosterian Medic
+@addmob 7112459 Tosterian Medic
+@addmob 7112460 Tosterian Medic
+@addmob 7112461 Tosterian Medic
+@addmob 7112462 Tosterian Medic
+@addmob 7112463 Tosterian Medic
+@addmob 7112464 Tosterian Elite Medic
+@addmob 7112465 Tosterian Elite Medic
+@addmob 7112466 Tosterian Elite Medic
+@addmob 7112467 Tosterian Elite Medic
+@addmob 7112468 Tosterian Elite Medic
+@addmob 7112469 Tosterian Elite Medic
+@addmob 7112470 Tosterian Medic
+@addmob 7112471 Tosterian Medic
+@addmob 7112472 Tosterian Medic
+@addmob 7112473 Tosterian Medic
+@addmob 7112474 Tosterian Medic
+@addmob 7112475 Tosterian Medic
+@addmob 7112476 Tosterian Elite Medic
+@addmob 7112477 Tosterian Elite Medic
+@addmob 7112478 Tosterian Elite Medic
+@addmob 7112479 Tosterian Elite Medic
+@addmob 7112480 Tosterian Elite Medic
+@addmob 7112481 Tosterian Elite Medic
+@addmob 7112482 Tosterian Medic
+@addmob 7112483 Tosterian Elite Medic
+@addmob 7112484 Tosterian Elite Medic
+@addmob 7112485 Tosterian Medic
+@addmob 7112488 Tosterian Elite Medic
+@addmob 7112489 Tosterian Elite Medic
+@addmob 7112491 Tosterian Medic
+@addmob 7112494 Devil Monitering Raider
+@addmob 7112501 Brainwashed Chief Inspector
+@addmob 7112502 Brainwashed Chief Inspector
+@addmob 7112503 Brainwashed Chief Inspector
+@addmob 7112504 Brainwashed Kiri Manager
+@addmob 7112507 Devil Strike Force Assistant
+@addmob 7112510 Tosterian Kiri Extractor
+@addmob 7113101 Kettlean
+@addmob 7113102 Kettlean
+@addmob 7113103 Kettlean
+@addmob 7113104 Chief Burglar
+@addmob 7113105 Chief Burglar
+@addmob 7113106 Chief Burglar
+@addmob 7113107 Mira Private
+@addmob 7113108 Mira Private
+@addmob 7113109 Mira Private
+@addmob 7113110 Kettlean Occupation Force
+@addmob 7113111 Kettlean Occupation Force
+@addmob 7113112 Kettlean Occupation Force
+@addmob 7113113 Kettlean Bomber
+@addmob 7113114 Kettlean Bomber
+@addmob 7113115 Kettlean Bomber
+@addmob 7113116 Insect Breeding Android [Old Type]
+@addmob 7113117 Insect Breeding Android [Old Type]
+@addmob 7113118 Insect Breeding Android [Old Type]
+@addmob 7113119 Vice Manager Krecka
+@addmob 7113122 Kettlean Collecting Unit
+@addmob 7113125 Kettlean Research Assistant
+@addmob 7113128 Graham's Subordinate
+@addmob 7113204 Brainwashed Soldier
+@addmob 7113205 Brainwashed Soldier
+@addmob 7113206 Brainwashed Soldier
+@addmob 7113207 Kettlean Battler
+@addmob 7113208 Kettlean Battler
+@addmob 7113209 Kettlean Battler
+@addmob 7113210 Kettlean Warlord
+@addmob 7113211 Kettlean Warlord
+@addmob 7113212 Kettlean Warlord
+@addmob 7113213 Fiery Warrior
+@addmob 7113214 Fiery Warrior
+@addmob 7113215 Fiery Warrior
+@addmob 7113216 Data Management Soldier
+@addmob 7113217 Data Management Soldier
+@addmob 7113218 Data Management Soldier
+@addmob 7113219 Guard Unit Warrior
+@addmob 7113220 Guard Unit Warrior
+@addmob 7113221 Guard Unit Warrior
+@addmob 7113243 Brainwashed Assassin
+@addmob 7113244 Brainwashed Assassin
+@addmob 7113245 Brainwashed Assassin
+@addmob 7113246 Arthritis Fighter
+@addmob 7113247 Arthritis Fighter
+@addmob 7113248 Arthritis Fighter
+@addmob 7113249 Frieza's Army Secret Police
+@addmob 7113252 Kettlean Battler
+@addmob 7113301 Elite Kettlean
+@addmob 7113302 Elite Kettlean
+@addmob 7113303 Elite Kettlean
+@addmob 7113304 Maintenance-Charging Android
+@addmob 7113305 Maintenance-Charging Android
+@addmob 7113306 Maintenance-Charging Android
+@addmob 7113310 Kettlean Ultrawave Manager
+@addmob 7113316 Bulggeun Berserker 
+@addmob 7113317 Bulggeun Berserker
+@addmob 7113318 Bulggeun Berserker
+@addmob 7113319 Sentry of Assistant 
+@addmob 7113320 Sentry of Assistant
+@addmob 7113321 Sentry of Assistant
+@addmob 7113322 Guard Unit Berserker
+@addmob 7113323 Guard Unit Berserker
+@addmob 7113324 Guard Unit Berserker
+@addmob 7113325 Detheka Mine Manager
+@addmob 7113401 Kettlean Scout
+@addmob 7113402 Kettlean Scout
+@addmob 7113403 Kettlean Scout
+@addmob 7113404 White-faced Man
+@addmob 7113405 White-faced Man
+@addmob 7113406 White-faced Man
+@addmob 7113407 Chief Investigator Tei
+@addmob 7113408 Chief Investigator Tei
+@addmob 7113409 Chief Investigator Tei
+@addmob 7113410 Doctor Pastri 
+@addmob 7113413 Kettlean Resource Officer
+@addmob 7113416 Kettlean Resource Officer
+@addmob 7113501 Chief Investigator Tei
+@addmob 7113502 Chief Investigator Tei
+@addmob 7113503 Chief Investigator Tei
+@addmob 7113504 Himbulggeun Worker
+@addmob 7114101 Brainwashed Kettlean Occupation Force
+@addmob 7114102 Brainwashed Kettlean Occupation Force
+@addmob 7114103 Brainwashed Kettlean Occupation Force
+@addmob 7114104 Brainwashed Kettlean Guard Unit
+@addmob 7114105 Brainwashed Kettlean Guard Unit
+@addmob 7114106 Brainwashed Kettlean Guard Unit
+@addmob 7114107 Brainwashed Soldier
+@addmob 7114108 Brainwashed Soldier
+@addmob 7114109 Brainwashed Soldier
+@addmob 7114158 Brainwashed White-faced Man
+@addmob 7114159 Brainwashed White-faced Man
+@addmob 7114160 Brainwashed White-faced Man
+@addmob 7114161 Brainwashed Inspector
+@addmob 7114162 Brainwashed Inspector
+@addmob 7114163 Brainwashed Inspector
+@addmob 7114164 Brainwashed Searching Unit
+@addmob 7114165 Brainwashed Searching Unit
+@addmob 7114166 Brainwashed Searching Unit
+@addmob 7114167 Brainwashed Kettlean Blitz Unit
+@addmob 7114168 Brainwashed Kettlean Blitz Unit
+@addmob 7114169 Brainwashed Kettlean Blitz Unit
+@addmob 7114170 Kiri Transporter Guard
+@addmob 7114182 Brainwashed Kettlean Security
+@addmob 7114183 Brainwashed Kettlean Security
+@addmob 7114184 Brainwashed Kettlean Security
+@addmob 7114185 Kettlean Mobile Strike Force
+@addmob 7114186 Kettlean Mobile Strike Force
+@addmob 7114187 Kettlean Mobile Strike Force
+@addmob 7114188 Kettlean Assistant 
+@addmob 7114191 Mira's Army Medic
+@addmob 7114194 Mira's Army Medic
+@addmob 7114197 Left Hand of Graham
+@addmob 7114201 Brainwashed Soldier
+@addmob 7114202 Brainwashed Soldier
+@addmob 7114203 Brainwashed Soldier
+@addmob 7114204 Brainwashed Inspector
+@addmob 7114205 Brainwashed Inspector
+@addmob 7114206 Brainwashed Inspector
+@addmob 7114207 Official Residence Guard
+@addmob 7114210 Vice Manager Guard
+@addmob 7114222 Brainwashed Kettlean Instructor
+@addmob 7114223 Brainwashed Kettlean Instructor
+@addmob 7114224 Brainwashed Kettlean Instructor
+@addmob 7114225 Brainwashed Kettlean Senior Soldier
+@addmob 7114226 Brainwashed Kettlean Senior Soldier
+@addmob 7114227 Brainwashed Kettlean Senior Soldier
+@addmob 7114228 Kettlean Strike Force Leader
+@addmob 7114229 Kettlean Strike Force Leader
+@addmob 7114230 Kettlean Strike Force Leader
+@addmob 7114231 Robot Insect Manager
+@addmob 7114232 Robot Insect Manager
+@addmob 7114233 Robot Insect Manager
+@addmob 7114234 Mira's Army Supervising Officer
+@addmob 7114235 Mira's Army Supervising Officer
+@addmob 7114236 Mira's Army Supervising Officer
+@addmob 7114237 Devil Supervising Detachment
+@addmob 7114240 Kettlean Strike Force Leader
+@addmob 7114301 Kettlean Blitz Unit
+@addmob 7114302 Kettlean Blitz Unit
+@addmob 7114303 Kettlean Blitz Unit
+@addmob 7114304 Kettlean Blitz Unit
+@addmob 7114305 Kettlean Blitz Unit
+@addmob 7114306 Kettlean Blitz Unit
+@addmob 7114307 Kettlean Blitz Unit Elite
+@addmob 7114308 Kettlean Blitz Unit Elite
+@addmob 7114309 Kettlean Blitz Unit Elite
+@addmob 7114310 Kettlean Blitz Unit Elite
+@addmob 7114311 Kettlean Blitz Unit Elite
+@addmob 7114312 Kettlean Blitz Unit Elite
+@addmob 7114313 Kettlean Blitz Unit
+@addmob 7114314 Kettlean Blitz Unit
+@addmob 7114315 Kettlean Blitz Unit
+@addmob 7114316 Kettlean Blitz Unit
+@addmob 7114317 Kettlean Blitz Unit
+@addmob 7114318 Kettlean Blitz Unit
+@addmob 7114319 Kettlean Blitz Unit Elite
+@addmob 7114320 Kettlean Blitz Unit Elite
+@addmob 7114321 Kettlean Blitz Unit Elite
+@addmob 7114322 Kettlean Blitz Unit Elite
+@addmob 7114323 Kettlean Blitz Unit Elite
+@addmob 7114324 Kettlean Blitz Unit Elite
+@addmob 7114325 Kettlean Blitz Unit
+@addmob 7114326 Kettlean Blitz Unit
+@addmob 7114327 Kettlean Blitz Unit
+@addmob 7114328 Kettlean Blitz Unit
+@addmob 7114329 Kettlean Blitz Unit
+@addmob 7114330 Kettlean Blitz Unit
+@addmob 7114331 Kettlean Blitz Unit Elite
+@addmob 7114332 Kettlean Blitz Unit Elite
+@addmob 7114333 Kettlean Blitz Unit Elite
+@addmob 7114334 Kettlean Blitz Unit Elite
+@addmob 7114335 Kettlean Blitz Unit Elite
+@addmob 7114336 Kettlean Blitz Unit Elite
+@addmob 7114337 Kettlean Blitz Unit
+@addmob 7114338 Kettlean Blitz Unit
+@addmob 7114339 Kettlean Blitz Unit
+@addmob 7114340 Kettlean Blitz Unit Elite
+@addmob 7114341 Kettlean Blitz Unit Elite
+@addmob 7114342 Kettlean Blitz Unit Elite
+@addmob 7114343 Nuke Land Stationed Soldier
+@addmob 7114347 Mira's Army Information Colletor
+@addmob 7114352 Brainwashed Kettlean Guerrilla Unit
+@addmob 7114353 Brainwashed Kettlean Guerrilla Unit
+@addmob 7114354 Brainwashed Kettlean Guerrilla Unit
+@addmob 7114355 Kettlean Labor Supervisor
+@addmob 7114358 Brainwashed Kettlean Watchman
+@addmob 7114359 Brainwashed Kettlean Watchman
+@addmob 7114360 Brainwashed Kettlean Watchman
+@addmob 7114361 Brainwashed Kettlean Army
+@addmob 7114362 Brainwashed Kettlean Army
+@addmob 7114363 Brainwashed Kettlean Army
+@addmob 7114364 Kettlean Blitz Unit
+@addmob 7114365 Kettlean Blitz Unit
+@addmob 7114366 Kettlean Blitz Unit
+@addmob 7114367 Kettlean Blitz Unit Elite
+@addmob 7114368 Kettlean Blitz Unit Elite
+@addmob 7114369 Kettlean Blitz Unit Elite
+@addmob 7114401 Marlon Slave Manager
+@addmob 7114402 Marlon Slave Manager
+@addmob 7114403 Marlon Slave Manager
+@addmob 7114404 Devil Raider
+@addmob 7114407 Low-Level Prison Chief
+@addmob 7114410 High-Level Prisoner Supervisor
+@addmob 7114413 Pure Majin Guard
+@addmob 7114417 Nuke Land Guard
+@addmob 7115101 Hot-Blooded Gun Rider
+@addmob 7115102 Hot-Blooded Gun Rider
+@addmob 7115103 Hot-Blooded Gun Rider
+@addmob 7115104 Right Hand of Graham
+@addmob 7116107 Mira's Army Strike Unit
+@addmob 7116108 Mira's Army Strike Unit
+@addmob 7116109 Mira's Army Strike Unit
+@addmob 7116110 Mira's Army Strike Unit
+@addmob 7116111 Mira's Strike Unit
+@addmob 7116112 Mira's Strike Unit
+@addmob 7116113 Mira's Strike Unit
+@addmob 7116114 Mira's Strike Unit
+@addmob 7116115 Mira's Strike Unit
+@addmob 7116116 Mira's Strike Unit
+@addmob 7116117 Mira's Strike Unit
+@addmob 7116118 Mira's Strike Unit
+@addmob 7116119 Mira's Advanced Unit
+@addmob 7116120 Mira's Advanced Unit
+@addmob 7116121 Mira's Advanced Unit
+@addmob 7116122 Stone Fist Burt
+@addmob 7116123 Stone Fist Burt
+@addmob 7116124 Stone Fist Burt
+@addmob 7116125 Iron-Fist Muggly
+@addmob 7116126 Iron-Fist Muggly
+@addmob 7116127 Iron-Fist Muggly
+@addmob 7116128 Merciless Plunderer Chief
+@addmob 7116131 Chief Programmer Laster
+@addmob 7116132 Chief Programmer Laster
+@addmob 7116133 Chief Programmer Laster
+@addmob 7116134 Suppy Chief Babar
+@addmob 7116137 Technician Croisan
+@addmob 7116140 Kettlean Teleporter Manager
+@addmob 7117101 Brainwashed Reginean Mobile Unit
+@addmob 7117104 Low-Level Prisoner Supervisor
+@addmob 7117107 Brainwashed Reginean Advance Party
+@addmob 7117108 Brainwashed Reginean Advance Party
+@addmob 7117109 Brainwashed Reginean Advance Party
+@addmob 7117110 Brainwashed Reginean Trainee
+@addmob 7117111 Brainwashed Reginean Trainee
+@addmob 7117112 Brainwashed Reginean Trainee
+@addmob 7117113 Brainwashed Reginean Private
+@addmob 7117114 Brainwashed Reginean Private
+@addmob 7117115 Brainwashed Reginean Private
+@addmob 7117116 Brainwashed Defense Unit
+@addmob 7117117 Brainwashed Defense Unit
+@addmob 7117118 Brainwashed Defense Unit
+@addmob 7117119 Brainwashed Collector
+@addmob 7117122 Devil Striking Battler
+@addmob 7117125 Nuke Land Sentry
+@addmob 7117128 Detheka Mine Watchman
+@addmob 7117131 Supply Patrol
+@addmob 7121101 Recoome
+@addmob 7121102 Recoome
+@addmob 7121103 Recoome
+@addmob 7122101 Recoome
+@addmob 7122102 Recoome
+@addmob 7122103 Recoome
+@addmob 7122104 Brainwashed Recoome
+@addmob 7122105 Brainwashed Recoome
+@addmob 7122106 Brainwashed Recoome
+@addmob 7122201 Recoome
+@addmob 7151110 Merciless Chief Admin [Old-Type]
+@addmob 7211101 Rio
+@addmob 7211102 Rio
+@addmob 7211103 Rio
+@addmob 7211104 Rio Nova
+@addmob 7211105 Rio Nova
+@addmob 7211106 Rio Nova
+@addmob 7211107 Rio Bravo
+@addmob 7211108 Rio Bravo
+@addmob 7211109 Rio Bravo
+@addmob 7211110 Big Rio
+@addmob 7211111 Big Rio
+@addmob 7211112 Big Rio
+@addmob 7211113 Rio
+@addmob 7211114 Rio
+@addmob 7211115 Rio
+@addmob 7211116 Hello Rio
+@addmob 7211117 Hello Rio
+@addmob 7211118 Hello Rio
+@addmob 7211119 Thirsty Rio
+@addmob 7211120 Thirsty Rio
+@addmob 7211121 Thirsty Rio
+@addmob 7211122 Cleaning Rio
+@addmob 7211123 Cleaning Rio
+@addmob 7211124 Cleaning Rio
+@addmob 7212101 Samba Rio
+@addmob 7212102 Samba Rio
+@addmob 7212103 Samba Rio
+@addmob 7212104 Samba Rio Amigo
+@addmob 7212105 Samba Rio Amigo
+@addmob 7212106 Samba Rio Amigo
+@addmob 7212107 Samba Rio Domingo
+@addmob 7212108 Samba Rio Domingo
+@addmob 7212109 Samba Rio Domingo
+@addmob 7212110 Samba Rio Don Juan
+@addmob 7212111 Samba Rio Don Juan
+@addmob 7212112 Samba Rio Don Juan
+@addmob 7212113 Samba Rio of Passion
+@addmob 7212114 Samba Rio of Passion
+@addmob 7212115 Samba Rio of Passion
+@addmob 7212116 Samba Rio Casanova
+@addmob 7212117 Samba Rio Casanova
+@addmob 7212118 Samba Rio Casanova
+@addmob 7213101 Desert Rio
+@addmob 7213102 Desert Rio
+@addmob 7213103 Desert Rio
+@addmob 7213104 Dry Desert Rio
+@addmob 7213105 Dry Desert Rio
+@addmob 7213106 Dry Desert Rio
+@addmob 7213107 Super Dry Desert Rio
+@addmob 7213108 Super Dry Desert Rio
+@addmob 7213109 Super Dry Desert Rio
+@addmob 7213110 Poison Rio
+@addmob 7213111 Poison Rio
+@addmob 7213112 Poison Rio
+@addmob 7213113 Poison Rio
+@addmob 7213114 Poison Rio
+@addmob 7213115 Poison Rio
+@addmob 7221101 Hard Stone
+@addmob 7221102 Hard Stone
+@addmob 7221103 Hard Stone
+@addmob 7251101 Dispatched Engineer
+@addmob 7251102 Dispatched Engineer
+@addmob 7251103 Dispatched Engineer
+@addmob 7251104 Dispatched Engineer
+@addmob 7251105 Dispatched Engineer
+@addmob 7251106 Dispatched Engineer
+@addmob 7251107 Kiri Experiment Researcher 
+@addmob 7251108 Kiri Experiment Researcher 
+@addmob 7251109 Kiri Experiment Researcher 
+@addmob 7251110 Bribed Scientist
+@addmob 7251111 Bribed Scientist
+@addmob 7251112 Bribed Scientist
+@addmob 7251113 Research Technician 
+@addmob 7251114 Research Technician 
+@addmob 7251115 Research Technician 
+@addmob 7251119 Creature Renovation Manager
+@addmob 7251120 Creature Renovation Manager
+@addmob 7251121 Creature Renovation Manager
+@addmob 7251122 Robot Technician
+@addmob 7251123 Robot Technician
+@addmob 7251124 Robot Technician
+@addmob 7251125 Brainwashed Experiment Technician
+@addmob 7251126 Brainwashed Experiment Technician
+@addmob 7251127 Brainwashed Experiment Technician
+@addmob 7251128 Doctor Jolling
+@addmob 7251131 Gooris Gas Researcher
+@addmob 7251132 Gooris Gas Researcher
+@addmob 7251133 Gooris Gas Researcher
+@addmob 7251134 Gooris Construction Inspector
+@addmob 7251135 Gooris Construction Inspector
+@addmob 7251136 Gooris Construction Inspector
+@addmob 7251137 Doctor Jolling
+@addmob 7251140 Kiri Experiment Researcher
+@addmob 7253101 Shu Stone Statue
+@addmob 7253102 Shu Stone Statue
+@addmob 7253103 Shu Stone Statue
+@addmob 7253104 Shu Stone Statue
+@addmob 7253105 Shu Stone Statue
+@addmob 7253106 Shu Stone Statue
+@addmob 7253107 Archie
+@addmob 7253108 Archie
+@addmob 7253109 Archie
+@addmob 7253110 Archie
+@addmob 7253111 Archie
+@addmob 7253112 Archie
+@addmob 7311101 Saibaman
+@addmob 7311102 Saibaman
+@addmob 7311103 Saibaman
+@addmob 7311104 Saibaman
+@addmob 7311107 Poisonous Saibaman
+@addmob 7311110 Special Force Saibaman
+@addmob 7312101 Shadow Saibaman
+@addmob 7312102 Shadow Saibaman
+@addmob 7312103 Shadow Saibaman
+@addmob 7313101 Evil Saibaman
+@addmob 7313102 Evil Saibaman
+@addmob 7313103 Evil Saibaman
+@addmob 7313104 Brainwashed Saibaman
+@addmob 7313105 Brainwashed Saibaman
+@addmob 7313106 Brainwashed Saibaman
+@addmob 7313107 Brainwashed Saibaman
+@addmob 7313108 Brainwashed Saibaman
+@addmob 7313109 Brainwashed Saibaman
+@addmob 7313110 Brainwashed Saibaman
+@addmob 7313111 Brainwashed Saibaman
+@addmob 7313112 Brainwashed Saibaman
+@addmob 7313113 Brainwashed Saibaman
+@addmob 7313114 Brainwashed Saibaman
+@addmob 7313115 Brainwashed Saibaman
+@addmob 7313116 Brainwashed Saibaman
+@addmob 7313117 Brainwashed Saibaman
+@addmob 7313118 Brainwashed Saibaman
+@addmob 7313119 Brainwashed Saibaman
+@addmob 7313120 Brainwashed Saibaman
+@addmob 7313121 Brainwashed Saibaman
+@addmob 7314101 Organic Saibaman
+@addmob 7314102 Organic Saibaman
+@addmob 7314103 Organic Saibaman
+@addmob 7411101 Svaile
+@addmob 7411102 Svaile
+@addmob 7411103 Svaile
+@addmob 7411104 York Svaile
+@addmob 7411105 York Svaile
+@addmob 7411106 York Svaile
+@addmob 7411107 Tant Svaile
+@addmob 7411108 Tant Svaile
+@addmob 7411109 Tant Svaile
+@addmob 7411110 Giant Svaile
+@addmob 7411111 Giant Svaile
+@addmob 7411112 Giant Svaile
+@addmob 7411113 Panky Pung
+@addmob 7411114 Panky Pung
+@addmob 7411115 Panky Pung
+@addmob 7411116 Blue Svaile
+@addmob 7412101 Bristol Svaile
+@addmob 7412102 Bristol Svaile
+@addmob 7412103 Bristol Svaile
+@addmob 7412104 Emperor Svaile
+@addmob 7412105 Emperor Svaile
+@addmob 7412106 Emperor Svaile
+@addmob 7412107 Coty Svaile
+@addmob 7412108 Coty Svaile
+@addmob 7412109 Coty Svaile
+@addmob 7412110 Wonder Svaile
+@addmob 7412111 Wonder Svaile
+@addmob 7412112 Wonder Svaile
+@addmob 7412113 Black Svaile
+@addmob 7431101 Punch Machine
+@addmob 7441101 Blood Machine Bee
+@addmob 7451101 Grandpa Gohan
+@addmob 7451102 Grandpa Gohan
+@addmob 7451103 Grandpa Gohan
+@addmob 7451104 Martial Artist Examiner
+@addmob 7451105 Martial Artist Examiner
+@addmob 7451106 Martial Artist Examiner
+@addmob 7451107 Grandpa Gohan
+@addmob 7451108 Grandpa Gohan
+@addmob 7451109 Grandpa Gohan
+@addmob 7485101 Julia
+@addmob 7485102 Julia
+@addmob 7485103 Julia
+@addmob 7485104 Julia
+@addmob 7485105 Julia
+@addmob 7485106 Julia
+@addmob 7511110 Gesstongue
+@addmob 7511111 Gesstongue
+@addmob 7511112 Gesstongue
+@addmob 7511116 Dotdarisaurs
+@addmob 7511117 Dotdarisaurs
+@addmob 7511118 Dotdarisaurs
+@addmob 7511119 Osorosaurs
+@addmob 7512101 Noganarisaurs
+@addmob 7513101 Mulgarisaurs
+@addmob 7513102 Mulgarisaurs
+@addmob 7513103 Mulgarisaurs
+@addmob 7513110 Tyrant Mulgarisaurs
+@addmob 7513111 Tyrant Mulgarisaurs
+@addmob 7513112 Tyrant Mulgarisaurs
+@addmob 7513113 Yatsi
+@addmob 7513114 Yatsi
+@addmob 7513115 Yatsi
+@addmob 7513116 Mulgarisaurs
+@addmob 7513117 Mulgarisaurs
+@addmob 7513118 Mulgarisaurs
+@addmob 7513119 Mulgarisaurs
+@addmob 7513120 Mulgarisaurs
+@addmob 7513121 Mulgarisaurs
+@addmob 7513122 Purungarisaurs
+@addmob 7513123 Purungarisaurs
+@addmob 7513124 Purungarisaurs
+@addmob 7513125 Mulgarisaurs
+@addmob 7513126 Mulgarisaurs
+@addmob 7513127 Mulgarisaurs
+@addmob 7513128 Mulgarisaurs
+@addmob 7513129 Mulgarisaurs
+@addmob 7513130 Mulgarisaurs
+@addmob 7513131 Mulgarisaurs
+@addmob 7513132 Mulgarisaurs
+@addmob 7513133 Mulgarisaurs
+@addmob 7711101 Dr. Smell
+@addmob 7711102 Dr. Smell
+@addmob 7711103 Dr. Smell
+@addmob 7711201 Brainwashed Dr. Smell
+@addmob 7711202 Brainwashed Dr. Smell
+@addmob 7711203 Brainwashed Dr. Smell
+@addmob 7711204 Brainwashed High-Level Prisoner
+@addmob 7711207 Robot Renovation Team Leader
+@addmob 7711208 Robot Renovation Team Leader
+@addmob 7711209 Robot Renovation Team Leader
+@addmob 7711210 Pure Majin Guard
+@addmob 7711213 Queen Saktugi Researcher
+@addmob 7771101 Patrol Robot Chief
+@addmob 7771102 Patrol Robot Chief
+@addmob 7771103 Patrol Robot Chief
+@addmob 7771104 Mira Police Robot
+@addmob 7771105 Mira Police Robot
+@addmob 7771106 Mira Police Robot
+@addmob 7771107 Insect Robot
+@addmob 7771108 Insect Robot
+@addmob 7771109 Insect Robot
+@addmob 7771110 Veteran guard
+@addmob 7771111 Veteran guard
+@addmob 7771112 Veteran guard
+@addmob 7771113 M - Boss Robot
+@addmob 7771116 Mira Military Robot
+@addmob 7771119 Mira's Army Patrol Robot
+@addmob 7772101 Guardian Robot
+@addmob 7772102 Guardian Robot
+@addmob 7772103 Guardian Robot
+@addmob 7772104 Laser Defense Veteran
+@addmob 7772105 Laser Defense Veteran
+@addmob 7772106 Laser Defense Veteran
+@addmob 7772107 Insect Breeding Robot
+@addmob 7772108 Insect Breeding Robot
+@addmob 7772109 Insect Breeding Robot
+@addmob 7772110 Biological extraction Robot
+@addmob 7772111 Biological extraction Robot
+@addmob 7772112 Biological extraction Robot
+@addmob 7772113 Reconstruction Robot
+@addmob 7772116 M - Dark Robot
+@addmob 7772119 Lower Labor Management Robot
+@addmob 7772122 Mira's Army Surveillance Robot
+@addmob 7773101 Marlon Robot
+@addmob 7773102 Marlon Robot
+@addmob 7773103 Marlon Robot
+@addmob 7773104 Mira's Army Fighter
+@addmob 7773107 M - Combat Robot
+@addmob 7773110 Labor Management Robot
+@addmob 7773113 Supply inspection Robot
+@addmob 7773116 Pure Majin Guard
+@addmob 7811101 Thorn Hippo
+@addmob 7811102 Thorn Hippo
+@addmob 7811103 Thorn Hippo
+@addmob 7811104 Large Thorn Hippo
+@addmob 7811105 Large Thorn Hippo
+@addmob 7811106 Large Thorn Hippo
+@addmob 7811107 Strange sound Hippo
+@addmob 7811108 Strange sound Hippo
+@addmob 7811109 Strange sound Hippo
+@addmob 7811110 Hippo
+@addmob 7811111 Hippo
+@addmob 7811112 Hippo
+@addmob 7811113 Overeating Hippo
+@addmob 7811114 Overeating Hippo
+@addmob 7811115 Overeating Hippo
+@addmob 7811116 Decaying Hippo
+@addmob 7811117 Decaying Hippo
+@addmob 7811118 Decaying Hippo
+@addmob 7811119 Red Pants Army Hippo
+@addmob 7811120 Red Pants Army Hippo
+@addmob 7811121 Red Pants Army Hippo
+@addmob 7811122 Dolphin Hippo
+@addmob 7812101 Fat Hippo
+@addmob 7812102 Fat Hippo
+@addmob 7812103 Fat Hippo
+@addmob 7812104 Big Fat Hippo
+@addmob 7812105 Big Fat Hippo
+@addmob 7812106 Big Fat Hippo
+@addmob 7812107 Bomb Hippo
+@addmob 7812108 Bomb Hippo
+@addmob 7812109 Bomb Hippo
+@addmob 7812110 Red Pants Fat Hippo
+@addmob 7812111 Red Pants Fat Hippo
+@addmob 7812112 Red Pants Fat Hippo
+@addmob 7813101 Armored Hippo
+@addmob 7813102 Armored Hippo
+@addmob 7813103 Armored Hippo
+@addmob 7813104 King Hippo
+@addmob 7813105 King Hippo
+@addmob 7813106 King Hippo
+@addmob 7813107 Sea Hippo
+@addmob 7813108 Sea Hippo
+@addmob 7813109 Sea Hippo
+@addmob 7813110 King Fat Hippo
+@addmob 7813111 King Fat Hippo
+@addmob 7813112 King Fat Hippo
+@addmob 7813113 Red Pants Army Hippo
+@addmob 7813114 Red Pants Army Hippo
+@addmob 7813115 Red Pants Army Hippo
+@addmob 7813201 Iron Armor Hippo
+@addmob 7813202 Iron Armor Hippo
+@addmob 7813203 Iron Armor Hippo
+@addmob 7813204 Mrs. Von's Pet
+@addmob 7813205 Mrs. Von's Pet
+@addmob 7813206 Mrs. Von's Pet
+@addmob 7813207 Transportation Hippo
+@addmob 7813208 Transportation Hippo
+@addmob 7813209 Transportation Hippo
+@addmob 7813210 Thorns water Hippo
+@addmob 7901101 Strange Obstacle
+@addmob 7901102 Strange Obstacle
+@addmob 7901103 Strange Obstacle
+@addmob 7901104 Radio Jammer
+@addmob 7901105 Radio Jammer
+@addmob 7901106 Radio Jammer
+@addmob 8 Zombie Type
+@addmob 8111101 Little Evil
+@addmob 8111102 Little Evil
+@addmob 8111103 Little Evil
+@addmob 8111104 Evil
+@addmob 8111105 Evil
+@addmob 8111106 Evil
+@addmob 8111107 Big Evil
+@addmob 8111108 Big Evil
+@addmob 8111109 Big Evil
+@addmob 8111110 [?]	
+@addmob 8111111 [?]	
+@addmob 8111112 [?]	
+@addmob 8111113 Dim Evil
+@addmob 8111114 Dim Evil
+@addmob 8111115 Dim Evil
+@addmob 8111116 Evil Bully Ghost 
+@addmob 8111117 Evil Bully Ghost 
+@addmob 8111118 Evil Bully Ghost 
+@addmob 8111119 Evil Cloud
+@addmob 8111120 Evil Cloud
+@addmob 8111121 Evil Cloud
+@addmob 8111122 Ghost box
+@addmob 8111123 Ghost box
+@addmob 8111124 Ghost box
+@addmob 8111125 Gas Entity
+@addmob 8111126 Gas Entity
+@addmob 8111127 Gas Entity
+@addmob 8112101 Evil Trick or Treat 
+@addmob 8112102 Evil Trick or Treat 
+@addmob 8112103 Evil Trick or Treat 
+@addmob 8112104 Big Evil Trick or Treat 
+@addmob 8112105 Big Evil Trick or Treat 
+@addmob 8112106 Big Evil Trick or Treat 
+@addmob 8112107 Evil Flames 
+@addmob 8112108 Evil Flames 
+@addmob 8112109 Evil Flames 
+@addmob 8112110 Evil Spirit
+@addmob 8112111 Evil Spirit
+@addmob 8112112 Evil Spirit
+@addmob 8112113 Big Evil Spirit
+@addmob 8112114 Big Evil Spirit
+@addmob 8112115 Big Evil Spirit
+@addmob 8112116 Chaotic Soul
+@addmob 8112117 Chaotic Soul
+@addmob 8112118 Chaotic Soul
+@addmob 8112119 Wicked Soul
+@addmob 8112120 Wicked Soul
+@addmob 8112121 Wicked Soul
+@addmob 8112122 Kabimong for Training
+@addmob 8112123 Kabimong for Training
+@addmob 8112124 Kabimong for Training
+@addmob 8112125 Smiling Spirit
+@addmob 8112126 Smiling Spirit
+@addmob 8112127 Smiling Spirit
+@addmob 8112128 Sparkling Spirit
+@addmob 8112129 Sparkling Spirit
+@addmob 8112130 Sparkling Spirit
+@addmob 8112131 Spooky Ghost
+@addmob 8112132 Spooky Ghost
+@addmob 8112133 Chilly Ghost
+@addmob 8112134 Gooris Gas Victim Ghost
+@addmob 8112135 Gooris Gas Victim Ghost
+@addmob 8112136 Gooris Gas Victim Ghost
+@addmob 8112137 Gas Podong Guard Ghost
+@addmob 8112138 Naughty Kaebimong
+@addmob 8112139 Naughty Kaebimong
+@addmob 8112140 Naughty Kaebimong
+@addmob 8112141 Naughty Kaebimong
+@addmob 8112142 Naughty Kaebimong
+@addmob 8113101 Evil Kaebimong
+@addmob 8113102 Evil Kaebimong
+@addmob 8113103 Evil Kaebimong
+@addmob 8113104 Super Evil Kaebimong
+@addmob 8113105 Super Evil Kaebimong
+@addmob 8113106 Super Evil Kaebimong
+@addmob 8113107 Protector Ghost
+@addmob 8113108 Protector Ghost
+@addmob 8113109 Protector Ghost
+@addmob 8113110 Well Ghost
+@addmob 8113111 Well Ghost
+@addmob 8113112 Well Ghost
+@addmob 8113113 Ghost of Closed Mine
+@addmob 8113114 Ghost of Closed Mine
+@addmob 8113115 Ghost of Closed Mine
+@addmob 8113116 OMG Ghost
+@addmob 8113117 OMG Ghost
+@addmob 8113118 OMG Ghost
+@addmob 8113119 Gooris Extoplasm
+@addmob 8113120 Gooris Extoplasm
+@addmob 8113121 Gooris Extoplasm
+@addmob 8114101 Spirit of King Tocco
+@addmob 8114102 Spirit of King Tocco
+@addmob 8114103 Spirit of King Tocco
+@addmob 8151101 Pulnarodon
+@addmob 8151102 Pulnarodon
+@addmob 8151103 Pulnarodon
+@addmob 8151104 Violent Pulnarodon
+@addmob 8151107 Pulnarodon
+@addmob 8152101 Wild Flying Pulnarodon
+@addmob 8211101 Pulnasaurs
+@addmob 8211102 Pulnasaurs
+@addmob 8211103 Pulnasaurs
+@addmob 8211104 Pulnasaurs
+@addmob 8211105 Pulnasaurs
+@addmob 8211106 Pulnasaurs
+@addmob 8211107 Pulnasaurs
+@addmob 8211108 Pulnasaurs
+@addmob 8211109 Pulnasaurs
+@addmob 8211110 Pulnasaurs
+@addmob 8211111 Pulnasaurs
+@addmob 8211112 Pulnasaurs
+@addmob 8211113 Pulnasaurs
+@addmob 8211114 Pulnasaurs
+@addmob 8211115 Pulnasaurs
+@addmob 8211116 Pulnasaurs
+@addmob 8211117 Pulnasaurs
+@addmob 8211118 Pulnasaurs
+@addmob 8211119 Combat Pulnasaurs
+@addmob 8211122 Gurigurisaurs
+@addmob 8211201 Brainwashed Pulnasaurs
+@addmob 8211202 Brainwashed Pulnasaurs
+@addmob 8211203 Brainwashed Pulnasaurs
+@addmob 8211204 Brainwashed Pulnasaurs
+@addmob 8211205 Brainwashed Pulnasaurs
+@addmob 8211206 Brainwashed Pulnasaurs
+@addmob 8211207 Brainwashed Pulnasaurs
+@addmob 8211208 Brainwashed Pulnasaurs
+@addmob 8211209 Brainwashed Pulnasaurs
+@addmob 8212101 Darksaurs
+@addmob 8212102 Darksaurs
+@addmob 8212103 Darksaurs
+@addmob 8212104 Darksaurs
+@addmob 8212105 Darksaurs
+@addmob 8212106 Darksaurs
+@addmob 8212107 Little Saurs
+@addmob 8212108 Little Saurs
+@addmob 8212109 Little Saurs
+@addmob 8212110 Darksaurs
+@addmob 8212111 Darksaurs
+@addmob 8212112 Darksaurs
+@addmob 8213101 Redsaurs
+@addmob 8213102 Redsaurs
+@addmob 8213103 Redsaurs
+@addmob 8213104 Redsaurs
+@addmob 8213105 Redsaurs
+@addmob 8213106 Redsaurs
+@addmob 8213107 Tyrantaurs
+@addmob 8213108 Tyrantaurs
+@addmob 8213109 Tyrantaurs
+@addmob 8213110 Redsaurs
+@addmob 8213111 Redsaurs
+@addmob 8213112 Redsaurs
+@addmob 8213113 Red Berserkaurs
+@addmob 8213116 Tyrant Gurigurisaurs
+@addmob 8311101 Sharp Saibaman
+@addmob 8311102 Sharp Saibaman
+@addmob 8311103 Sharp Saibaman
+@addmob 8311104 Big Sharp Saibaman
+@addmob 8311105 Big Sharp Saibaman
+@addmob 8311106 Big Sharp Saibaman
+@addmob 8311119 Cactus Saibaman
+@addmob 8311120 Cactus Saibaman
+@addmob 8311121 Cactus Saibaman
+@addmob 8311122 Kebi Sharp Saibaman
+@addmob 8311123 Kebi Sharp Saibaman
+@addmob 8311124 Kebi Sharp Saibaman
+@addmob 8311201 Mushroom Saibaman
+@addmob 8311202 Mushroom Saibaman
+@addmob 8311203 Mushroom Saibaman
+@addmob 8311204 Toxic Farting Saibaman
+@addmob 8311301 Toxic Mushroom Saibaman
+@addmob 8311302 Toxic Mushroom Saibaman
+@addmob 8311303 Toxic Mushroom Saibaman
+@addmob 8312101 Needle Saibaman
+@addmob 8312102 Needle Saibaman
+@addmob 8312103 Needle Saibaman
+@addmob 8312104 Tropical Needle Saibaman
+@addmob 8312105 Tropical Needle Saibaman
+@addmob 8312106 Tropical Needle Saibaman
+@addmob 8312107 Scale Needle Saibaman
+@addmob 8312108 Scale Needle Saibaman
+@addmob 8312109 Scale Needle Saibaman
+@addmob 8312110 Snub-Nose Needle Saibaman
+@addmob 8312111 Snub-Nose Needle Saibaman
+@addmob 8312112 Snub-Nose Needle Saibaman
+@addmob 8312201 Withered Needle Saibaman
+@addmob 8312202 Withered Needle Saibaman
+@addmob 8312203 Withered Needle Saibaman
+@addmob 8312204 Nose Needle Saibaman
+@addmob 8312205 Nose Needle Saibaman
+@addmob 8312206 Nose Needle Saibaman
+@addmob 8312207 Great Needle Saibaman
+@addmob 8312208 Great Needle Saibaman
+@addmob 8312209 Great Needle Saibaman
+@addmob 8312301 Hot Needle Saibaman
+@addmob 8312302 Hot Needle Saibaman
+@addmob 8312303 Hot Needle Saibaman
+@addmob 8312304 Sting-Needle Saibaman
+@addmob 8312305 Sting-Needle Saibaman
+@addmob 8312306 Sting-Needle Saibaman
+@addmob 8312307 Scary-Needle Saibaman
+@addmob 8312308 Scary-Needle Saibaman
+@addmob 8312309 Scary-Needle Saibaman
+@addmob 8313101 Thorn Saibaman
+@addmob 8313102 Thorn Saibaman
+@addmob 8313103 Thorn Saibaman
+@addmob 8313201 Splited-Thorn Saibaman
+@addmob 8313202 Splited-Thorn Saibaman
+@addmob 8313203 Splited-Thorn Saibaman
+@addmob 8313301 Gold-Thorn Saibaman
+@addmob 8313302 Gold-Thorn Saibaman
+@addmob 8313303 Gold-Thorn Saibaman
+@addmob 8314101 Weird Sharp Saibaman
+@addmob 8314102 Weird Sharp Saibaman
+@addmob 8314103 Weird Sharp Saibaman
+@addmob 8314104 Half-Dead Sharp Saibaman
+@addmob 8314105 Half-Dead Sharp Saibaman
+@addmob 8314106 Half-Dead Sharp Saibaman
+@addmob 8315101 Poisonous Sharp Saibaman
+@addmob 8315102 Poisonous Sharp Saibaman
+@addmob 8315103 Poisonous Sharp Saibaman
+@addmob 8315104 Venomous Sharp Saibaman
+@addmob 8315105 Venomous Sharp Saibaman
+@addmob 8315106 Venomous Sharp Saibaman
+@addmob 8316101 Horn Sharp Saibaman
+@addmob 8316102 Horn Sharp Saibaman
+@addmob 8316103 Horn Sharp Saibaman
+@addmob 8316104 Unicorn Sharp Saibaman
+@addmob 8316105 Unicorn Sharp Saibaman
+@addmob 8316106 Unicorn Sharp Saibaman
+@addmob 8317101 Brainwashed Sharp Saibaman
+@addmob 8317102 Brainwashed Sharp Saibaman
+@addmob 8317103 Brainwashed Sharp Saibaman
+@addmob 8317104 Brainwashed Sharp Saibaman
+@addmob 8317105 Brainwashed Sharp Saibaman
+@addmob 8317106 Brainwashed Sharp Saibaman
+@addmob 8317113 Brainwashed Big Sharp Saibaman
+@addmob 8317114 Brainwashed Big Sharp Saibaman
+@addmob 8317115 Brainwashed Big Sharp Saibaman
+@addmob 8411101 Tongaroo
+@addmob 8411102 Tongaroo
+@addmob 8411103 Tongaroo
+@addmob 8411104 Byong Tongaroo
+@addmob 8411105 Byong Tongaroo
+@addmob 8411106 Byong Tongaroo
+@addmob 8411107 Chongchongaroo
+@addmob 8411108 Chongchongaroo
+@addmob 8411109 Chongchongaroo
+@addmob 8411110 Tongaroo for Training
+@addmob 8411111 Tongaroo for Training
+@addmob 8411112 Tongaroo for Training
+@addmob 8412101 Kalgaroo
+@addmob 8412102 Kalgaroo
+@addmob 8412103 Kalgaroo
+@addmob 8412104 Big Kalgaroo
+@addmob 8412105 Big Kalgaroo
+@addmob 8412106 Big Kalgaroo
+@addmob 8412107 Drill Tongaroo
+@addmob 8412108 Drill Tongaroo
+@addmob 8412109 Drill Tongaroo
+@addmob 8412110 Snow-Field Kalgaroo
+@addmob 8412111 Snow-Field Kalgaroo
+@addmob 8412112 Snow-Field Kalgaroo
+@addmob 8421101 Tao Pai Pai X
+@addmob 8421102 Tao Pai Pai X
+@addmob 8421103 Tao Pai Pai X
+@addmob 8422101 Advanced Tao Pai Pai X
+@addmob 8422102 Advanced Tao Pai Pai X
+@addmob 8422103 Advanced Tao Pai Pai X
+@addmob 8431101 Burning Burning Turret
+@addmob 8431102 Burning Burning Turret
+@addmob 8431103 Burning Burning Turret
+@addmob 8441101 Pancho
+@addmob 8441102 Pancho
+@addmob 8441103 Pancho
+@addmob 8441104 Red Pants Repairman
+@addmob 8441105 Red Pants Repairman
+@addmob 8441106 Red Pants Repairman
+@addmob 8441107 Hyenan Garage Manager
+@addmob 8441108 Hyenan Garage Manager
+@addmob 8441109 Hyenan Garage Manager
+@addmob 8441110 Forced Worker
+@addmob 8441113 Assistant Pancho
+@addmob 8441201 Mushroom Gang Member
+@addmob 8441202 Mushroom Gang Member
+@addmob 8441203 Mushroom Gang Member
+@addmob 8441204 Mushroom Gang Collector
+@addmob 8441205 Mushroom Gang Collector
+@addmob 8441206 Mushroom Gang Collector
+@addmob 8441207 Mushroom Gang Action Corps
+@addmob 8441208 Mushroom Gang Action Corps
+@addmob 8441209 Mushroom Gang Action Corps
+@addmob 8441210 Mushroom Gang Spy
+@addmob 8441211 Mushroom Gang Spy
+@addmob 8441212 Mushroom Gang Spy
+@addmob 8441213 Mushroom Gang Collector
+@addmob 8441214 Mushroom Gang Collector
+@addmob 8441215 Mushroom Gang Collector
+@addmob 8441216 Mushroom Gang Problem Solver
+@addmob 8441219 Gang of Outclan
+@addmob 8441222 Mushroom Gang Gatherer
+@addmob 8441301 Mushroom Gang Plunderer
+@addmob 8441302 Mushroom Gang Plunderer
+@addmob 8441303 Mushroom Gang Plunderer
+@addmob 8441304 Mushroom Gang Watchman
+@addmob 8441305 Mushroom Gang Watchman
+@addmob 8441306 Mushroom Gang Watchman
+@addmob 8441307 Mushroom Gang Blackmailer
+@addmob 8441308 Mushroom Gang Blackmailer
+@addmob 8441309 Mushroom Gang Blackmailer
+@addmob 8441310 Mushroom Gang Snake Hunter
+@addmob 8441311 Mushroom Gang Snake Hunter
+@addmob 8441312 Mushroom Gang Snake Hunter
+@addmob 8441313 Mushroom Gang Capturer
+@addmob 8441314 Mushroom Gang Capturer
+@addmob 8441315 Mushroom Gang Capturer
+@addmob 8441316 Mushroom Gang Sneaker
+@addmob 8441319 Mushroom Gang Worker
+@addmob 8441322 Gang of Ronin
+@addmob 8441401 Mushroom Gang Destroyer
+@addmob 8441402 Mushroom Gang Destroyer
+@addmob 8441403 Mushroom Gang Destroyer
+@addmob 8441404 Mushroom Gang Watchman Chief
+@addmob 8441405 Mushroom Gang Watchman Chief
+@addmob 8441406 Mushroom Gang Watchman Chief
+@addmob 8441407 Mushroom Gang Assassin
+@addmob 8441410 Mochi Thief
+@addmob 8442101 Yena Supply Soldier
+@addmob 8442102 Yena Supply Soldier
+@addmob 8442103 Yena Supply Soldier
+@addmob 8442104 Hyenan Garage Guard
+@addmob 8442105 Hyenan Garage Guard
+@addmob 8442106 Hyenan Garage Guard
+@addmob 8442107 Hyenan Bomber
+@addmob 8442108 Hyenan Bomber
+@addmob 8442109 Hyenan Bomber
+@addmob 8442110 Wild Pancho Recruit
+@addmob 8442111 Wild Pancho Recruit
+@addmob 8442112 Wild Pancho Recruit
+@addmob 8442113 Wild Pancho Fighter
+@addmob 8442114 Wild Pancho Fighter
+@addmob 8442115 Wild Pancho Fighter
+@addmob 8442116 Boss Pancho
+@addmob 8442117 Boss Pancho
+@addmob 8442118 Boss Pancho
+@addmob 8442119 Hyenan Engineer
+@addmob 8442120 Hyenan Engineer
+@addmob 8442121 Hyenan Engineer
+@addmob 8442122 Breeding Expert
+@addmob 8442123 Breeding Expert
+@addmob 8442124 Breeding Expert
+@addmob 8442125 Gang of Rocle
+@addmob 8443101 Sinta
+@addmob 8443104 Sinta
+@addmob 8443107 Sinta
+@addmob 8443110 Sinta
+@addmob 8451101 Kerotopes
+@addmob 8471104 Wild Boar Plunder
+@addmob 8471105 Wild Boar Plunder
+@addmob 8471106 Wild Boar Plunder
+@addmob 8471107 Red Pants Army Patrol Captain
+@addmob 8471108 Red Pants Army Patrol Captain
+@addmob 8471109 Red Pants Army Patrol Captain
+@addmob 8471110 Spiritual Boar Warrior
+@addmob 8471111 Spiritual Boar Warrior
+@addmob 8471112 Spiritual Boar Warrior
+@addmob 8471113 Evil Boar
+@addmob 8471116 Crop Thief Captain
+@addmob 8471119 Teli-De Plunder
+@addmob 8471122 Mujji Thief
+@addmob 8471201 Mushroom Gang General
+@addmob 8471202 Mushroom Gang General
+@addmob 8471203 Mushroom Gang General
+@addmob 8471204 Dragon River Predator
+@addmob 8471205 Dragon River Predator
+@addmob 8471206 Dragon River Predator
+@addmob 8471207 Mushroom Gang Leader
+@addmob 8471208 Mushroom Gang Leader
+@addmob 8471209 Mushroom Gang Leader
+@addmob 8471210 Mushroom Gang Grabber
+@addmob 8471213 Gang of Smallking
+@addmob 8471216 Mushroom Gang Captain
+@addmob 8471219 Mushroom Gang Berserker
+@addmob 8471222 Mushroom Gang Samurai
+@addmob 8471225 Gang of Smallking
+@addmob 8472101 Sentry Soldier Boar
+@addmob 8472102 Sentry Soldier Boar
+@addmob 8472103 Sentry Soldier Boar
+@addmob 8472104 Wild Boar Guerrilla
+@addmob 8472105 Wild Boar Guerrilla
+@addmob 8472106 Wild Boar Guerrilla
+@addmob 8472107 Dojo Destroyer
+@addmob 8472108 Dojo Destroyer
+@addmob 8472109 Dojo Destroyer
+@addmob 8472110 Bomb Guard Soldier
+@addmob 8472111 Bomb Guard Soldier
+@addmob 8472112 Bomb Guard Soldier
+@addmob 8472113 Breakout Instigator
+@addmob 8472122 Wild Boar Plunder Captain
+@addmob 8472123 Wild Boar Plunder Captain
+@addmob 8472124 Wild Boar Plunder Captain
+@addmob 8511101 Vine Saibaman
+@addmob 8511102 Vine Saibaman
+@addmob 8511103 Vine Saibaman
+@addmob 8511104 Giant Vine Saibaman
+@addmob 8511105 Giant Vine Saibaman
+@addmob 8511106 Giant Vine Saibaman
+@addmob 8511107 Green Spider Saibaman
+@addmob 8511108 Green Spider Saibaman
+@addmob 8511109 Green Spider Saibaman
+@addmob 8511110 Spider Saibaman
+@addmob 8511111 Spider Saibaman
+@addmob 8511112 Spider Saibaman
+@addmob 8511113 Practitioner Saibaman
+@addmob 8511114 Practitioner Saibaman
+@addmob 8511115 Practitioner Saibaman
+@addmob 8512101 Poisonous Vine Saibaman
+@addmob 8512102 Poisonous Vine Saibaman
+@addmob 8512103 Poisonous Vine Saibaman
+@addmob 8512104 Venom Vine Saibaman
+@addmob 8512105 Venom Vine Saibaman
+@addmob 8512106 Venom Vine Saibaman
+@addmob 8512107 Venom Spider Saibaman
+@addmob 8512108 Venom Spider Saibaman
+@addmob 8512109 Venom Spider Saibaman
+@addmob 8513101 Asparagus Vine Saibaman
+@addmob 8513102 Asparagus Vine Saibaman
+@addmob 8513103 Asparagus Vine Saibaman
+@addmob 8513104 Giant Asparagus Vine Saibaman
+@addmob 8513105 Giant Asparagus Vine Saibaman
+@addmob 8513106 Giant Asparagus Vine Saibaman
+@addmob 8513107 Gas Vine Saibaman
+@addmob 8513108 Gas Vine Saibaman
+@addmob 8513109 Gas Vine Saibaman
+@addmob 8513110 White Spider Saibaman
+@addmob 8513111 White Spider Saibaman
+@addmob 8513112 White Spider Saibaman
+@addmob 8513113 Frozen Spider Saibaman
+@addmob 8513114 Frozen Spider Saibaman
+@addmob 8513115 Frozen Spider Saibaman
+@addmob 8514101 Brainwashed vine Saibaman
+@addmob 8514102 Brainwashed vine Saibaman
+@addmob 8514103 Brainwashed vine Saibaman
+@addmob 8514104 Brainwashed vine Saibaman
+@addmob 8514105 Brainwashed vine Saibaman
+@addmob 8514106 Brainwashed vine Saibaman
+@addmob 8601101 Towa
+@addmob 8601102 Towa
+@addmob 8601103 Towa
+@addmob 8811101 Brainwashing Machine
+@addmob 8811102 Brainwashing Machine
+@addmob 8811103 Brainwashing Machine
+@addmob 8811104 Brainwashing Machine
+@addmob 8811105 Brainwashing Machine
+@addmob 8811106 Brainwashing Machine
+@addmob 8811107 Brainwashing Machine
+@addmob 8811108 Brainwashing Machine
+@addmob 8811109 Brainwashing Machine
+@addmob 8811110 Brainwashing Machine
+@addmob 8811111 Brainwashing Machine
+@addmob 8811112 Brainwashing Machine
+@addmob 8811113 Brainwashing Machine
+@addmob 8811114 Brainwashing Machine
+@addmob 8811115 Brainwashing Machine
+@addmob 8811116 Brainwashing Machine
+@addmob 8811117 Brainwashing Machine
+@addmob 8811118 Brainwashing Machine
+@addmob 8811119 Mira's Army Brainwash Machine
+@addmob 8811122 Brainwashing Machine
+@addmob 8811123 Brainwashing Machine
+@addmob 8811124 Brainwashing Machine
+@addmob 8821101 Captain Wada
+@addmob 8821102 Captain Wada
+@addmob 8821103 Captain Wada
+@addmob 8821201 Captain Wada
+@addmob 8821202 Captain Wada
+@addmob 8821203 Captain Wada
+@addmob 8911101 Wild Wolf
+@addmob 8911102 Wild Wolf
+@addmob 8911103 Wild Wolf
+@addmob 8911104 Investigating Wolf
+@addmob 8911105 Investigating Wolf
+@addmob 8911106 Investigating Wolf
+@addmob 8911107 Poisonous Wolf
+@addmob 8911108 Poisonous Wolf
+@addmob 8911109 Poisonous Wolf
+@addmob 8911110 Manso Hound
+@addmob 8911111 Manso Hound
+@addmob 8911112 Manso Hound
+@addmob 8911113 Prairie Wolf
+@addmob 8911201 Moon Wolf
+@addmob 8911202 Moon Wolf
+@addmob 8911203 Moon Wolf
+@addmob 8911204 Korin Wolf
+@addmob 8911205 Korin Wolf
+@addmob 8911206 Korin Wolf
+@addmob 8911213 Shadow Army Wolf
+@addmob 8911214 Shadow Army Wolf
+@addmob 8911215 Shadow Army Wolf
+@addmob 8911216 Forest King
+@addmob 8911217 Forest King
+@addmob 8911218 Forest King
+@addmob 8911219 Brainwashed Mira Wolf
+@addmob 8911220 Brainwashed Mira Wolf
+@addmob 8911221 Brainwashed Mira Wolf
+@addmob 8911222 Mountain wolf
+@addmob 8911223 Mountain wolf
+@addmob 8911224 Mountain wolf
+@addmob 8911225 Red Pants Wolf
+@addmob 8911226 Red Pants Wolf
+@addmob 8911227 Red Pants Wolf
+@addmob 8911228 RP explore Wolf
+@addmob 8911229 RP explore Wolf
+@addmob 8911230 RP explore Wolf
+@addmob 8911231 Elite Invasion Wolf
+@addmob 8911234 Mountain wolf
+@addmob 8912101 Hungry Wolf
+@addmob 8912102 Hungry Wolf
+@addmob 8912103 Hungry Wolf
+@addmob 8912104 Howling Wolf
+@addmob 8912105 Howling Wolf
+@addmob 8912106 Howling Wolf
+@addmob 8912107 Savage Wolf
+@addmob 8912108 Savage Wolf
+@addmob 8912109 Savage Wolf
+@addmob 8912110 Wild Wolf
+@addmob 8912111 Wild Wolf
+@addmob 8912112 Wild Wolf
+@addmob 8912113 Dark gang Wolf
+@addmob 8912116 Elite Wolf Leader
+@addmob 8912128 Savage Dog
+@addmob 8912129 Savage Dog
+@addmob 8912130 Savage Dog
+@addmob 8912131 Master Savage
+@addmob 8912132 Master Savage
+@addmob 8912133 Master Savage
+@addmob 8912134 Guardian Wolf
+@addmob 8912135 Guardian Wolf
+@addmob 8912136 Guardian Wolf
+@addmob 8912201 Jackal
+@addmob 8912202 Jackal
+@addmob 8912203 Jackal
+@addmob 8912204 Lone Wolf
+@addmob 8912205 Lone Wolf
+@addmob 8912206 Lone Wolf
+@addmob 8912207 Night Wolf
+@addmob 8912210 Hunting Wolf
+@addmob 8912213 Dark Wolf
+@addmob 8912219 Wild Hound
+@addmob 8912220 Wild Hound
+@addmob 8912221 Wild Hound
+@addmob 8912222 Mad Jackal
+@addmob 8912223 Mad Jackal
+@addmob 8912224 Mad Jackal
+@addmob 8912225 Predator Wolf
+@addmob 8912226 Predator Wolf
+@addmob 8912227 Predator Wolf
+@addmob 8912228 Colonel Kiri's Hound
+@addmob 8912229 Colonel Kiri's Hound
+@addmob 8912230 Colonel Kiri's Hound
+@addmob 8912231 Wilderness Gao
+@addmob 8912232 Wilderness Gao
+@addmob 8912233 Wilderness Gao
+@addmob 8912234 Crazy Water Jackal
+@addmob 8912235 Crazy Water Jackal
+@addmob 8912236 Crazy Water Jackal
+@addmob 8912237 Duet Wolf
+@addmob 8912238 Duet Wolf
+@addmob 8912239 Duet Wolf
+@addmob 8912240 Wilderness Gao
+@addmob 8913101 Dingo
+@addmob 8913102 Dingo
+@addmob 8913103 Dingo
+@addmob 8913104 Wild Squad Wolf
+@addmob 8913105 Wild Squad Wolf
+@addmob 8913106 Wild Squad Wolf
+@addmob 8913107 Wild Spotted Wolf
+@addmob 8913108 Wild Spotted Wolf
+@addmob 8913109 Wild Spotted Wolf
+@addmob 8913110 Red patrol Wolf
+@addmob 8913111 Red patrol Wolf
+@addmob 8913112 Red patrol Wolf
+@addmob 8913113 Lazy Wolf
+@addmob 8913114 Lazy Wolf
+@addmob 8913115 Lazy Wolf
+@addmob 8913116 Gang of Nightowl
+@addmob 8913119 Hogarth Wolf
+@addmob 8913122 Poison Gas Wolf
+@addmob 8913125 Looting Wolf
+@addmob 8913128 Wild Wolf
+@addmob 8913201 Wolf Dog
+@addmob 8913202 Wolf Dog
+@addmob 8913203 Wolf Dog
+@addmob 8913204 Wild Howler
+@addmob 8913205 Wild Howler
+@addmob 8913206 Wild Howler
+@addmob 8913207 White Gang Wolf
+@addmob 8913210 Bagels Wolf
+@addmob 8913213 Wild Howler
+@addmob 9 Saibaman Type
+@addmob 9111101 Flower Monkey
+@addmob 9111102 Flower Monkey
+@addmob 9111103 Flower Monkey
+@addmob 9111104 Flower Power Monkey
+@addmob 9111105 Flower Power Monkey
+@addmob 9111106 Flower Power Monkey
+@addmob 9111107 Big Flower Monkey
+@addmob 9111108 Flower Monkey
+@addmob 9111109 Flower Monkey
+@addmob 9111110 War Monkey
+@addmob 9111111 War Monkey
+@addmob 9111112 War Monkey
+@addmob 9111113 Bula-Li Black Monkey
+@addmob 9111114 Bula-Li Black Monkey
+@addmob 9111115 Bula-Li Black Monkey
+@addmob 9111116 Sasi-Li Monkey
+@addmob 9112101 Little Baylor Monkey 
+@addmob 9112102 Little Baylor Monkey
+@addmob 9112103 Little Baylor Monkey
+@addmob 9112104 Baylor Monkey
+@addmob 9112105 Baylor Monkey
+@addmob 9112106 Baylor Monkey
+@addmob 9112107 Della Baylor Monkey
+@addmob 9112108 Della Baylor Monkey
+@addmob 9112109 Della Baylor Monkey
+@addmob 9112110 Coast Devil
+@addmob 9112111 Coast Devil
+@addmob 9112112 Coast Devil
+@addmob 9112113 Hungry Monkey
+@addmob 9112114 Hungry Monkey
+@addmob 9112115 Hungry Monkey
+@addmob 9112116 Hungry Monkey
+@addmob 9112117 Hungry Monkey
+@addmob 9112118 Hungry Monkey
+@addmob 9112119 Bula-Li Blue Monkey
+@addmob 9112120 Bula-Li Blue Monkey
+@addmob 9112121 Bula-Li Blue Monkey
+@addmob 9112122 Hungry Monkey
+@addmob 9112123 Hungry Monkey
+@addmob 9112124 Hungry Monkey
+@addmob 9112125 Wild Monkey
+@addmob 9112128 Bristol Flower Monkey
+@addmob 9112129 Bristol Flower Monkey
+@addmob 9112130 Bristol Flower Monkey
+@addmob 9112131 Bristol Flower Monkey
+@addmob 9113101 Lira
+@addmob 9113104 Violent Orangi
+@addmob 9411101 Buffalo Soldier
+@addmob 9411102 Buffalo Soldier
+@addmob 9411103 Buffalo Soldier
+@addmob 9411104 Buffalo Troop
+@addmob 9411105 Buffalo Troop
+@addmob 9411106 Buffalo Troop
+@addmob 9411107 Mou Champ
+@addmob 9411108 Mou Champ
+@addmob 9411109 Mou Champ
+@addmob 9411110 Ultimate weapon Guard
+@addmob 9411111 Ultimate weapon Guard
+@addmob 9411112 Ultimate weapon Guard
+@addmob 9411113 General Bone's Royal Raider
+@addmob 9411114 General Bone's Royal Raider
+@addmob 9411115 General Bone's Royal Raider
+@addmob 9411116 Buffalo Miner 
+@addmob 9411117 Buffalo Miner 
+@addmob 9411118 Buffalo Miner 
+@addmob 9411119 Buffalo Worker
+@addmob 9411120 Buffalo Worker
+@addmob 9411121 Buffalo Worker
+@addmob 9411122 Pillecuttle 
+@addmob 9411123 Pillecuttle
+@addmob 9411124 Pillecuttle
+@addmob 9411125 Defeated Bull Soldier
+@addmob 9411201 Defeated Buffalo Soldier
+@addmob 9411202 Defeated Buffalo Soldier
+@addmob 9411203 Defeated Buffalo Soldier
+@addmob 9411204 Buffalo Elite Unit
+@addmob 9411205 Buffalo Elite Unit
+@addmob 9411206 Buffalo Elite Unit
+@addmob 9411207 Buffalo Slave Soldier
+@addmob 9411208 Buffalo Slave Soldier
+@addmob 9411209 Buffalo Slave Soldier
+@addmob 9411210 Occupation Force Bull
+@addmob 9411211 Occupation Force Bull
+@addmob 9411212 Occupation Force Bull
+@addmob 9411213 Buffalo Experimental Sample
+@addmob 9411214 Buffalo Experimental Sample
+@addmob 9411215 Buffalo Experimental Sample
+@addmob 9411216 Mad Ox Soldier
+@addmob 9411217 Mad Ox Soldier
+@addmob 9411218 Mad Ox Soldier
+@addmob 9411219 Middle-Level Red Pants Soldier
+@addmob 9411301 Buffalo Soldier Royal Guard
+@addmob 9411302 Buffalo Soldier Royal Guard
+@addmob 9411303 Buffalo Soldier Royal Guard
+@addmob 9411304 Buffalo Seaman
+@addmob 9411305 Buffalo Seaman
+@addmob 9411306 Buffalo Seaman
+@addmob 9411307 Buffalo Supply Unit
+@addmob 9411308 Buffalo Supply Unit
+@addmob 9411309 Buffalo Supply Unit
+@addmob 9411310 Buffalo Deserter
+@addmob 9411311 Buffalo Deserter
+@addmob 9411312 Buffalo Deserter
+@addmob 9411313 Buffalo Worker
+@addmob 9411314 Buffalo Worker
+@addmob 9411315 Buffalo Worker
+@addmob 9411316 Mr. Jackie
+@addmob 9411317 Mr. Jackie
+@addmob 9411318 Mr. Jackie
+@addmob 9411319 Clean Buffalo Seaman
+@addmob 9411320 Clean Buffalo Seaman
+@addmob 9411321 Clean Buffalo Seaman
+@addmob 9411322 Red Pants Deserter
+@addmob 9411323 Red Pants Deserter
+@addmob 9411324 Red Pants Deserter
+@addmob 9411325 Bull Squad
+@addmob 9411326 Bull Squad
+@addmob 9411327 Bull Squad
+@addmob 9412101 Mad Ox Engineer Corps
+@addmob 9412102 Mad Ox Engineer Corps
+@addmob 9412103 Mad Ox Engineer Corps
+@addmob 9412104 Evening Star's Mad Ox
+@addmob 9412105 Evening Star's Mad Ox
+@addmob 9412106 Evening Star's Mad Ox
+@addmob 9412107 Vassal of Shenmaong
+@addmob 9412108 Vassal of Shenmaong
+@addmob 9412109 Vassal of Shenmaong
+@addmob 9412113 Buffalo Operation Officer
+@addmob 9412114 Buffalo Operation Officer
+@addmob 9412115 Buffalo Operation Officer
+@addmob 9412119 Mad Ox
+@addmob 9412120 Mad Ox
+@addmob 9412121 Mad Ox
+@addmob 9412201 Mad Ox Hot-Wind Troop
+@addmob 9412202 Mad Ox Hot-Wind Troop
+@addmob 9412203 Mad Ox Hot-Wind Troop
+@addmob 9412204 Mad Ox Suicide Corps
+@addmob 9412205 Mad Ox Suicide Corps
+@addmob 9412206 Mad Ox Suicide Corps
+@addmob 9412207 Red Pants Secretary 
+@addmob 9412208 Red Pants Secretary 
+@addmob 9412209 Red Pants Secretary 
+@addmob 9412210 Mad Ox Chief Guard
+@addmob 9412211 Mad Ox Chief Guard
+@addmob 9412212 Mad Ox Chief Guard
+@addmob 9413101 Hot-Wind Troops Bull
+@addmob 9413102 Hot-Wind Troops Bull
+@addmob 9413103 Hot-Wind Troops Bull
+@addmob 9413104 Suicide Corps Bull
+@addmob 9413105 Suicide Corps Bull
+@addmob 9413106 Suicide Corps Bull
+@addmob 9413107 Field Supervisor 
+@addmob 9413108 Field Supervisor 
+@addmob 9413109 Field Supervisor 
+@addmob 9413110 Doublles
+@addmob 9413111 Doublles
+@addmob 9413112 Doublles
+@addmob 9413113 Bull Sentry
+@addmob 9413114 Bull Sentry
+@addmob 9413115 Bull Sentry
+@addmob 9413116 Underground Base Guarding Warrior
+@addmob 9413117 Underground Base Guarding Warrior
+@addmob 9413118 Underground Base Guarding Warrior
+@addmob 9413119 Red Pants Guarding Warrior
+@addmob 9413120 Red Pants Guarding Warrior
+@addmob 9413121 Red Pants Guarding Warrior
+@addmob 9413122 Underground Base Guarding Warrior
+@addmob 9413201 Guard Unit Bull
+@addmob 9413202 Guard Unit Bull
+@addmob 9413203 Guard Unit Bull
+@addmob 9413204 Special Operation Unit Bull
+@addmob 9413205 Special Operation Unit Bull
+@addmob 9413206 Special Operation Unit Bull
+@addmob 9414101 General Bone
+@addmob 9414102 General Bone
+@addmob 9414103 General Bone
+@addmob 9414104 Julia
+@addmob 9414105 Julia
+@addmob 9414106 Julia
+@addmob 9414107 General Bone
+@addmob 9414201 Kiri Poisoned General Bone
+@addmob 9414202 Kiri Poisoned General Bone
+@addmob 9414203 Kiri Poisoned General Bone
+@addmob 9415104 Tomb Robber Leader Abek
+@addmob 9415105 Tomb Robber Leader Abek
+@addmob 9415106 Tomb Robber Leader Abek
+@addmob 9415107 Red Pants Army Leader
+@addmob 9415108 Red Pants Army Leader
+@addmob 9415109 Red Pants Army Leader
+@addmob 9415110 General Brooklyne
+@addmob 9415111 General Brooklyne
+@addmob 9415112 General Brooklyne
+@addmob 9415113 Red Pants Military Discipline Officer
+@addmob 9415114 Red Pants Military Discipline Officer
+@addmob 9415115 Red Pants Military Discipline Officer
+@addmob 9415201 Robot Renovating Worker
+@addmob 9415202 Robot Renovating Worker
+@addmob 9415203 Robot Renovating Worker
+@addmob 9415401 Brainwashed General Brooklyne
+@addmob 9415402 Brainwashed General Brooklyne
+@addmob 9415403 Brainwashed General Brooklyne
+@addmob 9415404 Brainwashed High-Level Prisoner
+@addmob 9415407 Deputy Popo
+@addmob 9415410 Brainwashed General Brooklyne
+@addmob 9416101 Engineer Corps
+@addmob 9416102 Engineer Corps
+@addmob 9416103 Engineer Corps
+@addmob 9416104 Special Engineer Corps Bull
+@addmob 9416105 Special Engineer Corps Bull
+@addmob 9416106 Special Engineer Corps Bull
+@addmob 9416107 Engineer Corps Bull
+@addmob 9416108 Engineer Corps Bull
+@addmob 9416109 Engineer Corps Bull
+@addmob 9416110 Bull Guard
+@addmob 9416111 Bull Guard
+@addmob 9416112 Bull Guard
+@addmob 9416113 Engineer Corps
+@addmob 9416114 Engineer Corps
+@addmob 9416115 Engineer Corps
+@addmob 9417101 Supervisor Bull
+@addmob 9417102 Supervisor Bull
+@addmob 9417103 Supervisor Bull
+@addmob 9418101 Field Supervisor
+@addmob 9418102 Field Supervisor
+@addmob 9418103 Field Supervisor
+@addmob 9418104 Classic Red Pants Elite Unit
+@addmob 9418105 Classic Red Pants Elite Unit
+@addmob 9418106 Classic Red Pants Elite Unit
+@addmob 9419101 General Bone's Arson Unit
+@addmob 9419102 General Bone's Arson Unit
+@addmob 9419103 General Bone's Arson Unit
+@addmob 9419104 RP Special Operation Officer
+@addmob 9419107 General Bone's Arson Unit
+@addmob 9420101 Engineer Corps
+@addmob 9420102 Engineer Corps
+@addmob 9420103 Engineer Corps
+@addmob 9420104 Gooris Buffalo Worker
+@addmob 9420105 Gooris Buffalo Worker
+@addmob 9420106 Gooris Buffalo Worker
+@addmob 9420107 Engineer Corps
+@addmob 9421101 Mushroom Gang Strong Man
+@addmob 9421104 Mushroom Gang Raider Leader
+@addmob 9421107 Mushroom Gang Wild Fellow
+@addmob 9421110 Mushroom Gang Tyrant
+@addmob 9421113 Mushroom Gang Raider Leader
+@addmob 9611101 Clamp Saibaman
+@addmob 9611102 Clamp Saibaman
+@addmob 9611103 Clamp Saibaman
+@addmob 9611104 Big Clamp Saibaman
+@addmob 9611105 Big Clamp Saibaman
+@addmob 9611106 Big Clamp Saibaman
+@addmob 9611107 King Clamp Saibaman
+@addmob 9611108 King Clamp Saibaman
+@addmob 9611109 King Clamp Saibaman
+@addmob 9611110 Clamp Saibaman
+@addmob 9611111 Clamp Saibaman
+@addmob 9611112 Clamp Saibaman
+@addmob 9611125 Oasis Clamp Saibaman
+@addmob 9611126 Oasis Clamp Saibaman
+@addmob 9611127 Oasis Clamp Saibaman
+@addmob 9611128 Desert Clamp Saibaman
+@addmob 9611129 Desert Clamp Saibaman
+@addmob 9611130 Desert Clamp Saibaman
+@addmob 9611131 Snip Clamp Saibaman
+@addmob 9611132 Snip Clamp Saibaman
+@addmob 9611133 Snip Clamp Saibaman
+@addmob 9611134 Son of "The Monster"
+@addmob 9611135 Son of "The Monster"
+@addmob 9611136 Son of "The Monster"
+@addmob 9611137 Clamp-Picker Saibaman
+@addmob 9611138 Clamp-Picker Saibaman
+@addmob 9611139 Clamp-Picker Saibaman
+@addmob 9611140 Waterway Clamp Saibaman
+@addmob 9611141 Waterway Clamp Saibaman
+@addmob 9611142 Waterway Clamp Saibaman
+@addmob 9612101 Glossy Saibaman
+@addmob 9612102 Glossy Saibaman
+@addmob 9612103 Glossy Saibaman
+@addmob 9612104 King Glossy Saibaman
+@addmob 9612105 King Glossy Saibaman
+@addmob 9612106 King Glossy Saibaman
+@addmob 9612107 Giga Glossy Saibaman
+@addmob 9612108 Giga Glossy Saibaman
+@addmob 9612109 Giga Glossy Saibaman
+@addmob 9612110 Salty Clamp Saibaman
+@addmob 9612111 Salty Clamp Saibaman
+@addmob 9612112 Salty Clamp Saibaman
+@addmob 9612113 Real Monster
+@addmob 9612114 Real Monster
+@addmob 9612115 Real Monster
+@addmob 9612116 Shell Clamp Saibaman
+@addmob 9612117 Shell Clamp Saibaman
+@addmob 9612118 Shell Clamp Saibaman
+@addmob 9612119 Wanderer Clamp Saibaman
+@addmob 9612120 Wanderer Clamp Saibaman
+@addmob 9612121 Wanderer Clamp Saibaman
+@addmob 9612122 Frozen Clamp Saibaman
+@addmob 9612123 Frozen Clamp Saibaman
+@addmob 9612124 Frozen Clamp Saibaman
+@addmob 9612125 Bred Monster
+@addmob 9612126 Bred Monster
+@addmob 9612127 Bred Monster
+@addmob 9612128 Wanderer Clamp Saibaman
+@addmob 9612131 Frozen Clamp Saibaman
+@addmob 9613101 Sand Crab Saibaman
+@addmob 9613102 Sand Crab Saibaman
+@addmob 9613103 Sand Crab Saibaman
+@addmob 9613104 King Sand Crab Saibaman
+@addmob 9613105 King Sand Crab Saibaman
+@addmob 9613106 King Sand Crab Saibaman
+@addmob 9613107 Giga Sand Crab Saibaman
+@addmob 9613108 Giga Sand Crab Saibaman
+@addmob 9613109 Giga Sand Crab Saibaman
+@addmob 9613110 Long-Leg Saibaman
+@addmob 9613111 Long-Leg Saibaman
+@addmob 9613112 Long-Leg Saibaman
+@addmob 9613113 Left-Clamp Saibaman
+@addmob 9613114 Left-Clamp Saibaman
+@addmob 9613115 Left-Clamp Saibaman
+@addmob 9613116 Oceanking Clamp Saibaman
+@addmob 9613117 Oceanking Clamp Saibaman
+@addmob 9613118 Oceanking Clamp Saibaman
+@addmob 9613119 Mushroom Lake Clamp Saibaman
+@addmob 9613120 Mushroom Lake Clamp Saibaman
+@addmob 9613121 Mushroom Lake Clamp Saibaman
+@addmob 9614101 Poisoned Clamp Saibaman
+@addmob 9614104 King Snip Saibaman
+@addmob 9614201 Real Monster
+@addmob 9614202 Real Monster
+@addmob 9614203 Real Monster
+@addmob 9615101 Brainwashed Clamp Saibaman
+@addmob 9615102 Brainwashed Clamp Saibaman
+@addmob 9615103 Brainwashed Clamp Saibaman
+@addmob 9615104 Brainwashed Clamp Saibaman
+@addmob 9615105 Brainwashed Clamp Saibaman
+@addmob 9615106 Brainwashed Clamp Saibaman
+@addmob 9615107 Brainwashed Steel-Clamp Saibaman
+@addmob 9615108 Brainwashed Steel-Clamp Saibaman
+@addmob 9615109 Brainwashed Steel-Clamp Saibaman
+@addmob 9615110 Brainwashed Plated-Clamp Saibaman
+@addmob 9615111 Brainwashed Plated-Clamp Saibaman
+@addmob 9615112 Brainwashed Plated-Clamp Saibaman
+@addmob 9615113 Brainwashed Clamp Saibaman
+@addmob 9615114 Brainwashed Clamp Saibaman
+@addmob 9615115 Brainwashed Clamp Saibaman
+@addmob 9811101 Oil Rock
+@addmob 9811102 Oil Rock
+@addmob 9811103 Oil Rock
+@addmob 9981101 0	
+@addmob 9981102 0	
+@addmob 9981103 0	
+@addmob 9991101 Test 1
+@addmob 9991102 Test 1
+@addmob 9991103 Test 1
+@addmob 9991104 Test 7
+@addmob 9991105 Test 7
+@addmob 9991106 Test 7
+@addmob 9991107 General Red
+@addmob 9991108 General Red
+@addmob 9991109 General Red
+@addmob 9994110 EP Absorbing Stat
+@addmob 9994111 LP Absorbing Stat
+@addmob 9995107 Test 4
+@addmob 9995108 Test 4
+@addmob 9995109 Test 4
+@addmob 9995112 Mega Dodon-Ray Stat Mob
+@addmob 68131393 Broly
+@addmob 68131391 Super Saiyan Broly
+@addmob 68131392 Ozaru Broly
+@addmob 68131390 Vampa Beetle
+@addmob 68131394  3 Star Dragon
+@addmob 68131395  4 Star Dragon
+@addmob 68131396  1 Star Dragon
+@addmob 68131397  Evil Dragon
+@addmob 68131398  Ice Dragon
+@addmob 68131399  Fire Dragon

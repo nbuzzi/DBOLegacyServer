@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "CPlayer.h"
 #include "GameServer.h"
+#include "ArenaManager.h"
 #include "freebattle.h"
 #include "privateshop.h"
 #include "trade.h"
@@ -31,6 +32,20 @@
 #include "DragonballScramble.h"
 #include "BusSystem.h" // #include "NtlPacketGU.h"
 #include "HelperNpcManager.h"
+#include "ArenaWorld.h"
+#include "CustomDropEvent.h"
+
+// Helper: name-based arena detection for the player's current world (no table lookup)
+static inline bool IsInArenaWorldByName(const CPlayer* plr)
+{
+	if (!plr) return false;
+	// GetCurWorld is non-const in this codebase; use const_cast to access for read-only check.
+	CPlayer* p = const_cast<CPlayer*>(plr);
+	CWorld* w = p->GetCurWorld();
+	if (!w) return false;
+	sWORLD_TBLDAT* td = w->GetTbldat();
+	return td && ArenaWorld::IsArenaWorldByWideName(td->wszName);
+}
 
 
 bool DeleteItemUponLogin(TBLIDX itemIdx)
@@ -195,7 +210,7 @@ void CPlayer::LoadData(sPC_PROFILE* pcdata, sPC_TBLDAT* pTbldat)
 
 			m_byCurRPBall = pcdata->byCurRPBall;
 			player_data.charTitle = pcdata->charTitle;
-			player_data.dwWaguWaguPoints = pcdata->dwWaguWaguPoints;		
+			player_data.dwWaguWaguPoints = pcdata->dwWaguWaguPoints;
 			player_data.mascotTblidx = pcdata->mascotTblidx;
 			player_data.bInvisibleCostume = pcdata->bInvisibleCostume; //if true then cant see costume
 			player_data.bInvisibleTitle = false;//Xanu pcdata->bInvisibleTitle; //if true, then cant see char title
@@ -230,7 +245,8 @@ void CPlayer::LeaveGame()
 	sRejoinTicket.charId = GetCharID();
 	sRejoinTicket.partyId = GetPartyID();
 	sRejoinTicket.channelId = app->GetGsChannel();
-	sRejoinTicket.expireAtMs = GetTickCount() + 10 * 60 * 1000; // 10 minutes
+	// Default rejoin expiry: 10 minutes (overridden per-context below)
+	sRejoinTicket.expireAtMs = GetTickCount() + 10 * 60 * 1000;
 
 	sREJOIN_TARGET tgt{};
 	tgt.worldId = GetLastRejoinWorldId();
@@ -402,8 +418,80 @@ void CPlayer::LeaveGame()
 			SetWorldID(GetTeleportWorldID());
 		}
 
+		// If disconnecting while in an Arena world or as an Arena participant, try to restore
+		// the player's original world/position saved before entering the arena. If not available,
+		// fall back to a safe static location.
+		const unsigned int SAFE_WORLD_TBLIDX = 1;
+		const unsigned int SAFE_MAP_INFO_INDEX = 200101011;
+		const CNtlVector SAFE_LOC(4975.609863f, -48.869999f, 4012.609863f);
+		const CNtlVector SAFE_DIR(0.911100f, 0.0f, -0.412000f);
+
+		bool inArenaContext = false;
+		do {
+			if (g_pArenaManager && g_pArenaManager->IsEnabled())
+			{
+				if (g_pArenaManager->IsParticipant(this)) { inArenaContext = true; break; }
+				unsigned int arenaWorldId = g_pArenaManager->GetOrCreateCurrentWorldId();
+				if (arenaWorldId != 0 && (unsigned int)GetWorldID() == arenaWorldId) { inArenaContext = true; break; }
+			}
+		} while (false);
+
+		if (inArenaContext)
+		{
+			// Proactively clear arena-applied conditions so we don't relog invisible or locked
+			if (GetStateManager())
+			{
+				GetStateManager()->RemoveConditionState(CHARCOND_TRANSPARENT, NULL, true);
+				GetStateManager()->RemoveConditionState(CHARCOND_INVINCIBLE, NULL, true);
+				GetStateManager()->RemoveConditionState(CHARCOND_CANT_BE_TARGETTED, NULL, true);
+				GetStateManager()->RemoveConditionState(CHARCOND_ATTACK_DISALLOW, NULL, true);
+			}
+
+			unsigned int prevWorldId = INVALID_WORLDID;
+			CNtlVector prevLoc, prevDir;
+			bool hasPrev = false;
+			if (g_pArenaManager)
+			{
+				hasPrev = g_pArenaManager->GetPrevLocation(GetCharID(), prevWorldId, prevLoc, prevDir);
+			}
+
+			if (hasPrev)
+			{
+				SetCurLoc(prevLoc);
+				SetCurDir(prevDir);
+				SetWorldID((WORLDID)prevWorldId);
+				// Try resolve map name index from world; fall back to safe index when unavailable
+				if (CWorld* pPrevWorld = app->GetGameMain()->GetWorldManager()->FindWorld((WORLDID)prevWorldId))
+					SetMapNameTblidx(GetNaviEngine()->GetTextAllIndex(pPrevWorld->GetNaviInstanceHandle(), prevLoc.x, prevLoc.z));
+				else
+					SetMapNameTblidx(SAFE_MAP_INFO_INDEX);
+			}
+			else
+			{
+				SetCurLoc((CNtlVector&)SAFE_LOC);
+				SetCurDir((CNtlVector&)SAFE_DIR);
+				SetWorldID((WORLDID)SAFE_WORLD_TBLIDX);
+				SetMapNameTblidx(SAFE_MAP_INFO_INDEX);
+			}
+
+			// Ensure ArenaManager forgets our arena context snapshot/membership
+			if (g_pArenaManager)
+			{
+				g_pArenaManager->Remove(this);
+			}
+		}
+
 		if (app->IsDojoChannel() && GetMatchIndex() != INVALID_BYTE)
 		{
+			// Issue a Budokai rejoin ticket so the player can return
+			sRejoinTicket.dungeonType = eREJOIN_DUNGEON_TYPE::REJOIN_BUDOKAI;
+			sRejoinTicket.worldId = GetWorldID();
+			// Budokai tickets are short-lived per policy: 1 minute
+			sRejoinTicket.expireAtMs = GetTickCount() + 60 * 1000;
+			g_Rejoin.Put(sRejoinTicket);
+
+			ERR_LOG(LOG_GENERAL, "[REJOIN] Ticket created: char=%u type=BUDOKAI joinId=%u matchIdx=%u worldId=%u expiresInMs=%u", (unsigned)GetCharID(), (unsigned)GetJoinID(), (unsigned)GetMatchIndex(), (unsigned)GetWorldID(), (unsigned)(60 * 1000));
+
 			SetBudokaiPcState(MATCH_MEMBER_STATE_GIVEUP);
 			g_pBudokaiManager->PlayerDisconnect(GetCharID(), GetID(), GetJoinID(), GetMatchIndex(), GetBudokaiTeamType());
 		}
@@ -556,6 +644,10 @@ void CPlayer::Initialize()
 	m_currentHtbSkill = INVALID_BYTE;
 	m_byHtbUseBalls = 0;
 
+	// no pending class change by default
+	m_byPendingClass = INVALID_BYTE;
+	m_bSkipNextSkillResetCost = false;
+
 	ZeroMemory(player_data.awchName, NTL_MAX_SIZE_CHAR_NAME + 1);
 	player_data.bEmergency = false;
 	player_data.bindObjectTblidx = INVALID_TBLIDX;
@@ -704,7 +796,7 @@ void CPlayer::TickProcess(DWORD dwTickDiff, float fMultiple)
 		return;
 
 	CCharacter::TickProcess(dwTickDiff, fMultiple);
-	
+
 	// AFK CHECK
 	AfkCheck(dwTickDiff);
 
@@ -798,18 +890,35 @@ void CPlayer::UpdateFreePvpZone(DWORD dwTickDiff)
 		m_dwFreePvpZoneUpdateTick = 0;
 		if (GetCurWorld())
 		{
+			// Do not auto-toggle PvP zone while Arena is running in the current world
+			bool blockAutoToggle = false;
+			if (g_pArenaManager && g_pArenaManager->IsEnabled() && g_pArenaManager->GetState() == CArenaManager::State::IN_ROUND)
+			{
+				if (g_pArenaManager->IsArenaWorldId((unsigned int)GetWorldID()) || g_pArenaManager->IsArenaWorldTblidx((unsigned int)GetWorldTblidx()))
+					blockAutoToggle = true;
+			}
+
+			if (blockAutoToggle)
+			{
+				// Ensure the client always considers this map as PvP during Arena RUN
+				if (!IsPvpZone())
+					UpdatePvpZone(true);
+				return;
+			}
+
 			if (!IsPvpZone())
 			{
-				//if (GetNaviEngine()->IsBasicAttributeSet(GetCurWorld()->GetNaviInstanceHandle(), GetCurLoc().x, GetCurLoc().z, DBO_WORLD_ATTR_BASIC_FREE_PVP_ZONE))
-				if (IsInBattleArena(GetWorldTblidx(), GetCurLoc(), DiePowerTournament) || GetWorldTblidx() == 510000 && DiePowerTournament == false)
+				// Arena worlds are force-PvP zones during events
+				bool arenaWorld = (g_pArenaManager && g_pArenaManager->IsArenaWorldTblidx((unsigned int)GetWorldTblidx()));
+				if (arenaWorld || IsInBattleArena(GetWorldTblidx(), GetCurLoc(), DiePowerTournament) || (GetWorldTblidx() == 510000 && DiePowerTournament == false))
 				{
 					UpdatePvpZone(true);
 				}
 			}
 			else if (IsPvpZone())
 			{
-				//if (GetNaviEngine()->IsBasicAttributeSet(GetCurWorld()->GetNaviInstanceHandle(), GetCurLoc().x, GetCurLoc().z, DBO_WORLD_ATTR_BASIC_FREE_PVP_ZONE) == false)
-				if (IsInBattleArena(GetWorldTblidx(), GetCurLoc(), DiePowerTournament) == false || GetWorldTblidx() == 510000 && IsFainting() == true && DiePowerTournament == false)
+				bool arenaWorld = (g_pArenaManager && g_pArenaManager->IsArenaWorldTblidx((unsigned int)GetWorldTblidx()));
+				if ((!arenaWorld && IsInBattleArena(GetWorldTblidx(), GetCurLoc(), DiePowerTournament) == false) || (GetWorldTblidx() == 510000 && IsFainting() == true && DiePowerTournament == false))
 				{
 					UpdatePvpZone(false);
 					if (GetWorldTblidx() == 510000)
@@ -818,7 +927,7 @@ void CPlayer::UpdateFreePvpZone(DWORD dwTickDiff)
 						Revival(CNtlVector(GetBindLoc()), GetBindWorldID(), REVIVAL_TYPE_BIND_POINT, TELEPORT_TYPE_POPOSTONE);
 						/*Revival(CNtlVector(GetCurLoc()), GetWorldTblidx(), REVIVAL_TYPE_SPECIFIED_POSITION, TELEPORT_TYPE_POPOSTONE);
 						GetStateManager()->AddConditionState(CHARCOND_CANT_BE_TARGETTED, NULL, true);*/
-					}					
+					}
 				}
 			}
 		}
@@ -1067,6 +1176,32 @@ void CPlayer::RecvLoadPcDataRes(sPC_DATA* pPcData, sDBO_SERVER_CHANGE_INFO* pser
 {
 	CGameServer* app = (CGameServer*)g_pApp;
 
+	// Enforce GM-only server access if configured
+	if (app->IsGmOnlyMode())
+	{
+		bool isGm = (pPcData->bIsGameMaster != 0) || (pPcData->byAdminLevel >= ADMIN_LEVEL_EARLY_ACCESS);
+		if (!isGm)
+		{
+			// Notify the client, then gracefully return to character select
+			CNtlPacket packetMsg(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+			sGU_SYSTEM_DISPLAY_TEXT* resMsg = (sGU_SYSTEM_DISPLAY_TEXT*)packetMsg.GetPacketData();
+			resMsg->wOpCode = GU_SYSTEM_DISPLAY_TEXT;
+			resMsg->byDisplayType = SERVER_TEXT_SYSTEM;
+			const wchar_t* kickMsg = L"Server is in GM-only mode. Access denied.";
+			wcscpy_s(resMsg->awchMessage, NTL_MAX_LENGTH_OF_CHAT_MESSAGE + 1, kickMsg);
+			packetMsg.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+			app->Send(GetClientSessionID(), &packetMsg);
+
+			CNtlPacket packetExit(sizeof(sGU_GAME_EXIT_RES));
+			sGU_GAME_EXIT_RES* resExit = (sGU_GAME_EXIT_RES*)packetExit.GetPacketData();
+			resExit->wOpCode = GU_GAME_EXIT_RES;
+			packetExit.SetPacketLen(sizeof(sGU_GAME_EXIT_RES));
+			app->Send(GetClientSessionID(), &packetExit);
+
+			return;
+		}
+	}
+
 	SetPrevChannelID(pserverChangeInfo->prevServerChannelId);
 
 	/*Did we teleport to another channel?*/
@@ -1223,7 +1358,9 @@ void CPlayer::RecvLoadPcDataRes(sPC_DATA* pPcData, sDBO_SERVER_CHANGE_INFO* pser
 	}
 	else
 	{
-		ERR_LOG(LOG_GENERAL, "Fail. Player Create failed");
+		char* nameLog = Ntl_WC2MB(pPcData->awchName);
+		ERR_LOG(LOG_GENERAL, "Fail. Player Create failed charId=%u name=%s", pPcData->charId, nameLog ? nameLog : "<null>");
+		Ntl_CleanUpHeapString(nameLog);
 	}
 }
 
@@ -1874,6 +2011,11 @@ void CPlayer::OnLeaveWorld(CWorld* pWorld)
 void CPlayer::OnEnterWorldComplete()
 {
 	CSpawnObject::OnEnterWorldComplete();
+	// Arena resync only for participants to avoid impacting non-participants login
+	if (g_pArenaManager->IsEnabled() && g_pArenaManager->IsParticipant(this))
+	{
+		g_pArenaManager->OnPlayerEnterWorld(this);
+	}
 }
 
 //--------------------------------------------------------------------------------------//
@@ -3242,7 +3384,7 @@ void CPlayer::FusionMascot(BYTE byItemPlace, BYTE byItemPos, BYTE byMascotLevelU
 	CItem* item = NULL;
 	CItemPet* mainMascot = NULL;
 	CItemPet* offeringMascot = NULL;
-		
+
 	mainMascot = GetMascot(byMascotLevelUpSlot);
 	offeringMascot = GetMascot(byMascotOfferingSlot);
 
@@ -3391,7 +3533,7 @@ void	CPlayer::UpdateBattleCombatMode(bool status)
 				ResetBuffReduction = 35000;
 				m_dwCombatModeTickCount = NTL_BATTLE_COMBAT_DISABLE;
 				return;
-			}			
+			}
 		}
 		else
 		{
@@ -3779,10 +3921,14 @@ void	CPlayer::EnterLava()
 	if (g_pEventMgr->HasEvent(this, EVENT_ON_LAVA))
 		return;
 
-	//Do damage once enter lava and then let event handle damage
-	event_LavaDamage();
+	// Do not apply immediate damage if invincible (e.g., post-revive protection)
+	if (!GetStateManager()->IsCharCondition(CHARCOND_INVINCIBLE))
+	{
+		//Do damage once enter lava and then let event handle damage
+		event_LavaDamage();
+	}
 
-	if (!IsFainting())
+	if (!IsFainting() && !GetStateManager()->IsCharCondition(CHARCOND_INVINCIBLE))
 		g_pEventMgr->AddEvent(this, &CPlayer::event_LavaDamage, EVENT_ON_LAVA, 2000, 0xFFFFFFFF, 0);
 }
 //--------------------------------------------------------------------------------------//
@@ -3856,9 +4002,37 @@ bool CPlayer::AttackProgress(DWORD dwTickDiff, float fMultiple)
 			return false;
 
 		if (!IsAttackable(pVictim))
+		{
+			// Diagnostics: only when CustomDropEvent is ON (to troubleshoot event-related reports)
+			if (g_pCustomDropEvent && g_pCustomDropEvent->m_bOn && g_pCustomDropEvent->m_bVerbose)
+			{
+				QWORD tCond = pVictim->GetStateManager()->GetConditionState();
+				QWORD mCond = GetStateManager()->GetConditionState();
+				ERR_LOG(LOG_GENERAL,
+					"[AttackDbg] IsAttackable=false me=%u world=%u tgt=%u tblidx=%u tState=%u tCond=%I64u mState=%u mCond=%I64u",
+					(unsigned)GetCharID(), (unsigned)GetWorldID(), (unsigned)pVictim->GetID(), (unsigned)pVictim->GetTblidx(),
+					(unsigned)pVictim->GetCharStateID(), tCond, (unsigned)GetCharStateID(), mCond);
+			}
 			return false;
+		}
 		else if (ConsiderAttackRange() == false)
+		{
+			if (g_pCustomDropEvent && g_pCustomDropEvent->m_bOn && g_pCustomDropEvent->m_bVerbose)
+			{
+				// Log distance vs range to understand geometry issues
+				float dx = GetCurLoc().x - pVictim->GetCurLoc().x;
+				float dy = GetCurLoc().y - pVictim->GetCurLoc().y;
+				float dz = GetCurLoc().z - pVictim->GetCurLoc().z;
+				float dist3 = sqrtf(dx * dx + dy * dy + dz * dz);
+				float range = GetAttackRange(pVictim);
+
+				ERR_LOG(LOG_GENERAL,
+					"[AttackDbg] Range=false me=%u world=%u tgt=%u tblidx=%u dist3=%.2f range=%.2f airTgt=%d airMe=%d",
+					(unsigned)GetCharID(), (unsigned)GetWorldID(), (unsigned)pVictim->GetID(), (unsigned)pVictim->GetTblidx(),
+					dist3, range, (int)pVictim->GetAirState(), (int)GetAirState());
+			}
 			return false;
+		}
 
 		UpdateBattleCombatMode(true); //Start/Reset combat event
 
@@ -3944,110 +4118,122 @@ bool CPlayer::Faint(CCharacterObject* pkKiller, eFAINT_REASON byReason)
 {
 	CGameServer* app = (CGameServer*)g_pApp;
 
-	if (m_pTransformTbldat) //if transformed then cancel
+	if (m_pTransformTbldat) // if transformed then cancel
 		CancelTransformation();
 
-	if (GetAspectStateId() == ASPECTSTATE_VEHICLE) //cancel vehicle when faint
+	if (GetAspectStateId() == ASPECTSTATE_VEHICLE) // cancel vehicle when faint
 		EndVehicle(GAME_VEHICLE_END_BY_HIT);
 
-	if (GetPcIsFreeBattle() == false)
+	// Real FreeBattle faint handling only when the player is actually in a FreeBattle
+	if (GetPcIsFreeBattle() && GetFreeBattleID() != INVALID_DWORD)
 	{
-		if (CCharacterObject::Faint(pkKiller, byReason))
-		{
-			CCharacter::Faint(pkKiller, byReason);
-
-			UpdateBattleCombatMode(false);
-
-			if (GetDragonballScrambleBallFlag() > 0)
-				g_pDragonballScramble->SpawnBall(this, true);
-
-			bool bApply = true;
-
-			if (GetCurrentPetId() != INVALID_HOBJECT)
-			{
-				if (CSummonPet* pPet = g_pObjectManager->GetSummonPet(GetCurrentPetId()))
-					pPet->Despawn(true);
-			}
-
-			if (GetCurWorld())
-			{
-				if (GetCurWorld()->GetRuleType() == GAMERULE_RANKBATTLE) //check if player in rank battle)
-				{
-					bApply = false;
-					g_pRankbattleManager->UpdatePlayerState(GetRankBattleRoomTblidx(), GetRankBattleRoomId(), this, RANKBATTLE_MEMBER_STATE_FAINT);
-				}
-				else if (GetCurWorld()->GetRuleType() == GAMERULE_DOJO) //check if player in rank battle)
-				{
-					bApply = false;
-
-					SetCurRP(0); //just set value is enough because client reset the rp by itself (DO NOT WHEN PLAYER DIE IN RANK BATTLE)
-					SetRPBall(0);//just set value is enough because client reset the rp ball by itself (DO NOT WHEN PLAYER DIE IN RANK BATTLE)
-				}
-				else if (GetCurWorld()->GetRuleType() == GAMERULE_MINORMATCH || GetCurWorld()->GetRuleType() == GAMERULE_MAJORMATCH || GetCurWorld()->GetRuleType() == GAMERULE_FINALMATCH)//check if die in budokaiif 
-				{
-					if (GetBudokaiPcState() != MATCH_MEMBER_STATE_FAINT && app->IsDojoChannel())
-					{
-						SetBudokaiPcState(MATCH_MEMBER_STATE_FAINT);
-
-						//update score etc
-						if (g_pBudokaiManager->GetMatchDepth() == INVALID_BUDOKAI_MATCH_DEPTH)
-						{
-							if (pkKiller)
-								g_pBudokaiManager->MinorMatchUpdateScore(GetMatchIndex(), ((CPlayer*)pkKiller)->GetBudokaiTeamType(), pkKiller->GetID(), GetID());
-							else
-								g_pBudokaiManager->MinorMatchUpdateScore(GetMatchIndex(), INVALID_TEAMTYPE, INVALID_HOBJECT, GetID());
-						}
-						else if (g_pBudokaiManager->GetMatchDepth() >= BUDOKAI_MATCH_DEPTH_8)
-							g_pBudokaiManager->MajorMatchUpdateScore(GetMatchIndex(), GetBudokaiTeamType(), GetID(), GetJoinID());
-						else if (g_pBudokaiManager->GetMatchDepth() <= BUDOKAI_MATCH_DEPTH_4)
-							g_pBudokaiManager->FinalMatchUpdateScore(GetMatchIndex(), GetBudokaiTeamType(), GetID(), GetJoinID());
-						else
-							ERR_LOG(LOG_SYSTEM, "BudokaiManager: MatchDepth %u not found", g_pBudokaiManager->GetMatchDepth());
-
-						bApply = false;
-					}
-
-					SetCurRP(0); //just set value is enough because client reset the rp by itself (DO NOT WHEN PLAYER DIE IN RANK BATTLE)
-					SetRPBall(0);//just set value is enough because client reset the rp ball by itself (DO NOT WHEN PLAYER DIE IN RANK BATTLE)
-				}
-				else
-				{
-					SetCurRP(0); //just set value is enough because client reset the rp by itself (DO NOT WHEN PLAYER DIE IN RANK BATTLE)
-					SetRPBall(0);//just set value is enough because client reset the rp ball by itself (DO NOT WHEN PLAYER DIE IN RANK BATTLE)
-				}
-			}
-
-			if (IsInBattleArena(GetWorldTblidx(), GetCurLoc(), DiePowerTournament) || GetWorldTblidx() == 510000) //check if player is in free pvp arena
-			{
-				bApply = false;
-			}
-
-			if (bApply)
-			{
-				if (GetCurWorld() && GetCurWorld()->GetTbldat()->bDynamic == false)
-					AddDeathQuickTeleport();
-
-				if (IsGameMaster() == false)		//do not decrease durability when player is a gm..
-					DecreaseEquipmentDurability();
-
-				GetQuests()->PlayerDied(); //inform quests that player died. Some quests might fail.
-			}
-
-			GetCharAtt()->CalculateAll();
-			return true;
-		}
-	}
-	else
-	{
-		SetCurLP(1); //set current LP to 1 because client-side the lp dont go below 1 if battle ends
+		SetCurLP(1); // set current LP to 1 because client-side the LP doesn't go below 1 if freebattle ends
 		g_pFreeBattleManager->EndFreeBattle(GetFreeBattleID(), GetFreeBattleTarget());
-
 		return true;
 	}
 
-	return false;
-}
+	// Normal faint flow (Arena, PvP arenas, open world, etc.)
+	if (!CCharacterObject::Faint(pkKiller, byReason))
+		return false;
 
+	CCharacter::Faint(pkKiller, byReason);
+
+	UpdateBattleCombatMode(false);
+
+	if (GetDragonballScrambleBallFlag() > 0)
+		g_pDragonballScramble->SpawnBall(this, true);
+
+	bool bApply = true;
+
+	if (GetCurrentPetId() != INVALID_HOBJECT)
+	{
+		if (CSummonPet* pPet = g_pObjectManager->GetSummonPet(GetCurrentPetId()))
+			pPet->Despawn(true);
+	}
+
+	if (GetCurWorld())
+	{
+		switch (GetCurWorld()->GetRuleType())
+		{
+		case GAMERULE_RANKBATTLE:
+			bApply = false;
+			g_pRankbattleManager->UpdatePlayerState(GetRankBattleRoomTblidx(), GetRankBattleRoomId(), this, RANKBATTLE_MEMBER_STATE_FAINT);
+			break;
+		case GAMERULE_DOJO:
+			bApply = false;
+			SetCurRP(0);
+			SetRPBall(0);
+			break;
+		case GAMERULE_MINORMATCH:
+		case GAMERULE_MAJORMATCH:
+		case GAMERULE_FINALMATCH:
+			if (GetBudokaiPcState() != MATCH_MEMBER_STATE_FAINT && app->IsDojoChannel())
+			{
+				SetBudokaiPcState(MATCH_MEMBER_STATE_FAINT);
+
+				// update score etc
+				if (g_pBudokaiManager->GetMatchDepth() == INVALID_BUDOKAI_MATCH_DEPTH)
+				{
+					if (pkKiller)
+						g_pBudokaiManager->MinorMatchUpdateScore(GetMatchIndex(), ((CPlayer*)pkKiller)->GetBudokaiTeamType(), pkKiller->GetID(), GetID());
+					else
+						g_pBudokaiManager->MinorMatchUpdateScore(GetMatchIndex(), INVALID_TEAMTYPE, INVALID_HOBJECT, GetID());
+				}
+				else if (g_pBudokaiManager->GetMatchDepth() >= BUDOKAI_MATCH_DEPTH_8)
+				{
+					g_pBudokaiManager->MajorMatchUpdateScore(GetMatchIndex(), GetBudokaiTeamType(), GetID(), GetJoinID());
+				}
+				else if (g_pBudokaiManager->GetMatchDepth() <= BUDOKAI_MATCH_DEPTH_4)
+				{
+					g_pBudokaiManager->FinalMatchUpdateScore(GetMatchIndex(), GetBudokaiTeamType(), GetID(), GetJoinID());
+				}
+				else
+				{
+					ERR_LOG(LOG_SYSTEM, "BudokaiManager: MatchDepth %u not found", g_pBudokaiManager->GetMatchDepth());
+				}
+
+				bApply = false;
+			}
+
+			SetCurRP(0);
+			SetRPBall(0);
+			break;
+		default:
+			SetCurRP(0);
+			SetRPBall(0);
+			break;
+		}
+	}
+
+	if (IsInBattleArena(GetWorldTblidx(), GetCurLoc(), DiePowerTournament) || GetWorldTblidx() == 510000) // check if player is in free pvp arena
+	{
+		bApply = false;
+	}
+
+	if (bApply)
+	{
+		if (GetCurWorld() && GetCurWorld()->GetTbldat()->bDynamic == false)
+			AddDeathQuickTeleport();
+
+		if (IsGameMaster() == false) // do not decrease durability when player is a gm
+			DecreaseEquipmentDurability();
+
+		GetQuests()->PlayerDied(); // inform quests that player died. Some quests might fail.
+	}
+
+	// Arena scoring hook: register a point for killer when a participant faints
+	if (pkKiller)
+	{
+		CPlayer* pKillerPc = dynamic_cast<CPlayer*>(pkKiller);
+		if (pKillerPc)
+		{
+			g_pArenaManager->OnPlayerFaint((unsigned int)pKillerPc->GetCharID(), (unsigned int)GetCharID());
+		}
+	}
+
+	GetCharAtt()->CalculateAll();
+	return true;
+}
 
 //--------------------------------------------------------------------------------------//
 //		return true on death
@@ -4074,15 +4260,62 @@ bool CPlayer::ConsiderAttackRange()
 	CCharacter* pTarget = g_pObjectManager->GetChar(GetAttackTarget());
 	if (pTarget)
 	{
+		const float baseRange = GetAttackRange(pTarget);
 		if (pTarget->GetAirState() == AIR_STATE_ON)
 		{
-			if (IsInRange3(pTarget, GetAttackRange(pTarget)))
+			if (IsInRange3(pTarget, baseRange))
 				return true;
 		}
 		else
 		{
-			if (IsInRange(pTarget, GetAttackRange(pTarget)))
+			if (IsInRange(pTarget, baseRange))
 				return true;
+		}
+
+		// Event-aware lenience: some event-replaced bosses have very large models or offset centers where
+		// center-to-center distance can exceed practical melee reach. When the Custom Drop Event is ON,
+		// allow a bounded dynamic extra range for MONSTER targets only to account for this. No effect in PvP.
+		if (g_pCustomDropEvent && g_pCustomDropEvent->m_bOn && pTarget->IsMonster())
+		{
+			// Compute current distance in matching metric (3D if target is airborne)
+			float dx = GetCurLoc().x - pTarget->GetCurLoc().x;
+			float dy = GetCurLoc().y - pTarget->GetCurLoc().y;
+			float dz = GetCurLoc().z - pTarget->GetCurLoc().z;
+			float dist = (pTarget->GetAirState() == AIR_STATE_ON) ? sqrtf(dx * dx + dy * dy + dz * dz) : sqrtf(dx * dx + dz * dz);
+
+			// Bridge only the missing gap, up to a safe cap to prevent abuse
+			float missing = dist - baseRange;
+			float extra = (missing > 0.f ? missing + 0.25f : 0.f); // just enough, add a hair
+			if (extra > 25.0f) extra = 25.0f; // hard cap
+
+			if (pTarget->GetAirState() == AIR_STATE_ON)
+			{
+				if (IsInRange3(pTarget, baseRange + extra))
+				{
+					if (g_pCustomDropEvent->m_bVerbose)
+					{
+						ERR_LOG(LOG_GENERAL,
+							"[AttackDbg] EventPad used (air): me=%u tgt=%u tblidx=%u base=%.2f extra=%.2f dist=%.2f",
+							(unsigned)GetCharID(), (unsigned)pTarget->GetID(), (unsigned)pTarget->GetTblidx(), baseRange, extra, dist);
+					}
+
+					return true;
+				}
+			}
+			else
+			{
+				if (IsInRange(pTarget, baseRange + extra))
+				{
+					if (g_pCustomDropEvent->m_bVerbose)
+					{
+						ERR_LOG(LOG_GENERAL,
+							"[AttackDbg] EventPad used: me=%u tgt=%u tblidx=%u base=%.2f extra=%.2f dist=%.2f",
+							(unsigned)GetCharID(), (unsigned)pTarget->GetID(), (unsigned)pTarget->GetTblidx(), baseRange, extra, dist);
+					}
+
+					return true;
+				}
+			}
 		}
 	}
 
@@ -4091,18 +4324,40 @@ bool CPlayer::ConsiderAttackRange()
 
 float CPlayer::GetAttackRange(CCharacter* pTarget)
 {
+	// Base melee range from attributes (weapon/class)
 	float fAttackRange = CCharacterObject::GetAttackRange();
 
+	// Great Namek uses a fixed longer melee reach
 	if (GetStateManager()->GetAspectStateID() == ASPECTSTATE_GREAT_NAMEK)
 	{
 		fAttackRange = DBO_GREAT_NAMEK_ATTACK_RANGE;
 	}
 
-	fAttackRange += CCharacter::GetAttackRange(pTarget);
+	// Include target surface by adding target's radius (existing behavior)
+	float fTargetRadius = 0.0f;
+	if (pTarget)
+		fTargetRadius = pTarget->GetObjectRadius();
 
-	fAttackRange += 0.5f; // add some padding
+	// Also include our own radius so the check is effectively center-to-center <= base + bothRadii
+	float fSelfRadius = GetObjectRadius();
 
-	return fAttackRange;
+	// Small universal padding
+	float fPad = 0.5f;
+
+	// For oversized monsters, allow a tiny extra lenience to account for large collision hulls and nav buffers
+	// Keep this conservative and PvE-only by nature (applies only when the target is a monster)
+	if (pTarget && pTarget->IsMonster())
+	{
+		if (fTargetRadius >= 10.0f)
+		{
+			// Up to +2.0m extra, scaled by monster size
+			float extra = fTargetRadius * 0.05f; // 5% of target radius
+			if (extra > 2.0f) extra = 2.0f;
+			fPad += extra;
+		}
+	}
+
+	return fAttackRange + fTargetRadius + fSelfRadius + fPad;
 }
 void CPlayer::TeleportSky(WORLDID ID)
 {
@@ -4246,6 +4501,50 @@ void CPlayer::CancelTeleportProposal(BYTE byTeleportIndex)
 //--------------------------------------------------------------------------------------//
 bool CPlayer::IsAttackable(CCharacterObject* pTarget)
 {
+	// Arena override only when both players are on the Arena world AND the arena is actively running.
+	if (pTarget && pTarget->IsPC())
+	{
+		CPlayer* pPlayerTargt = static_cast<CPlayer*>(pTarget);
+		bool bothInArenaWorld = false;
+		if (g_pArenaManager)
+		{
+			bothInArenaWorld = (g_pArenaManager->IsArenaWorldId((unsigned int)GetWorldID()) || g_pArenaManager->IsArenaWorldTblidx((unsigned int)GetWorldTblidx())) &&
+				(g_pArenaManager->IsArenaWorldId((unsigned int)pPlayerTargt->GetWorldID()) || g_pArenaManager->IsArenaWorldTblidx((unsigned int)pPlayerTargt->GetWorldTblidx()));
+		}
+		const bool arenaActive = (bothInArenaWorld && g_pArenaManager && g_pArenaManager->IsEnabled() &&
+			g_pArenaManager->GetState() == CArenaManager::State::IN_ROUND);
+		if (arenaActive)
+		{
+			const bool meSpectator = g_pArenaManager->IsSpectatorId((unsigned int)GetCharID());
+			const bool tgSpectator = g_pArenaManager->IsSpectatorId((unsigned int)pPlayerTargt->GetCharID());
+			if (meSpectator || tgSpectator)
+				return false; // spectators never engage
+
+			const bool meParticipant = g_pArenaManager->IsParticipant(this);
+			const bool tgParticipant = g_pArenaManager->IsParticipant(pPlayerTargt);
+			if (!(meParticipant && tgParticipant))
+				return false; // only participants can fight in the arena world during RUN
+
+			switch (g_pArenaManager->GetMode())
+			{
+			case CArenaManager::Mode::PARTY_VS_PARTY:
+				// Friendly fire off for same party; otherwise allowed
+				if (GetPartyID() != INVALID_PARTYID && GetPartyID() == pPlayerTargt->GetPartyID())
+					return false;
+				return true;
+			case CArenaManager::Mode::GUILD_VS_GUILD:
+				// Friendly fire off for same guild; otherwise allowed
+				if (GetGuildID() != 0 && GetGuildID() == pPlayerTargt->GetGuildID())
+					return false;
+				return true;
+			case CArenaManager::Mode::FREE_FOR_ALL:
+			case CArenaManager::Mode::OPEN:
+			default:
+				return true;
+			}
+		}
+	}
+
 	if (CCharacterObject::IsAttackable(pTarget))
 	{
 		if (pTarget->IsPC())
@@ -4254,6 +4553,8 @@ bool CPlayer::IsAttackable(CCharacterObject* pTarget)
 
 			if (GetCurWorld() == NULL || pPlayerTargt->GetCurWorld() == NULL)
 				return false;
+
+			// Arena-specific handling is already applied in the early block above. Avoid duplication here.
 
 			if (GetDragonballScramble() && pPlayerTargt->GetDragonballScramble())
 			{
@@ -4268,13 +4569,15 @@ bool CPlayer::IsAttackable(CCharacterObject* pTarget)
 			if (GetFreeBattleID() != INVALID_DWORD && GetFreeBattleID() == pPlayerTargt->GetFreeBattleID())
 				return true;
 
+			// Arena-friendly fire is handled above; no extra checks here.
+
 			if (IsPvpZone() == true && IsInBattleArena(pPlayerTargt->GetWorldTblidx(), pPlayerTargt->GetCurLoc(), DiePowerTournament) == true) //dont allow players attack players who are not in battle arena
 				return true;
 
 			if (m_sRankBattleData.eState == RANKBATTLE_MEMBER_STATE_ATTACKABLE && pPlayerTargt->GetRankBattleData()->eState == RANKBATTLE_MEMBER_STATE_ATTACKABLE)
 			{
-				if (m_sRankBattleData.eTeamType != pPlayerTargt->GetRankBattleData()->eTeamType)
-					return true;
+				// Attackable due rank
+				return true;
 			}
 
 			else if (GetCurWorld()->GetRuleType() == GAMERULE_DOJO && GetGuildID() != pPlayerTargt->GetGuildID())
@@ -4637,12 +4940,12 @@ void CPlayer::ChatServerCoordinateSync(DWORD dwTickDiff)
 		CGameServer* app = (CGameServer*)g_pApp;
 
 		CNtlPacket packet(sizeof(sGU_CHAR_COORDINATE_EACH_TICK_NFY));
-		sGU_CHAR_COORDINATE_EACH_TICK_NFY * res = (sGU_CHAR_COORDINATE_EACH_TICK_NFY *)packet.GetPacketData();
+		sGU_CHAR_COORDINATE_EACH_TICK_NFY* res = (sGU_CHAR_COORDINATE_EACH_TICK_NFY*)packet.GetPacketData();
 		res->wOpCode = GU_CHAR_COORDINATE_EACH_TICK_NFY;
 		res->hSubject = GetID();
 		NtlLocationCompress(&res->vCurLoc, GetCurLoc().x, GetCurLoc().y, GetCurLoc().z);
 		NtlDirectionCompress(&res->vCurDir, GetCurDir().x, GetCurDir().y, GetCurDir().z);
-		packet.SetPacketLen( sizeof(sGU_CHAR_COORDINATE_EACH_TICK_NFY) );
+		packet.SetPacketLen(sizeof(sGU_CHAR_COORDINATE_EACH_TICK_NFY));
 		app->Send(GetClientSessionID(), &packet);
 
 		//set map name tblidx

@@ -138,3 +138,4 @@ Tools/**/*.pdb
 !Tools/CustomDropEventEditor/items.txt
 !Tools/CustomDropEventEditor/ItemList.txt
 !Tools/CustomDropEventEditor/itemlist.txt
+!Mobs.txt

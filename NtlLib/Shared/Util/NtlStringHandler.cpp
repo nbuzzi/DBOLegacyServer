@@ -53,14 +53,15 @@ WCHAR* Ntl_MB2WC(const char* pszOriginalString)
 		return NULL;
 	}
 
-	int iRequiredChars = ::MultiByteToWideChar(::GetACP(), 0, pszOriginalString, -1, NULL, 0);
+	// Use UTF-8 explicitly to preserve international characters
+	int iRequiredChars = ::MultiByteToWideChar(CP_UTF8, 0, pszOriginalString, -1, NULL, 0);
 	WCHAR* pwszResultString = new WCHAR[iRequiredChars];
 	if (NULL == pwszResultString)
 	{
 		return NULL;
 	}
 
-	::MultiByteToWideChar(::GetACP(), 0, pszOriginalString, -1, pwszResultString, iRequiredChars);
+	::MultiByteToWideChar(CP_UTF8, 0, pszOriginalString, -1, pwszResultString, iRequiredChars);
 
 	return pwszResultString;
 }
@@ -72,14 +73,15 @@ char* Ntl_WC2MB(const WCHAR* pwszOriginalString)
 		return NULL;
 	}
 
-	int iRequiredChars = ::WideCharToMultiByte(::GetACP(), 0, pwszOriginalString, -1, NULL, 0, NULL, NULL);
+	// Convert wide (UTF-16) to UTF-8 explicitly
+	int iRequiredChars = ::WideCharToMultiByte(CP_UTF8, 0, pwszOriginalString, -1, NULL, 0, NULL, NULL);
 	char* pszResultString = new char[iRequiredChars];
 	if (NULL == pszResultString)
 	{
 		return NULL;
 	}
 
-	::WideCharToMultiByte(::GetACP(), 0, pwszOriginalString, -1, pszResultString, iRequiredChars, NULL, NULL);
+	::WideCharToMultiByte(CP_UTF8, 0, pwszOriginalString, -1, pszResultString, iRequiredChars, NULL, NULL);
 
 	return pszResultString;
 }

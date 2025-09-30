@@ -4,11 +4,11 @@
 //
 //	Begin		:	2005-12-13
 //
-//	Copyright	:	¨Ï NTL-Inc Co., Ltd
+//	Copyright	:	ï¿½ï¿½ NTL-Inc Co., Ltd
 //
 //	Author		:	Hyun Woo, Koo   ( zeroera@ntl-inc.com )
 //
-//	Desc		:	Network Á¢¼ÓÀ» ¹Þ¾ÆµéÀÌ´Â Acceptor Å¬·¡½º
+//	Desc		:	Network ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Þ¾Æµï¿½ï¿½Ì´ï¿½ Acceptor Å¬ï¿½ï¿½ï¿½ï¿½
 //
 //***********************************************************************************
 
@@ -97,6 +97,10 @@ public:
 
 	DWORD					GetTotalAcceptCount() { return m_dwTotalAcceptCount; }
 
+	// Diagnostics helpers
+	int							GetAcceptingCount() const { return m_nAcceptingCount; }
+	int							GetAcceptedCount() const { return m_nAcceptedCount; }
+
 
 protected:
 
@@ -131,18 +135,18 @@ public:
 	CNtlBitFlagManager		m_BitFlagManager;
 	CNtlAcceptingSessionList*	m_pAcceptingSessionList;
 
-	int						m_nMaxAcceptCount;  // Acceptor¿¡¼­ µ¿½Ã¿¡ Accept ÇÒ ¼ö ÀÖ´Â ÃÖ´ë °³¼ö
+	int						m_nMaxAcceptCount;  // Acceptorï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ã¿ï¿½ Accept ï¿½ï¿½ ï¿½ï¿½ ï¿½Ö´ï¿½ ï¿½Ö´ï¿½ ï¿½ï¿½ï¿½ï¿½
 
-	int						m_nMinAcceptCount; // ÀÌ °³¼ö º¸´Ù CurAcceptCount°¡ ÀûÀ¸¸é PostAcceptCount¸¸Å­ Accept½ÃÅ²´Ù
+	int						m_nMinAcceptCount; // ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ CurAcceptCountï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ PostAcceptCountï¿½ï¿½Å­ Acceptï¿½ï¿½Å²ï¿½ï¿½
 
-	int						m_nPostAcceptCount; // Accept¸¦ ReserveÇÏ´Â °³¼ö
+	int						m_nPostAcceptCount; // Acceptï¿½ï¿½ Reserveï¿½Ï´ï¿½ ï¿½ï¿½ï¿½ï¿½
 
-	int						m_nCreateAcceptCount; // ÃÖÃÊ »ý¼º½Ã Accept¸¦ ReserveÇÏ´Â °³¼ö
+	int						m_nCreateAcceptCount; // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Acceptï¿½ï¿½ Reserveï¿½Ï´ï¿½ ï¿½ï¿½ï¿½ï¿½
 
 
-	int						m_nAcceptingCount; // ÇöÀç AcceptÇÏ°í ÀÖ´Â °³¼ö
+	int						m_nAcceptingCount; // ï¿½ï¿½ï¿½ï¿½ Acceptï¿½Ï°ï¿½ ï¿½Ö´ï¿½ ï¿½ï¿½ï¿½ï¿½
 
-	int						m_nAcceptedCount; // ÇöÀç AcceptµÈ °³¼ö
+	int						m_nAcceptedCount; // ï¿½ï¿½ï¿½ï¿½ Acceptï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 
 	DWORD					m_dwTotalAcceptCount; 
 

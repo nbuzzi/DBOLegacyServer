@@ -95,6 +95,10 @@ void CGT_Opcodes::BuildOpcodeList()
 	StoreOpcode(GT_BROADCASTING_SYSTEM_NFY, "GT_BROADCASTING_SYSTEM_NFY", PROCESS_INPLACE, &CServerPassiveSession::RecvBroadcastingSystemNfy);
 	StoreOpcode(GT_WAGUCOIN_INCREASE_NFY, "GT_WAGUCOIN_INCREASE_NFY", PROCESS_INPLACE, &CServerPassiveSession::RecvWaguCoinIncreaseNfy);
 	StoreOpcode(GT_EVENTCOIN_INCREASE_NFY, "GT_EVENTCOIN_INCREASE_NFY", PROCESS_INPLACE, &CServerPassiveSession::RecvEventCoinIncreaseNfy);
+
+	// Arena
+	StoreOpcode(GT_ARENA_TELEPORT_INFO_REQ, "GT_ARENA_TELEPORT_INFO_REQ", PROCESS_INPLACE, &CServerPassiveSession::RecvArenaTeleportInfoReq);
+	StoreOpcode(GT_ARENA_TELEPORT_INFO_RES, "GT_ARENA_TELEPORT_INFO_RES", PROCESS_INPLACE, &CServerPassiveSession::RecvArenaTeleportInfoRes);
 }
 
 

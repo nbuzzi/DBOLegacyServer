@@ -50,6 +50,7 @@ CCustomDropEvent::~CCustomDropEvent()
 void CCustomDropEvent::Init()
 {
 	m_bOn = false;
+	m_bVerbose = false;
 	m_timeStart = 0;
 	m_timeEnd = 0;
 	m_dwNextUpdateTick = 0;
@@ -70,12 +71,21 @@ void CCustomDropEvent::Init()
 	m_exceptTitles.clear();
 	m_exceptVisuals.clear();
 	m_exceptTotems.clear();
+	m_replaceMob.clear();
+	m_exceptReplace.clear();
 	m_eventSpawned.clear();
 	m_cfgPath = ".\\config\\CustomDropEvent.cfg";
 	m_allowChainSpawns = false; // default: prevent chain spawns
 	// Debuff immunity defaults
 	m_debuffImmuneEnabled = true; // default ON as requested
 	m_blockDebuffEffects.clear();
+	m_replaceUseTargetStats = true; // default ON so replacements feel authentic
+	// Auto-start defaults
+	m_autoStart = false;
+	m_autoStartAllChannels = false;
+	m_autoStartHours = 3;
+	m_autoStartChannels.clear();
+	m_autoStartPending = false;
 	LoadConfigInternal(m_cfgPath.c_str());
 	LoadLevelsSidecar(m_cfgPath.c_str());
 }
@@ -110,9 +120,17 @@ bool CCustomDropEvent::LoadConfigInternal(const char* path)
 	m_exceptTitles.clear();
 	m_exceptVisuals.clear();
 	m_exceptTotems.clear();
+	m_replaceMob.clear();
+	m_exceptReplace.clear();
 	// Preserve current immunity default; allow settings section to override
 	// but clear specific lists so reloading replaces them
 	m_blockDebuffEffects.clear();
+	// Reset auto-start flags; settings may re-enable
+	m_autoStart = false;
+	m_autoStartAllChannels = false;
+	m_autoStartHours = 3;
+	m_autoStartChannels.clear();
+	m_autoStartPending = false;
 
 	FILE* f = nullptr;
 	errno_t e = fopen_s(&f, path, "rt");
@@ -142,13 +160,15 @@ bool CCustomDropEvent::LoadConfigInternal(const char* path)
 		const char* titlesKw = "titles";
 		const char* visualsKw = "visuals";
 		const char* totemKw = "totem";
-	const char* settingsKw = "settings"; // global settings for defaults
+		const char* replaceKw = "replace";
+		const char* settingsKw = "settings"; // global settings for defaults
 		bool isMods = false;
 		bool isSpawn = false;
 		bool isBuffs = false;
 		bool isTitles = false;
 		bool isVisuals = false;
 		bool isTotem = false;
+		bool isReplace = false;
 		bool isSettings = false;
 		bool isExcept = false;
 		char* colon = strchr(p, ':');
@@ -196,6 +216,8 @@ bool CCustomDropEvent::LoadConfigInternal(const char* path)
 					isVisuals = true;
 				else if (_stricmp(tail, totemKw) == 0)
 					isTotem = true;
+				else if (_stricmp(tail, replaceKw) == 0)
+					isReplace = true;
 				else if (_stricmp(tail, settingsKw) == 0)
 					isSettings = true;
 				else if (_stricmp(tail, "except") == 0)
@@ -232,7 +254,21 @@ bool CCustomDropEvent::LoadConfigInternal(const char* path)
 			else if (isVisuals)   parseExcept(m_exceptVisuals);
 			else if (isTotem)     parseExcept(m_exceptTotems);
 			else if (isMods)      parseExcept(m_exceptMods);
+			else if (isReplace)   parseExcept(m_exceptReplace);
 			else                  parseExcept(m_exceptDrops); // default (drops)
+			continue;
+		}
+		else if (isReplace)
+		{
+			// format: mobId replace: targetMobTblidx  (mobId can be 0/all for global)
+			char* rhs = colon + 1;
+			while (*rhs == ' ' || *rhs == '\t') ++rhs;
+			unsigned int target = (unsigned int)strtoul(rhs, nullptr, 10);
+			if (target != 0)
+			{
+				m_replaceMob[mobId] = target;
+			}
+			// Do not treat this line as a drop list
 			continue;
 		}
 
@@ -378,7 +414,7 @@ bool CCustomDropEvent::LoadConfigInternal(const char* path)
 		}
 		else if (isSettings)
 		{
-			// format: all settings: radius=50 interval=2000 healMul=3.5 duration=60000 immuneDebuff=1 debuffEffects=EFFECT1|EFFECT2|...
+			// format: all settings: radius=50 interval=2000 healMul=3.5 duration=60000 immuneDebuff=1 debuffEffects=EFFECT1|EFFECT2|... replaceUseTargetStats=1
 			// Only allowed with mobId 0/all
 			if (mobId != 0)
 				continue;
@@ -439,9 +475,49 @@ bool CCustomDropEvent::LoadConfigInternal(const char* path)
 							tok = strtok(nullptr, "|, ");
 						}
 					}
+					else if (_stricmp(key, "replaceUseTargetStats") == 0 || _stricmp(key, "replaceStats") == 0)
+					{
+						m_replaceUseTargetStats = (atoi(val) != 0);
+					}
+					else if (_stricmp(key, "autoStart") == 0)
+					{
+						m_autoStart = (atoi(val) != 0);
+					}
+					else if (_stricmp(key, "autoStartHours") == 0 || _stricmp(key, "autoHours") == 0)
+					{
+						int h = atoi(val); if (h <= 0) h = 1; if (h > 168) h = 168; m_autoStartHours = (BYTE)h;
+					}
+					else if (_stricmp(key, "autoStartChannels") == 0 || _stricmp(key, "autoChannels") == 0)
+					{
+						// parse CSV or '|' separated list of channel indices; special token 'all'
+						m_autoStartChannels.clear();
+						m_autoStartAllChannels = false;
+						char buf[256]; strncpy_s(buf, sizeof(buf), val, _TRUNCATE);
+						char* tok = strtok(buf, ",| ");
+						while (tok)
+						{
+							while (*tok == ' ' || *tok == '\t') ++tok;
+							if (*tok)
+							{
+								if (_stricmp(tok, "all") == 0)
+								{
+									m_autoStartAllChannels = true;
+									m_autoStartChannels.clear();
+									break;
+								}
+								int ch = atoi(tok);
+								if (ch >= 0 && ch <= 50)
+									m_autoStartChannels.insert((BYTE)ch);
+							}
+							tok = strtok(nullptr, ",| ");
+						}
+					}
 				}
 				t = strtok(nullptr, " \t\n\r");
 			}
+			// If autoStart is on, schedule StartEvent on next tick to avoid init-order issues
+			if (m_autoStart)
+				m_autoStartPending = true;
 		}
 		else if (isTotem)
 		{
@@ -513,7 +589,7 @@ bool CCustomDropEvent::LoadConfigInternal(const char* path)
 							while (*pEnd && *pEnd != '@' && *pEnd != ',' && *pEnd != '\n' && *pEnd != '\r') ++pEnd;
 							char saved = *pEnd; *pEnd = '\0';
 							size_t len = strlen(p1);
-							if (len > 0 && (p1[len-1] == 's' || p1[len-1] == 'S')) { secs = true; p1[len-1] = '\0'; }
+							if (len > 0 && (p1[len - 1] == 's' || p1[len - 1] == 'S')) { secs = true; p1[len - 1] = '\0'; }
 							durationMs = (DWORD)strtoul(p1, nullptr, 10);
 							if (secs) durationMs *= 1000;
 							*pEnd = saved;
@@ -526,7 +602,7 @@ bool CCustomDropEvent::LoadConfigInternal(const char* path)
 								while (*pEnd2 && *pEnd2 != ',' && *pEnd2 != '\n' && *pEnd2 != '\r') ++pEnd2;
 								char saved2 = *pEnd2; *pEnd2 = '\0';
 								size_t len2 = strlen(p2);
-								if (len2 > 0 && (p2[len2-1] == 's' || p2[len2-1] == 'S')) { secs2 = true; p2[len2-1] = '\0'; }
+								if (len2 > 0 && (p2[len2 - 1] == 's' || p2[len2 - 1] == 'S')) { secs2 = true; p2[len2 - 1] = '\0'; }
 								periodMs = (DWORD)strtoul(p2, nullptr, 10);
 								if (secs2) periodMs *= 1000;
 								*pEnd2 = saved2;
@@ -701,6 +777,12 @@ void CCustomDropEvent::TickProcess(DWORD dwTick)
 	if (dwTick < m_dwNextUpdateTick)
 		return;
 
+	// If auto-start was requested by config, apply it once
+	if (m_autoStartPending && !m_bOn)
+	{
+		ApplyAutoStartPolicy();
+	}
+
 	if (m_bOn)
 	{
 		if (app->GetTime() >= m_timeEnd)
@@ -753,7 +835,7 @@ void CCustomDropEvent::TickProcess(DWORD dwTick)
 									{
 										if (now < t.buffNextTicks[bi])
 											continue;
-										const BuffEntry &be = t.buffs[bi];
+										const BuffEntry& be = t.buffs[bi];
 										sSKILL_TBLDAT* pSkill = (sSKILL_TBLDAT*)g_pTableContainer->GetSkillTable()->FindData(be.skillTblidx);
 										if (!pSkill) continue;
 
@@ -845,16 +927,42 @@ void CCustomDropEvent::TickProcess(DWORD dwTick)
 	}
 }
 
+void CCustomDropEvent::ApplyAutoStartPolicy()
+{
+	if (!m_autoStart || m_bOn)
+	{
+		m_autoStartPending = false;
+		return;
+	}
+	CGameServer* app = (CGameServer*)g_pApp;
+	BYTE ch = app->m_config.byChannel; // channel index configured for this GameServer instance
+	bool allowed = m_autoStartAllChannels || m_autoStartChannels.empty() || (m_autoStartChannels.find(ch) != m_autoStartChannels.end());
+	if (allowed)
+	{
+		StartEvent(m_autoStartHours);
+	}
+	m_autoStartPending = false;
+}
+
 void CCustomDropEvent::Update(CMonster* pMob, CCharacter* pPlayer)
 {
 	if (!pPlayer->GetCurWorld()) { m_eventSpawned.erase(pMob->GetID()); return; }
-	
-	// Allow CustomDropEvent in dungeons and normal worlds, but exclude competitive/PvP areas
+
+	// Allow CustomDropEvent in all worlds except competitive/PvP-only modes
 	eGAMERULE_TYPE ruleType = pPlayer->GetCurWorld()->GetRuleType();
-	if (ruleType != GAMERULE_NORMAL && ruleType != GAMERULE_TIMEQUEST && ruleType != GAMERULE_HUNT && 
-	    ruleType != GAMERULE_CCBATTLEDUNGEON && ruleType != GAMERULE_SKD && ruleType != GAMERULE_RAID) {
-		m_eventSpawned.erase(pMob->GetID()); 
-		return; 
+	switch (ruleType)
+	{
+	case GAMERULE_RANKBATTLE:
+	case GAMERULE_MUDOSA:
+	case GAMERULE_DOJO:
+	case GAMERULE_MINORMATCH:
+	case GAMERULE_MAJORMATCH:
+	case GAMERULE_FINALMATCH:
+	case GAMERULE_TEINKAICHIBUDOKAI:
+		m_eventSpawned.erase(pMob->GetID());
+		return; // skip PvP/competitive arenas entirely
+	default:
+		break; // all other rule types (normal, dungeons, raids, quests) are allowed
 	}
 
 	if (!m_bOn) { m_eventSpawned.erase(pMob->GetID()); return; }
@@ -1443,6 +1551,37 @@ void CCustomDropEvent::ApplyModifiers(CMonster* pMob)
 	// Mark mob as debuff-immune to avoid recalculation via curse-type effects
 	if (m_debuffImmuneEnabled)
 		pMob->SetEventDebuffImmune(true);
+
+	// Ensure event-modified mobs are actually fightable: clear lingering script conditions that block combat
+	// Common offenders observed: ATTACK_DISALLOW, INVINCIBLE, CLICK_DISABLE, CANT_BE_TARGETTED
+	{
+		auto sm = pMob->GetStateManager();
+		bool cleared = false;
+		if (sm->IsCharCondition(CHARCOND_ATTACK_DISALLOW))
+		{
+			sm->RemoveConditionState(CHARCOND_ATTACK_DISALLOW, NULL, true);
+			cleared = true;
+		}
+		if (sm->IsCharCondition(CHARCOND_CANT_BE_TARGETTED))
+		{
+			sm->RemoveConditionState(CHARCOND_CANT_BE_TARGETTED, NULL, true);
+			cleared = true;
+		}
+		if (sm->IsCharCondition(CHARCOND_INVINCIBLE))
+		{
+			sm->RemoveConditionState(CHARCOND_INVINCIBLE, NULL, true);
+			cleared = true;
+		}
+		if (sm->IsCharCondition(CHARCOND_CLICK_DISABLE))
+		{
+			sm->RemoveConditionState(CHARCOND_CLICK_DISABLE, NULL, true);
+			cleared = true;
+		}
+		if (cleared)
+		{
+			ERR_LOG(LOG_GENERAL, "[CustomDropEvent] Cleared combat-blocking flags on mob %u (world %u)", (unsigned)pMob->GetTblidx(), (unsigned)pMob->GetWorldID());
+		}
+	}
 }
 
 void CCustomDropEvent::ApplyBuffs(CMonster* pMob)

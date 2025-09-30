@@ -74,6 +74,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="ArenaManager.cpp" />
     <ClCompile Include="ActionPattern.cpp" />
     <ClCompile Include="ActionPatternIdle1.cpp" />
     <ClCompile Include="ActionPatternIdle2.cpp" />
@@ -330,6 +331,8 @@
     <ClCompile Include="ExpEvent.cpp" />
     <ClCompile Include="Fairy Event.cpp" />
   <ClCompile Include="CustomDropEvent.cpp" />
+  <ClInclude Include="PlayerModifiers.h" />
+  <ClCompile Include="PlayerModifiers.cpp" />
     <ClCompile Include="Guild.cpp" />
     <ClCompile Include="HoneyBeeEvent.cpp" />
     <ClCompile Include="HtbSkill.cpp" />
@@ -746,6 +749,7 @@
     <ClCompile Include="WpsScriptAlgoCondition_CCBD_pattern.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ArenaManager.h" />
     <ClInclude Include="ActionPattern.h" />
     <ClInclude Include="ActionPatternIdle1.h" />
     <ClInclude Include="ActionPatternIdle2.h" />

@@ -1,0 +1,57 @@
+[Chat Server]
+Address = 127.0.0.1
+PublicAddress = 127.0.0.1
+Port = 20400
+server_accept_limit = 5
+Server_Accept_Address = 127.0.0.1
+Server_Accept_Port = 21400
+
+[Master Connect]
+Address = 127.0.0.1
+Port = 40003
+
+[Query Connect]
+Address = 127.0.0.1
+Port = 41000
+
+[DATABASE_CHARACTER]
+Host = 127.0.0.1
+Port = 3306
+User = root
+Password = test
+Db = dbo_char
+
+[DATABASE_ACCOUNT]
+Host = 127.0.0.1
+Port = 3306
+User = root
+Password = test
+Db = dbo_acc
+
+[CONFIG]
+MaxConnection = 400
+
+[TABLE]
+LoadTableFormat = 1
+; 0 = XML, 1 = Binary(rdf), 2 = Secured Binary(edf)
+Path = resource/server_data/table/rdf
+
+[Translator]
+; Enable DeepL-backed chat translation via prefixes:
+;   $chinese <text>, $japanese <text>, $spanish <text>, $english <text>
+; Prefix may be followed by a space or a colon, e.g. $italian: hello
+; When enabled and a valid key is configured, messages are translated server-side
+; before broadcasting, preserving original sender and channel.
+; Supported prefixes (examples):
+;   $english, $en, $english-us, $en-us, $english-uk, $en-gb
+;   $spanish, $es | $japanese, $ja | $chinese, $zh | $korean, $ko
+;   $french, $fr | $german, $de | $portuguese, $pt, $pt-br, $pt-pt
+;   $italian, $it | $russian, $ru | $turkish, $tr | $polish, $pl
+;   $dutch, $nl | $swedish, $sv | $norwegian, $no/$nb | $danish, $da
+;   $finnish, $fi | $czech, $cs | $hungarian, $hu | $romanian, $ro
+;   $bulgarian, $bg | $slovak, $sk | $slovenian, $sl | $estonian, $et
+;   $latvian, $lv | $lithuanian, $lt | $ukrainian, $uk | $indonesian, $id | $greek, $el
+Enable = 0
+DeepLKey = 
+; Use free endpoint (api-free.deepl.com) when set to 1; otherwise api.deepl.com
+DeepLUseFreeApi = 1
