@@ -125,7 +125,7 @@ int CBotAiCondition_SkillUse::OnUpdate(DWORD dwTickDiff, float fMultiple)
 	m_dwSinceLastFollowReassertMs = UnsignedSafeIncrease<DWORD>(m_dwSinceLastFollowReassertMs, dwTickDiff);
 
 	// Track time since last proactive engage/follow switch to prevent rapid oscillation (buffer jitter fix)
-	static const DWORD HELPER_MIN_ENGAGE_STICK_MS = 1500; // stay committed at least 1.5s
+	static const DWORD HELPER_MIN_ENGAGE_STICK_MS = 500; // stay committed at least 0.5s
 	m_dwTime = UnsignedSafeIncrease<DWORD>(m_dwTime, dwTickDiff);
 
 	if (m_dwTime >= 1000)
@@ -275,7 +275,7 @@ int CBotAiCondition_SkillUse::OnUpdate(DWORD dwTickDiff, float fMultiple)
 		{
 			m_dwSinceLastEngageMs = UnsignedSafeIncrease<DWORD>(m_dwSinceLastEngageMs, dwTickDiff);
 			// Movement jitter suppression: if already following leader and within small radius, suppress frequent follow reasserts
-			static const float HELPER_FOLLOW_HYSTERESIS = 1.2f; // meters
+			static const float HELPER_FOLLOW_HYSTERESIS = 2.2f; // meters
 			static const DWORD HELPER_MIN_FOLLOW_REASSERT_MS = 1200; // ms
 			if (GetBot()->GetCharStateID() == CHARSTATE_FOLLOWING && GetBot()->GetLinkPc() != INVALID_HOBJECT)
 			{
@@ -508,7 +508,7 @@ int CBotAiCondition_SkillUse::OnUpdate(DWORD dwTickDiff, float fMultiple)
 						}
 
 						m_dwOutOfRangeTimeMs = UnsignedSafeIncrease<DWORD>(m_dwOutOfRangeTimeMs, 1000);
-						if (m_dwOutOfRangeTimeMs >= 3000)
+						if (m_dwOutOfRangeTimeMs >= 1000)
 						{
 							CWorld* pWorld = pLeaderWorld;
 							if (pWorld && pWorld == pLeader->GetCurWorld())
@@ -610,14 +610,14 @@ int CBotAiCondition_SkillUse::OnUpdate(DWORD dwTickDiff, float fMultiple)
 								if (fDist > (DESIRED_DIST + 1.5f))
 									bShouldReassert = true;
 							}
-							else if (m_dwNoFollowProgressMs >= 4000)
+							else if (m_dwNoFollowProgressMs >= 2000)
 							{
-								// Moving but stuck for >= 4s -> reassert
+								// Moving but stuck for >= 2s -> reassert
 								bShouldReassert = true;
 							}
 
 							// If we've been stuck making no progress for a while, do a local teleport-resync even if in range
-							if (m_dwNoFollowProgressMs >= 8000 && fDist > 20.0f)
+							if (m_dwNoFollowProgressMs >= 4000 && fDist > 20.0f)
 							{
 								CWorld* pWorld = pLeaderWorld;
 								if (pWorld && pWorld == pLeader->GetCurWorld())
@@ -659,7 +659,7 @@ int CBotAiCondition_SkillUse::OnUpdate(DWORD dwTickDiff, float fMultiple)
 								sVECTOR3 vLeaderLoc; pLeader->GetCurLoc().CopyTo(vLeaderLoc);
 								if (GetBot()->SendCharStateFollowing(pLeader->GetID(), 1.5f, DBO_MOVE_FOLLOW_FRIENDLY, vLeaderLoc, true))
 								{
-									if (!bFollowingLeader || byMoveFlag == NTL_MOVE_FLAG_INVALID || m_dwNoFollowProgressMs >= 4000)
+									if (!bFollowingLeader || byMoveFlag == NTL_MOVE_FLAG_INVALID || m_dwNoFollowProgressMs >= 2000)
 									{
 										if (GetHelperNpcManager()->GetConfig().bVerboseLogs)
 											ERR_LOG(LOG_BOTAI, "HelperNPC: reassert follow to leader %u (state=%u, dist=%.2f)", SAFE_ID(pLeader), st, fDist);

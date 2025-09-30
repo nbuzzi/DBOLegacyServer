@@ -139,6 +139,11 @@ void CGameProcessor::Run(DWORD dwTickCount)
 
 			// Periodic helper-NPC watchdog to repair spawns after floor transitions
 			GetHelperNpcManager()->TickWatchdog(m_dwTickCount);
+
+			// Arena automation + state machine (channel name compare)
+			if (_stricmp(app->m_config.ChannelName.c_str(), "ARENA") == 0)
+				g_pArenaManager->AutomationTick(dwTickDiff);
+			
 			g_pArenaManager->TickProcess(dwTickDiff);
 		}
 

@@ -673,8 +673,8 @@ ACMD(do_arena)
 ACMD(do_world_fight)
 {
 	// Syntax:
-	// @world_fight start score [worldTblidx] [ffa|party] [seconds]
-	// @world_fight start elimination [worldTblidx] [ffa|party]
+	// @world_fight start score [worldTblidx] [ffa|party|guild] [seconds]
+	// @world_fight start elimination [worldTblidx] [ffa|party|guild]
 	// @world_fight stop
 	// Defaults: world=900043 (Arena base), mode=ffa, seconds=900 (15min)
 	const unsigned int DEFAULT_WORLD = 900043;
@@ -724,7 +724,7 @@ ACMD(do_world_fight)
 		if (t != 0) worldTblidx = t;
 	}
 
-	// optional mode ffa|party
+	// optional mode ffa|party|guild
 	CArenaManager::Mode arenaMode = CArenaManager::Mode::FREE_FOR_ALL;
 	pToken->PopToPeek();
 	std::wstring wfight = pToken->PeekNextToken(NULL, &iLine);
@@ -732,6 +732,7 @@ ACMD(do_world_fight)
 	{
 		std::string s = ws2s(wfight); for (auto& c : s) c = (char)tolower(c);
 		if (s == "party") arenaMode = CArenaManager::Mode::PARTY_VS_PARTY;
+		else if (s == "guild" || s == "gvg") arenaMode = CArenaManager::Mode::GUILD_VS_GUILD;
 		else if (s == "ffa" || s == "all") arenaMode = CArenaManager::Mode::FREE_FOR_ALL;
 		else {
 			// push back one token if it's not a mode (so it can be seconds)
@@ -780,10 +781,11 @@ ACMD(do_world_fight)
 	// Start arena enrollment immediately for chosen mode
 	g_pArenaManager->Start(arenaMode);
 	wchar_t msg[256];
+	const wchar_t* modeName = (arenaMode == CArenaManager::Mode::PARTY_VS_PARTY) ? L"Party" : (arenaMode == CArenaManager::Mode::GUILD_VS_GUILD) ? L"Guild" : L"FFA";
 	if (scoreMode)
-		swprintf_s(msg, _countof(msg), L"[WorldFight] Score mode in world %u for %u seconds (%s)", worldTblidx, seconds, (arenaMode == CArenaManager::Mode::PARTY_VS_PARTY) ? L"Party" : L"FFA");
+		swprintf_s(msg, _countof(msg), L"[WorldFight] Score mode in world %u for %u seconds (%s)", worldTblidx, seconds, modeName);
 	else
-		swprintf_s(msg, _countof(msg), L"[WorldFight] Elimination mode in world %u (%s)", worldTblidx, (arenaMode == CArenaManager::Mode::PARTY_VS_PARTY) ? L"Party" : L"FFA");
+		swprintf_s(msg, _countof(msg), L"[WorldFight] Elimination mode in world %u (%s)", worldTblidx, modeName);
 	CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
 	sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
 	res->wOpCode = GU_SYSTEM_DISPLAY_TEXT; res->byDisplayType = SERVER_TEXT_NOTICE;

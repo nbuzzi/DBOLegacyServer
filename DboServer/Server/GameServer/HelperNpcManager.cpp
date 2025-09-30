@@ -517,7 +517,7 @@ bool CHelperNpcManager::LoadRoleSection(CNtlIniFile& file, const char* sectionNa
 			outRole.cfg.byMaxBuffsPerTargetPerAudit = 5; // Allow multiple buffs per person
 		// Ensure rebuff is enabled for BUFFERs
 		if (outRole.cfg.dwRebuffCooldownMs == 0)
-			outRole.cfg.dwRebuffCooldownMs = 5000; // Check every 5 seconds
+			outRole.cfg.dwRebuffCooldownMs = 2000; // Check every 2 seconds
 	}
 
 	// Special handling for HEALER role to increase healing coverage
@@ -530,7 +530,7 @@ bool CHelperNpcManager::LoadRoleSection(CNtlIniFile& file, const char* sectionNa
 			outRole.cfg.byMaxBuffsPerTargetPerAudit = 2; // Allow multiple heals per person
 		// Ensure rebuff is enabled for HEALERs (healing skills use same system)
 		if (outRole.cfg.dwRebuffCooldownMs == 0)
-			outRole.cfg.dwRebuffCooldownMs = 1000; // Check every 1 second for faster healing response
+			outRole.cfg.dwRebuffCooldownMs = 500; // Check every 0.5 seconds for faster healing response
 	}
 
 	// Parse covered class IDs

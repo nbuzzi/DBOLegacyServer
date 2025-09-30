@@ -119,6 +119,20 @@ public:
 		std::vector<std::pair<unsigned int, unsigned int>> winnerRewards;
 		std::vector<std::pair<unsigned int, unsigned int>> participantRewards;
 
+		// Attackability reliability tuning
+		unsigned int unlockPulseSleepMs;   // sleep between unlock pulses when forcing attackable
+		unsigned int unlockDefaultAttempts; // how many pulses to send by default per unlock burst
+
+		// AutoArena scheduler (server-side automation)
+		bool autoEnabled;                 // when true, scheduler opens enrollment periodically
+		CNtlString autoChannelName;       // if non-empty, run only when channel name contains this (case-insensitive)
+		unsigned int autoIntervalSeconds; // how often to start a new enrollment window
+		unsigned int autoInitialDelaySeconds; // delay before the very first auto enrollment after server starts
+		unsigned int autoEnrollmentSeconds; // how long to keep enrollment open before teleport
+		unsigned int autoWorldTblidx;     // world to use for the automated event (0 = use default 900043)
+		Mode autoMode;                    // FFA or PARTY for automated events
+		bool autoUseElimination;          // true = elimination, false = score
+
 		Config()
 			: enabled(false), rotationSeconds(0), startDelaySeconds(5), roundTimerSeconds(180), stopOnTimeout(true),
 			roundsCount(0),
@@ -136,7 +150,9 @@ public:
 			postFinishDirX(0.911100f), postFinishDirY(-0.412000f), postFinishDirZ(0.0f), keepRankUiAfterFinish(true), suppressRankFinishUi(false),
 			verboseLogs(false), worldWidePvpDuringRun(false),
 			ccBattleMode(false), allowCustomWorlds(false), useOnlyCustomWorlds(false), allowBudokaiRuleWorlds(false), forceExactWorld(false),
-			rewardsEnabled(false) {
+			rewardsEnabled(false),
+			unlockPulseSleepMs(100), unlockDefaultAttempts(2),
+			autoEnabled(false), autoChannelName("ARENA"), autoIntervalSeconds(600), autoInitialDelaySeconds(300), autoEnrollmentSeconds(600), autoWorldTblidx(900043), autoMode(Mode::FREE_FOR_ALL), autoUseElimination(true) {
 		}
 	};
 
@@ -159,6 +175,8 @@ public:
 	bool LoadConfigFromIniPath(const char* iniPath);
 
 	void TickProcess(unsigned long dwTickDiff);
+	// Automation scheduler (runs even when arena state is IDLE)
+	void AutomationTick(unsigned long dwTickDiff);
 
 	// GM control
 	void Start(Mode mode);
@@ -242,7 +260,7 @@ public:
 	void ShowCfgTo(CPlayer* pWho);
 
 private:
-	void BroadcastSystem(const wchar_t* msg);
+	void BroadcastSystem(const wchar_t* msg, unsigned char byType = 2);
 	void SendSystemTo(CPlayer* pPlayer, const wchar_t* msg, unsigned char byType = 3);
 	void TryRotateByTime(unsigned long dwTickDiff);
 	void ParseWorldListCsv(const CNtlString& csv);
@@ -327,6 +345,11 @@ private:
 	void AnnounceRoundTimeRemaining(unsigned int secondsLeft);
 	void AnnounceRotationTimeRemaining(unsigned int secondsLeft);
 	static void FormatTime(unsigned int seconds, wchar_t* outBuf, size_t cchBuf);
+
+	// Automation
+	enum class AutoState : unsigned char { OFF = 0, WAIT_NEXT, ENROLLMENT_OPEN };
+	AutoState m_autoState = AutoState::OFF;
+	unsigned long m_autoRemainMs = 0; // time left for current auto phase
 
 public:
 	void OnPlayerFaint(unsigned int killerCharId, unsigned int victimCharId);

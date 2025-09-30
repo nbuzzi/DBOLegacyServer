@@ -346,11 +346,39 @@ bool CArenaManager::LoadConfigFromIniPath(const char* iniPath)
 	if (file.Read("Arena", "VerboseLogs", verboseLogs)) m_cfg.verboseLogs = (verboseLogs != 0);
 	ARENA_VLOG(m_cfg, LOG_GENERAL, "[ARENA] VerboseLogs enabled=%d", m_cfg.verboseLogs ? 1 : 0);
 
+	// Attackability reliability tuning
+	unsigned int unlockSleepMs = 0;
+	if (file.Read("Arena", "UnlockPulseSleepMs", unlockSleepMs) && unlockSleepMs > 0) m_cfg.unlockPulseSleepMs = unlockSleepMs;
+	unsigned int unlockAttempts = 0;
+	if (file.Read("Arena", "UnlockDefaultAttempts", unlockAttempts) && unlockAttempts > 0) m_cfg.unlockDefaultAttempts = unlockAttempts;
+
 	// Allow custom world overrides (GM commands, config WorldTblidxList)
 	int allowCustomWorlds = 0;
 	if (file.Read("Arena", "AllowCustomWorlds", allowCustomWorlds)) m_cfg.allowCustomWorlds = (allowCustomWorlds != 0);
 	int useOnlyCustom = 0;
 	if (file.Read("Arena", "UseOnlyCustomWorlds", useOnlyCustom)) m_cfg.useOnlyCustomWorlds = (useOnlyCustom != 0);
+
+	// [AutoArena]
+	int autoOn = 0;
+	if (file.Read("AutoArena", "Enabled", autoOn)) m_cfg.autoEnabled = (autoOn != 0);
+	m_cfg.autoChannelName = file.Read("AutoArena", "ChannelNameContains");
+	unsigned int autoInterval = 0;
+	if (file.Read("AutoArena", "IntervalSeconds", autoInterval) && autoInterval > 0) m_cfg.autoIntervalSeconds = autoInterval;
+	unsigned int autoInitDelay = 0;
+	if (file.Read("AutoArena", "InitialDelaySeconds", autoInitDelay) && autoInitDelay >= 0) m_cfg.autoInitialDelaySeconds = autoInitDelay;
+	unsigned int enrollSec = 0;
+	if (file.Read("AutoArena", "EnrollmentSeconds", enrollSec) && enrollSec > 0) m_cfg.autoEnrollmentSeconds = enrollSec;
+	unsigned int autoWorld = 0;
+	if (file.Read("AutoArena", "WorldTblidx", autoWorld) && autoWorld > 0) m_cfg.autoWorldTblidx = autoWorld;
+	CNtlString autoMode = file.Read("AutoArena", "Mode"); // FFA | PARTY (default FFA)
+	if (autoMode.c_str())
+	{
+		std::string s = autoMode.c_str();
+		for (auto& c : s) c = (char)tolower(c);
+		if (s == "party") m_cfg.autoMode = Mode::PARTY_VS_PARTY; else m_cfg.autoMode = Mode::FREE_FOR_ALL;
+	}
+	int autoElim = 1;
+	if (file.Read("AutoArena", "UseElimination", autoElim)) m_cfg.autoUseElimination = (autoElim != 0);
 
 	// [Spectator]
 	int specEnabled = 0;
@@ -882,8 +910,9 @@ void CArenaManager::TickProcess(unsigned long dwTickDiff)
 					BYTE rule2 = pWorld2->GetTbldat() ? pWorld2->GetTbldat()->byWorldRuleType : GAMERULE_NORMAL;
 					bool isBudokaiRule2 = (rule2 == GAMERULE_MINORMATCH || rule2 == GAMERULE_MAJORMATCH || rule2 == GAMERULE_FINALMATCH);
 
-					// For problematic worlds like 45000, send multiple unlock signals
-					int unlockAttempts = (worldId == 45000 || worldId == 44000 || worldId == 43000) ? 3 : 1;
+					// Send multiple unlock signals based on config to ensure attackability is applied
+					int unlockAttempts = (int)m_cfg.unlockDefaultAttempts;
+					if (unlockAttempts <= 0) unlockAttempts = 1;
 
 					for (int attempt = 0; attempt < unlockAttempts; attempt++)
 					{
@@ -922,11 +951,12 @@ void CArenaManager::TickProcess(unsigned long dwTickDiff)
 						// As extra safety, clear any combat-restricting conditions again
 						ClearCombatRestrictionsForParticipants();
 
-						if (attempt < unlockAttempts - 1)
-						{
-							// Brief delay between attempts for problematic worlds
-							Sleep(100);
-						}
+							if (attempt < unlockAttempts - 1)
+							{
+								// Brief delay between attempts per configuration
+								if (m_cfg.unlockPulseSleepMs > 0)
+									Sleep(m_cfg.unlockPulseSleepMs);
+							}
 					}
 				}
 			}
@@ -1127,7 +1157,7 @@ void CArenaManager::TickProcess(unsigned long dwTickDiff)
 					m_pendingStartWorldId = 0;
 					m_waitAllArriveMs = 0;
 					m_state = State::ENROLLMENT;
-					SendNotice(L"Arena canceled: no participants online.", SERVER_TEXT_SYSNOTICE);
+					SendNotice(L"Arena canceled: no participants online.", SERVER_TEXT_EMERGENCY);
 					NTL_PRINT(PRINT_APP, _T("[ARENA] Start canceled: no participants online"));
 					return;
 				}
@@ -1181,7 +1211,8 @@ void CArenaManager::TickProcess(unsigned long dwTickDiff)
 			m_state = State::MATCH_READY;
 			m_directionTimeMs = 3000; // tighter intro
 			m_currentWorldId = worldId;
-			// Assign teams server-side so attack rules work
+			// Assign teams only in explicit team modes (Party or Guild)
+			if (m_mode == Mode::PARTY_VS_PARTY || m_mode == Mode::GUILD_VS_GUILD)
 			{
 				std::vector<CPlayer*> players;
 				players.reserve(m_participants.size());
@@ -1191,9 +1222,8 @@ void CArenaManager::TickProcess(unsigned long dwTickDiff)
 					if (p && p->IsInitialized() && (unsigned int)p->GetWorldID() == worldId)
 						players.push_back(p);
 				}
-				bool partyModeWorld = IsPartyModeWorld(m_currentWorldTblidx);
 				auto getTeamKey = [&](CPlayer* p)->unsigned int {
-					if (m_mode == Mode::PARTY_VS_PARTY || partyModeWorld)
+					if (m_mode == Mode::PARTY_VS_PARTY)
 					{
 						PARTYID pid = p->GetPartyID();
 						if (pid != INVALID_PARTYID)
@@ -1205,7 +1235,6 @@ void CArenaManager::TickProcess(unsigned long dwTickDiff)
 					return 0;
 					};
 				unsigned int ownerKey = 0, challengerKey = 0;
-				if (m_mode == Mode::PARTY_VS_PARTY || partyModeWorld || m_mode == Mode::GUILD_VS_GUILD)
 				{
 					for (CPlayer* p : players)
 					{
@@ -1214,27 +1243,20 @@ void CArenaManager::TickProcess(unsigned long dwTickDiff)
 						if (ownerKey == 0) ownerKey = key; else if (key != ownerKey) { challengerKey = key; break; }
 					}
 				}
-				size_t half = (players.size() + 1) / 2;
 				for (size_t i = 0; i < players.size(); ++i)
 				{
 					CPlayer* p = players[i];
 					BYTE team = RANKBATTLE_TEAM_OWNER;
-					if (m_mode == Mode::PARTY_VS_PARTY || partyModeWorld || m_mode == Mode::GUILD_VS_GUILD)
-					{
-						unsigned int key = getTeamKey(p);
-						team = (key != 0 && key != ownerKey) ? RANKBATTLE_TEAM_CHALLENGER : RANKBATTLE_TEAM_OWNER;
-					}
-					else
-					{
-						team = (i < half ? RANKBATTLE_TEAM_OWNER : RANKBATTLE_TEAM_CHALLENGER);
-					}
+					unsigned int key = getTeamKey(p);
+					team = (key != 0 && key != ownerKey) ? RANKBATTLE_TEAM_CHALLENGER : RANKBATTLE_TEAM_OWNER;
 					sRANK_BATTLE_DATA* rd = p->GetRankBattleData();
 					if (rd) rd->eTeamType = (eRANKBATTLE_TEAM_TYPE)team; else ARENA_VLOG(m_cfg, LOG_GENERAL, "[ARENA][WARN] Null RankBattleData when setting team type char=%u", (unsigned)p->GetCharID());
 				}
 			}
 			// Inform clients they joined a RankBattle context before showing WAIT, so HUD initializes correctly
 			if (m_cfg.rankUiEnabled) BroadcastRankJoinToWorld(worldId);
-			BroadcastRankTeamInfoToWorld(worldId);
+			if (m_mode == Mode::PARTY_VS_PARTY || m_mode == Mode::GUILD_VS_GUILD)
+				BroadcastRankTeamInfoToWorld(worldId);
 			// Compute WAIT and DIRECTION durations similar to RankBattle table (fallback to defaults)
 			DWORD waitMs = 2000;
 			if (CRankBattleTable* pRankBattleTable = g_pTableContainer->GetRankBattleTable())
@@ -1255,7 +1277,7 @@ void CArenaManager::TickProcess(unsigned long dwTickDiff)
 			UpdateRankBattleState(RANKBATTLE_BATTLESTATE_WAIT, m_rankBattleStage, waitMs);
 			ARENA_VLOG(m_cfg, LOG_GENERAL, "[ARENA] PRE_ROUND->MATCH_READY: scheduled WAIT waitMs=%u worldId=%u", (unsigned)waitMs, worldId);
 			ARENA_VLOG(m_cfg, LOG_GENERAL, "[ARENA] PRE_ROUND->MATCH_READY immediate worldId=%u present=%u ready=%u stage=%u", worldId, present, ready, (unsigned)m_rankBattleStage);
-			SendNotice(L"Arena match starting...", SERVER_TEXT_SYSNOTICE);
+			SendNotice(L"Arena match starting...", SERVER_TEXT_EMERGENCY);
 			NTL_PRINT(PRINT_APP, _T("[ARENA] PRE_ROUND -> MATCH_READY (immediate): present=%u ready=%u worldId=%u"), present, ready, worldId);
 		}
 		else if (m_waitAllArriveMs <= dwTickDiff)
@@ -1266,7 +1288,7 @@ void CArenaManager::TickProcess(unsigned long dwTickDiff)
 				m_waitAllArriveMs = 0;
 				m_pendingStartWorldId = 0;
 				m_state = State::ENROLLMENT;
-				SendNotice(L"Arena canceled: nobody arrived to the arena.", SERVER_TEXT_SYSNOTICE);
+				SendNotice(L"Arena canceled: nobody arrived to the arena.", SERVER_TEXT_EMERGENCY);
 				NTL_PRINT(PRINT_APP, _T("[ARENA] Start canceled: present=0 at timeout"));
 			}
 			else
@@ -1278,7 +1300,8 @@ void CArenaManager::TickProcess(unsigned long dwTickDiff)
 				m_directionTimeMs = 5000; // direction/intro
 				// Bind current world id just in case it wasn't set yet
 				m_currentWorldId = worldId;
-				// Assign teams server-side so attack rules work
+				// Assign teams only for team modes; skip in FFA
+				if (m_mode == Mode::PARTY_VS_PARTY || m_mode == Mode::GUILD_VS_GUILD)
 				{
 					std::vector<CPlayer*> players;
 					players.reserve(m_participants.size());
@@ -1288,9 +1311,8 @@ void CArenaManager::TickProcess(unsigned long dwTickDiff)
 						if (p && p->IsInitialized() && (unsigned int)p->GetWorldID() == worldId)
 							players.push_back(p);
 					}
-					bool partyModeWorld = IsPartyModeWorld(m_currentWorldTblidx);
 					auto getTeamKey = [&](CPlayer* p)->unsigned int {
-						if (m_mode == Mode::PARTY_VS_PARTY || partyModeWorld)
+						if (m_mode == Mode::PARTY_VS_PARTY)
 						{
 							PARTYID pid = p->GetPartyID();
 							if (pid != INVALID_PARTYID)
@@ -1301,7 +1323,6 @@ void CArenaManager::TickProcess(unsigned long dwTickDiff)
 						return 0;
 						};
 					unsigned int ownerKey = 0, challengerKey = 0;
-					if (m_mode == Mode::PARTY_VS_PARTY || partyModeWorld || m_mode == Mode::GUILD_VS_GUILD)
 					{
 						for (CPlayer* p : players)
 						{
@@ -1310,27 +1331,20 @@ void CArenaManager::TickProcess(unsigned long dwTickDiff)
 							if (ownerKey == 0) ownerKey = key; else if (key != ownerKey) { challengerKey = key; break; }
 						}
 					}
-					size_t half = (players.size() + 1) / 2;
 					for (size_t i = 0; i < players.size(); ++i)
 					{
 						CPlayer* p = players[i];
 						BYTE team = RANKBATTLE_TEAM_OWNER;
-						if (m_mode == Mode::PARTY_VS_PARTY || partyModeWorld || m_mode == Mode::GUILD_VS_GUILD)
-						{
-							unsigned int key = getTeamKey(p);
-							team = (key != 0 && key != ownerKey) ? RANKBATTLE_TEAM_CHALLENGER : RANKBATTLE_TEAM_OWNER;
-						}
-						else
-						{
-							team = (i < half ? RANKBATTLE_TEAM_OWNER : RANKBATTLE_TEAM_CHALLENGER);
-						}
+						unsigned int key = getTeamKey(p);
+						team = (key != 0 && key != ownerKey) ? RANKBATTLE_TEAM_CHALLENGER : RANKBATTLE_TEAM_OWNER;
 						sRANK_BATTLE_DATA* rd = p->GetRankBattleData();
 						if (rd) rd->eTeamType = (eRANKBATTLE_TEAM_TYPE)team; else ARENA_VLOG(m_cfg, LOG_GENERAL, "[ARENA][WARN] Null RankBattleData when setting team type char=%u", (unsigned)p->GetCharID());
 					}
 				}
-				// RankBattle opening: JOIN -> TeamInfo -> WAIT(stage)
+				// RankBattle opening: JOIN -> WAIT (TeamInfo only for team modes)
 				if (m_cfg.rankUiEnabled) BroadcastRankJoinToWorld(worldId);
-				BroadcastRankTeamInfoToWorld(worldId);
+				if (m_mode == Mode::PARTY_VS_PARTY || m_mode == Mode::GUILD_VS_GUILD)
+					BroadcastRankTeamInfoToWorld(worldId);
 				// Compute WAIT based on RankBattle table; DIRECTION will be scheduled by the state machine on WAIT expiry
 				DWORD waitMs = 2000; // default visible WAIT time
 				if (CRankBattleTable* pRankBattleTable = g_pTableContainer->GetRankBattleTable())
@@ -1351,7 +1365,7 @@ void CArenaManager::TickProcess(unsigned long dwTickDiff)
 				ARENA_VLOG(m_cfg, LOG_GENERAL, "[ARENA] PRE_ROUND->MATCH_READY (grace end): scheduled WAIT waitMs=%u worldId=%u", (unsigned)waitMs, worldId);
 				ARENA_VLOG(m_cfg, LOG_GENERAL, "[ARENA] PRE_ROUND->MATCH_READY (grace end) worldId=%u present=%u ready=%u stage=%u", worldId, present, ready, (unsigned)m_rankBattleStage);
 				// Do NOT send MATCH_START here; respect RankBattle flow: WAIT->TeamInfo->DIRECTION->STAGE_PREPARE->STAGE_READY->MATCH_START->RUN
-				SendNotice(L"Arena match starting...", SERVER_TEXT_SYSNOTICE);
+				SendNotice(L"Arena match starting...", SERVER_TEXT_EMERGENCY);
 				NTL_PRINT(PRINT_APP, _T("[ARENA] PRE_ROUND -> MATCH_READY: present=%u ready=%u worldId=%u (grace expired)"), present, ready, worldId);
 			}
 		}
@@ -1410,7 +1424,7 @@ void CArenaManager::TickProcess(unsigned long dwTickDiff)
 
 			if (accepted == 0)
 			{
-				SendNotice(L"Arena invite timed out. No participants accepted.", SERVER_TEXT_SYSNOTICE);
+				SendNotice(L"Arena invite timed out. No participants accepted.", SERVER_TEXT_EMERGENCY);
 				m_state = State::ENROLLMENT;
 				// Do not cancel external proposals; Arena uses direct teleports now
 				NTL_PRINT(PRINT_APP, _T("[ARENA] Invite timeout: no acceptors. Reset to ENROLLMENT"));
@@ -1420,7 +1434,7 @@ void CArenaManager::TickProcess(unsigned long dwTickDiff)
 				// Require at least 2 participants to start a rank-like match
 				if (accepted < 2)
 				{
-					SendNotice(L"Arena invite concluded: not enough participants accepted.", SERVER_TEXT_SYSNOTICE);
+					SendNotice(L"Arena invite concluded: not enough participants accepted.", SERVER_TEXT_EMERGENCY);
 					m_state = State::ENROLLMENT;
 					// Do not cancel external proposals; Arena uses direct teleports now
 					NTL_PRINT(PRINT_APP, _T("[ARENA] Invite end: accepted=%u < 2. Reset to ENROLLMENT"), accepted);
@@ -1457,7 +1471,8 @@ void CArenaManager::TickProcess(unsigned long dwTickDiff)
 				if (m_cfg.rankUiEnabled) BroadcastRankJoinToWorld(worldId);
 				// Ensure HUD is initialized just before start
 				BroadcastRankStateToWorld(worldId, RANKBATTLE_BATTLESTATE_WAIT, 0);
-				// Assign teams server-side so PvP rules are correct
+				// Assign teams only for team modes; in FFA do not assign teams
+				if (m_mode == Mode::PARTY_VS_PARTY || m_mode == Mode::GUILD_VS_GUILD)
 				{
 					std::vector<CPlayer*> players;
 					players.reserve(m_participants.size());
@@ -1467,9 +1482,8 @@ void CArenaManager::TickProcess(unsigned long dwTickDiff)
 						if (p && p->IsInitialized() && (unsigned int)p->GetWorldID() == worldId)
 							players.push_back(p);
 					}
-					bool partyModeWorld = IsPartyModeWorld(m_currentWorldTblidx);
 					auto getTeamKey = [&](CPlayer* p)->unsigned int {
-						if (m_mode == Mode::PARTY_VS_PARTY || partyModeWorld)
+						if (m_mode == Mode::PARTY_VS_PARTY)
 						{
 							PARTYID pid = p->GetPartyID();
 							if (pid != INVALID_PARTYID)
@@ -1486,26 +1500,19 @@ void CArenaManager::TickProcess(unsigned long dwTickDiff)
 						if (key == 0) continue;
 						if (ownerKey == 0) { ownerKey = key; break; }
 					}
-					size_t half = (players.size() + 1) / 2;
 					for (size_t i = 0; i < players.size(); ++i)
 					{
 						CPlayer* p = players[i];
 						BYTE team = RANKBATTLE_TEAM_OWNER;
-						if (m_mode == Mode::PARTY_VS_PARTY || partyModeWorld || m_mode == Mode::GUILD_VS_GUILD)
-						{
-							unsigned int key = getTeamKey(p);
-							team = (key != 0 && key != ownerKey) ? RANKBATTLE_TEAM_CHALLENGER : RANKBATTLE_TEAM_OWNER;
-						}
-						else
-						{
-							team = (i < half ? RANKBATTLE_TEAM_OWNER : RANKBATTLE_TEAM_CHALLENGER);
-						}
+						unsigned int key = getTeamKey(p);
+						team = (key != 0 && key != ownerKey) ? RANKBATTLE_TEAM_CHALLENGER : RANKBATTLE_TEAM_OWNER;
 						sRANK_BATTLE_DATA* rd = p->GetRankBattleData();
 						if (rd) rd->eTeamType = (eRANKBATTLE_TEAM_TYPE)team; else ARENA_VLOG(m_cfg, LOG_GENERAL, "[ARENA][WARN] Null RankBattleData when setting team type char=%u", (unsigned)p->GetCharID());
 					}
 				}
-				// Send team composition
-				BroadcastRankTeamInfoToWorld(worldId);
+				// Send team composition only in team modes
+				if (m_mode == Mode::PARTY_VS_PARTY || m_mode == Mode::GUILD_VS_GUILD)
+					BroadcastRankTeamInfoToWorld(worldId);
 				// Start with WAIT state for a visible duration, then transition to DIRECTION
 				// Pull timings from RankBattle table if available
 				DWORD waitMs = 2000; // default visible WAIT time
@@ -1533,7 +1540,7 @@ void CArenaManager::TickProcess(unsigned long dwTickDiff)
 
 				wchar_t msg[128];
 				swprintf_s(msg, _countof(msg), L"Arena starting with %u participants...", accepted);
-				SendNotice(msg, m_cfg.noticeType);
+				SendNotice(msg, SERVER_TEXT_EMERGENCY);
 
 				NTL_PRINT(PRINT_APP, _T("[ARENA] MATCH_READY: TeamInfo sent; WAIT for %ums"), (unsigned)waitMs);
 
@@ -1807,21 +1814,23 @@ void CArenaManager::TickProcess(unsigned long dwTickDiff)
 								if (!p || !p->IsInitialized()) continue;
 								CNtlVector loc = (i < half) ? pWorldTbldat->vStart1Loc : pWorldTbldat->vStart2Loc;
 								CNtlVector dir = (i < half) ? pWorldTbldat->vStart1Dir : pWorldTbldat->vStart2Dir;
-								// loc.x += RandomRangeF(-3.0f, 3.0f);
-								// loc.z += RandomRangeF(-3.0f, 3.0f);
 								loc.x += RandomRangeF(0, 3.0f);
 								loc.z += RandomRangeF(0, 3.0f);
 								TeleportOneToWorldTblidx(p, m_currentWorldTblidx, loc.x, loc.y, loc.z);
-								// Update team state hint for attack rules/UI
-								sRANK_BATTLE_DATA* rd = p->GetRankBattleData();
-								if (rd) rd->eTeamType = (i < half) ? RANKBATTLE_TEAM_OWNER : RANKBATTLE_TEAM_CHALLENGER; else ARENA_VLOG(m_cfg, LOG_GENERAL, "[ARENA][WARN] Null RankBattleData when rotating map team assign char=%u", (unsigned)p->GetCharID());
+								// Set team type only in team modes
+								if (m_mode == Mode::PARTY_VS_PARTY || m_mode == Mode::GUILD_VS_GUILD)
+								{
+									sRANK_BATTLE_DATA* rd = p->GetRankBattleData();
+									if (rd) rd->eTeamType = (i < half) ? RANKBATTLE_TEAM_OWNER : RANKBATTLE_TEAM_CHALLENGER; else ARENA_VLOG(m_cfg, LOG_GENERAL, "[ARENA][WARN] Null RankBattleData when rotating map team assign char=%u", (unsigned)p->GetCharID());
+								}
 							}
 						}
 						// Bind to new world id for subsequent RB packets
 						m_currentWorldId = newWorldId;
-						// Reinitialize HUD/order: JOIN -> TeamInfo -> WAIT(stage)
+						// Reinitialize HUD/order: JOIN -> (TeamInfo for team modes) -> WAIT(stage)
 						if (m_cfg.rankUiEnabled) BroadcastRankJoinToWorld(newWorldId);
-						BroadcastRankTeamInfoToWorld(newWorldId);
+						if (m_mode == Mode::PARTY_VS_PARTY || m_mode == Mode::GUILD_VS_GUILD)
+							BroadcastRankTeamInfoToWorld(newWorldId);
 						BroadcastRankStateToWorld(newWorldId, RANKBATTLE_BATTLESTATE_WAIT, m_rankBattleStage);
 						// Ensure everyone exits any residual lock/cinematic state after TP
 						EnsureParticipantsStanding(newWorldId);
@@ -1847,9 +1856,10 @@ void CArenaManager::TickProcess(unsigned long dwTickDiff)
 					unsigned int worldId = m_currentWorldId ? m_currentWorldId : EnsureCurrentWorldId();
 					if (worldId)
 					{
-						// Refresh HUD/order for next round on same map: JOIN -> TeamInfo -> WAIT
+						// Refresh HUD/order for next round on same map: JOIN -> (TeamInfo for team modes) -> WAIT
 						if (m_cfg.rankUiEnabled) BroadcastRankJoinToWorld(worldId);
-						BroadcastRankTeamInfoToWorld(worldId);
+						if (m_mode == Mode::PARTY_VS_PARTY || m_mode == Mode::GUILD_VS_GUILD)
+							BroadcastRankTeamInfoToWorld(worldId);
 						BroadcastRankStateToWorld(worldId, RANKBATTLE_BATTLESTATE_WAIT, m_rankBattleStage);
 						EnsureParticipantsStanding(worldId);
 						m_state = State::PRE_ROUND;
@@ -1930,6 +1940,104 @@ void CArenaManager::TickProcess(unsigned long dwTickDiff)
 				SpawnRandomMobWave(m_cfg.randomMobsPerWave);
 			}
 		}
+	}
+}
+
+// Drive automation even when the arena state is IDLE (called from game loop)
+void CArenaManager::AutomationTick(unsigned long dwTickDiff)
+{
+	if (!m_cfg.autoEnabled)
+		return;
+
+	// Optional channel-name filter: only run on matching channels
+	CGameServer* app = (CGameServer*)g_pApp;
+	if (m_cfg.autoChannelName.c_str() && m_cfg.autoChannelName.c_str()[0] != '\0')
+	{
+		std::string want = m_cfg.autoChannelName.c_str();
+		std::string got = app->m_config.ChannelName.c_str();
+		for (auto& c : want) c = (char)tolower(c);
+		for (auto& c : got) c = (char)tolower(c);
+		if (got.find(want) == std::string::npos)
+		{
+			m_autoState = AutoState::OFF; // not our channel
+			return;
+		}
+	}
+
+	// Initialize automation if currently off
+	if (m_autoState == AutoState::OFF)
+	{
+		m_autoState = AutoState::WAIT_NEXT;
+		// Target the first fight to happen at InitialDelaySeconds; open enrollment earlier if needed
+		unsigned int firstDelay = m_cfg.autoInitialDelaySeconds;
+		unsigned int prepWaitSec = 0;
+		if (firstDelay > m_cfg.autoEnrollmentSeconds)
+			prepWaitSec = firstDelay - m_cfg.autoEnrollmentSeconds;
+		else
+			prepWaitSec = 0; // open enrollment immediately
+		m_autoRemainMs = ToMs(prepWaitSec);
+		return;
+	}
+
+	if (m_autoRemainMs > 0)
+	{
+		if (m_autoRemainMs > dwTickDiff) m_autoRemainMs -= dwTickDiff; else m_autoRemainMs = 0;
+	}
+
+	if (m_autoState == AutoState::WAIT_NEXT && m_autoRemainMs == 0)
+	{
+		// Don't interrupt an active arena; defer until it returns to IDLE/COMPLETE
+		if (m_state != State::IDLE && m_state != State::COMPLETE)
+		{
+			// retry in 5 seconds
+			m_autoRemainMs = 5000;
+			return;
+		}
+		// Open a new enrollment window
+		// Configure world_fight parameters from config
+		unsigned int wid = m_cfg.autoWorldTblidx ? m_cfg.autoWorldTblidx : 900043;
+		ForceCurrentWorld(wid);
+		// Use world_fight setup to configure elimination or score
+		unsigned int sec = m_cfg.autoUseElimination ? (m_cfg.roundTimerSeconds ? m_cfg.roundTimerSeconds : 0) : (m_cfg.roundTimerSeconds ? m_cfg.roundTimerSeconds : 900);
+		SetupWorldFight(!m_cfg.autoUseElimination, sec, m_cfg.autoMode);
+		// Open enrollment and announce join command
+		Start(m_cfg.autoMode);
+		BroadcastSystem(L"[Arena] Auto event opened. Use @arenajoin within the next minutes to participate.");
+		m_autoState = AutoState::ENROLLMENT_OPEN;
+		m_autoRemainMs = ToMs(m_cfg.autoEnrollmentSeconds);
+		return;
+	}
+
+	if (m_autoState == AutoState::ENROLLMENT_OPEN)
+	{
+		// Announce remaining enrollment time every minute (without spamming within the same second)
+		if (m_autoRemainMs > dwTickDiff)
+		{
+			unsigned int secLeft = (unsigned int)(m_autoRemainMs / 1000);
+			static unsigned int s_lastAnnouncedSecLeft = 0;
+			if (secLeft != s_lastAnnouncedSecLeft && secLeft % 60 == 0)
+			{
+				wchar_t msg[128];
+				swprintf_s(msg, _countof(msg), L"[Arena] Enrollment closes in %u minute(s). Use @arenajoin now!", secLeft / 60);
+				BroadcastSystem(msg);
+				s_lastAnnouncedSecLeft = secLeft;
+			}
+			m_autoRemainMs -= dwTickDiff;
+			return;
+		}
+		// Enrollment period over: teleport and start
+		m_autoRemainMs = 0;
+		TeleportParticipants(true);
+		TeleportSpectators();
+		BroadcastSystem(L"[Arena] Enrollment closed. Teleporting participants...");
+		// Next cycle: schedule opening so that the next fight happens after IntervalSeconds from now
+		m_autoState = AutoState::WAIT_NEXT;
+		unsigned int prepWaitSec = 0;
+		if (m_cfg.autoIntervalSeconds > m_cfg.autoEnrollmentSeconds)
+			prepWaitSec = m_cfg.autoIntervalSeconds - m_cfg.autoEnrollmentSeconds;
+		else
+			prepWaitSec = 0;
+		m_autoRemainMs = ToMs(prepWaitSec);
 	}
 }
 
@@ -2095,12 +2203,12 @@ void CArenaManager::StatusTo(CPlayer* pWho)
 	pWho->SendPacket(&packet);
 }
 
-void CArenaManager::BroadcastSystem(const wchar_t* msg)
+void CArenaManager::BroadcastSystem(const wchar_t* msg, unsigned char byType)
 {
 	CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
 	sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
 	res->wOpCode = GU_SYSTEM_DISPLAY_TEXT;
-	res->byDisplayType = SERVER_TEXT_SYSNOTICE;
+	res->byDisplayType = byType;
 	res->wMessageLengthInUnicode = (WORD)wcslen(msg);
 	wcscpy_s(res->awchMessage, NTL_MAX_LENGTH_OF_CHAT_MESSAGE + 1, msg);
 	packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
@@ -2229,7 +2337,7 @@ bool CArenaManager::AddSpectator(CPlayer* pPlayer)
 	m_spectators.insert(pPlayer->GetCharID());
 	wchar_t buf[128];
 	swprintf_s(buf, _countof(buf), L"%s is spectating the arena.", pPlayer->GetCharName());
-	SendNotice(buf, m_cfg.noticeType);
+	SendNotice(buf, SERVER_TEXT_SYSNOTICE);
 	return true;
 }
 
@@ -2299,7 +2407,7 @@ void CArenaManager::TeleportParticipants(bool forceDirect)
 						BroadcastRankStateToWorld(existingWorldId, RANKBATTLE_BATTLESTATE_STAGE_PREPARE, m_rankBattleStage);
 						BroadcastRankStateToWorld(existingWorldId, RANKBATTLE_BATTLESTATE_STAGE_READY, m_rankBattleStage);
 					}
-					SendNotice(L"Get ready for battle!", m_cfg.noticeType);
+					SendNotice(L"Get ready for battle!", SERVER_TEXT_EMERGENCY);
 					NTL_PRINT(PRINT_APP, _T("[ARENA] No configured world - using existing world, state: STAGE_READY"));
 				}
 				else
@@ -2373,7 +2481,7 @@ void CArenaManager::TeleportParticipants(bool forceDirect)
 		m_inviting = true;
 		m_inviteRemainMs = ToMs(m_cfg.inviteWaitSeconds);
 		m_state = State::PRE_ROUND;
-		SendNotice(L"Arena invites sent. Please accept to join.", m_cfg.noticeType);
+		SendNotice(L"Arena invites sent. Please accept to join.", SERVER_TEXT_EMERGENCY);
 		ARENA_VLOG(m_cfg, LOG_GENERAL, "[ARENA] Invites sent (by tblidx): tblidx=%u waitSec=%u participants=%u", (unsigned)m_currentWorldTblidx, (unsigned)m_cfg.inviteWaitSeconds, (unsigned)m_participants.size());
 		// Force the next world id lookup to create or find a fresh instance as needed
 		m_currentWorldId = 0;
@@ -2384,7 +2492,7 @@ void CArenaManager::TeleportParticipants(bool forceDirect)
 	m_currentWorldId = EnsureCurrentWorldId();
 	if (m_cfg.forceExactWorld && m_currentWorldId == 0)
 	{
-		SendNotice(L"[Arena] Failed to create the requested world instance.", m_cfg.noticeType);
+		SendNotice(L"[Arena] Failed to create the requested world instance.", SERVER_TEXT_EMERGENCY);
 		NTL_PRINT(PRINT_APP, _T("[ARENA] Direct teleport aborted: cannot create world for tblidx=%u (forceExactWorld)"), (unsigned)m_currentWorldTblidx);
 		return;
 	}
@@ -2601,7 +2709,7 @@ void CArenaManager::CheckFaintAndAliveLogic()
 	// Check if too few players remain online (disconnects/quits) to continue
 	if (onlineParticipants < 2)
 	{
-		SendNotice(L"Arena ended: insufficient participants remaining (disconnect/quit).", 3);
+		SendNotice(L"Arena ended: insufficient participants remaining (disconnect/quit).", SERVER_TEXT_EMERGENCY);
 		FinishMatch(false);
 		return;
 	}
@@ -2750,7 +2858,7 @@ void CArenaManager::FinishMatch(bool aborted)
 				{
 					wchar_t msg[256];
 					ComposeWinnerText(winner, msg, _countof(msg));
-					SendNotice(msg, 3);
+					SendNotice(msg, SERVER_TEXT_EMERGENCY);
 					break; // Only announce first winner to avoid spam
 				}
 			}
@@ -2780,7 +2888,7 @@ void CArenaManager::FinishMatch(bool aborted)
 				{
 					wchar_t msg[256];
 					ComposeWinnerText(winner, msg, _countof(msg));
-					SendNotice(msg, 3);
+					SendNotice(msg, SERVER_TEXT_EMERGENCY);
 				}
 				m_winners.insert(lastAlive);
 			}
@@ -2797,7 +2905,7 @@ void CArenaManager::FinishMatch(bool aborted)
 		{
 			if (CPlayer* p = g_pObjectManager->FindByChar((CHARACTERID)cid))
 			{
-				SendSystemTo(p, L"[Arena] Rewards granted.");
+				SendSystemTo(p, L"[Arena] Rewards granted.", SERVER_TEXT_EMERGENCY);
 			}
 		}
 
@@ -2815,13 +2923,13 @@ void CArenaManager::FinishMatch(bool aborted)
 					wchar_t wtxt[256];
 					ComposeWinnerText(pWin, wtxt, _countof(wtxt));
 					swprintf_s(msg, _countof(msg), L"%s — Check your inventory for rewards.", wtxt);
-					BroadcastSystem(msg);
+					BroadcastSystem(msg, SERVER_TEXT_EMERGENCY);
 					announced = true;
 				}
 			}
 			if (!announced)
 			{
-				BroadcastSystem(L"[Arena] Finished — Check your inventory for rewards.");
+				BroadcastSystem(L"[Arena] Finished — Check your inventory for rewards.", SERVER_TEXT_EMERGENCY);
 			}
 		}
 	}
@@ -2831,7 +2939,7 @@ void CArenaManager::FinishMatch(bool aborted)
 	{
 		if (m_currentWorldId)
 			BroadcastScoreboardToWorld(m_currentWorldId);
-		SendNotice(aborted ? L"Arena stopped." : L"Arena finished.", 3);
+		SendNotice(aborted ? L"Arena stopped." : L"Arena finished.", SERVER_TEXT_EMERGENCY);
 	}
 
 	// If a delay is configured, announce and defer the teleport/cleanup to TickProcess
@@ -5283,7 +5391,8 @@ void CArenaManager::SendRankFullStartSequenceTo(CPlayer* pPlayer)
 void CArenaManager::SendRankTeamInfoTo(CPlayer* pPlayer)
 {
 	if (!pPlayer) return;
-	BroadcastRankTeamInfoToWorld((unsigned int)pPlayer->GetWorldID());
+	if (m_mode == Mode::PARTY_VS_PARTY || m_mode == Mode::GUILD_VS_GUILD)
+		BroadcastRankTeamInfoToWorld((unsigned int)pPlayer->GetWorldID());
 }
 
 void CArenaManager::SendRoundTimerStartTo(CPlayer* pPlayer, unsigned int seconds)
