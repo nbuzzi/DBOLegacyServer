@@ -383,7 +383,7 @@ bool CArenaManager::LoadConfigFromIniPath(const char* iniPath)
 	ARENA_VLOG(m_cfg, LOG_GENERAL, "[ARENA] VerboseLogs enabled=%d", m_cfg.verboseLogs ? 1 : 0);
 
 	// Watchdog settings (optional)
-	int watchdogEnabled = 0;
+	int watchdogEnabled = 1;
 	if (file.Read("Arena", "WatchdogEnabled", watchdogEnabled)) m_cfg.watchdogEnabled = (watchdogEnabled != 0);
 	unsigned int wdPre = 0, wdEnroll = 0, wdRun = 0;
 	if (file.Read("Arena", "WatchdogPreRoundSeconds", wdPre)) m_cfg.watchdogPreRoundSeconds = wdPre;
