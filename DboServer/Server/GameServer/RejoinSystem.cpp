@@ -160,13 +160,13 @@ bool CRejoinManager::ResolveRejoinTarget(const sREJOIN_TICKET& t, sREJOIN_TARGET
 		}
 		break;
 	case REJOIN_BUDOKAI:
-		ERR_LOG(LOG_GENERAL, "[REJOIN] Budokai rejoin attempt: char=%u joinId=%u channel=%u", (unsigned)cPlayer->GetCharID(), (unsigned)cPlayer->GetJoinID(), (unsigned)app->GetGsChannel());
+		/*ERR_LOG(LOG_GENERAL, "[REJOIN] Budokai rejoin attempt: char=%u joinId=%u channel=%u", (unsigned)cPlayer->GetCharID(), (unsigned)cPlayer->GetJoinID(), (unsigned)app->GetGsChannel());
 		if (g_pBudokaiManager->TryRejoinPlayer(cPlayer))
 		{
 			ERR_LOG(LOG_GENERAL, "[REJOIN] Budokai rejoin initiated: char=%u", (unsigned)cPlayer->GetCharID());
 			return true;
 		}
-		ERR_LOG(LOG_GENERAL, "[REJOIN] Budokai rejoin failed to initiate: char=%u", (unsigned)cPlayer->GetCharID());
+		ERR_LOG(LOG_GENERAL, "[REJOIN] Budokai rejoin failed to initiate: char=%u", (unsigned)cPlayer->GetCharID());*/
 		break; // could not handle Budokai rejoin here
 	default: break;
 	}

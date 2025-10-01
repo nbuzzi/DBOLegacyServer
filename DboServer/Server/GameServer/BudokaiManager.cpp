@@ -6373,7 +6373,7 @@ void CBudokaiManager::LoadBudokaiStateInfo(CPlayer * pPlayer)
 	}
 }
 
-// Attempt to rejoin a player to the appropriate Budokai context (prelim/major/final)
+// Attempt to rejoin a player to the appropriate Budokai context (prelim/major/final) -- THIS FUNCTION IS CAUSING THE BUG UNABLE TO TELEPORT BACK TO BUDOKAI
 bool CBudokaiManager::TryRejoinPlayer(CPlayer* pPlayer)
 {
 	CGameServer* app = (CGameServer*)g_pApp;

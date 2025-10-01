@@ -1,5 +1,5 @@
 [Auth Server]
-Address = 26.45.249.194
+Address = 127.0.0.1
 Port = 20200
 ServerID = 0
 

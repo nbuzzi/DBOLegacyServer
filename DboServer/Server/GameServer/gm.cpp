@@ -1161,6 +1161,30 @@ ACMD(do_arena_join_public)
 	UNREFERENCED_PARAMETER(iLine);
 	// consume any leftover tokens if present
 	pToken->PopToPeek();
+
+	// Channel gating: only allow joining on ARENA channels and never on Dojo channel
+	{
+		CGameServer* app = (CGameServer*)g_pApp;
+		bool isDojo = app && app->IsDojoChannel();
+		bool nameOk = true;
+		if (app)
+		{
+			std::string got = app->m_config.ChannelName.c_str();
+			for (auto& c : got) c = (char)tolower(c);
+			nameOk = (got.find("arena") != std::string::npos);
+		}
+		if (isDojo || !nameOk)
+		{
+			CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+			sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+			res->wOpCode = GU_SYSTEM_DISPLAY_TEXT;
+			res->byDisplayType = SERVER_TEXT_SYSTEM;
+			NTL_SAFE_WCSCPY(res->awchMessage, L"[Arena] Joining is only available on ARENA channels (not Dojo).");
+			packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+			pPlayer->SendPacket(&packet);
+			return;
+		}
+	}
 	// Add the caller as a participant if ArenaManager exists
 	if (g_pArenaManager && pPlayer && pPlayer->IsInitialized())
 	{
@@ -1196,6 +1220,30 @@ ACMD(do_arena_joinparty_public)
 	UNREFERENCED_PARAMETER(iLine);
 	// consume any leftover tokens if present (we ignore parameters)
 	pToken->PopToPeek();
+
+	// Channel gating: only allow joining on ARENA channels and never on Dojo channel
+	{
+		CGameServer* app = (CGameServer*)g_pApp;
+		bool isDojo = app && app->IsDojoChannel();
+		bool nameOk = true;
+		if (app)
+		{
+			std::string got = app->m_config.ChannelName.c_str();
+			for (auto& c : got) c = (char)tolower(c);
+			nameOk = (got.find("arena") != std::string::npos);
+		}
+		if (isDojo || !nameOk)
+		{
+			CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+			sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+			res->wOpCode = GU_SYSTEM_DISPLAY_TEXT;
+			res->byDisplayType = SERVER_TEXT_SYSTEM;
+			NTL_SAFE_WCSCPY(res->awchMessage, L"[Arena] Party joining is only available on ARENA channels (not Dojo).");
+			packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+			pPlayer->SendPacket(&packet);
+			return;
+		}
+	}
 
 	if (!pPlayer || !pPlayer->IsInitialized())
 		return;
@@ -1257,6 +1305,30 @@ ACMD(do_arena_joinguild_public)
 	UNREFERENCED_PARAMETER(iLine);
 	// consume any leftover tokens if present (we ignore parameters)
 	pToken->PopToPeek();
+
+	// Channel gating: only allow joining on ARENA channels and never on Dojo channel
+	{
+		CGameServer* app = (CGameServer*)g_pApp;
+		bool isDojo = app && app->IsDojoChannel();
+		bool nameOk = true;
+		if (app)
+		{
+			std::string got = app->m_config.ChannelName.c_str();
+			for (auto& c : got) c = (char)tolower(c);
+			nameOk = (got.find("arena") != std::string::npos);
+		}
+		if (isDojo || !nameOk)
+		{
+			CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+			sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+			res->wOpCode = GU_SYSTEM_DISPLAY_TEXT;
+			res->byDisplayType = SERVER_TEXT_SYSTEM;
+			NTL_SAFE_WCSCPY(res->awchMessage, L"[Arena] Guild joining is only available on ARENA channels (not Dojo).");
+			packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+			pPlayer->SendPacket(&packet);
+			return;
+		}
+	}
 
 	if (!pPlayer || !pPlayer->IsInitialized())
 		return;

@@ -31,6 +31,8 @@ public:
 	struct Config
 	{
 		bool enabled;
+		// When true, Arena can only start on channels whose name contains 'ARENA' (case-insensitive) and not on Dojo channel
+		bool onlyOnArenaChannel = true;
 		// comma-separated list of world tblidx values
 		std::vector<unsigned int> worldTblidxList;
 		// worlds that require Budokai-style match notifications instead of RankBattle ones

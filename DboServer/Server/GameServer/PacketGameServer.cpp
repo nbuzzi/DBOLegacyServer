@@ -12637,18 +12637,18 @@ void CClientSession::RecvTeleportConfirmationReq(CNtlPacket* pPacket)
 		if (req->bTeleport) // check if agree to teleport
 		{
 			// If accepting a Budokai teleport proposal, create a short-lived rejoin ticket
-			const BYTE tp = cPlayer->GetTeleportProposalType();
-			if (tp == TELEPORT_TYPE_MINORMATCH || tp == TELEPORT_TYPE_MAJORMATCH || tp == TELEPORT_TYPE_FINALMATCH)
-			{
-				sREJOIN_TICKET t{};
-				t.charId = cPlayer->GetCharID();
-				t.dungeonType = eREJOIN_DUNGEON_TYPE::REJOIN_BUDOKAI;
-				t.worldId = cPlayer->GetTeleportProposalWorldID();
-				// Budokai rejoin: short-lived ticket (2 minutes max)
-				t.expireAtMs = GetTickCount() + 60 * 2000;
-				g_Rejoin.Put(t);
-				ERR_LOG(LOG_GENERAL, "[REJOIN] Ticket created on accept: char=%u type=BUDOKAI worldId=%u expiresInMs=%u", (unsigned)cPlayer->GetCharID(), (unsigned)t.worldId, (unsigned)(60 * 1000));
-			}
+			//const BYTE tp = cPlayer->GetTeleportProposalType();
+			//if (tp == TELEPORT_TYPE_MINORMATCH || tp == TELEPORT_TYPE_MAJORMATCH || tp == TELEPORT_TYPE_FINALMATCH)
+			//{
+			//	sREJOIN_TICKET t{};
+			//	t.charId = cPlayer->GetCharID();
+			//	t.dungeonType = eREJOIN_DUNGEON_TYPE::REJOIN_BUDOKAI;
+			//	t.worldId = cPlayer->GetTeleportProposalWorldID();
+			//	// Budokai rejoin: short-lived ticket (2 minutes max)
+			//	t.expireAtMs = GetTickCount() + 60 * 2000;
+			//	g_Rejoin.Put(t);
+			//	ERR_LOG(LOG_GENERAL, "[REJOIN] Ticket created on accept: char=%u type=BUDOKAI worldId=%u expiresInMs=%u", (unsigned)cPlayer->GetCharID(), (unsigned)t.worldId, (unsigned)(60 * 1000));
+			//}
 			cPlayer->StartTeleport(cPlayer->GetTeleportProposalLoc(), cPlayer->GetTeleportProposalDir(), cPlayer->GetTeleportProposalWorldID(), cPlayer->GetTeleportProposalType(), INVALID_TBLIDX, false, cPlayer->GetTeleportAnotherServer());
 		}
 		else
