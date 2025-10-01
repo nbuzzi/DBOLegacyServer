@@ -23,6 +23,7 @@
 #include "CustomDropEvent.h"
 #include "HelperNpcManager.h"
 #include "ArenaManager.h"
+#include "EventManager.h"
 
 
 CGameProcessor::CGameProcessor()
@@ -151,6 +152,16 @@ void CGameProcessor::Run(DWORD dwTickCount)
 					g_pArenaManager->TickProcess(dwTickDiff);
 				}
 				// else: skip Arena ticks on Dojo channel
+			}
+
+			// Event Manager automation + state machine
+			// EventManager internally filters by channel name (Event.ChannelNameContains)
+			{
+				if (!app->IsDojoChannel())
+				{
+					g_pEventManager->AutomationTick(dwTickDiff);
+					g_pEventManager->TickProcess(dwTickDiff);
+				}
 			}
 		}
 

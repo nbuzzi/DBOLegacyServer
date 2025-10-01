@@ -38,6 +38,7 @@
 #include "PlayerModifiers.h"
 #include "ArenaManager.h"
 #include "DojoManager.h"
+#include "EventManager.h"
 #include <algorithm>
 
 void gm_read_command(sUG_SERVER_COMMAND* sPacket, CPlayer* pPlayer)
@@ -171,6 +172,7 @@ ACMD(do_arena);
 ACMD(do_arena_join_public);
 ACMD(do_arena_joinparty_public);
 ACMD(do_arena_joinguild_public);
+ACMD(do_event_participate);
 ACMD(do_world_fight);
 ACMD(do_budokai);
 ACMD(do_dojo);
@@ -189,6 +191,7 @@ struct command_info cmd_info[] =
 	{ L"@joinarena", do_arena_join_public, ADMIN_LEVEL_NONE }, // Alias
 	{ L"@arenajoinparty", do_arena_joinparty_public, ADMIN_LEVEL_NONE }, // Public: party join (leader only)
 	{ L"@arenajoinguild", do_arena_joinguild_public, ADMIN_LEVEL_NONE }, // Public: guild join (guild member only)
+	{ L"@participate", do_event_participate, ADMIN_LEVEL_NONE }, // Public: join EVENT channel
 
 	// GM
 
@@ -1378,6 +1381,41 @@ ACMD(do_arena_joinguild_public)
 	pPlayer->SendPacket(&packet);
 }
 
+ACMD(do_event_participate)
+{
+	UNREFERENCED_PARAMETER(iLine);
+	pToken->PopToPeek();
+
+	// Channel gating: only allow on EVENTS channels
+	{
+		CGameServer* app = (CGameServer*)g_pApp;
+		bool isDojo = app && app->IsDojoChannel();
+		bool nameOk = true;
+		if (app)
+		{
+			std::string got = app->m_config.ChannelName.c_str();
+			for (auto& c : got) c = (char)tolower(c);
+			nameOk = (got.find("events") != std::string::npos);
+		}
+		if (isDojo || !nameOk)
+		{
+			CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+			sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+			res->wOpCode = GU_SYSTEM_DISPLAY_TEXT;
+			res->byDisplayType = SERVER_TEXT_SYSTEM;
+			NTL_SAFE_WCSCPY(res->awchMessage, L"[EVENT] Participation is only available on EVENTS channels.");
+			packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+			pPlayer->SendPacket(&packet);
+			return;
+		}
+	}
+
+	// Add the caller as a participant if EventManager exists
+	if (g_pEventManager && pPlayer && pPlayer->IsInitialized())
+	{
+		g_pEventManager->AddParticipant(pPlayer);
+	}
+}
 
 ACMD(do_big)
 {

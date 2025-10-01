@@ -48,6 +48,7 @@
 #include "HelperNpcManager.h"
 #include "SkillTable.h"
 #include "ArenaManager.h"
+#include "EventManager.h"
 // --- INICIO SOCKET COMANDOS ---
 #include <thread>
 #include <atomic>
@@ -311,6 +312,17 @@ int CGameServer::OnAppStart()
 		const char* arenaIni = ".\\config\\Arena.cfg";
 		bool ok = g_pArenaManager->LoadConfigFromIniPath(arenaIni);
 		NTL_PRINT(PRINT_APP, ok ? "[ARENA] Config loaded" : "[ARENA] Config not found or invalid");
+	}
+
+	NTL_PRINT(PRINT_APP, "Prepare Event System");
+	CEventManager* pEventManager = new CEventManager;
+	UNREFERENCED_PARAMETER(pEventManager);
+
+	// Load Event config now that the manager singleton exists
+	{
+		const char* eventIni = ".\\config\\Events.cfg";
+		bool ok = g_pEventManager->LoadConfigFromIniPath(eventIni);
+		NTL_PRINT(PRINT_APP, ok ? "[EVENT] Config loaded" : "[EVENT] Config not found or invalid");
 	}
 
 	int rc = NTL_SUCCESS;

@@ -167,7 +167,7 @@ namespace RdfTableEditor.Views
             if (!_table.Columns.Contains(SearchIndexColumnName))
                 _table.Columns.Add(SearchIndexColumnName, typeof(string));
 
-            // Fill rows
+            // Fill rows from document
             foreach (var r in _doc.Rows)
             {
                 var row = _table.NewRow();
@@ -561,12 +561,22 @@ namespace RdfTableEditor.Views
 
             if (_table != null && _schema != null)
             {
+                // In schema mode: add directly to DataTable
+                // Changes will sync back to _doc.Rows when Save is called
                 var nr = _table.NewRow();
+
                 // Fill defaults (zeros/empty strings)
                 foreach (DataColumn col in _table.Columns)
                 {
-                    if (col.DataType == typeof(string)) nr[col] = string.Empty; else nr[col] = Activator.CreateInstance(col.DataType) ?? 0;
+                    if (string.Equals(col.ColumnName, SearchIndexColumnName, StringComparison.Ordinal))
+                        continue; // skip internal column
+
+                    if (col.DataType == typeof(string))
+                        nr[col] = string.Empty;
+                    else
+                        nr[col] = Activator.CreateInstance(col.DataType) ?? 0;
                 }
+
                 // Smart Tblidx default: max+1
                 if (_table.Columns.Contains("Tblidx"))
                 {
@@ -585,7 +595,9 @@ namespace RdfTableEditor.Views
                     }
                     catch { /* ignore */ }
                 }
+
                 _table.Rows.Add(nr);
+
                 // Move selection
                 _grid.ClearSelection();
                 var idx = _table.Rows.Count - 1;
@@ -599,7 +611,7 @@ namespace RdfTableEditor.Views
             }
             else
             {
-                // fallback list mode
+                // fallback list mode: work directly with RdfRows
                 var rr = new RdfRow
                 {
                     Id = (_doc.Rows.Count == 0) ? 1 : _doc.Rows.Max(r => r.Id) + 1,
@@ -634,14 +646,20 @@ namespace RdfTableEditor.Views
             var checkedRows = GetCheckedGridRows();
             if (_table != null && _schema != null)
             {
+                // In schema mode: clone DataTable rows directly
+                // Changes will sync back to _doc.Rows when Save is called
                 var rowsToClone = checkedRows.Any() ? checkedRows : _grid.SelectedRows.Cast<DataGridViewRow>();
+
                 foreach (DataGridViewRow sel in rowsToClone)
                 {
                     if (sel.DataBoundItem is DataRowView drv)
                     {
                         var src = drv.Row;
                         var nr = _table.NewRow();
+
+                        // Clone all values from source row
                         nr.ItemArray = (object?[])src.ItemArray.Clone();
+
                         // bump Tblidx if present
                         if (_table.Columns.Contains("Tblidx"))
                         {
@@ -655,13 +673,14 @@ namespace RdfTableEditor.Views
                             }
                             catch { /* ignore */ }
                         }
+
                         _table.Rows.Add(nr);
                     }
                 }
             }
             else
             {
-                // list mode
+                // list mode: work directly with RdfRows
                 var selected = (checkedRows.Any() ? checkedRows : _grid.SelectedRows.Cast<DataGridViewRow>())
                     .Select(r => r.DataBoundItem as RdfRow)
                     .Where(r => r != null).Cast<RdfRow>()
@@ -695,12 +714,14 @@ namespace RdfTableEditor.Views
             var checkedRows = GetCheckedGridRows();
             if (_table != null && _schema != null)
             {
-                // collect to avoid modifying while iterating
+                // In schema mode: delete from DataTable only
+                // Changes will sync back to _doc.Rows when Save is called
                 var baseRows = checkedRows.Any() ? checkedRows : _grid.SelectedRows.Cast<DataGridViewRow>();
                 var toDelete = baseRows
                     .Select(r => (r.DataBoundItem as DataRowView)?.Row)
                     .Where(r => r != null).Cast<DataRow>()
                     .ToList();
+
                 foreach (var row in toDelete)
                 {
                     _table.Rows.Remove(row);
@@ -708,6 +729,7 @@ namespace RdfTableEditor.Views
             }
             else
             {
+                // list mode: work directly with RdfRows
                 var baseRows = checkedRows.Any() ? checkedRows : _grid.SelectedRows.Cast<DataGridViewRow>();
                 var toDelete = baseRows
                     .Select(r => r.DataBoundItem as RdfRow)

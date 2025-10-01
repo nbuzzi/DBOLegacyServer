@@ -249,5 +249,17 @@ all totem: 16454201@45000@@: 300500@20000, 300510@20000, 300200@15000
 - `visuals:` require SystemEffect tblidx values, not skill ids. For long-lived visuals via buffs, list the skill ids under `buffs:` with a long `@durationMs`.
 - Safety caps exist internally to avoid spam (e.g., stacked drops). Keep values reasonable.
 
+## Documentation
+
+Comprehensive documentation for server features and tools is available in the [Documentation](DboServer/Documentation) folder:
+
+- **[Event Manager](DboServer/Documentation/EventManager_README.md)** - Round-based event system with world rotation, minion spawning, and auto-restart
+  - [Versión en Español](DboServer/Documentation/EventManager_README_ES.md)
+- **[Custom Event Drop](DboServer/Documentation/Custom%20Event%20Drop.md)** - Config-driven drops, spawns, modifiers, buffs, titles, and visuals
+- **[Server Monitor](DboServer/Documentation/Server%20Monitor.md)** - Real-time server monitoring and management tool
+- **[RDF Table Editor](DboServer/Documentation/RDF%20Table%20Editor.md)** - Table editing tool for game data
+- **[WPS Stage Gen](DboServer/Documentation/WPS%20Stage%20Gen.md)** - World path staging generation tool
+  - [CLI Version](DboServer/Documentation/WPS%20Stage%20GEN%20CLI.md)
+
 ## Acknowledgements
 All and any copyrighted material belongs to their respective owners, this is just a non-profit fan project aiming for game preservation. Thanks to DBOG for providing the base for this source code.

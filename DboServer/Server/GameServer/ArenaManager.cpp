@@ -5369,7 +5369,7 @@ void CArenaManager::SpawnArenaMobs()
 
 		if (CMonster* pMob = (CMonster*)g_pObjectManager->CreateCharacter(OBJTYPE_MOB))
 		{
-			if (pMob->CreateDataAndSpawn((WORLDID)worldId, pMobTbldat, &spawn, false, 0))
+			if (pMob->CreateDataAndSpawn((WORLDID)worldId, pMobTbldat, &spawn, false, SPAWN_FUNC_FLAG_RESPAWN | SPAWN_FUNC_FLAG_NO_SPAWN_WAIT))
 			{
 				pMob->SetStandAlone(true); // mark as standalone so purge doesn't kill them
 				m_spawnedMobs.push_back(pMob->GetID());
@@ -5431,7 +5431,7 @@ bool CArenaManager::SpawnMob(unsigned int mobTblidx, const CNtlVector* pAt, cons
 
 	if (CMonster* pMob = (CMonster*)g_pObjectManager->CreateCharacter(OBJTYPE_MOB))
 	{
-		if (pMob->CreateDataAndSpawn((WORLDID)worldId, pMobTbldat, &spawn, false, 0))
+		if (pMob->CreateDataAndSpawn((WORLDID)worldId, pMobTbldat, &spawn, false, SPAWN_FUNC_FLAG_RESPAWN | SPAWN_FUNC_FLAG_NO_SPAWN_WAIT))
 		{
 			pMob->SetStandAlone(true);
 			m_spawnedMobs.push_back(pMob->GetID());
