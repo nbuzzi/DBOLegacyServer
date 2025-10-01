@@ -201,7 +201,7 @@ int CWorld::Enter(CSpawnObject* pSpawnObject, bool bIsServerStart/* = false*/)
 			if (pWorldCell->EnterObject(pSpawnObject, bIsServerStart) != NTL_SUCCESS)
 			{
 				ERR_LOG(LOG_SYSTEM, "[Handle : %u] (pWorldCell->EnterObject != NTL_SUCCESS), pSpawnObject->GetCurLoc() = (%f, %f, %f)", pSpawnObject->GetID(), pSpawnObject->GetCurLoc().x, pSpawnObject->GetCurLoc().y, pSpawnObject->GetCurLoc().z);
-			//	CNtlMiniDump::Snapshot();
+				//	CNtlMiniDump::Snapshot();
 			}
 			else
 			{
@@ -315,7 +315,7 @@ void CWorld::OnCreate() //only used when creating dungeon world
 	CGameServer* app = (CGameServer*)g_pApp;
 
 	//dont spawn anything on dojo channel
-	if (app->IsDojoChannel() && GetTbldat()->byWorldRuleType != GAMERULE_MINORMATCH && GetTbldat()->byWorldRuleType != GAMERULE_MINORMATCH &&GetTbldat()->byWorldRuleType != GAMERULE_MINORMATCH)
+	if (app->IsDojoChannel() && GetTbldat()->byWorldRuleType != GAMERULE_MINORMATCH && GetTbldat()->byWorldRuleType != GAMERULE_MINORMATCH && GetTbldat()->byWorldRuleType != GAMERULE_MINORMATCH)
 		return;
 
 	SpawnNpcMob();
@@ -340,7 +340,7 @@ void CWorld::OnDestroy()
 	RemAllScript();
 
 	DespawnNpcMob();
-	
+
 	//reset object states
 	for (std::map<HOBJECT, CTriggerObject*>::iterator it = m_map_TriggerObj.begin(); it != m_map_TriggerObj.end(); it++)
 	{
@@ -379,16 +379,16 @@ void CWorld::SpawnNpcMob()
 						CNpc* pNpc = (CNpc*)g_pObjectManager->CreateCharacter(OBJTYPE_NPC);
 						if (pNpc)
 						{
-							// In dynamic worlds we still want spawned entries to respawn after death.
-							// Use both flags: allow immediate spawn without wait and enable future respawn.
-							BYTE bySpawnFlag = 0;
-							BIT_FLAG_SET(bySpawnFlag, SPAWN_FUNC_FLAG_RESPAWN);
-							BIT_FLAG_SET(bySpawnFlag, SPAWN_FUNC_FLAG_NO_SPAWN_WAIT);
-
-							if (!pNpc->CreateDataAndSpawn(GetID(), pNPCTblData, pNPCSpwnTblData, false, bySpawnFlag))
+							// In normal worlds allow respawn; in dungeons (dynamic) do not
 							{
-								ERR_LOG(LOG_SYSTEM, "Failed to create NPC. Tblidx %u World %u spawn location %f %f %f", pNPCTblData->tblidx, pWorldTblData->tblidx, pNPCSpwnTblData->vSpawn_Loc.x, pNPCSpwnTblData->vSpawn_Loc.y, pNPCSpwnTblData->vSpawn_Loc.z);
-								delete pNpc;
+								BYTE bySpawnFlag = SPAWN_FUNC_FLAG_NO_SPAWN_WAIT;
+								if (!GetTbldat()->bDynamic)
+									BIT_FLAG_SET(bySpawnFlag, SPAWN_FUNC_FLAG_RESPAWN);
+								if (!pNpc->CreateDataAndSpawn(GetID(), pNPCTblData, pNPCSpwnTblData, false, bySpawnFlag))
+								{
+									ERR_LOG(LOG_SYSTEM, "Failed to create NPC. Tblidx %u World %u spawn location %f %f %f", pNPCTblData->tblidx, pWorldTblData->tblidx, pNPCSpwnTblData->vSpawn_Loc.x, pNPCSpwnTblData->vSpawn_Loc.y, pNPCSpwnTblData->vSpawn_Loc.z);
+									delete pNpc;
+								}
 							}
 						}
 					}
@@ -418,16 +418,16 @@ void CWorld::SpawnNpcMob()
 						CMonster* pMob = (CMonster*)g_pObjectManager->CreateCharacter(OBJTYPE_MOB);
 						if (pMob)
 						{
-							// In dynamic worlds we still want spawned entries to respawn after death.
-							// Use both flags: allow immediate spawn without wait and enable future respawn.
-							BYTE bySpawnFlag = 0;
-							BIT_FLAG_SET(bySpawnFlag, SPAWN_FUNC_FLAG_RESPAWN);
-							BIT_FLAG_SET(bySpawnFlag, SPAWN_FUNC_FLAG_NO_SPAWN_WAIT);
-
-							if (!pMob->CreateDataAndSpawn(GetID(), pMOBTblData, pMOBSpwnTblData, false, bySpawnFlag))
+							// In normal worlds allow respawn; in dungeons (dynamic) do not
 							{
-								ERR_LOG(LOG_SYSTEM, "Failed to create monster. Tblidx %u World %u spawn location %f %f %f", pMOBTblData->tblidx, pWorldTblData->tblidx, pMOBSpwnTblData->vSpawn_Loc.x, pMOBSpwnTblData->vSpawn_Loc.y, pMOBSpwnTblData->vSpawn_Loc.z);
-								delete pMob;
+								BYTE bySpawnFlag = SPAWN_FUNC_FLAG_NO_SPAWN_WAIT;
+								if (!GetTbldat()->bDynamic)
+									BIT_FLAG_SET(bySpawnFlag, SPAWN_FUNC_FLAG_RESPAWN);
+								if (!pMob->CreateDataAndSpawn(GetID(), pMOBTblData, pMOBSpwnTblData, false, bySpawnFlag))
+								{
+									ERR_LOG(LOG_SYSTEM, "Failed to create monster. Tblidx %u World %u spawn location %f %f %f", pMOBTblData->tblidx, pWorldTblData->tblidx, pMOBSpwnTblData->vSpawn_Loc.x, pMOBSpwnTblData->vSpawn_Loc.y, pMOBSpwnTblData->vSpawn_Loc.z);
+									delete pMob;
+								}
 							}
 						}
 					}
@@ -444,7 +444,7 @@ void CWorld::DespawnNpcMob()
 	CNpc* pExistObject = (CNpc*)m_objectList.GetFirst(OBJTYPE_NPC);
 	int nObj = m_objectList.GetObjCount(OBJTYPE_NPC);
 
-	for(int i = 0; i < nObj; i++)
+	for (int i = 0; i < nObj; i++)
 	{
 		pNextObject = (CNpc*)m_objectList.GetNext(pExistObject->GetWorldObjectLinker());
 
@@ -467,7 +467,7 @@ void CWorld::DespawnNpcMob()
 
 		pExistObject->SetSpawnFuncFlag(0);
 
-		if(pExistObject->IsInitialized())
+		if (pExistObject->IsInitialized())
 			pExistObject->LeaveGame();
 
 		pExistObject = pNextObject;
@@ -507,7 +507,7 @@ void CWorld::DespawnNpcMob()
 		pDropExistObject = pDropNextObject;
 	}
 
-//	printf("CWorld::DespawnNpcMob(): m_objectList.GetObjCount(OBJTYPE_NPC) %u, Max %u \n", m_objectList.GetObjCount(OBJTYPE_NPC), m_objectList.GetObjMaxCount(OBJTYPE_NPC));
+	//	printf("CWorld::DespawnNpcMob(): m_objectList.GetObjCount(OBJTYPE_NPC) %u, Max %u \n", m_objectList.GetObjCount(OBJTYPE_NPC), m_objectList.GetObjMaxCount(OBJTYPE_NPC));
 }
 
 
@@ -529,7 +529,7 @@ int CWorld::CopyToInfo(sWORLD_INFO* pWorldInfo)
 		pWorldInfo->sRuleInfo.sBattleDungeonRuleInfo.bItemUse = pCCBD->bItemUse;
 		pWorldInfo->sRuleInfo.sBattleDungeonRuleInfo.bLpRegen = pCCBD->bLpRegen;
 	}
-	
+
 
 	return sizeof(sWORLD_INFO);
 }
@@ -651,11 +651,11 @@ int CWorld::Split(sWORLD_TBLDAT* pTbldat)
 	CNtlVector vOffset(1.0f, 1.0f, 1.0f);
 	m_vWorldSize = (m_vStart - m_vEnd) + vOffset;
 	//NTL_PRINT(PRINT_APP, "m_vWorldSize(%f, %f, %f)", m_vWorldSize.x, m_vWorldSize.y, m_vWorldSize.z);
-	
+
 	if (pTbldat->fSplitSize * 3.0f < m_vWorldSize.x && pTbldat->fSplitSize * 3.0f < m_vWorldSize.z)
 	{
-		m_dwCellHorizontalCount = (DWORD) floor(m_vWorldSize.x / pTbldat->fSplitSize);
-		m_dwCellVerticalCount = (DWORD) floor(m_vWorldSize.z / pTbldat->fSplitSize);
+		m_dwCellHorizontalCount = (DWORD)floor(m_vWorldSize.x / pTbldat->fSplitSize);
+		m_dwCellVerticalCount = (DWORD)floor(m_vWorldSize.z / pTbldat->fSplitSize);
 		m_dwTotalCount = m_dwCellVerticalCount * m_dwCellHorizontalCount;
 
 		m_nStY = 1;
@@ -697,7 +697,7 @@ int CWorld::Split(sWORLD_TBLDAT* pTbldat)
 				{
 					m_vEndBoundary = pEndCell->GetEndLoc();
 				}
-				else 
+				else
 				{
 					ERR_LOG(LOG_SYSTEM, "NULL == pEndCell. worldId[%u]", m_worldID);
 					return 100001;
@@ -786,7 +786,7 @@ void CWorld::AddEventIdToAllPlayers(DWORD dwEventID)
 	}
 }
 
-void CWorld::AddEventIdToAllPlayers(DWORD dwEventID, CSpawnObject * pSubject, float fRange)
+void CWorld::AddEventIdToAllPlayers(DWORD dwEventID, CSpawnObject* pSubject, float fRange)
 {
 	int nObjCount = m_objectList.GetObjCount(OBJTYPE_PC);
 	CPlayer* pExistObject = (CPlayer*)m_objectList.GetFirst(OBJTYPE_PC);
@@ -885,7 +885,7 @@ CWorldCell* CWorld::GetWorldCellWithLoc(CNtlVector& rhs)
 	CELLID cellID = GetCellID(rhs);
 	if (cellID != INVALID_CELLID)
 		return GetWorldCell(cellID);
-	
+
 	return NULL;
 }
 
@@ -893,10 +893,10 @@ CELLID CWorld::GetCellID(CNtlVector& rhs)
 {
 	if (m_pTbldat)
 	{
-		DWORD dwX = (DWORD) floor(float(m_vStart.x - rhs.x) / m_pTbldat->fSplitSize);
+		DWORD dwX = (DWORD)floor(float(m_vStart.x - rhs.x) / m_pTbldat->fSplitSize);
 		if (m_dwCellHorizontalCount > dwX)
 		{
-			DWORD dwZ = (DWORD)((DWORD) (m_vStart.z - rhs.z) / m_pTbldat->fSplitSize);
+			DWORD dwZ = (DWORD)((DWORD)(m_vStart.z - rhs.z) / m_pTbldat->fSplitSize);
 			if (m_dwCellVerticalCount > dwX)
 				return dwX + m_dwCellHorizontalCount * dwZ;
 		}
@@ -1014,9 +1014,9 @@ CNpc* CWorld::FindNpc(TBLIDX tblidx)
 	CNpc* pExistObject = (CNpc*)m_objectList.GetFirst(OBJTYPE_NPC);
 	int nCount = m_objectList.GetObjCount(OBJTYPE_NPC);
 
-	for(int i = 0; i < nCount; i++) //use for instead of "while" to avoid endless loop ;)
+	for (int i = 0; i < nCount; i++) //use for instead of "while" to avoid endless loop ;)
 	{
-		if ( pExistObject->GetTblidx() == tblidx)
+		if (pExistObject->GetTblidx() == tblidx)
 			return pExistObject;
 
 		pExistObject = (CNpc*)m_objectList.GetNext(pExistObject->GetWorldObjectLinker());
@@ -1063,7 +1063,7 @@ CScriptAlgoObject* CWorld::GetScript(DWORD dwScriptID)
 	return NULL;
 }
 
-CScriptAlgoObject * CWorld::GetFirstScript(eSSD_SCRIPT_TYPE scripType)
+CScriptAlgoObject* CWorld::GetFirstScript(eSSD_SCRIPT_TYPE scripType)
 {
 	for (std::map<DWORD, CScriptAlgoObject*>::iterator it = m_mapScript.begin(); it != m_mapScript.end(); it++)
 	{
@@ -1119,7 +1119,7 @@ void CWorld::RemAllScript()
 }
 
 
-bool CWorld::CreateZoneMap(CWorldZoneTable *pWorldZoneTable)
+bool CWorld::CreateZoneMap(CWorldZoneTable* pWorldZoneTable)
 {
 	for (CTable::TABLEIT iterTable = pWorldZoneTable->Begin(); iterTable != pWorldZoneTable->End(); iterTable++)
 	{
@@ -1140,7 +1140,7 @@ bool CWorld::CreateZoneMap(CWorldZoneTable *pWorldZoneTable)
 				delete pWorldZone;
 				return false;
 			}
-		//	printf("create zone %u world %u \n", pWorldZone->GetZoneId(), GetIdx());
+			//	printf("create zone %u world %u \n", pWorldZone->GetZoneId(), GetIdx());
 		}
 	}
 
@@ -1160,7 +1160,7 @@ void CWorld::DestroyWorldCellArray()
 }
 
 
-CWorldZone* CWorld::CreateWorldZone(sWORLD_ZONE_TBLDAT *pWorldZoneData, CWorld *pWorldRef)
+CWorldZone* CWorld::CreateWorldZone(sWORLD_ZONE_TBLDAT* pWorldZoneData, CWorld* pWorldRef)
 {
 	CWorldZone* pWorldZone = new CWorldZone;
 	if (pWorldZone->Create(pWorldZoneData, pWorldRef))
@@ -1172,16 +1172,16 @@ CWorldZone* CWorld::CreateWorldZone(sWORLD_ZONE_TBLDAT *pWorldZoneData, CWorld *
 }
 
 
-bool CWorld::BroadcastPacket(CNtlPacket *pPacket, CSpawnObject *pSubject, float fRange)
+bool CWorld::BroadcastPacket(CNtlPacket* pPacket, CSpawnObject* pSubject, float fRange)
 {
 	bool bIsPacketSent = false;
 	int nObjCount = m_objectList.GetObjCount(OBJTYPE_PC);
 	CSpawnObject* pExistObject = m_objectList.GetFirst(OBJTYPE_PC);
 
 	int n = 0;
-	for(int i = 0; i < nObjCount; i++) //use for instead of "while" to avoid endless loop ;)
+	for (int i = 0; i < nObjCount; i++) //use for instead of "while" to avoid endless loop ;)
 	{
-		if (!pSubject || (pExistObject && pSubject->IsInRange(pExistObject->GetCurLoc(), fRange)) )
+		if (!pSubject || (pExistObject && pSubject->IsInRange(pExistObject->GetCurLoc(), fRange)))
 		{
 			pExistObject->SendPacket(pPacket);
 			bIsPacketSent = true;
@@ -1200,7 +1200,7 @@ bool CWorld::BroadcastPacket(CNtlPacket *pPacket, CSpawnObject *pSubject, float 
 }
 
 
-bool CWorld::BroadcastPacket(CNtlPacket *pPacket, CSpawnObject *pExcept)
+bool CWorld::BroadcastPacket(CNtlPacket* pPacket, CSpawnObject* pExcept)
 {
 	bool bIsPacketSent = false;
 	int nObjCount = m_objectList.GetObjCount(OBJTYPE_PC);

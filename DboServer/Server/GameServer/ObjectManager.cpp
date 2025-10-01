@@ -37,9 +37,9 @@ void CObjectManager::SpawnNpcAndMob()
 	
 	for (CTable::TABLEIT itpWorld = pWorld->Begin(); itpWorld != pWorld->End(); itpWorld++)
 	{
-		BYTE bySpawnFlag = SPAWN_FUNC_FLAG_NO_SPAWN_WAIT;
-		// BIT_FLAG_SET(bySpawnFlag, SPAWN_FUNC_FLAG_RESPAWN);
-		// BIT_FLAG_SET(bySpawnFlag, SPAWN_FUNC_FLAG_NO_SPAWN_WAIT);
+		BYTE bySpawnFlag = 0;
+		BIT_FLAG_SET(bySpawnFlag, SPAWN_FUNC_FLAG_RESPAWN);
+		BIT_FLAG_SET(bySpawnFlag, SPAWN_FUNC_FLAG_NO_SPAWN_WAIT);
 
 		sWORLD_TBLDAT* pWorldTblData = (sWORLD_TBLDAT*)itpWorld->second;
 		CSpawnTable* pNPCSpawnTbl = g_pTableContainer->GetNpcSpawnTable(pWorldTblData->tblidx);
@@ -89,9 +89,9 @@ void CObjectManager::SpawnNpcAndMob()
 		//spawn mob
 		if (pMOBSpawnTbl != NULL)
 		{
-			BYTE bySpawnFlag = SPAWN_FUNC_FLAG_NO_SPAWN_WAIT;
-			// BIT_FLAG_SET(bySpawnFlag, SPAWN_FUNC_FLAG_RESPAWN);
-			// BIT_FLAG_SET(bySpawnFlag, SPAWN_FUNC_FLAG_NO_SPAWN_WAIT);
+			BYTE bySpawnFlag = 0;
+			BIT_FLAG_SET(bySpawnFlag, SPAWN_FUNC_FLAG_RESPAWN);
+			BIT_FLAG_SET(bySpawnFlag, SPAWN_FUNC_FLAG_NO_SPAWN_WAIT);
 
 			for (CTable::TABLEIT itMOBSpawn = pMOBSpawnTbl->Begin(); itMOBSpawn != pMOBSpawnTbl->End(); itMOBSpawn++)
 			{

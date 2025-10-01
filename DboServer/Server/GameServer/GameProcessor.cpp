@@ -141,12 +141,17 @@ void CGameProcessor::Run(DWORD dwTickCount)
 			GetHelperNpcManager()->TickWatchdog(m_dwTickCount);
 
 			// Arena automation + state machine
-			// Always tick automation here; ArenaManager internally checks autoEnabled and arena channel name
-			// and optionally filters by configured autoChannelName. This avoids brittle
-			// exact channel-name gating here and keeps the scheduler alive across renames.
-			g_pArenaManager->AutomationTick(dwTickDiff);
-
-			g_pArenaManager->TickProcess(dwTickDiff);
+			// Do NOT run Arena runtime on the Dojo channel to avoid interfering with Budokai/Dojo teleports.
+			// We still keep Arena config loaded so Dojo can compute arena spectator destinations when asked by Chat.
+			{
+				if (!app->IsDojoChannel())
+				{
+					// ArenaManager also internally filters automation by channel name (AutoArena.ChannelNameContains)
+					g_pArenaManager->AutomationTick(dwTickDiff);
+					g_pArenaManager->TickProcess(dwTickDiff);
+				}
+				// else: skip Arena ticks on Dojo channel
+			}
 		}
 
 		g_pPartyManager->TickProcess(dwTickDiff);

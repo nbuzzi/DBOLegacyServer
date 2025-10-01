@@ -1,6 +1,8 @@
 param(
     [string]$Runtime = 'win-x64',
-    [string]$VersionStamp
+    [string]$VersionStamp,
+    [switch]$DeployToExecutionEnv,
+    [string]$ExecutionEnvPath
 )
 
 Set-StrictMode -Version Latest
@@ -42,7 +44,8 @@ New-Item -ItemType Directory -Path $outRoot -Force | Out-Null
 $projects = @(
     @{ Path = Join-Path $root 'WpsStageGen\WpsStageGen.csproj'; Name = 'WpsStageGen' },
     @{ Path = Join-Path $root 'WpsStageGen.UI\WpsStageGen.UI.csproj'; Name = 'WpsStageGen.UI' },
-    @{ Path = Join-Path $root 'CustomDropEventEditor\CustomDropEventEditor.csproj'; Name = 'CustomDropEventEditor' }
+    @{ Path = Join-Path $root 'CustomDropEventEditor\CustomDropEventEditor.csproj'; Name = 'CustomDropEventEditor' },
+    @{ Path = Join-Path $root 'ServerMonitor\ServerMonitor.csproj'; Name = 'ServerMonitor' }
 )
 
 $results = @()
@@ -62,6 +65,35 @@ foreach ($r in $results) {
         $exe = Get-ChildItem -Path $dir -Filter *.exe -File -ErrorAction SilentlyContinue | Select-Object -First 1
         if ($null -ne $exe) {
             Write-Host ("  {0} [{1}] -> {2:N0} bytes" -f $r.Name, $p.Kind, $exe.Length)
+        }
+    }
+}
+
+# Optional: Deploy ServerMonitor next to ExecutionEnv
+if ($DeployToExecutionEnv) {
+    if ([string]::IsNullOrWhiteSpace($ExecutionEnvPath)) {
+        # Try default repo path
+        $candidate = Join-Path (Split-Path -Parent $root) 'DboServer\ExecutionEnv'
+        if (Test-Path $candidate) { $ExecutionEnvPath = $candidate }
+    }
+    if (-not (Test-Path $ExecutionEnvPath)) {
+        Write-Warning "ExecutionEnv path not found: $ExecutionEnvPath"
+    }
+    else {
+        $serverMonitor = $results | Where-Object { $_.Name -eq 'ServerMonitor' } | Select-Object -First 1
+        if ($null -eq $serverMonitor) {
+            Write-Warning 'ServerMonitor publish output not found.'
+        }
+        else {
+            # Choose framework-dependent build (smaller), but allow switching to self-contained if needed
+            $src = $serverMonitor.FD
+            $dst = $ExecutionEnvPath
+            Write-Host ("Deploying ServerMonitor → {0}" -f $dst) -ForegroundColor Cyan
+            # Copy files (not mirroring) to avoid accidental deletions
+            Get-ChildItem -Path $src -Recurse | ForEach-Object {
+                if ($_.PSIsContainer) { return }
+                Copy-Item $_.FullName -Destination (Join-Path $dst $_.Name) -Force
+            }
         }
     }
 }

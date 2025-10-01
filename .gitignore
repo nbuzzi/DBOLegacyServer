@@ -139,3 +139,13 @@ Tools/**/*.pdb
 !Tools/CustomDropEventEditor/ItemList.txt
 !Tools/CustomDropEventEditor/itemlist.txt
 !Mobs.txt
+
+# ExecutionEnv deploy outputs (any ExecutionEnv in the repo)
+**/ExecutionEnv/*.dll
+!**/ExecutionEnv/libmysql.dll
+**/ExecutionEnv/de/
+**/ExecutionEnv/runtimes/
+**/ExecutionEnv/DBO Server Monitor.deps.json
+**/ExecutionEnv/DBO Server Monitor.runtimeconfig.json
+**/Tools/publish/**
+**/ExecutionEnv/config/google-drive.json

@@ -1,0 +1,120 @@
+<mah:MetroWindow x:Class="DBOServerMonitor.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
+  xmlns:local="clr-namespace:DBOServerMonitor"
+  xmlns:conv="clr-namespace:DBOServerMonitor.Converters"
+    Title="Settings" Height="600" Width="800" Background="{DynamicResource Brush.Background}" x:Name="Root">
+  <mah:MetroWindow.Resources>
+    <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+    <conv:InverseBoolConverter x:Key="InverseBoolConverter"/>
+  </mah:MetroWindow.Resources>
+  <Grid Margin="8" Background="{DynamicResource Brush.Background}">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="*"/>
+      <RowDefinition Height="Auto"/>
+    </Grid.RowDefinitions>
+    <TabControl>
+      <TabItem Header="Backups">
+        <StackPanel Margin="8">
+          <CheckBox Content="Enable daily backups" IsChecked="{Binding BackupsEnabled}"/>
+          <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+            <TextBlock Text="Time (HH:MM):" VerticalAlignment="Center" Margin="0,0,8,0"/>
+            <TextBox Width="40" Text="{Binding BackupHour}"/>
+            <TextBlock Text=":" Margin="4,0"/>
+            <TextBox Width="40" Text="{Binding BackupMinute}"/>
+          </StackPanel>
+          <Separator Margin="0,8"/>
+          <TextBlock Text="MySQL" FontWeight="Bold"/>
+          <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+            <TextBlock Text="Host:" Width="80"/>
+            <TextBox Width="160" Text="{Binding MySqlHost}"/>
+            <TextBlock Text="Port:" Width="80" Margin="16,0,0,0"/>
+            <TextBox Width="80" Text="{Binding MySqlPort}"/>
+          </StackPanel>
+          <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+            <TextBlock Text="User:" Width="80"/>
+            <TextBox Width="160" Text="{Binding MySqlUser}"/>
+            <TextBlock Text="Password:" Width="80" Margin="16,0,0,0"/>
+            <PasswordBox x:Name="Pwd" Width="160" PasswordChar="*"/>
+          </StackPanel>
+          <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+            <TextBlock Text="mysqldump path:" Width="120"/>
+            <TextBox x:Name="DumpPathText" Width="400" Text="{Binding MySqlDumpPath}"/>
+            <Button Content="Browse..." Margin="8,0,0,0" Click="BrowseDump_Click"/>
+          </StackPanel>
+          <CheckBox Content="Upload to Google Drive after backup" IsChecked="{Binding UploadToDrive}" Margin="0,8,0,0"/>
+          <CheckBox Content="Zip backups before upload" IsChecked="{Binding ZipBackups}" Margin="0,4,0,0"/>
+          <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+            <Button x:Name="BtnRunBackup" Content="Run backup now" Click="RunBackupNow_Click"/>
+            <TextBlock Text="  (Runs immediately with current settings)" VerticalAlignment="Center" Foreground="{DynamicResource Brush.SubText}"/>
+          </StackPanel>
+        </StackPanel>
+      </TabItem>
+      <TabItem Header="Theme">
+        <StackPanel Margin="8">
+          <TextBlock Text="MahApps Theme" FontWeight="Bold"/>
+          <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+            <TextBlock Text="Base:" Width="80" VerticalAlignment="Center"/>
+            <ComboBox Width="160" SelectedItem="{Binding SelectedBaseTheme, ElementName=Root}" ItemsSource="{Binding AvailableBaseThemes, ElementName=Root}"/>
+            <TextBlock Text="Accent:" Width="80" Margin="16,0,0,0" VerticalAlignment="Center"/>
+            <ComboBox Width="200" SelectedItem="{Binding SelectedAccent, ElementName=Root}" ItemsSource="{Binding AvailableAccents, ElementName=Root}"/>
+          </StackPanel>
+          <TextBlock Text="Changes apply immediately and persist to settings." Margin="0,8,0,0" Foreground="{DynamicResource Brush.SubText}"/>
+
+          <Separator Margin="0,16,0,8"/>
+          <TextBlock Text="Startup" FontWeight="Bold"/>
+          <CheckBox Content="Run at Windows startup" IsChecked="{Binding RunAtStartup}" Margin="0,6,0,0"/>
+          <CheckBox Content="Start all servers on app launch" IsChecked="{Binding StartAllOnLaunch}" Margin="0,2,0,0"/>
+        </StackPanel>
+      </TabItem>
+      <TabItem Header="Google Drive">
+        <StackPanel Margin="8">
+          <TextBlock Text="Choose authentication" FontWeight="Bold"/>
+          <StackPanel Orientation="Horizontal" Margin="0,4,0,8">
+            <RadioButton Content="Service Account" IsChecked="{Binding UseOAuthForDrive, Converter={StaticResource InverseBoolConverter}}"/>
+            <TextBlock Text="  " Width="8"/>
+            <RadioButton Content="OAuth (User Sign-in)" IsChecked="{Binding UseOAuthForDrive}"/>
+          </StackPanel>
+
+          <StackPanel Orientation="Horizontal">
+            <TextBlock Text="Service account JSON:" Width="160"/>
+            <TextBox x:Name="JsonPathText" Width="420" Text="{Binding GoogleServiceAccountJsonPath}"/>
+            <Button Content="Browse..." Margin="8,0,0,0" Click="BrowseJson_Click"/>
+          </StackPanel>
+          <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+            <TextBlock Text="Parent folder ID:" Width="160"/>
+            <TextBox Width="420" Text="{Binding GoogleDriveParentFolderId}"/>
+            <Button Content="Test Upload" Margin="8,0,0,0" Click="TestDrive_Click"/>
+          </StackPanel>
+
+          <Separator Margin="0,12,0,8"/>
+          <TextBlock Text="OAuth (User)" FontWeight="Bold"/>
+          <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+            <TextBlock Text="Client secrets JSON:" Width="160"/>
+            <TextBox x:Name="OAuthJsonText" Width="420" Text="{Binding OAuthClientSecretsJsonPath}"/>
+            <Button Content="Browse..." Margin="8,0,0,0" Click="BrowseOAuthJson_Click"/>
+          </StackPanel>
+          <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+            <Button Content="Sign in to Google" Click="SignInOAuth_Click"/>
+            <TextBlock Text="  (Opens a browser window; choose your Google account)" VerticalAlignment="Center" Foreground="{DynamicResource Brush.SubText}"/>
+          </StackPanel>
+        </StackPanel>
+      </TabItem>
+      <TabItem Header="Discord">
+        <StackPanel Margin="8">
+          <CheckBox Content="Enable alerts" IsChecked="{Binding DiscordAlertsEnabled}"/>
+          <StackPanel Orientation="Horizontal" Margin="8,8,0,0">
+            <TextBlock Text="Webhook URL:" Width="120"/>
+            <TextBox Width="420" Text="{Binding DiscordWebhookUrl}"/>
+            <Button Content="Test" Margin="8,0,0,0" Click="TestDiscord_Click"/>
+          </StackPanel>
+        </StackPanel>
+      </TabItem>
+    </TabControl>
+    <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right">
+      <Button Content="Save" Margin="0,8,8,0" Click="Save_Click"/>
+      <Button Content="Cancel" Margin="0,8,0,0" Click="Cancel_Click"/>
+    </StackPanel>
+  </Grid>
+</mah:MetroWindow>

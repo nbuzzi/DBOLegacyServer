@@ -45,11 +45,14 @@ dotnet publish WpsStageGen.UI.csproj -c Release -r win-x64 -p:PublishSingleFile=
 In the UI:
 - Set `WPS file` to your `83000.wps` file.
 - Set `Generator path` to the folder with the WpsStageGen `.csproj` (for example: `D:\projects\dbo-legacy\OpenDBO-Core\Tools\WpsStageGen`).
-- Adjust parameters and click `Run`.
+- Set `Boss every`, `Boss group`, `Reward item`, `Pattern list`.
+- Optionally set:
+	- `Boss worlds cycle` as a comma-separated list to annotate varying arenas per boss
+	- You can run with `out=PATH` and `bossTemplate=PATH` by copying the Args preview into a terminal
+- Click `Run`.
 
 Display/Scaling:
 - The app is Per-Monitor V2 DPI aware and uses Segoe UI; labels and inputs scale cleanly at 125–150%.
 
 ## Notes
 - The UI simply shells out to `dotnet run --` in the generator folder with the composed arguments.
-- Teleport/world args are intentionally not included since WPS does not use explicit teleport params here.

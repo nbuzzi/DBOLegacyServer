@@ -204,6 +204,12 @@ bool CArenaManager::LoadConfigFromIniPath(const char* iniPath)
 		m_cfg.enabled = (enabled != 0);
 	}
 
+	int onlyOnArena = 1;
+	if (file.Read("Arena", "OnlyOnArenaChannel", onlyOnArena))
+	{
+		m_cfg.onlyOnArenaChannel = (onlyOnArena != 0);
+	}
+
 	CNtlString worldsCsv = file.Read("Arena", "WorldTblidxList");
 	ParseWorldListCsv(worldsCsv);
 	// Keep a copy of config-provided worlds so we can optionally merge them later
@@ -1325,7 +1331,7 @@ void CArenaManager::TickProcess(unsigned long dwTickDiff)
 					m_pendingStartWorldId = 0;
 					m_waitAllArriveMs = 0;
 					m_state = State::ENROLLMENT;
-					SendNotice(L"Arena canceled: no participants online.", SERVER_TEXT_EMERGENCY);
+					SendNotice(L"Arena canceled: no participants online.", SERVER_TEXT_SYSNOTICE);
 					NTL_PRINT(PRINT_APP, _T("[ARENA] Start canceled: no participants online"));
 					// Clear participant list so automation can proceed on next cycle
 					m_participants.clear();
@@ -1447,7 +1453,7 @@ void CArenaManager::TickProcess(unsigned long dwTickDiff)
 			UpdateRankBattleState(RANKBATTLE_BATTLESTATE_WAIT, m_rankBattleStage, waitMs);
 			ARENA_VLOG(m_cfg, LOG_GENERAL, "[ARENA] PRE_ROUND->MATCH_READY: scheduled WAIT waitMs=%u worldId=%u", (unsigned)waitMs, worldId);
 			ARENA_VLOG(m_cfg, LOG_GENERAL, "[ARENA] PRE_ROUND->MATCH_READY immediate worldId=%u present=%u ready=%u stage=%u", worldId, present, ready, (unsigned)m_rankBattleStage);
-			SendNotice(L"Arena match starting...", SERVER_TEXT_EMERGENCY);
+			SendNotice(L"Arena match starting...", SERVER_TEXT_SYSNOTICE);
 			NTL_PRINT(PRINT_APP, _T("[ARENA] PRE_ROUND -> MATCH_READY (immediate): present=%u ready=%u worldId=%u"), present, ready, worldId);
 		}
 		else if (m_waitAllArriveMs <= dwTickDiff)
@@ -1458,7 +1464,7 @@ void CArenaManager::TickProcess(unsigned long dwTickDiff)
 				m_waitAllArriveMs = 0;
 				m_pendingStartWorldId = 0;
 				m_state = State::ENROLLMENT;
-				SendNotice(L"Arena canceled: nobody arrived to the arena.", SERVER_TEXT_EMERGENCY);
+				SendNotice(L"Arena canceled: nobody arrived to the arena.", SERVER_TEXT_SYSNOTICE);
 				NTL_PRINT(PRINT_APP, _T("[ARENA] Start canceled: present=0 at timeout"));
 				// Avoid automation stalls: clear participants when nobody arrived
 				m_participants.clear();
@@ -1537,7 +1543,7 @@ void CArenaManager::TickProcess(unsigned long dwTickDiff)
 				ARENA_VLOG(m_cfg, LOG_GENERAL, "[ARENA] PRE_ROUND->MATCH_READY (grace end): scheduled WAIT waitMs=%u worldId=%u", (unsigned)waitMs, worldId);
 				ARENA_VLOG(m_cfg, LOG_GENERAL, "[ARENA] PRE_ROUND->MATCH_READY (grace end) worldId=%u present=%u ready=%u stage=%u", worldId, present, ready, (unsigned)m_rankBattleStage);
 				// Do NOT send MATCH_START here; respect RankBattle flow: WAIT->TeamInfo->DIRECTION->STAGE_PREPARE->STAGE_READY->MATCH_START->RUN
-				SendNotice(L"Arena match starting...", SERVER_TEXT_EMERGENCY);
+				SendNotice(L"Arena match starting...", SERVER_TEXT_SYSNOTICE);
 				NTL_PRINT(PRINT_APP, _T("[ARENA] PRE_ROUND -> MATCH_READY: present=%u ready=%u worldId=%u (grace expired)"), present, ready, worldId);
 			}
 		}
@@ -1596,7 +1602,7 @@ void CArenaManager::TickProcess(unsigned long dwTickDiff)
 
 			if (accepted == 0)
 			{
-				SendNotice(L"Arena invite timed out. No participants accepted.", SERVER_TEXT_EMERGENCY);
+				SendNotice(L"Arena invite timed out. No participants accepted.", SERVER_TEXT_SYSNOTICE);
 				m_state = State::ENROLLMENT;
 				// Do not cancel external proposals; Arena uses direct teleports now
 				NTL_PRINT(PRINT_APP, _T("[ARENA] Invite timeout: no acceptors. Reset to ENROLLMENT"));
@@ -1608,7 +1614,7 @@ void CArenaManager::TickProcess(unsigned long dwTickDiff)
 				// Require at least 2 participants to start a rank-like match
 				if (accepted < 2)
 				{
-					SendNotice(L"Arena invite concluded: not enough participants accepted.", SERVER_TEXT_EMERGENCY);
+					SendNotice(L"Arena invite concluded: not enough participants accepted.", SERVER_TEXT_SYSNOTICE);
 					m_state = State::ENROLLMENT;
 					// Do not cancel external proposals; Arena uses direct teleports now
 					NTL_PRINT(PRINT_APP, _T("[ARENA] Invite end: accepted=%u < 2. Reset to ENROLLMENT"), accepted);
@@ -1716,7 +1722,7 @@ void CArenaManager::TickProcess(unsigned long dwTickDiff)
 
 				wchar_t msg[128];
 				swprintf_s(msg, _countof(msg), L"Arena starting with %u participants...", accepted);
-				SendNotice(msg, SERVER_TEXT_EMERGENCY);
+				SendNotice(msg, SERVER_TEXT_SYSNOTICE);
 
 				NTL_PRINT(PRINT_APP, _T("[ARENA] MATCH_READY: TeamInfo sent; WAIT for %ums"), (unsigned)waitMs);
 
@@ -1727,8 +1733,8 @@ void CArenaManager::TickProcess(unsigned long dwTickDiff)
 						continue; // accepted; already moved
 					if (CPlayer* p = g_pObjectManager->FindByChar((CHARACTERID)cid))
 					{
+						// Only cancel Arena/Rank-related proposals; do not interfere with Dojo/Budokai
 						p->CancelTeleportProposal(TELEPORT_TYPE_RANKBATTLE);
-						p->CancelTeleportProposal(TELEPORT_TYPE_DOJO);
 					}
 				}
 			}
@@ -2678,7 +2684,7 @@ bool CArenaManager::AddParticipant(CPlayer* pPlayer)
 	m_participants.insert(pPlayer->GetCharID());
 	wchar_t buf[128];
 	swprintf_s(buf, _countof(buf), L"%s joined the arena!", pPlayer->GetCharName());
-	SendNotice(buf, m_cfg.noticeType);
+	SendNotice(buf, SERVER_TEXT_SYSNOTICE);
 	return true;
 }
 
@@ -2760,7 +2766,7 @@ void CArenaManager::TeleportParticipants(bool forceDirect)
 						BroadcastRankStateToWorld(existingWorldId, RANKBATTLE_BATTLESTATE_STAGE_PREPARE, m_rankBattleStage);
 						BroadcastRankStateToWorld(existingWorldId, RANKBATTLE_BATTLESTATE_STAGE_READY, m_rankBattleStage);
 					}
-					SendNotice(L"Get ready for battle!", SERVER_TEXT_EMERGENCY);
+					SendNotice(L"Get ready for battle!", SERVER_TEXT_SYSNOTICE);
 					NTL_PRINT(PRINT_APP, _T("[ARENA] No configured world - using existing world, state: STAGE_READY"));
 				}
 				else
@@ -2834,7 +2840,7 @@ void CArenaManager::TeleportParticipants(bool forceDirect)
 		m_inviting = true;
 		m_inviteRemainMs = ToMs(m_cfg.inviteWaitSeconds);
 		m_state = State::PRE_ROUND;
-		SendNotice(L"Arena invites sent. Please accept to join.", SERVER_TEXT_EMERGENCY);
+		SendNotice(L"Arena invites sent. Please accept to join.", SERVER_TEXT_SYSNOTICE);
 		ARENA_VLOG(m_cfg, LOG_GENERAL, "[ARENA] Invites sent (by tblidx): tblidx=%u waitSec=%u participants=%u", (unsigned)m_currentWorldTblidx, (unsigned)m_cfg.inviteWaitSeconds, (unsigned)m_participants.size());
 		// Force the next world id lookup to create or find a fresh instance as needed
 		m_currentWorldId = 0;
@@ -2845,7 +2851,7 @@ void CArenaManager::TeleportParticipants(bool forceDirect)
 	m_currentWorldId = EnsureCurrentWorldId();
 	if (m_cfg.forceExactWorld && m_currentWorldId == 0)
 	{
-		SendNotice(L"[Arena] Failed to create the requested world instance.", SERVER_TEXT_EMERGENCY);
+		SendNotice(L"[Arena] Failed to create the requested world instance.", SERVER_TEXT_SYSNOTICE);
 		NTL_PRINT(PRINT_APP, _T("[ARENA] Direct teleport aborted: cannot create world for tblidx=%u (forceExactWorld)"), (unsigned)m_currentWorldTblidx);
 		return;
 	}
@@ -3064,7 +3070,7 @@ void CArenaManager::CheckFaintAndAliveLogic()
 	// Check if too few players remain online (disconnects/quits) to continue
 	if (onlineParticipants < 2)
 	{
-		SendNotice(L"Arena ended: insufficient participants remaining (disconnect/quit).", SERVER_TEXT_EMERGENCY);
+		SendNotice(L"Arena ended: insufficient participants remaining (disconnect/quit).", SERVER_TEXT_SYSNOTICE);
 		FinishMatch(false);
 		return;
 	}
@@ -3133,7 +3139,7 @@ void CArenaManager::CheckFaintAndAliveLogic()
 				{
 					wchar_t msg[256];
 					ComposeWinnerText(p, msg, _countof(msg));
-					SendNotice(msg, m_cfg.noticeType);
+					SendNotice(msg, SERVER_TEXT_SYSNOTICE);
 				}
 			}
 			// Minimal finalization on arena world: stop timer and finish immediately
@@ -3281,13 +3287,13 @@ void CArenaManager::FinishMatch(bool aborted)
 					wchar_t wtxt[256];
 					ComposeWinnerText(pWin, wtxt, _countof(wtxt));
 					swprintf_s(msg, _countof(msg), L"%s — Check your inventory for rewards.", wtxt);
-					BroadcastSystem(msg, SERVER_TEXT_EMERGENCY);
+					BroadcastSystem(msg, SERVER_TEXT_SYSNOTICE);
 					announced = true;
 				}
 			}
 			if (!announced)
 			{
-				BroadcastSystem(L"[Arena] Finished — Check your inventory for rewards.", SERVER_TEXT_EMERGENCY);
+				BroadcastSystem(L"[Arena] Finished — Check your inventory for rewards.", SERVER_TEXT_SYSNOTICE);
 			}
 		}
 	}
@@ -3297,7 +3303,7 @@ void CArenaManager::FinishMatch(bool aborted)
 	{
 		if (m_currentWorldId)
 			BroadcastScoreboardToWorld(m_currentWorldId);
-		SendNotice(aborted ? L"Arena stopped." : L"Arena finished.", SERVER_TEXT_EMERGENCY);
+		SendNotice(aborted ? L"Arena stopped." : L"Arena finished.", SERVER_TEXT_SYSNOTICE);
 	}
 
 	// If a delay is configured, announce and defer the teleport/cleanup to TickProcess
@@ -3347,6 +3353,27 @@ void CArenaManager::Start(Mode mode)
 		return;
 	}
 
+	// Channel gating: Only allow starting Arena on channels whose name contains "ARENA" and which are NOT the Dojo channel
+	{
+		CGameServer* app = (CGameServer*)g_pApp;
+		bool isDojo = app && app->IsDojoChannel();
+		bool nameOk = true; // default permissive, becomes strict if name available
+		if (app)
+		{
+			std::string want = "arena";
+			std::string got = app->m_config.ChannelName.c_str();
+			for (auto& c : got) c = (char)tolower(c);
+			nameOk = (got.find(want) != std::string::npos);
+		}
+
+		if ((m_cfg.onlyOnArenaChannel && !nameOk) || isDojo)
+		{
+			NTL_PRINT(PRINT_APP, _T("[ARENA][BLOCK] Start denied: channel='%S' dojo=%d (require name contains 'ARENA' and not Dojo)"), app ? app->m_config.ChannelName.c_str() : "<unknown>", (int)isDojo);
+			BroadcastSystem(L"[Arena] Cannot start here. Use an ARENA channel (not Dojo).", SERVER_TEXT_SYSTEM);
+			return;
+		}
+	}
+
 	// Reset state to a clean enrollment phase
 	StopRoundTimerUI();
 	// Safety resets from any previous run to prevent stuck PvP/attackability blocking next arena
@@ -3383,7 +3410,7 @@ void CArenaManager::Start(Mode mode)
 	m_nextRotationAnnounceSec = (unsigned int)(m_rotationRemainMs / 1000);
 
 	BroadcastSystem(L"[Arena] Enrollment opened. Use @arenajoin to participate.");
-	SendNotice(L"Arena is open. Join now!", m_cfg.noticeType);
+	SendNotice(L"Arena is open. Join now!", SERVER_TEXT_SYSNOTICE);
 	NTL_PRINT(PRINT_APP, _T("[ARENA] Started: mode=%u worldTblidx=%u"), (unsigned)m_mode, (unsigned)m_currentWorldTblidx);
 }
 

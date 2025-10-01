@@ -1,0 +1,136 @@
+<mah:MetroWindow x:Class="DBOServerMonitor.MainWindow"
+  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:ScottPlot="clr-namespace:ScottPlot;assembly=ScottPlot.WPF"
+  xmlns:conv="clr-namespace:DBOServerMonitor.Converters"
+  xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
+  Title="DBO Server Monitor" Height="720" Width="1080">
+  <Window.Resources>
+    <conv:FileNameConverter x:Key="FileNameConverter"/>
+  </Window.Resources>
+  <DockPanel Background="{DynamicResource Brush.Background}">
+  <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Margin="8">
+      <Button Click="StartAll_Click" Content="Start All"/>
+      <Button Click="StopAll_Click" Content="Stop All"/>
+      <CheckBox Content="Auto-Restart on crash" IsChecked="{Binding AutoRestart, Mode=TwoWay}" Margin="0,0,12,0"/>
+      <TextBlock Text="Env:" VerticalAlignment="Center" Margin="8,0,4,0"/>
+      <TextBox Width="520" Text="{Binding ExecutionEnvPath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,6,0"/>
+  <Button Click="BrowseEnv_Click" Content="Browse"/>
+  <Button Click="OpenLogsViewer_Click" Margin="12,0,0,0" Content="Logs Viewer"/>
+  <Button Click="OpenDumps_Click" Margin="6,0,0,0" Content="Dumps"/>
+  <Button Click="OpenSettings_Click" Margin="6,0,0,0" Content="Settings"/>
+  <Button Click="RunBackupNow_Click" Margin="6,0,0,0" Content="Run Backup Now"/>
+    </StackPanel>
+
+  <Grid Margin="8" Background="{DynamicResource Brush.Background}">
+      <Grid.RowDefinitions>
+        <RowDefinition Height="*"/>
+        <RowDefinition Height="240"/>
+      </Grid.RowDefinitions>
+
+      <DataGrid Grid.Row="0" ItemsSource="{Binding Processes}" AutoGenerateColumns="False" IsReadOnly="True" SelectionMode="Single" SelectedItem="{Binding SelectedProcess, Mode=TwoWay}" GridLinesVisibility="All">
+        <DataGrid.Resources>
+          <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="Background" Value="{DynamicResource Brush.Panel}"/>
+            <Setter Property="Foreground" Value="{DynamicResource Brush.Text}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border}"/>
+            <Style.Triggers>
+              <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Foreground" Value="#888"/>
+                <Setter Property="Background" Value="#2A2A2A"/>
+                <Setter Property="BorderBrush" Value="#333"/>
+              </Trigger>
+            </Style.Triggers>
+          </Style>
+        </DataGrid.Resources>
+        <DataGrid.Columns>
+          <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="160"/>
+          <DataGridTextColumn Header="Type" Binding="{Binding Type}" Width="120"/>
+          <DataGridTextColumn Header="Channel" Binding="{Binding Channel}" Width="80"/>
+          <DataGridTextColumn Header="Channel Name" Binding="{Binding ChannelName}" Width="140"/>
+          <DataGridTextColumn Header="PID" Binding="{Binding Pid}" Width="80"/>
+          <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="120"/>
+          <DataGridTextColumn Header="Args" Binding="{Binding Arguments}" Width="*"/>
+          <DataGridTemplateColumn Header="Actions" Width="260">
+            <DataGridTemplateColumn.CellTemplate>
+              <DataTemplate>
+                <StackPanel Orientation="Horizontal">
+                  <Button Content="Start" Command="{Binding DataContext.StartCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" Margin="0,0,4,0"/>
+                  <Button Content="Stop" Command="{Binding DataContext.StopCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" Margin="0,0,4,0"/>
+                  <Button Content="Restart" Command="{Binding DataContext.RestartCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" Margin="0,0,4,0"/>
+                  <Button Content="Open Logs" Command="{Binding DataContext.OpenLogsCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}"/>
+                </StackPanel>
+              </DataTemplate>
+            </DataGridTemplateColumn.CellTemplate>
+          </DataGridTemplateColumn>
+        </DataGrid.Columns>
+      </DataGrid>
+
+      <Grid Grid.Row="1" Margin="0,8,0,0">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="2*"/>
+          <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+  <GroupBox Header="INI Editor" Margin="0,0,8,0">
+          <DockPanel>
+            <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Margin="4">
+              <ComboBox Width="420" ItemsSource="{Binding IniFiles}" SelectedItem="{Binding SelectedIniFile, Mode=TwoWay}" Margin="0,0,6,0" MaxDropDownHeight="280">
+                <ComboBox.ItemTemplate>
+                  <DataTemplate>
+                    <TextBlock Text="{Binding Path=., Converter={StaticResource FileNameConverter}}"/>
+                  </DataTemplate>
+                </ComboBox.ItemTemplate>
+              </ComboBox>
+              <Button Content="Reload" Click="ReloadIni_Click" Margin="0,0,6,0"/>
+              <Button Content="Save" Click="SaveIni_Click" Margin="0,0,6,0"/>
+              <TextBlock Text="(Backup on save)" VerticalAlignment="Center"/>
+            </StackPanel>
+            <Grid>
+              <TextBox Text="{Binding IniContent, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" AcceptsTab="True" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" FontFamily="Consolas" FontSize="12"/>
+            </Grid>
+          </DockPanel>
+        </GroupBox>
+
+  <Grid Grid.Column="1">
+          <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="*"/>
+          </Grid.RowDefinitions>
+          <GroupBox Header="Channels" Grid.Row="0">
+            <StackPanel Margin="4">
+              <StackPanel Orientation="Horizontal">
+                <Button Content="Start Next Channel" Click="StartNextChannel_Click" Margin="0,0,6,0"/>
+                <Button Content="Ensure Dojo (9)" Click="EnsureDojo_Click"/>
+              </StackPanel>
+              <ListBox ItemsSource="{Binding ChannelSummaries}">
+                <ListBox.ItemTemplate>
+                  <DataTemplate>
+                    <StackPanel Orientation="Horizontal">
+                      <TextBlock Text="{Binding}"/>
+                    </StackPanel>
+                  </DataTemplate>
+                </ListBox.ItemTemplate>
+              </ListBox>
+            </StackPanel>
+          </GroupBox>
+          <GroupBox Header="Memory (selected and aggregate)" Grid.Row="1" Margin="0,8,0,0">
+            <Grid>
+              <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="*"/>
+              </Grid.RowDefinitions>
+              <StackPanel Orientation="Horizontal" Margin="4" Grid.Row="0">
+                <TextBlock Text="Show:" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                <CheckBox x:Name="ChkShowSelected" Content="Selected" IsChecked="True" Margin="4,0"/>
+                <CheckBox x:Name="ChkShowAll" Content="All Processes" IsChecked="True" Margin="4,0"/>
+                <CheckBox x:Name="ChkShowAggregate" Content="Aggregate" IsChecked="True" Margin="4,0"/>
+              </StackPanel>
+              <ScottPlot:WpfPlot x:Name="MemoryPlot" Grid.Row="1"/>
+            </Grid>
+          </GroupBox>
+        </Grid>
+      </Grid>
+    </Grid>
+  </DockPanel>
+</mah:MetroWindow>
