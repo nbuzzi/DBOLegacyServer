@@ -14670,7 +14670,17 @@ void CClientSession::RecvBudokaiMudosaTeleportReq(CNtlPacket* pPacket)
 
 void CClientSession::RecvBudokaiPartyMakerReq(CNtlPacket* pPacket)
 {
+	if (!cPlayer || !cPlayer->IsInitialized())
+		return;
+
 	sUG_BUDOKAI_PARTY_MAKER_REQ* req = (sUG_BUDOKAI_PARTY_MAKER_REQ*)pPacket->GetPacketData();
+
+	CGameServer* app = (CGameServer*)g_pApp;
+
+	// Join the matchmaking queue for random team formation
+	g_pBudokaiManager->JoinMatchmakingQueue(cPlayer);
+
+	ERR_LOG(LOG_USER, "[MATCHMAKING] Player %u requested party maker", (unsigned)cPlayer->GetCharID());
 }
 
 //-------------------------------------------------

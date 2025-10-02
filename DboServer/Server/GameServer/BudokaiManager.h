@@ -348,6 +348,11 @@ public:
 	// Returns true if a teleport was initiated.
 	bool								TryRejoinPlayer(CPlayer* pPlayer);
 
+	// Random party matchmaking for Team Budokai
+	void								JoinMatchmakingQueue(CPlayer* pPlayer);
+	void								LeaveMatchmakingQueue(CHARACTERID charId);
+	void								ProcessMatchmakingQueue();
+
 private:
 
 	void								SetIndividualTeamType(CHARACTERID charId, TEAMTYPE teamType);
@@ -400,6 +405,18 @@ private:
 	boost::unordered_map<JOINID, sBUDOKAI_REGISTER_TEAM_DATA>			m_mapTeam;
 
 	std::map<JOINID, sBUDOKAI_JOIN_INFO>							m_mapJoinInfo;
+
+	// Random party matchmaking queue for Team Budokai
+	struct sMATCHMAKING_PLAYER
+	{
+		CHARACTERID		charId;
+		HOBJECT			hPlayer;
+		DWORD			dwQueueTimestamp;
+
+		sMATCHMAKING_PLAYER(CHARACTERID cid, HOBJECT hnd, DWORD ts)
+			: charId(cid), hPlayer(hnd), dwQueueTimestamp(ts) {}
+	};
+	std::vector<sMATCHMAKING_PLAYER>								m_vecMatchmakingQueue;
 
 	// ----
 

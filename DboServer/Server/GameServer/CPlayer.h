@@ -148,6 +148,10 @@ private:
 
 	bool					m_bIsReviving;
 
+	// Budokai rejoin support
+	bool					m_bExpectingBudokaiChannelChange; // Flag to track legitimate budokai teleports vs crashes
+	DWORD					m_dwBudokaiTeleportTimestamp;     // Timestamp of last budokai teleport
+
 	DWORD					m_dwCombatModeTickCount;
 	DWORD					ResetBuffReduction;
 
@@ -246,6 +250,11 @@ public:
 
 	inline void				SetIsReviving(bool bFlag) { m_bIsReviving = bFlag; }
 	inline bool				IsReviving() { return m_bIsReviving; }
+
+	// Budokai rejoin control
+	inline void				SetExpectingBudokaiChannelChange(bool bFlag, DWORD dwTimestamp = 0) { m_bExpectingBudokaiChannelChange = bFlag; m_dwBudokaiTeleportTimestamp = dwTimestamp; }
+	inline bool				IsExpectingBudokaiChannelChange() const { return m_bExpectingBudokaiChannelChange; }
+	inline DWORD			GetBudokaiTeleportTimestamp() const { return m_dwBudokaiTeleportTimestamp; }
 
 	inline bool				IsGameMaster() { return m_bIsGameMaster; }
 	inline BYTE				GetGMLevel() { return m_byGameMasterLevel; }

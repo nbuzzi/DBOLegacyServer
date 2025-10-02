@@ -176,6 +176,7 @@ ACMD(do_event_participate);
 ACMD(do_world_fight);
 ACMD(do_budokai);
 ACMD(do_dojo);
+ACMD(do_budokai_findteam);
 
 struct command_info cmd_info[] =
 {
@@ -192,6 +193,7 @@ struct command_info cmd_info[] =
 	{ L"@arenajoinparty", do_arena_joinparty_public, ADMIN_LEVEL_NONE }, // Public: party join (leader only)
 	{ L"@arenajoinguild", do_arena_joinguild_public, ADMIN_LEVEL_NONE }, // Public: guild join (guild member only)
 	{ L"@participate", do_event_participate, ADMIN_LEVEL_NONE }, // Public: join EVENT channel
+	{ L"@findteam", do_budokai_findteam, ADMIN_LEVEL_NONE }, // Public: join Team Budokai matchmaking queue
 
 	// GM
 
@@ -4513,4 +4515,52 @@ ACMD(do_notify)
 	packet.SetPacketLen(sizeof(sGU_GUILD_GIVE_ZENNY_RES));
 	//app->Send(pPlayer->GetHandle(), &packet);
 	pPlayer->SendPacket(&packet);
+}
+
+//========================================
+// @findteam - Join Team Budokai matchmaking queue
+//========================================
+ACMD(do_budokai_findteam)
+{
+	UNREFERENCED_PARAMETER(iLine);
+	UNREFERENCED_PARAMETER(pToken);
+
+	if (!pPlayer || !pPlayer->IsInitialized())
+		return;
+
+	CGameServer* app = (CGameServer*)g_pApp;
+
+	// Helper function to send system message
+	auto SendMessage = [&](const WCHAR* msg) {
+		CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+		sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+		res->wOpCode = GU_SYSTEM_DISPLAY_TEXT;
+		res->byDisplayType = SERVER_TEXT_SYSTEM;
+		NTL_SAFE_WCSCPY(res->awchMessage, msg);
+		packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+		pPlayer->SendPacket(&packet);
+	};
+
+	// Check if player already has a party
+	if (pPlayer->GetParty() != NULL)
+	{
+		SendMessage(L"[Budokai Matchmaking] You are already in a party! Leave your party first to use matchmaking.");
+		return;
+	}
+
+	// Check if player is in a valid world (not in dungeon/instance)
+	CWorld* pWorld = pPlayer->GetCurWorld();
+	if (pWorld && pWorld->GetRuleType() != GAMERULE_NORMAL)
+	{
+		SendMessage(L"[Budokai Matchmaking] You can only use matchmaking from normal world zones.");
+		return;
+	}
+
+	// Join the matchmaking queue
+	g_pBudokaiManager->JoinMatchmakingQueue(pPlayer);
+
+	// Send confirmation message
+	SendMessage(L"[Budokai Matchmaking] You have joined the queue! You will be notified when a team of 5 players is formed.");
+
+	ERR_LOG(LOG_USER, "[MATCHMAKING] Player %u used @findteam command", (unsigned)pPlayer->GetCharID());
 }

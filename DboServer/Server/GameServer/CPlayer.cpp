@@ -483,18 +483,29 @@ void CPlayer::LeaveGame()
 
 		if (app->IsDojoChannel() && GetMatchIndex() != INVALID_BYTE)
 		{
-			// Issue a Budokai rejoin ticket so the player can return
-			// sRejoinTicket.dungeonType = eREJOIN_DUNGEON_TYPE::REJOIN_BUDOKAI;
-			// sRejoinTicket.worldId = GetWorldID();
-			// Budokai tickets are short-lived per policy: 1 minute
-			// sRejoinTicket.expireAtMs = GetTickCount() + 60 * 1000;
-			// g_Rejoin.Put(sRejoinTicket);
+			// Only create rejoin ticket if this is an UNEXPECTED disconnect (crash), not a legitimate channel change
+			if (!m_bExpectingBudokaiChannelChange)
+			{
+				// Issue a Budokai rejoin ticket so the player can return after crash
+				sRejoinTicket.dungeonType = eREJOIN_DUNGEON_TYPE::REJOIN_BUDOKAI;
+				sRejoinTicket.worldId = GetWorldID();
+				// Budokai tickets are short-lived per policy: 2 minutes
+				sRejoinTicket.expireAtMs = GetTickCount() + 120 * 1000;
+				g_Rejoin.Put(sRejoinTicket);
 
-			// ERR_LOG(LOG_GENERAL, "[REJOIN] Ticket created: char=%u type=BUDOKAI joinId=%u matchIdx=%u worldId=%u expiresInMs=%u", (unsigned)GetCharID(), (unsigned)GetJoinID(), (unsigned)GetMatchIndex(), (unsigned)GetWorldID(), (unsigned)(60 * 1000));
+				ERR_LOG(LOG_GENERAL, "[REJOIN] Budokai ticket created: char=%u type=BUDOKAI joinId=%u matchIdx=%u worldId=%u expiresInMs=%u", (unsigned)GetCharID(), (unsigned)GetJoinID(), (unsigned)GetMatchIndex(), (unsigned)GetWorldID(), (unsigned)(120 * 1000));
+			}
+			else
+			{
+				ERR_LOG(LOG_GENERAL, "[REJOIN] Budokai expected channel change - no rejoin ticket created: char=%u", (unsigned)GetCharID());
+			}
 
 			SetBudokaiPcState(MATCH_MEMBER_STATE_GIVEUP);
 			g_pBudokaiManager->PlayerDisconnect(GetCharID(), GetID(), GetJoinID(), GetMatchIndex(), GetBudokaiTeamType());
 		}
+
+		// Remove from matchmaking queue on disconnect
+		g_pBudokaiManager->LeaveMatchmakingQueue(GetCharID());
 	}
 
 	if (m_pkShop)
@@ -640,6 +651,10 @@ void CPlayer::Initialize()
 	uiAccountID = INVALID_ACCOUNTID;
 	m_byPrevChannelID = INVALID_SERVERCHANNELID;
 	m_bIsTutorial = false;
+
+	// Initialize budokai rejoin flags
+	m_bExpectingBudokaiChannelChange = false;
+	m_dwBudokaiTeleportTimestamp = 0;
 
 	m_currentHtbSkill = INVALID_BYTE;
 	m_byHtbUseBalls = 0;
@@ -1203,6 +1218,13 @@ void CPlayer::RecvLoadPcDataRes(sPC_DATA* pPcData, sDBO_SERVER_CHANGE_INFO* pser
 	}
 
 	SetPrevChannelID(pserverChangeInfo->prevServerChannelId);
+
+	// Clear expected channel change flag on successful login (legitimate teleport completed)
+	if (m_bExpectingBudokaiChannelChange)
+	{
+		m_bExpectingBudokaiChannelChange = false;
+		m_dwBudokaiTeleportTimestamp = 0;
+	}
 
 	/*Did we teleport to another channel?*/
 	if (pserverChangeInfo->destWorldId != INVALID_WORLDID)
