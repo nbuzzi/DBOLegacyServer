@@ -18,6 +18,12 @@ timeout /t 1 /nobreak > nul
 start GameServer.exe .\\config\\GameServer1.ini
 timeout /t 1 /nobreak > nul
 
+start GameServer.exe .\\config\\GameServer2.ini
+timeout /t 1 /nobreak > nul
+
+start GameServer.exe .\\config\\GameServer3.ini
+timeout /t 1 /nobreak > nul
+
 ::Using the game server full for now::
 start GameServer.exe .\\config\\GameServer9.ini
 timeout /t 1 /nobreak > nul
