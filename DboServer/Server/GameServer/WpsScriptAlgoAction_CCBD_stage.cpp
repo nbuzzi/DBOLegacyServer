@@ -180,9 +180,12 @@ void CWpsScriptAlgoAction_CCBD_stage::TeleportToBoss()
 
 	BYTE byBossStageCount = (m_byStage / 5) - 1;
 
+	// Cycle through available boss arenas if stage exceeds configured arenas
+	BYTE byArenaIndex = byBossStageCount % ENTER_BOSS_STATE_LOC_COUNT;
+
 	WORLDID destWorld = GetOwner()->GetWorld()->GetID();
-	CNtlVector destLoc(g_pTableContainer->GetServerConfigTable()->GetServerConfigData()->sBattleDungeonData.aEnterLoc_BossStage[byBossStageCount].sLoc);
-	CNtlVector destDir(g_pTableContainer->GetServerConfigTable()->GetServerConfigData()->sBattleDungeonData.aEnterLoc_BossStage[byBossStageCount].sDir);
+	CNtlVector destLoc(g_pTableContainer->GetServerConfigTable()->GetServerConfigData()->sBattleDungeonData.aEnterLoc_BossStage[byArenaIndex].sLoc);
+	CNtlVector destDir(g_pTableContainer->GetServerConfigTable()->GetServerConfigData()->sBattleDungeonData.aEnterLoc_BossStage[byArenaIndex].sDir);
 
 	CPlayer* pPlayer = GetOwner()->GetPlayersFirst();
 	while (pPlayer)

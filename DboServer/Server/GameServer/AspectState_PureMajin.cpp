@@ -46,14 +46,18 @@ int CAspectState_PureMajin::OnUpdate(DWORD dwTickDiff, float fMultiple)
 		CPlayer* pPlayer = (CPlayer*)m_pParent;
 		m_dwLastTransformEffect = 0;
 
-		float fMultiplier = pPlayer->GetTransformationTbldat()->fEP_Consume_Rate / 100.0f;
+		// Check if transformation table data exists (null for virtual transformations)
+		if (pPlayer->GetTransformationTbldat())
+		{
+			float fMultiplier = pPlayer->GetTransformationTbldat()->fEP_Consume_Rate / 100.0f;
 
-		float fEp = (float)pPlayer->GetMaxEP() * fMultiplier;
+			float fEp = (float)pPlayer->GetMaxEP() * fMultiplier;
 
-		pPlayer->UpdateCurEP((WORD)fEp, false, false);
+			pPlayer->UpdateCurEP((WORD)fEp, false, false);
 
-		if (pPlayer->ConsiderEPLow(10.0f)) //check percent
-			pPlayer->CancelTransformation();
+			if (pPlayer->ConsiderEPLow(10.0f)) //check percent
+				pPlayer->CancelTransformation();
+		}
 	}
 
 	return TRUE;

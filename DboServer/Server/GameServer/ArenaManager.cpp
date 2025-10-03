@@ -193,9 +193,29 @@ CArenaManager::~CArenaManager() {}
 
 bool CArenaManager::LoadConfigFromIniPath(const char* iniPath)
 {
-	CNtlIniFile file;
-	if (file.Create(iniPath) != NTL_SUCCESS)
+	// Debug: Get current working directory
+	char currentDir[MAX_PATH];
+	GetCurrentDirectoryA(MAX_PATH, currentDir);
+	printf("[ARENA] Current working directory: %s\n", currentDir);
+	printf("[ARENA] Attempting to load: %s\n", iniPath);
+
+	// Check if file exists
+	DWORD fileAttr = GetFileAttributesA(iniPath);
+	if (fileAttr == INVALID_FILE_ATTRIBUTES)
+	{
+		printf("[ARENA] File does not exist or cannot be accessed!\n");
 		return false;
+	}
+
+	CNtlIniFile file;
+	int createResult = file.Create(iniPath);
+	if (createResult != NTL_SUCCESS)
+	{
+		printf("[ARENA] Failed to load config from %s (CNtlIniFile::Create returned %d)\n", iniPath, createResult);
+		return false;
+	}
+
+	printf("[ARENA] CNtlIniFile::Create succeeded!\n");
 
 	// [Arena]
 	int enabled = 0;

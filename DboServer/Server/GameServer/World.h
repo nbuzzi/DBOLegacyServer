@@ -15,6 +15,7 @@ class CNtlPacket;
 class CWorldZone;
 class CTriggerObject;
 class CNpc;
+class CMonster; // forward declaration for monster type used in Add_Monster
 class CScriptAlgoObject;
 class CTqsAlgoObject;
 class CPlayer;
@@ -109,6 +110,9 @@ public:
 	CNpcPartyManager*		GetNpcPartyManager() { return &m_partyManager; }
 
 	inline HOBJECT			GetTiggerObjectOffset() { return m_hTriggerObjectOffset; }
+
+	// Helper method for spawning monsters dynamically
+	CMonster* Add_Monster(TBLIDX mobTblidx, const CNtlVector& spawnPos, const CNtlVector& spawnDir, BYTE bySpawnFuncFlag);
 
 public:
 

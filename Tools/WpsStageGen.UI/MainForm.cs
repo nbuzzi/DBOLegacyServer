@@ -12,7 +12,8 @@ namespace WpsStageGen.UI
     {
         TextBox txtWpsPath = new TextBox();
         TextBox txtGenPath = new TextBox();
-        NumericUpDown numAdd = new NumericUpDown { Minimum = 1, Maximum = 1000, Value = 5 };
+        NumericUpDown numAdd = new NumericUpDown { Minimum = 1, Maximum = 1000, Value = 50 };
+        NumericUpDown numStartStage = new NumericUpDown { Minimum = 0, Maximum = 255, Value = 0 };
         NumericUpDown numBossEvery = new NumericUpDown { Minimum = 1, Maximum = 1000, Value = 5 };
         NumericUpDown numRewardItem = new NumericUpDown { Minimum = 1, Maximum = int.MaxValue, Value = 7000002 };
         NumericUpDown numBossGroup = new NumericUpDown { Minimum = 1, Maximum = 999999, Value = 9999 };
@@ -34,9 +35,13 @@ namespace WpsStageGen.UI
         Button btnRun = new Button { Text = "Run" };
         Button btnCopyArgs = new Button { Text = "Copy" };
         Button btnReset = new Button { Text = "Reset" };
+        Button btnOpenDocs = new Button { Text = "📖 Help" };
+        Button btnOpenTemplates = new Button { Text = "📁 Templates" };
         ComboBox cboBossEvery = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 120 };
-        // no mob base combo in the new generator
-        ToolTip tt = new ToolTip();
+        ComboBox cboTemplatePreset = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList };
+        Label lblStageInfo = new Label { AutoSize = true, ForeColor = Color.LightSkyBlue };
+        Label lblMaxStage = new Label { AutoSize = true, ForeColor = Color.Orange, Text = "⚠ Max: 255 stages" };
+        ToolTip tt = new ToolTip { AutoPopDelay = 8000, InitialDelay = 500 };
         Panel header = new Panel { Height = 64, Dock = DockStyle.Top };
         Label lblTitle = new Label();
         Label lblSub = new Label();
@@ -46,10 +51,10 @@ namespace WpsStageGen.UI
 
         public MainForm()
         {
-            Text = "WpsStageGen UI";
+            Text = "CCBD Floor Generator - WpsStageGen v4";
             Width = 1600; Height = 1080; StartPosition = FormStartPosition.CenterScreen;
             WindowState = FormWindowState.Normal;
-            MinimumSize = new Size(1600, 1080);
+            MinimumSize = new Size(1400, 900);
             Font = new Font("Segoe UI", 11F, FontStyle.Regular, GraphicsUnit.Point);
 
             // Theme
@@ -91,13 +96,13 @@ namespace WpsStageGen.UI
             header.BackColor = Color.FromArgb(45, 47, 51);
             header.Padding = new Padding(24, 12, 24, 12);
             var ver = typeof(MainForm).Assembly.GetName().Version?.ToString() ?? "1.0.0";
-            lblTitle.Text = $"WpsStageGen v{ver}";
+            lblTitle.Text = $"🎰 CCBD Floor Generator v{ver}";
             lblTitle.Font = new Font("Segoe UI Semibold", 18F, FontStyle.Bold, GraphicsUnit.Point);
             lblTitle.ForeColor = Color.WhiteSmoke;
             lblTitle.AutoSize = true;
-            lblSub.Text = "CCBD floors generator • Patterns + boss arenas";
+            lblSub.Text = "Generate Crazy Casino floors • Up to 255 stages • Advanced templates & mechanics";
             lblSub.Font = new Font("Segoe UI", 10F, FontStyle.Regular, GraphicsUnit.Point);
-            lblSub.ForeColor = Color.Silver;
+            lblSub.ForeColor = Color.LightSkyBlue;
             lblSub.AutoSize = true;
             lblSub.Top = 34; lblSub.Left = 18;
             header.Controls.Add(lblTitle);
@@ -140,10 +145,28 @@ namespace WpsStageGen.UI
             paramTable.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
             paramTable.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             paramTable.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            paramTable.Controls.Add(FieldStack("Floors to append:", numAdd, "How many stages to add after the last one"), 0, 0);
-            paramTable.Controls.Add(FieldStack("Boss every N floors:", numBossEvery, "Boss appears every Nth floor"), 1, 0);
-            paramTable.Controls.Add(FieldStack("Presets:", cboBossEvery, "Quick select for 'Boss every'"), 0, 1);
-            var paramCard = CreateCard("Parameters", paramTable, "\uE713");
+            paramTable.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+
+            // Add stage info label
+            var stagePanel = new Panel { Dock = DockStyle.Fill, AutoSize = true };
+            stagePanel.Controls.Add(FieldStack("Floors to append:", numAdd, "How many new floors to generate (e.g., 50 floors will create 10 boss stages)"));
+            stagePanel.Controls.Add(lblStageInfo);
+            lblStageInfo.Top = 75;
+            paramTable.Controls.Add(stagePanel, 0, 0);
+
+            var startPanel = new Panel { Dock = DockStyle.Fill, AutoSize = true };
+            startPanel.Controls.Add(FieldStack("Starting stage:", numStartStage, "First stage number (0 = auto-detect from WPS file)"));
+            startPanel.Controls.Add(lblMaxStage);
+            lblMaxStage.Top = 75;
+            paramTable.Controls.Add(startPanel, 1, 0);
+
+            paramTable.Controls.Add(FieldStack("Boss every N floors:", numBossEvery, "Boss appears every Nth floor (typically 5)"), 0, 1);
+            paramTable.Controls.Add(FieldStack("Presets:", cboBossEvery, "Quick select for 'Boss every'"), 1, 1);
+
+            // Template preset selection
+            paramTable.Controls.Add(FieldStack("Template preset:", cboTemplatePreset, "Pre-configured template combinations"), 0, 2);
+
+            var paramCard = CreateCard("⚙ Stage Parameters", paramTable, "\uE713");
             // Create a two-column row for params + boss worlds
             var row1 = new TableLayoutPanel { Dock = DockStyle.Top, ColumnCount = 2, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink };
             row1.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
@@ -191,9 +214,12 @@ namespace WpsStageGen.UI
             root.Controls.Add(row2, 0, 2);
 
             // Args card
-            var argsTable = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 5, RowCount = 1, Padding = new Padding(8) };
+            var argsTable = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 7, RowCount = 1, Padding = new Padding(8) };
             argsTable.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
             argsTable.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            argsTable.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            argsTable.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            argsTable.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
             argsTable.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
             argsTable.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
             argsTable.Controls.Add(StyledLabel("Args preview:"), 0, 0);
@@ -201,12 +227,20 @@ namespace WpsStageGen.UI
             argsTable.Controls.Add(txtArgs, 1, 0);
             btnCopyArgs.AutoSize = true;
             btnCopyArgs.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            btnReset.AutoSize = true;
+            btnReset.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            btnOpenDocs.AutoSize = true;
+            btnOpenDocs.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            btnOpenTemplates.AutoSize = true;
+            btnOpenTemplates.AutoSizeMode = AutoSizeMode.GrowAndShrink;
             btnRun.AutoSize = true;
             btnRun.AutoSizeMode = AutoSizeMode.GrowAndShrink;
             argsTable.Controls.Add(btnCopyArgs, 2, 0);
             argsTable.Controls.Add(btnReset, 3, 0);
-            argsTable.Controls.Add(btnRun, 4, 0);
-            var argsCard = CreateCard("Action", argsTable, "\uE768");
+            argsTable.Controls.Add(btnOpenTemplates, 4, 0);
+            argsTable.Controls.Add(btnOpenDocs, 5, 0);
+            argsTable.Controls.Add(btnRun, 6, 0);
+            var argsCard = CreateCard("🚀 Action", argsTable, "\uE768");
             root.Controls.Add(argsCard, 0, 3);
 
             // Output card (expands)
@@ -231,15 +265,53 @@ namespace WpsStageGen.UI
             // Preset options
             cboBossEvery.Items.AddRange(new object[] { 3, 5, 10, 15 });
             cboBossEvery.SelectedIndexChanged += (s, e) => { if (cboBossEvery.SelectedItem != null) numBossEvery.Value = Convert.ToDecimal(cboBossEvery.SelectedItem); };
-            // removed mob base presets
 
-            // Tooltips
-            tt.SetToolTip(btnBrowseWps, "Browse for a .wps file");
-            tt.SetToolTip(btnBrowseGen, "Browse to the WpsStageGen folder");
-            tt.SetToolTip(btnRun, "Run generator with the selected parameters");
-            tt.SetToolTip(btnCopyArgs, "Copy args to clipboard");
+            // Template presets
+            cboTemplatePreset.Items.AddRange(new object[] {
+                "None (Basic floors only)",
+                "Simple Boss (Enrage at 30%)",
+                "Advanced Boss (4 phases)",
+                "Enhanced Regular + Simple Boss",
+                "Enhanced Regular + Advanced Boss (Recommended)",
+                "Custom (Select files manually)"
+            });
+            cboTemplatePreset.SelectedIndex = 4; // Default to recommended
+            cboTemplatePreset.SelectedIndexChanged += (s, e) => ApplyTemplatePreset();
 
-            foreach (var c in new Control[] { txtWpsPath, txtGenPath, txtOutPath, txtBossTemplate, txtRegularTemplate, txtVarsFile, txtVarsInline, numAdd, numBossEvery, numRewardItem, numBossGroup, txtPattern, txtBossWorlds })
+            // Help buttons
+            StyleButton(btnOpenDocs, primary: false);
+            StyleButton(btnOpenTemplates, primary: false);
+            btnOpenDocs.Click += (s, e) => OpenDocumentation();
+            btnOpenTemplates.Click += (s, e) => OpenTemplatesFolder();
+
+            // Dynamic stage info update
+            numAdd.ValueChanged += (s, e) => UpdateStageInfo();
+            numStartStage.ValueChanged += (s, e) => UpdateStageInfo();
+            numBossEvery.ValueChanged += (s, e) => UpdateStageInfo();
+
+            // Enhanced Tooltips
+            tt.SetToolTip(btnBrowseWps, "Browse for the source CCBD WPS file (e.g., 83000.wps)");
+            tt.SetToolTip(btnBrowseGen, "Browse to the WpsStageGen folder (optional, auto-detected if tool is bundled)");
+            tt.SetToolTip(btnRun, "Generate new CCBD floors with selected templates and parameters");
+            tt.SetToolTip(btnCopyArgs, "Copy command-line arguments to clipboard");
+            tt.SetToolTip(btnReset, "Reset all fields to default values");
+            tt.SetToolTip(btnOpenDocs, "Open the comprehensive documentation and usage guide");
+            tt.SetToolTip(btnOpenTemplates, "Open the templates folder to view/edit template files");
+            tt.SetToolTip(numAdd, "Number of new floors to generate (e.g., 50 = 45 regular + 10 boss stages)");
+            tt.SetToolTip(numStartStage, "Starting stage number (0 = auto-detect from WPS file, 151 = start after floor 150)");
+            tt.SetToolTip(numBossEvery, "Boss appears every N floors (5 = boss at 5,10,15,20... | 10 = boss at 10,20,30...)");
+            tt.SetToolTip(numBossGroup, "Mob group ID for boss spawns (must exist in mob tables)");
+            tt.SetToolTip(numRewardItem, "Reward item table ID given after boss clear");
+            tt.SetToolTip(txtPattern, "Mob spawn pattern with probabilities: (pattern_id, percentage)");
+            tt.SetToolTip(txtBossWorlds, "Boss arena rotation (comma-separated): ARENA_A,ARENA_B,ARENA_C");
+            tt.SetToolTip(cboTemplatePreset, "Quick select pre-configured template combinations");
+            tt.SetToolTip(cboBossEvery, "Quick select boss interval (overrides 'Boss every N floors')");
+            tt.SetToolTip(txtBossTemplate, "WPS template file for boss mechanics (phases, buffs, etc.)");
+            tt.SetToolTip(txtRegularTemplate, "WPS template file for regular floor enhancements");
+            tt.SetToolTip(txtVarsFile, "Variables file (.ini) with custom placeholder values");
+            tt.SetToolTip(txtVarsInline, "Inline variables (one per line): VAR_NAME=value");
+
+            foreach (var c in new Control[] { txtWpsPath, txtGenPath, txtOutPath, txtBossTemplate, txtRegularTemplate, txtVarsFile, txtVarsInline, numAdd, numStartStage, numBossEvery, numRewardItem, numBossGroup, txtPattern, txtBossWorlds })
             {
                 c.TextChanged += (s, e) => UpdateArgs();
             }
@@ -251,6 +323,7 @@ namespace WpsStageGen.UI
             LoadSettings();
             AutoLoadBundledTemplatesIfAvailable();
             UpdateArgs();
+            UpdateStageInfo();
             AcceptButton = btnRun;
         }
 
@@ -471,17 +544,143 @@ namespace WpsStageGen.UI
             txtOutPath.Clear();
             txtBossTemplate.Clear();
             txtRegularTemplate.Clear();
-            numAdd.Value = 5;
+            numAdd.Value = 50; // Changed from 5 to 50 for better default
+            numStartStage.Value = 0;
             numBossEvery.Value = 5;
             numRewardItem.Value = 7000002;
             numBossGroup.Value = 9999;
             cboBossEvery.SelectedIndex = -1;
+            cboTemplatePreset.SelectedIndex = 4; // Enhanced Regular + Advanced Boss
             txtPattern.Text = "(1, 35%), (2, 35%), (3, 10%), (4, 10%), (6, 10%)";
             txtBossWorlds.Text = string.Empty;
             txtVarsFile.Clear();
             txtVarsInline.Clear();
             lblStatus.Text = "Defaults restored";
             UpdateArgs();
+            UpdateStageInfo();
+        }
+
+        void UpdateStageInfo()
+        {
+            int add = (int)numAdd.Value;
+            int start = (int)numStartStage.Value;
+            int bossEvery = (int)numBossEvery.Value;
+
+            int end = start > 0 ? start + add - 1 : add; // If start is 0, just show count
+            int bossCount = add / bossEvery;
+            int regularCount = add - bossCount;
+
+            if (start == 0)
+            {
+                lblStageInfo.Text = $"💡 {regularCount} regular + {bossCount} boss stages";
+            }
+            else
+            {
+                lblStageInfo.Text = $"💡 Stages {start}-{end} ({regularCount} regular + {bossCount} boss)";
+            }
+
+            // Warning if exceeding 255
+            if (end > 255)
+            {
+                lblMaxStage.Text = "⚠ Warning: Exceeds max 255 stages!";
+                lblMaxStage.ForeColor = Color.Red;
+            }
+            else if (end > 200)
+            {
+                lblMaxStage.Text = $"⚠ High stage count ({end}/255)";
+                lblMaxStage.ForeColor = Color.Orange;
+            }
+            else
+            {
+                lblMaxStage.Text = $"✓ Within limits ({end}/255)";
+                lblMaxStage.ForeColor = Color.LightGreen;
+            }
+        }
+
+        void ApplyTemplatePreset()
+        {
+            string baseDir = AppContext.BaseDirectory;
+            string tplDir = Path.Combine(baseDir, "templates");
+
+            switch (cboTemplatePreset.SelectedIndex)
+            {
+                case 0: // None
+                    txtBossTemplate.Clear();
+                    txtRegularTemplate.Clear();
+                    txtVarsFile.Clear();
+                    break;
+
+                case 1: // Simple Boss
+                    txtBossTemplate.Text = Path.Combine(tplDir, "boss_simple.wps");
+                    txtRegularTemplate.Clear();
+                    txtVarsFile.Text = Path.Combine(tplDir, "sample_vars.ini");
+                    break;
+
+                case 2: // Advanced Boss
+                    txtBossTemplate.Text = Path.Combine(tplDir, "boss_phases.wps");
+                    txtRegularTemplate.Clear();
+                    txtVarsFile.Text = Path.Combine(tplDir, "sample_vars.ini");
+                    break;
+
+                case 3: // Enhanced Regular + Simple Boss
+                    txtBossTemplate.Text = Path.Combine(tplDir, "boss_simple.wps");
+                    txtRegularTemplate.Text = Path.Combine(tplDir, "regular_enhanced.wps");
+                    txtVarsFile.Text = Path.Combine(tplDir, "sample_vars.ini");
+                    break;
+
+                case 4: // Enhanced Regular + Advanced Boss (Recommended)
+                    txtBossTemplate.Text = Path.Combine(tplDir, "boss_phases.wps");
+                    txtRegularTemplate.Text = Path.Combine(tplDir, "regular_enhanced.wps");
+                    txtVarsFile.Text = Path.Combine(tplDir, "sample_vars.ini");
+                    break;
+
+                case 5: // Custom - don't change anything
+                    break;
+            }
+
+            UpdateArgs();
+        }
+
+        void OpenDocumentation()
+        {
+            try
+            {
+                string docPath = Path.Combine(AppContext.BaseDirectory, "templates", "README.md");
+                if (File.Exists(docPath))
+                {
+                    Process.Start(new ProcessStartInfo(docPath) { UseShellExecute = true });
+                    lblStatus.Text = "Documentation opened";
+                }
+                else
+                {
+                    MessageBox.Show(this, "Documentation file not found: " + docPath, "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(this, "Failed to open documentation: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        void OpenTemplatesFolder()
+        {
+            try
+            {
+                string tplDir = Path.Combine(AppContext.BaseDirectory, "templates");
+                if (Directory.Exists(tplDir))
+                {
+                    Process.Start(new ProcessStartInfo(tplDir) { UseShellExecute = true });
+                    lblStatus.Text = "Templates folder opened";
+                }
+                else
+                {
+                    MessageBox.Show(this, "Templates folder not found: " + tplDir, "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(this, "Failed to open templates folder: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         Label StyledLabel(string text)
@@ -688,6 +887,7 @@ namespace WpsStageGen.UI
             var parts = new System.Collections.Generic.List<string>();
             parts.Add($"in=\\\"{txtWpsPath.Text}\\\"");
             parts.Add($"add={numAdd.Value}");
+            if (numStartStage.Value > 0) parts.Add($"start={numStartStage.Value}");
             parts.Add($"bossEvery={numBossEvery.Value}");
             parts.Add($"bossGroup={numBossGroup.Value}");
             parts.Add($"rewardItem={numRewardItem.Value}");
@@ -729,6 +929,7 @@ namespace WpsStageGen.UI
             var list = new System.Collections.Generic.List<string>();
             if (!string.IsNullOrEmpty(inArg)) list.Add(inArg);
             list.Add($"add={(int)numAdd.Value}");
+            if (numStartStage.Value > 0) list.Add($"start={(int)numStartStage.Value}");
             list.Add($"bossEvery={(int)numBossEvery.Value}");
             list.Add($"bossGroup={(int)numBossGroup.Value}");
             list.Add($"rewardItem={(int)numRewardItem.Value}");

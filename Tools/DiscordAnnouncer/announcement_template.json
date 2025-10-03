@@ -1,0 +1,111 @@
+{
+  "project_name": "DBO Legacy",
+  "webhooks": {
+    "patch_notes": "https://discord.com/api/webhooks/1423408648763215972/AFW7v9h3xtUS6Y3aqblz1Wp8QEwIC52K-Yw31uq46YvQSkt_-EDdarfpY-Y-MPuY8YQR",
+    "announcements": "https://discord.com/api/webhooks/1423408906578825336/AY_JharAl89hnJsYf9KKrdX3iRK5CnIFOk2y-XZTQyiyZY52_0A6hfsu1u1yY_uc97w0"
+  },
+  "format_rules": {
+    "always_include": [
+      "@everyone mention at the start",
+      "Project name in header",
+      "Decorative separators (━━━)",
+      "Emojis for visual appeal",
+      "4 language versions: English, Spanish, Portuguese, Chinese",
+      "Bold formatting for emphasis",
+      "Closing line in all languages"
+    ],
+    "languages": {
+      "english": {
+        "code": "🇺🇸 / No flag needed for first",
+        "header_patch": "**DBO Legacy - Patch Notes**",
+        "header_announcement": "**DBO Legacy - Announcements**",
+        "section_new": "🆕 **NEW FEATURES**",
+        "section_changes": "🔧 **CHANGES**",
+        "section_fixes": "🐛 **BUG FIXES**",
+        "footer": "🔥 **Update live now!**"
+      },
+      "spanish": {
+        "code": "🇪🇸",
+        "header": "**ESPAÑOL**",
+        "section_new": "🆕 **NUEVAS FUNCIONES**",
+        "section_changes": "🔧 **CAMBIOS**",
+        "section_fixes": "🐛 **CORRECCIÓN DE ERRORES**",
+        "footer": "**¡Actualización disponible!**"
+      },
+      "portuguese": {
+        "code": "🇧🇷",
+        "header": "**PORTUGUÊS**",
+        "section_new": "🆕 **NOVOS RECURSOS**",
+        "section_changes": "🔧 **MUDANÇAS**",
+        "section_fixes": "🐛 **CORREÇÕES DE BUGS**",
+        "footer": "**Atualização disponível!**"
+      },
+      "chinese": {
+        "code": "🇨🇳",
+        "header": "**中文**",
+        "section_new": "🆕 **新功能**",
+        "section_changes": "🔧 **更改**",
+        "section_fixes": "🐛 **错误修复**",
+        "footer": "**更新已上线！**"
+      }
+    },
+    "recommended_emojis": {
+      "header": "🎮",
+      "new_feature": "🆕",
+      "changes": "🔧",
+      "bug_fix": "🐛",
+      "money_cash": "💰",
+      "items_rewards": "🎁",
+      "roulette_gambling": "🎰",
+      "ui_improvements": "✨",
+      "performance": "⚡",
+      "security": "🔒",
+      "database": "💾",
+      "server": "🖥️",
+      "combat": "⚔️",
+      "skills": "🎯",
+      "events": "🎉",
+      "closing": "🔥"
+    }
+  },
+  "channel_usage": {
+    "patch_notes": "Use for completed changes that are already live/deployed",
+    "announcements": "Use for upcoming features, planned changes, or future updates"
+  },
+  "example_structure": [
+    "@everyone",
+    "",
+    "🎮 **DBO Legacy - [Patch Notes/Announcements]** 🎮",
+    "",
+    "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+    "",
+    "🆕 **NEW FEATURES**",
+    "💰 **Feature Title** - Feature description here.",
+    "🎰 **Another Feature** - Another description.",
+    "",
+    "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+    "",
+    "🇪🇸 **ESPAÑOL**",
+    "",
+    "🆕 **NUEVAS FUNCIONES**",
+    "💰 **Título de Función** - Descripción aquí.",
+    "",
+    "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+    "",
+    "🇧🇷 **PORTUGUÊS**",
+    "",
+    "🆕 **NOVOS RECURSOS**",
+    "💰 **Título do Recurso** - Descrição aqui.",
+    "",
+    "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+    "",
+    "🇨🇳 **中文**",
+    "",
+    "🆕 **新功能**",
+    "💰 **功能标题** - 功能描述。",
+    "",
+    "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+    "",
+    "🔥 **Update live now!** | **¡Actualización disponible!** | **Atualização disponível!** | **更新已上线！** 🔥"
+  ]
+}

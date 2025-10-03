@@ -32,6 +32,13 @@ void CPlayerModifiers::Init()
     m_byCharId.clear();
     m_byCharName.clear();
     m_cfgPath = ".\\config\\PlayerModifiers.cfg";
+
+    // Initialize auto-schedule state
+    m_autoScheduleCfg = AutoScheduleConfig();
+    m_autoScheduleState = AutoScheduleState::IDLE;
+    m_autoScheduleActive = false;
+    m_autoScheduleRemainingMs = 0;
+
     LoadConfigInternal(m_cfgPath.c_str());
 }
 
@@ -152,6 +159,36 @@ bool CPlayerModifiers::LoadConfigInternal(const char* path)
                 else if (_stricmp(key, "blockRate") == 0) temp.blockRate = val;
                 else if (_stricmp(key, "blockDmg") == 0) temp.blockDmg = val;
                 else if (_stricmp(key, "guardRate") == 0) temp.guardRate = val;
+                // Auto-schedule configuration
+                else if (_stricmp(key, "AutoScheduleEnabled") == 0)
+                {
+                    if (scope == Scope_Global)
+                        m_autoScheduleCfg.enabled = (val != 0.f);
+                }
+                else if (_stricmp(key, "AutoScheduleDaysPerWeek") == 0)
+                {
+                    if (scope == Scope_Global)
+                    {
+                        unsigned int days = (unsigned int)val;
+                        if (days >= 1 && days <= 7)
+                            m_autoScheduleCfg.daysPerWeek = days;
+                    }
+                }
+                else if (_stricmp(key, "AutoScheduleDurationHours") == 0)
+                {
+                    if (scope == Scope_Global)
+                        m_autoScheduleCfg.durationHours = (unsigned int)val;
+                }
+                else if (_stricmp(key, "AutoScheduleIntervalHours") == 0)
+                {
+                    if (scope == Scope_Global)
+                        m_autoScheduleCfg.intervalHours = (unsigned int)val;
+                }
+                else if (_stricmp(key, "AutoScheduleInitialDelayMinutes") == 0)
+                {
+                    if (scope == Scope_Global)
+                        m_autoScheduleCfg.initialDelayMinutes = (unsigned int)val;
+                }
             }
             t = strtok(nullptr, " \t\n\r");
         }
@@ -346,5 +383,80 @@ void CPlayerModifiers::ApplyTo(CCharacterAttPC* att)
         float diff = target - cur;
         if (diff > 0.0f) att->CalculateEnergyCriticalDamageRate(diff, SYSTEM_EFFECT_APPLY_TYPE_VALUE, true);
         else if (diff < 0.0f) att->CalculateEnergyCriticalDamageRate(-diff, SYSTEM_EFFECT_APPLY_TYPE_VALUE, false);
+    }
+}
+
+void CPlayerModifiers::AutoScheduleTick(unsigned long dwTickDiff)
+{
+    if (!m_autoScheduleCfg.enabled)
+        return;
+
+    switch (m_autoScheduleState)
+    {
+    case AutoScheduleState::IDLE:
+        // Initialize auto-schedule system on first tick
+        m_autoScheduleState = AutoScheduleState::WAIT_NEXT;
+        m_autoScheduleRemainingMs = m_autoScheduleCfg.initialDelayMinutes * 60 * 1000UL;
+        break;
+
+    case AutoScheduleState::WAIT_NEXT:
+        if (m_autoScheduleRemainingMs > dwTickDiff)
+        {
+            m_autoScheduleRemainingMs -= dwTickDiff;
+        }
+        else
+        {
+            m_autoScheduleRemainingMs = 0;
+            StartAutoScheduleSession();
+        }
+        break;
+
+    case AutoScheduleState::ACTIVE:
+        if (m_autoScheduleRemainingMs > dwTickDiff)
+        {
+            m_autoScheduleRemainingMs -= dwTickDiff;
+        }
+        else
+        {
+            m_autoScheduleRemainingMs = 0;
+            EndAutoScheduleSession();
+        }
+        break;
+    }
+}
+
+void CPlayerModifiers::StartAutoScheduleSession()
+{
+    m_autoScheduleState = AutoScheduleState::ACTIVE;
+    m_autoScheduleActive = true;
+    m_autoScheduleRemainingMs = m_autoScheduleCfg.durationHours * 3600 * 1000UL;
+
+    // Enable player modifiers
+    SetEnabled(true);
+
+    // Recalculate all players
+    if (g_pObjectManager)
+    {
+        size_t n = g_pObjectManager->RecalculateAllPlayers();
+        NTL_PRINT(PRINT_APP, _T("[PlayerModifiers Auto-Schedule] Started session (duration: %u hours, %zu players recalculated)"),
+            m_autoScheduleCfg.durationHours, n);
+    }
+}
+
+void CPlayerModifiers::EndAutoScheduleSession()
+{
+    m_autoScheduleState = AutoScheduleState::WAIT_NEXT;
+    m_autoScheduleActive = false;
+    m_autoScheduleRemainingMs = m_autoScheduleCfg.intervalHours * 3600 * 1000UL;
+
+    // Disable player modifiers
+    SetEnabled(false);
+
+    // Recalculate all players back to normal
+    if (g_pObjectManager)
+    {
+        size_t n = g_pObjectManager->RecalculateAllPlayers();
+        NTL_PRINT(PRINT_APP, _T("[PlayerModifiers Auto-Schedule] Ended session (next session in %u hours, %zu players recalculated)"),
+            m_autoScheduleCfg.intervalHours, n);
     }
 }

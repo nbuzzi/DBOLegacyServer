@@ -23,15 +23,19 @@ int CAspectState_Kaioken::OnUpdate(DWORD dwTickDiff, float fMultiple)
 		CPlayer* pPlayer = (CPlayer*)m_pParent;
 		m_dwLastTransformEffect = 0;
 
-		float fMultiplier = ((float)pPlayer->GetTransformGrade() * pPlayer->GetTransformationTbldat()->fLP_Consume_Rate) / 100.0f;
+		// Check if transformation table data exists (null for virtual transformations)
+		if (pPlayer->GetTransformationTbldat())
+		{
+			float fMultiplier = ((float)pPlayer->GetTransformGrade() * pPlayer->GetTransformationTbldat()->fLP_Consume_Rate) / 100.0f;
 
-		float fLp = (float)pPlayer->GetMaxLP() * fMultiplier;
-		float fEp = (float)pPlayer->GetMaxEP() * fMultiplier;
+			float fLp = (float)pPlayer->GetMaxLP() * fMultiplier;
+			float fEp = (float)pPlayer->GetMaxEP() * fMultiplier;
 
-		pPlayer->UpdateCurLpEp((int)fLp, (WORD)fEp, false, false);
+			pPlayer->UpdateCurLpEp((int)fLp, (WORD)fEp, false, false);
 
-		if (pPlayer->ConsiderLPLow(10.0f)) //check percent
-			pPlayer->CancelTransformation();
+			if (pPlayer->ConsiderLPLow(10.0f)) //check percent
+				pPlayer->CancelTransformation();
+		}
 	}
 
 	return TRUE;

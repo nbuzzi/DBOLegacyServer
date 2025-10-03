@@ -423,7 +423,7 @@ std::pair<BYTE, BYTE> CPlayerItemContainer::GetEmptyInventory()
 
 		if (pBag && pBag->IsExpired() == false) //check if bag exist
 		{
-			if (pBag->GetPlace() == 0 && pBag->GetPos() == byBagPos)
+			if (pBag->GetPlace() == CONTAINER_TYPE_BAGSLOT && pBag->GetPos() == byBagPos)
 			{
 				for (BYTE bypos = 0; bypos < pBag->GetBagSize(); bypos++) //loop pos inside bag
 				{
@@ -436,10 +436,14 @@ std::pair<BYTE, BYTE> CPlayerItemContainer::GetEmptyInventory()
 			}
 			else
 			{
-				ERR_LOG(LOG_USER, "ERROR: Player %u has bag in array but place %u/pos %u dont match. byBagPos = %u. pos should be same as byBagPos!!", m_pOwner->GetCharID(), pBag->GetPlace(), pBag->GetPos(), byBagPos);
+				ERR_LOG(LOG_USER, "ERROR: Player %u (class:%u) has bag in array but place %u/pos %u dont match. byBagPos = %u. pos should be same as byBagPos!! IsBag:%d BagSize:%u",
+					m_pOwner->GetCharID(), m_pOwner->GetClass(), pBag->GetPlace(), pBag->GetPos(), byBagPos, pBag->IsBag(), pBag->GetBagSize());
 			}
 		}
 	}
+
+	ERR_LOG(LOG_USER, "DEBUG: Player %u (class:%u) - GetEmptyInventory returned INVALID. Bags checked: %u",
+		m_pOwner->GetCharID(), m_pOwner->GetClass(), NTL_MAX_BAGSLOT_COUNT);
 
 	return std::make_pair(INVALID_BYTE, INVALID_BYTE);
 }
@@ -453,13 +457,14 @@ BYTE CPlayerItemContainer::CountBags()
 		CItem* pBag = m_arr_ActiveBags[byBagPos];
 		if (pBag && pBag->IsExpired() == false)
 		{
-			if (pBag->GetPlace() == 0 && pBag->GetPos() == byBagPos)
+			if (pBag->GetPlace() == CONTAINER_TYPE_BAGSLOT && pBag->GetPos() == byBagPos)
 			{
 				++bags;
 			}
 			else
 			{
-				ERR_LOG(LOG_USER, "ERROR: Player %u has bag in array but place %u/pos %u dont match. byBagPos = %u. pos should be same as byBagPos!!", m_pOwner->GetCharID(), pBag->GetPlace(), pBag->GetPos(), byBagPos);
+				ERR_LOG(LOG_USER, "ERROR: Player %u (class:%u) has bag in array but place %u/pos %u dont match. byBagPos = %u. pos should be same as byBagPos!! IsBag:%d",
+					m_pOwner->GetCharID(), m_pOwner->GetClass(), pBag->GetPlace(), pBag->GetPos(), byBagPos, pBag->IsBag());
 			}
 		}
 	}
@@ -478,7 +483,7 @@ BYTE CPlayerItemContainer::CountEmptyInventory()
 
 		if (pBag && pBag->IsExpired() == false) //check if bag exist
 		{
-			if (pBag->GetPlace() == 0 && pBag->GetPos() == byBagPos)
+			if (pBag->GetPlace() == CONTAINER_TYPE_BAGSLOT && pBag->GetPos() == byBagPos)
 			{
 				for (BYTE bypos = 0; bypos < pBag->GetBagSize(); bypos++) //loop through the bag to find free pos
 				{
@@ -488,7 +493,8 @@ BYTE CPlayerItemContainer::CountEmptyInventory()
 			}
 			else
 			{
-				ERR_LOG(LOG_USER, "ERROR: Player %u has bag in array but place %u/pos %u dont match. byBagPos = %u. pos should be same as byBagPos!!", m_pOwner->GetCharID(), pBag->GetPlace(), pBag->GetPos(), byBagPos);
+				ERR_LOG(LOG_USER, "ERROR: Player %u (class:%u) has bag in array but place %u/pos %u dont match. byBagPos = %u. pos should be same as byBagPos!! IsBag:%d",
+					m_pOwner->GetCharID(), m_pOwner->GetClass(), pBag->GetPlace(), pBag->GetPos(), byBagPos, pBag->IsBag());
 			}
 		}
 	}

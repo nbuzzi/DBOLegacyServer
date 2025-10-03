@@ -36,6 +36,8 @@
 #include "Guild.h"
 #include "BudokaiManager.h"
 #include "PlayerModifiers.h"
+#include "FeatureFlags.h"
+#include "VirtualTransformationManager.h"
 #include "ArenaManager.h"
 #include "DojoManager.h"
 #include "EventManager.h"
@@ -164,6 +166,8 @@ ACMD(do_customdrop_healmul);
 ACMD(do_customdrop_buffduration);
 ACMD(do_reload_playermods_cfg);
 ACMD(do_playermods_toggle);
+ACMD(do_vtransform);
+ACMD(do_vtransform_end);
 ACMD(do_reload_helpernpc_cfg);
 ACMD(do_helpernpc_metrics);
 ACMD(do_helpernpc_resetmetrics);
@@ -172,6 +176,8 @@ ACMD(do_arena);
 ACMD(do_arena_join_public);
 ACMD(do_arena_joinparty_public);
 ACMD(do_arena_joinguild_public);
+ACMD(do_event);
+ACMD(do_event_reload);
 ACMD(do_event_participate);
 ACMD(do_world_fight);
 ACMD(do_budokai);
@@ -277,7 +283,11 @@ struct command_info cmd_info[] =
 	{ L"@customdrop_buffduration", do_customdrop_buffduration, ADMIN_LEVEL_GAME_MASTER },
 	{ L"@reload_playermods", do_reload_playermods_cfg, ADMIN_LEVEL_GAME_MASTER },
 	{ L"@playermods", do_playermods_toggle, ADMIN_LEVEL_GAME_MASTER },
+	{ L"@vtransform", do_vtransform, ADMIN_LEVEL_GAME_MASTER },
+	{ L"@vtransform_end", do_vtransform_end, ADMIN_LEVEL_GAME_MASTER },
 	{ L"@arena", do_arena, ADMIN_LEVEL_GAME_MASTER },
+	{ L"@event", do_event, ADMIN_LEVEL_GAME_MASTER },
+	{ L"@event_reload", do_event_reload, ADMIN_LEVEL_GAME_MASTER },
 	{ L"@world_fight", do_world_fight, ADMIN_LEVEL_GAME_MASTER },
 	{ L"@dojo", do_dojo, ADMIN_LEVEL_GAME_MASTER },
 	{ L"@budokai", do_budokai, ADMIN_LEVEL_ADMIN },
@@ -673,6 +683,84 @@ ACMD(do_arena)
 	else {
 		g_pArenaManager->StatusTo(pPlayer);
 	}
+}
+
+ACMD(do_event)
+{
+	// Syntax:
+	// @event start
+	// @event stop [abort]
+	// @event status
+	// @event beginnow
+	pToken->PopToPeek();
+	std::wstring wsub = pToken->PeekNextToken(NULL, &iLine);
+	if (wsub.empty())
+	{
+		if (g_pEventManager)
+			g_pEventManager->StatusTo(pPlayer);
+		return;
+	}
+
+	std::string sub = ws2s(wsub);
+	for (auto &c : sub) c = (char)tolower(c);
+
+	if (sub == "start")
+	{
+		if (g_pEventManager)
+			g_pEventManager->Start();
+	}
+	else if (sub == "stop")
+	{
+		// optional: abort flag
+		pToken->PopToPeek();
+		std::wstring warg = pToken->PeekNextToken(NULL, &iLine);
+		std::string arg = ws2s(warg);
+		for (auto &c : arg) c = (char)tolower(c);
+		bool abort = (arg == "abort");
+		if (g_pEventManager)
+			g_pEventManager->Stop(abort);
+	}
+	else if (sub == "status")
+	{
+		if (g_pEventManager)
+			g_pEventManager->StatusTo(pPlayer);
+	}
+	else if (sub == "beginnow")
+	{
+		if (g_pEventManager)
+			g_pEventManager->BeginNow();
+	}
+	else
+	{
+		CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+		sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+		res->wOpCode = GU_SYSTEM_DISPLAY_TEXT; res->byDisplayType = SERVER_TEXT_SYSTEM;
+		const wchar_t* wmsg = L"Usage: @event start | stop [abort] | status | beginnow";
+		res->wMessageLengthInUnicode = (WORD)wcslen(wmsg);
+		NTL_SAFE_WCSCPY(res->awchMessage, wmsg);
+		packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+		pPlayer->SendPacket(&packet);
+	}
+}
+
+ACMD(do_event_reload)
+{
+	// Reload Events.cfg and reset auto scheduling. If InitialDelaySeconds=0, start immediately.
+	bool ok = false;
+	if (g_pEventManager)
+		ok = g_pEventManager->ReloadConfigFromDefault();
+
+	if (g_pEventManager)
+		g_pEventManager->ResetAutomation(true);
+
+	CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+	sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+	res->wOpCode = GU_SYSTEM_DISPLAY_TEXT; res->byDisplayType = SERVER_TEXT_SYSTEM;
+	const wchar_t* wmsg = ok ? L"[EVENT] Config reloaded; automation reset" : L"[EVENT] Failed to reload config; automation reset";
+	res->wMessageLengthInUnicode = (WORD)wcslen(wmsg);
+	NTL_SAFE_WCSCPY(res->awchMessage, wmsg);
+	packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+	pPlayer->SendPacket(&packet);
 }
 
 ACMD(do_world_fight)
@@ -1712,6 +1800,130 @@ ACMD(do_playermods_toggle)
 	else
 	{
 		NTL_PRINT(PRINT_APP, _T("PlayerModifiers: currently %s (cfg=%s)"), (g_pPlayerModifiers->IsEnabled() ? L"ENABLED" : L"DISABLED"), s2ws(g_pPlayerModifiers->GetCfgPath()).c_str());
+	}
+}
+
+ACMD(do_vtransform)
+{
+	// Check if virtual transformations are enabled
+	if (!g_pFeatureFlags->IsVirtualTransformationsEnabled())
+	{
+		NTL_PRINT(PRINT_APP, _T("Virtual transformations are currently disabled by feature flag"));
+		return;
+	}
+
+	// usage: @vtransform <id> [target]
+	// Example: @vtransform 200 (transforms self to Human->Namek test)
+	pToken->PopToPeek();
+	std::wstring strToken = pToken->PeekNextToken(NULL, &iLine);
+	if (strToken.empty())
+	{
+		NTL_PRINT(PRINT_APP, _T("Usage: @vtransform <id> [target]"));
+		NTL_PRINT(PRINT_APP, _T("Available transforms:"));
+		NTL_PRINT(PRINT_APP, _T("  100 - Super Saiyan Blue"));
+		NTL_PRINT(PRINT_APP, _T("  101 - Ultra Instinct"));
+		NTL_PRINT(PRINT_APP, _T("  200 - Test: Human to Namek"));
+		NTL_PRINT(PRINT_APP, _T("  201 - Test: Human to Majin"));
+		return;
+	}
+
+	DWORD virtualId = (DWORD)_wtoi(strToken.c_str());
+	if (virtualId < 100)
+	{
+		NTL_PRINT(PRINT_APP, _T("Virtual transform IDs must be 100 or higher"));
+		return;
+	}
+
+	// Check for target parameter
+	pToken->PopToPeek();
+	std::wstring strTarget = pToken->PeekNextToken(NULL, &iLine);
+	CPlayer* pTargetPlayer = pPlayer;
+
+	if (!strTarget.empty())
+	{
+		// Find target player by name
+		pTargetPlayer = g_pObjectManager->FindByName((WCHAR*)strTarget.c_str());
+		if (!pTargetPlayer)
+		{
+			NTL_PRINT(PRINT_APP, _T("Player '%s' not found"), strTarget.c_str());
+			return;
+		}
+	}
+
+	if (!pTargetPlayer || !pTargetPlayer->IsInitialized())
+	{
+		NTL_PRINT(PRINT_APP, _T("Invalid target player"));
+		return;
+	}
+
+	// Debug: Check if transform exists before activating
+	const auto* checkTransform = g_pVirtualTransformManager->GetVirtualTransform(virtualId);
+	if (checkTransform)
+	{
+		NTL_PRINT(PRINT_APP, _T("DEBUG: Found transform %d: %s"), virtualId, checkTransform->name.c_str());
+	}
+	else
+	{
+		NTL_PRINT(PRINT_APP, _T("DEBUG: Transform %d NOT found in loaded transforms!"), virtualId);
+	}
+
+	if (g_pVirtualTransformManager->ActivateVirtualTransform(pTargetPlayer, virtualId))
+	{
+		const auto* transform = g_pVirtualTransformManager->GetVirtualTransform(virtualId);
+		if (transform)
+		{
+			NTL_PRINT(PRINT_APP, _T("Activated virtual transform %d (%s) for %s"),
+				virtualId, transform->name.c_str(), pTargetPlayer->GetCharName());
+		}
+		else
+		{
+			NTL_PRINT(PRINT_APP, _T("Activated virtual transform %d for %s"),
+				virtualId, pTargetPlayer->GetCharName());
+		}
+	}
+	else
+	{
+		NTL_PRINT(PRINT_APP, _T("Failed to activate virtual transform %d (not found in config)"), virtualId);
+	}
+}
+
+ACMD(do_vtransform_end)
+{
+	// Check if virtual transformations are enabled
+	if (!g_pFeatureFlags->IsVirtualTransformationsEnabled())
+	{
+		NTL_PRINT(PRINT_APP, _T("Virtual transformations are currently disabled by feature flag"));
+		return;
+	}
+
+	// usage: @vtransform_end [target]
+	pToken->PopToPeek();
+	std::wstring strTarget = pToken->PeekNextToken(NULL, &iLine);
+	CPlayer* pTargetPlayer = pPlayer;
+
+	if (!strTarget.empty())
+	{
+		pTargetPlayer = g_pObjectManager->FindByName((WCHAR*)strTarget.c_str());
+		if (!pTargetPlayer)
+		{
+			NTL_PRINT(PRINT_APP, _T("Player '%s' not found"), strTarget.c_str());
+			return;
+		}
+	}
+
+	if (!pTargetPlayer || !pTargetPlayer->IsInitialized())
+	{
+		NTL_PRINT(PRINT_APP, _T("Invalid target player"));
+		return;
+	}
+
+	if (g_pVirtualTransformManager->DeactivateVirtualTransform(pTargetPlayer))
+	{
+		NTL_PRINT(PRINT_APP, _T("Deactivated virtual transform for %s"), pTargetPlayer->GetCharName());
+	}
+	else
+	{
+		NTL_PRINT(PRINT_APP, _T("No virtual transform active for %s"), pTargetPlayer->GetCharName());
 	}
 }
 

@@ -109,7 +109,7 @@ public:
 			  postEventPosX(4975.609863f), postEventPosY(-48.869999f), postEventPosZ(4012.609863f),
 			  postEventTeleportDelayMs(3000),
 			  mudosaPerRound(1000), mudosaEventComplete(5000),
-			  autoEnabled(false), autoIntervalSeconds(1800), autoInitialDelaySeconds(600),
+			  autoEnabled(true), autoIntervalSeconds(1800), autoInitialDelaySeconds(0),
 			  autoRestartOnComplete(false), autoRestartDelaySeconds(300),
 			  worldRotationEnabled(false), randomizeWorlds(false),
 			  mobSpawnRadius(50.0f), randomMobPositions(true),
@@ -128,6 +128,11 @@ public:
 	void Start();
 	void Stop(bool abort = false);
 	void StatusTo(CPlayer* pWho);
+
+	// Runtime utilities
+	bool ReloadConfigFromDefault();                // Reload .\\config\\Events.cfg
+	void ResetAutomation(bool startIfZeroDelay);   // Reset auto state; optionally start immediately when delay=0
+	void BeginNow();                                // Force close enrollment and begin pre-round immediately
 
 	// Participant management
 	bool AddParticipant(CPlayer* pPlayer);
@@ -153,13 +158,20 @@ public:
 
 	// Player callbacks
 	void OnPlayerEnterWorld(CPlayer* pPlayer);
+	// Called when player has fully loaded into the world (login complete)
+	void OnPlayerEnterWorldComplete(CPlayer* pPlayer);
 	void OnMobKilled(unsigned int mobHandle);
 
 private:
+	// ChatServer-wide notice (like Arena): broadcasts to channel via ChatServer
+	void SendNotice(const wchar_t* msg, unsigned char byType = 2);
 	void BroadcastSystem(const wchar_t* msg, unsigned char byType = 2);
 	void SendSystemTo(CPlayer* pPlayer, const wchar_t* msg, unsigned char byType = 3);
 	void TeleportParticipants();
 	void TeleportParticipantsToWorld(unsigned int worldTblidx, float x, float y, float z);
+	// Arena-like teleport helpers (single-recipient)
+	bool TeleportOneToWorldTblidx(CPlayer* pPlayer, unsigned int worldTblidx, float posX, float posY, float posZ);
+	bool TeleportOneToWorldTblidxDir(CPlayer* pPlayer, unsigned int worldTblidx, float posX, float posY, float posZ, float dirX, float dirY, float dirZ);
 	void PostEventTeleportAll();
 	void StartRoundTimer(unsigned int seconds);
 	void StopRoundTimer();
@@ -170,6 +182,10 @@ private:
 	void BroadcastDungeonStateToWorld(unsigned int worldId, unsigned char byStage, unsigned int titleTblidx = 0);
 	void BroadcastRoundTimerStartToWorld(unsigned int worldId, unsigned int seconds);
 	void BroadcastRoundTimerEndToWorld(unsigned int worldId);
+	void BroadcastCountdownToWorld(unsigned int worldId, bool bStart);
+	void SendCountdownTo(CPlayer* pPlayer, bool bStart);
+	void SendRoundTimerStartTo(CPlayer* pPlayer, unsigned int seconds);
+	void SendRoundTimerEndTo(CPlayer* pPlayer);
 	unsigned int GetWorldForRound(unsigned int roundIndex);
 	void GetSpawnPosForRound(unsigned int roundIndex, float& outX, float& outY, float& outZ);
 
@@ -201,6 +217,13 @@ private:
 
 	// Post-event teleport delay
 	unsigned long m_postEventTeleportRemainMs;
+
+	// Enrollment announcement helper to avoid spamming every tick
+	unsigned int m_nextEnrollmentAnnounceSec = 0;
+
+	// Pre-round/intermission countdown helpers
+	bool m_countdownActive = false;
+	unsigned int m_nextPreRoundAnnounceSec = 0;
 };
 
 #define GetEventManager() CEventManager::GetInstance()

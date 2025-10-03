@@ -569,6 +569,8 @@
     <ClCompile Include="SvrScrFormulaToken.cpp" />
     <ClCompile Include="SvrScrVariableContainer.cpp" />
     <ClCompile Include="SvrScrVariableMap.cpp" />
+  <ClCompile Include="FeatureFlags.cpp" />
+  <ClCompile Include="VirtualTransformationManager.cpp" />
     <ClCompile Include="TargetListManager.cpp" />
     <ClCompile Include="TimeLeapDungeon.cpp" />
     <ClCompile Include="TimeQuest.cpp" />
@@ -1256,6 +1258,8 @@
     <ClInclude Include="SvrScrFormulaToken.h" />
     <ClInclude Include="SvrScrVariableContainer.h" />
     <ClInclude Include="SvrScrVariableMap.h" />
+  <ClInclude Include="FeatureFlags.h" />
+  <ClInclude Include="VirtualTransformationManager.h" />
     <ClInclude Include="TargetListManager.h" />
     <ClInclude Include="TimeLeapDungeon.h" />
     <ClInclude Include="TimeQuest.h" />

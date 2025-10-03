@@ -34,6 +34,7 @@
 #include "HelperNpcManager.h"
 #include "ArenaWorld.h"
 #include "CustomDropEvent.h"
+#include "EventManager.h"
 
 // Helper: name-based arena detection for the player's current world (no table lookup)
 static inline bool IsInArenaWorldByName(const CPlayer* plr)
@@ -2037,6 +2038,13 @@ void CPlayer::OnEnterWorldComplete()
 	if (g_pArenaManager->IsEnabled() && g_pArenaManager->IsParticipant(this))
 	{
 		g_pArenaManager->OnPlayerEnterWorld(this);
+	}
+
+	// Event enrollment/login messaging parity with Arena: when a player enters the world
+	// and the EventManager is in ENROLLMENT, notify them that enrollment is open.
+	if (g_pEventManager && g_pEventManager->IsEnabled())
+	{
+		g_pEventManager->OnPlayerEnterWorldComplete(this);
 	}
 }
 

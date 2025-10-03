@@ -4858,9 +4858,29 @@ void CBudokaiManager::UpdateFinalMatchScore(sTOURNAMENT_MATCH * match, BYTE byMa
 
 bool CBudokaiManager::LoadConfigFromIniPath(const char* iniPath)
 {
-	CNtlIniFile file;
-	if (file.Create(iniPath) != NTL_SUCCESS)
+	// Debug: Get current working directory
+	char currentDir[MAX_PATH];
+	GetCurrentDirectoryA(MAX_PATH, currentDir);
+	printf("[BUDOKAI] Current working directory: %s\n", currentDir);
+	printf("[BUDOKAI] Attempting to load: %s\n", iniPath);
+
+	// Check if file exists
+	DWORD fileAttr = GetFileAttributesA(iniPath);
+	if (fileAttr == INVALID_FILE_ATTRIBUTES)
+	{
+		printf("[BUDOKAI] File does not exist or cannot be accessed!\n");
 		return false;
+	}
+
+	CNtlIniFile file;
+	int createResult = file.Create(iniPath);
+	if (createResult != NTL_SUCCESS)
+	{
+		printf("[BUDOKAI] Failed to load config from %s (CNtlIniFile::Create returned %d)\n", iniPath, createResult);
+		return false;
+	}
+
+	printf("[BUDOKAI] CNtlIniFile::Create succeeded!\n");
 
 	int val = 0;
 	unsigned int u = 0;
@@ -7557,6 +7577,18 @@ void CBudokaiManager::JoinMatchmakingQueue(CPlayer* pPlayer)
 
 void CBudokaiManager::LeaveMatchmakingQueue(CHARACTERID charId)
 {
+	// Helper to send system message
+	auto SendMessage = [&](CPlayer* pPlayer, const WCHAR* msg) {
+		CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+		sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+		res->wOpCode = GU_SYSTEM_DISPLAY_TEXT;
+		res->byDisplayType = SERVER_TEXT_SYSTEM;
+		NTL_SAFE_WCSCPY(res->awchMessage, msg);
+		packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+		pPlayer->SendPacket(&packet);
+	};
+
+	// Find and remove player from queue
 	for (auto it = m_vecMatchmakingQueue.begin(); it != m_vecMatchmakingQueue.end(); ++it)
 	{
 		if (it->charId == charId)
@@ -7568,12 +7600,7 @@ void CBudokaiManager::LeaveMatchmakingQueue(CHARACTERID charId)
 			CPlayer* pPlayer = g_pObjectManager->FindByChar(charId);
 			if (pPlayer && pPlayer->IsInitialized())
 			{
-				CNtlPacket packet(sizeof(sGU_BUDOKAI_NOTICE_NFY));
-				sGU_BUDOKAI_NOTICE_NFY* res = (sGU_BUDOKAI_NOTICE_NFY*)packet.GetPacketData();
-				res->wOpCode = GU_BUDOKAI_NOTICE_NFY;
-				res->byNoticeType = BUDOKAI_NOTICE_PARTY_MAKER_LEFT_QUEUE;
-				packet.SetPacketLen(sizeof(sGU_BUDOKAI_NOTICE_NFY));
-				pPlayer->SendPacket(&packet);
+				SendMessage(pPlayer, L"[Budokai Matchmaking] You have left the matchmaking queue.");
 			}
 			return;
 		}

@@ -24,6 +24,7 @@
 #include "HelperNpcManager.h"
 #include "ArenaManager.h"
 #include "EventManager.h"
+#include "PlayerModifiers.h"
 
 
 CGameProcessor::CGameProcessor()
@@ -141,28 +142,17 @@ void CGameProcessor::Run(DWORD dwTickCount)
 			// Periodic helper-NPC watchdog to repair spawns after floor transitions
 			GetHelperNpcManager()->TickWatchdog(m_dwTickCount);
 
-			// Arena automation + state machine
-			// Do NOT run Arena runtime on the Dojo channel to avoid interfering with Budokai/Dojo teleports.
-			// We still keep Arena config loaded so Dojo can compute arena spectator destinations when asked by Chat.
-			{
-				if (!app->IsDojoChannel())
-				{
-					// ArenaManager also internally filters automation by channel name (AutoArena.ChannelNameContains)
-					g_pArenaManager->AutomationTick(dwTickDiff);
-					g_pArenaManager->TickProcess(dwTickDiff);
-				}
-				// else: skip Arena ticks on Dojo channel
-			}
-
 			// Event Manager automation + state machine
 			// EventManager internally filters by channel name (Event.ChannelNameContains)
-			{
-				if (!app->IsDojoChannel())
-				{
-					g_pEventManager->AutomationTick(dwTickDiff);
-					g_pEventManager->TickProcess(dwTickDiff);
-				}
-			}
+			g_pEventManager->AutomationTick(dwTickDiff);
+			g_pEventManager->TickProcess(dwTickDiff);
+
+			// ArenaManager also internally filters automation by channel name (AutoArena.ChannelNameContains)
+			g_pArenaManager->AutomationTick(dwTickDiff);
+			g_pArenaManager->TickProcess(dwTickDiff);
+
+			// Player modifiers auto-schedule
+			g_pPlayerModifiers->AutoScheduleTick(dwTickDiff);
 		}
 
 		g_pPartyManager->TickProcess(dwTickDiff);

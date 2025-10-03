@@ -2,9 +2,11 @@
 #include "EventManager.h"
 #include "NtlIniFile.h"
 #include "GameServer.h"
+#include "GameMain.h"
 #include "ObjectManager.h"
 #include "CPlayer.h"
 #include "NtlPacketGU.h"
+#include "NtlPacketGT.h"
 #include "NtlLog.h"
 #include "Monster.h"
 #include "World.h"
@@ -16,19 +18,28 @@
 #include "NtlRandom.h"
 #include <algorithm>
 #include <sstream>
+#include <cstdarg>
+#include <cstdio>
 
 static unsigned long ToMs(unsigned int seconds) { return seconds * 1000UL; }
 
-#define EVENT_VLOG(cfg, category, ...) do { \
-	if ((cfg).verboseLogs) { \
-		char buf[1024]; \
-		buf[0] = '\0'; \
-		va_list ap; \
-		va_start(ap, __VA_ARGS__); \
-		vsnprintf_s(buf, sizeof(buf), _TRUNCATE, __VA_ARGS__, ap); \
-		va_end(ap); \
-		NTL_PRINT(category, _T("%S"), buf); \
-	} \
+static void EventVLog(const CEventManager::Config& cfg, int category, const char* fmt, ...)
+{
+    if (!cfg.verboseLogs || fmt == nullptr) return;
+    char buf[1024];
+    buf[0] = '\0';
+    va_list ap; va_start(ap, fmt);
+#if defined(_MSC_VER)
+    vsnprintf_s(buf, sizeof(buf), _TRUNCATE, fmt, ap);
+#else
+    vsnprintf(buf, sizeof(buf), fmt, ap);
+#endif
+    va_end(ap);
+    NTL_PRINT(category, _T("%S"), buf);
+}
+
+#define EVENT_VLOG(cfg, category, fmt, ...) do { \
+    if ((cfg).verboseLogs) EventVLog((cfg), (category), (fmt), ##__VA_ARGS__); \
 } while (0)
 
 CEventManager::CEventManager()
@@ -50,12 +61,29 @@ CEventManager::~CEventManager()
 
 bool CEventManager::LoadConfigFromIniPath(const char* iniPath)
 {
-	CNtlIniFile file;
-	if (!file.Create(iniPath))
+	// Debug: Get current working directory
+	char currentDir[MAX_PATH];
+	GetCurrentDirectoryA(MAX_PATH, currentDir);
+	printf("[EVENT] Current working directory: %s\n", currentDir);
+	printf("[EVENT] Attempting to load: %s\n", iniPath);
+
+	// Check if file exists
+	DWORD fileAttr = GetFileAttributesA(iniPath);
+	if (fileAttr == INVALID_FILE_ATTRIBUTES)
 	{
-		ERR_LOG(LOG_GENERAL, "[EVENT] Failed to load config from %s", iniPath);
+		printf("[EVENT] File does not exist or cannot be accessed!\n");
 		return false;
 	}
+
+	CNtlIniFile file;
+	int createResult = file.Create(iniPath);
+	if (createResult != NTL_SUCCESS)
+	{
+		printf("[EVENT] Failed to load config from %s (CNtlIniFile::Create returned %d)\n", iniPath, createResult);
+		return false;
+	}
+
+	printf("[EVENT] CNtlIniFile::Create succeeded!\n");
 
 	int enabled = 0;
 	if (file.Read("Event", "Enabled", enabled))
@@ -346,6 +374,21 @@ void CEventManager::TickProcess(unsigned long dwTickDiff)
 	switch (m_state)
 	{
 	case State::ENROLLMENT:
+		// Announce remaining time at key intervals like Arena does for rotations
+		if (m_enrollmentRemainMs > 0)
+		{
+			unsigned int sec = (unsigned int)(m_enrollmentRemainMs / 1000);
+			if (sec != m_nextEnrollmentAnnounceSec)
+			{
+				if (sec == 300 || sec == 180 || sec == 120 || sec == 60 || sec == 30 || sec == 10 || (sec <= 5 && sec >= 1))
+				{
+					wchar_t msg[128];
+					swprintf_s(msg, L"[EVENT] Enrollment ends in %u second%s. Use @participate to join.", sec, sec == 1 ? L"" : L"s");
+					SendNotice(msg, SERVER_TEXT_SYSNOTICE);
+				}
+				m_nextEnrollmentAnnounceSec = sec;
+			}
+		}
 		if (m_enrollmentRemainMs > dwTickDiff)
 		{
 			m_enrollmentRemainMs -= dwTickDiff;
@@ -357,6 +400,7 @@ void CEventManager::TickProcess(unsigned long dwTickDiff)
 			if (m_participants.size() > 0)
 			{
 				BroadcastSystem(L"[EVENT] Enrollment closed. Teleporting participants...");
+				SendNotice(L"[EVENT] Enrollment closed. Teleporting participants...", SERVER_TEXT_SYSNOTICE);
 				TeleportParticipants();
 				m_state = State::PRE_ROUND;
 				m_startDelayRemainMs = ToMs(m_cfg.startDelaySeconds);
@@ -364,6 +408,7 @@ void CEventManager::TickProcess(unsigned long dwTickDiff)
 			else
 			{
 				BroadcastSystem(L"[EVENT] No participants. Event cancelled.");
+				SendNotice(L"[EVENT] No participants. Event cancelled.", SERVER_TEXT_SYSNOTICE);
 				m_state = State::IDLE;
 			}
 		}
@@ -373,10 +418,26 @@ void CEventManager::TickProcess(unsigned long dwTickDiff)
 		if (m_startDelayRemainMs > dwTickDiff)
 		{
 			m_startDelayRemainMs -= dwTickDiff;
+			// Announce remaining time similarly to Arena
+			unsigned int sec = (unsigned int)(m_startDelayRemainMs / 1000);
+			if (sec != m_nextPreRoundAnnounceSec)
+			{
+				if (sec == 30 || sec == 10 || (sec <= 5 && sec >= 1))
+				{
+					wchar_t msg[128];
+					swprintf_s(msg, L"[EVENT] Round starts in %u second%s.", sec, sec == 1 ? L"" : L"s");
+					SendNotice(msg, SERVER_TEXT_SYSNOTICE);
+				}
+				m_nextPreRoundAnnounceSec = sec;
+			}
 		}
 		else
 		{
 			m_startDelayRemainMs = 0;
+			// End countdown UI before starting
+			if (m_eventWorldId)
+				BroadcastCountdownToWorld(m_eventWorldId, false);
+			m_countdownActive = false;
 			StartNextRound();
 		}
 		break;
@@ -421,6 +482,7 @@ void CEventManager::TickProcess(unsigned long dwTickDiff)
 				m_state = State::COMPLETE;
 				m_postEventTeleportRemainMs = m_cfg.postEventTeleportDelayMs;
 				BroadcastSystem(L"[EVENT] Event completed! Congratulations!");
+				SendNotice(L"[EVENT] Event completed! Congratulations!", SERVER_TEXT_SYSNOTICE);
 			}
 		}
 		break;
@@ -460,8 +522,25 @@ void CEventManager::AutomationTick(unsigned long dwTickDiff)
 	switch (m_autoState)
 	{
 	case AutoState::OFF:
-		m_autoState = AutoState::WAIT_NEXT;
-		m_autoRemainMs = ToMs(m_cfg.autoInitialDelaySeconds);
+		// If initial delay is zero, start immediately; otherwise wait
+		if (m_cfg.autoInitialDelaySeconds == 0)
+		{
+			if (m_state == State::IDLE)
+			{
+				Start();
+				m_autoState = AutoState::ENROLLMENT_OPEN;
+			}
+			else
+			{
+				m_autoState = AutoState::WAIT_NEXT;
+				m_autoRemainMs = ToMs(60);
+			}
+		}
+		else
+		{
+			m_autoState = AutoState::WAIT_NEXT;
+			m_autoRemainMs = ToMs(m_cfg.autoInitialDelaySeconds);
+		}
 		break;
 
 	case AutoState::WAIT_NEXT:
@@ -545,10 +624,14 @@ void CEventManager::Start()
 
 	m_state = State::ENROLLMENT;
 	m_enrollmentRemainMs = ToMs(m_cfg.enrollmentSeconds);
+	m_nextEnrollmentAnnounceSec = (unsigned int)(m_enrollmentRemainMs / 1000);
 	m_currentRound = 0;
 	m_participants.clear();
 	m_spectators.clear();
 	m_killedMobs.clear();
+
+    EVENT_VLOG(m_cfg, LOG_GENERAL, "[EVENT] Enrollment opened immediately on startup? initialDelay=%u autoEnabled=%d state=%d",
+        m_cfg.autoInitialDelaySeconds, (int)m_cfg.autoEnabled, (int)m_autoState);
 
 	wchar_t msg[256];
 	if (m_cfg.requireParticipateCommand)
@@ -560,6 +643,7 @@ void CEventManager::Start()
 		swprintf_s(msg, L"[EVENT] Event enrollment opened! Time: %u seconds", m_cfg.enrollmentSeconds);
 	}
 	BroadcastSystem(msg);
+	SendNotice(msg, SERVER_TEXT_SYSNOTICE);
 }
 
 void CEventManager::Stop(bool abort)
@@ -610,6 +694,7 @@ void CEventManager::StartNextRound()
 	swprintf_s(msg, L"[EVENT] Round %u/%u starting! Kill all mobs to proceed.",
 		m_currentRound + 1, (unsigned)m_cfg.rounds.size());
 	BroadcastSystem(msg);
+	SendNotice(msg, SERVER_TEXT_SYSNOTICE);
 
 	m_state = State::IN_ROUND;
 	SpawnRoundMobs(round);
@@ -635,6 +720,7 @@ void CEventManager::CompleteCurrentRound()
 	wchar_t msg[256];
 	swprintf_s(msg, L"[EVENT] Round %u completed!", m_currentRound + 1);
 	BroadcastSystem(msg);
+	SendNotice(msg, SERVER_TEXT_SYSNOTICE);
 
 	// Award rewards
 	AwardRoundRewards(round);
@@ -645,6 +731,13 @@ void CEventManager::CompleteCurrentRound()
 	{
 		m_state = State::INTERMISSION;
 		m_startDelayRemainMs = ToMs(5); // 5 second intermission
+		m_nextPreRoundAnnounceSec = (unsigned int)(m_startDelayRemainMs / 1000);
+		// Start a brief countdown UI for intermission
+		if (m_eventWorldId)
+		{
+			BroadcastCountdownToWorld(m_eventWorldId, true);
+			m_countdownActive = true;
+		}
 	}
 	else
 	{
@@ -660,7 +753,8 @@ void CEventManager::CompleteCurrentRound()
 				CPlayer* pPlayer = g_pObjectManager->GetPC(charId);
 				if (pPlayer && pPlayer->IsInitialized())
 				{
-					pPlayer->UpdateMudosaToken(m_cfg.mudosaEventComplete, true);
+					// UpdateMudosaPoints expects an absolute value; add to current total
+					pPlayer->UpdateMudosaPoints(pPlayer->GetMudosaPoints() + m_cfg.mudosaEventComplete, true);
 				}
 			}
 		}
@@ -674,13 +768,36 @@ void CEventManager::SpawnRoundMobs(const EventRound& round)
 	// Get world for current round
 	unsigned int worldTblidx = GetWorldForRound(m_currentRound);
 
-	CWorld* pWorld = g_pObjectManager->GetWorldByTblidx(worldTblidx);
-	if (!pWorld)
+	// Resolve or create world instance via WorldManager
+	CGameServer* app = (CGameServer*)g_pApp;
+	sWORLD_TBLDAT* pWorldTbldat = (sWORLD_TBLDAT*)g_pTableContainer->GetWorldTable()->FindData((TBLIDX)worldTblidx);
+	if (!pWorldTbldat)
 	{
-		ERR_LOG(LOG_GENERAL, "[EVENT] Failed to get event world tblidx=%u", worldTblidx);
+		ERR_LOG(LOG_GENERAL, "[EVENT] World tblidx not found: %u", worldTblidx);
 		return;
 	}
-	m_eventWorldId = pWorld->GetID();
+	CWorld* pWorld = nullptr;
+	if (m_eventWorldId)
+	{
+		pWorld = app->GetGameMain()->GetWorldManager()->FindWorld((WORLDID)m_eventWorldId);
+		if (pWorld)
+		{
+			// If existing world has different tblidx, recreate
+			sWORLD_TBLDAT* curTbldat = pWorld->GetTbldat();
+			if (!curTbldat || curTbldat->tblidx != (TBLIDX)worldTblidx)
+				pWorld = nullptr;
+		}
+	}
+	if (!pWorld)
+	{
+		pWorld = app->GetGameMain()->GetWorldManager()->CreateWorld(pWorldTbldat);
+		if (!pWorld)
+		{
+			ERR_LOG(LOG_GENERAL, "[EVENT] Failed to create event world tblidx=%u", worldTblidx);
+			return;
+		}
+		m_eventWorldId = pWorld->GetID();
+	}
 
 	// Get spawn position for current round
 	float spawnX, spawnY, spawnZ;
@@ -729,7 +846,9 @@ void CEventManager::SpawnRoundMobs(const EventRound& round)
 
 void CEventManager::SpawnMinionsAroundBoss(const CNtlVector& bossPos, const MinionGroup& minionGroup, unsigned int worldId)
 {
-	CWorld* pWorld = g_pObjectManager->GetWorld(worldId);
+	// Resolve world by ID via WorldManager
+	CGameServer* app = (CGameServer*)g_pApp;
+	CWorld* pWorld = app->GetGameMain()->GetWorldManager()->FindWorld((WORLDID)worldId);
 	if (!pWorld)
 		return;
 
@@ -801,12 +920,12 @@ void CEventManager::AwardRoundRewards(const EventRound& round)
 			{
 				for (const auto& reward : round.fixedRewards)
 				{
-					pPlayer->GetItemManager()->CreateItem(reward.first, reward.second, true, "[EVENT]");
+					g_pItemManager->CreateItem(pPlayer, (TBLIDX)reward.first, (BYTE)reward.second);
 				}
 
 				if (m_cfg.mudosaPerRound > 0)
 				{
-					pPlayer->UpdateMudosaToken(m_cfg.mudosaPerRound, true);
+					pPlayer->UpdateMudosaPoints(pPlayer->GetMudosaPoints() + m_cfg.mudosaPerRound, true);
 				}
 			}
 		}
@@ -851,8 +970,8 @@ void CEventManager::CheckRoundCompletion()
 		if (m_killedMobs.find(mobHandle) == m_killedMobs.end())
 		{
 			// Check if mob still exists
-			CMonster* pMob = (CMonster*)g_pObjectManager->GetObject(mobHandle);
-			if (pMob && !pMob->IsDead())
+			CCharacter* pMob = (CCharacter*)g_pObjectManager->GetObject(mobHandle);
+			if (pMob && !pMob->IsFainting())
 			{
 				allKilled = false;
 				break;
@@ -900,8 +1019,9 @@ bool CEventManager::AddParticipant(CPlayer* pPlayer)
 
 	wchar_t msg[256];
 	swprintf_s(msg, L"[EVENT] %s joined the event! (%u participants)",
-		pPlayer->GetPcProfile()->wszCharName, (unsigned)m_participants.size());
+		pPlayer->GetCharName(), (unsigned)m_participants.size());
 	BroadcastSystem(msg);
+	SendNotice(msg, SERVER_TEXT_SYSNOTICE);
 
 	return true;
 }
@@ -948,6 +1068,7 @@ bool CEventManager::IsParticipantId(unsigned int charId) const
 void CEventManager::TeleportParticipants()
 {
 	// Save previous locations
+	EVENT_VLOG(m_cfg, LOG_GENERAL, "[EVENT] TeleportParticipants: count=%u to worldTblidx=%u", (unsigned)m_participants.size(), (unsigned)m_cfg.eventWorldTblidx);
 	for (unsigned int charId : m_participants)
 	{
 		CPlayer* pPlayer = g_pObjectManager->GetPC(charId);
@@ -956,7 +1077,7 @@ void CEventManager::TeleportParticipants()
 			PrevLoc loc;
 			loc.worldId = pPlayer->GetWorldID();
 			loc.loc = pPlayer->GetCurLoc();
-			loc.dir = pPlayer->GetDirection();
+			loc.dir = pPlayer->GetCurDir();
 			m_prevLoc[charId] = loc;
 		}
 	}
@@ -967,12 +1088,55 @@ void CEventManager::TeleportParticipants()
 
 void CEventManager::TeleportParticipantsToWorld(unsigned int worldTblidx, float x, float y, float z)
 {
+	// Ensure world exists / create if needed. Default to world start position when coords are zero.
+	CGameServer* app = (CGameServer*)g_pApp;
+	if (!app)
+	{
+		ERR_LOG(LOG_GENERAL, "[EVENT] TeleportParticipantsToWorld failed: app is null");
+		return;
+	}
+
+	sWORLD_TBLDAT* pWorldTbldat = (sWORLD_TBLDAT*)g_pTableContainer->GetWorldTable()->FindData((TBLIDX)worldTblidx);
+	if (!pWorldTbldat)
+	{
+		ERR_LOG(LOG_GENERAL, "[EVENT] TeleportParticipantsToWorld: world tblidx not found %u", worldTblidx);
+		return;
+	}
+
+	CWorld* pWorld = nullptr;
+	if (m_eventWorldId)
+	{
+		pWorld = app->GetGameMain()->GetWorldManager()->FindWorld((WORLDID)m_eventWorldId);
+		if (pWorld)
+		{
+			sWORLD_TBLDAT* curTbldat = pWorld->GetTbldat();
+			if (!curTbldat || curTbldat->tblidx != (TBLIDX)worldTblidx)
+				pWorld = nullptr; // will recreate
+		}
+	}
+	if (!pWorld)
+	{
+		pWorld = app->GetGameMain()->GetWorldManager()->CreateWorld(pWorldTbldat);
+		if (!pWorld)
+		{
+			ERR_LOG(LOG_GENERAL, "[EVENT] TeleportParticipantsToWorld: failed to create world %u", worldTblidx);
+			return;
+		}
+		m_eventWorldId = pWorld->GetID();
+	}
+
+	CNtlVector destLoc = pWorldTbldat->vStart1Loc;
+	if (!(x == 0.f && y == 0.f && z == 0.f))
+	{
+		destLoc.x = x; destLoc.y = y; destLoc.z = z;
+	}
+
 	for (unsigned int charId : m_participants)
 	{
 		CPlayer* pPlayer = g_pObjectManager->GetPC(charId);
 		if (pPlayer && pPlayer->IsInitialized())
 		{
-			pPlayer->Teleport_Direct(worldTblidx, 0, x, y, z, 0, 0, 0);
+			pPlayer->StartTeleport(destLoc, pPlayer->GetCurDir(), pWorld->GetID(), TELEPORT_TYPE_COMMAND);
 		}
 	}
 }
@@ -992,17 +1156,96 @@ void CEventManager::PostEventTeleportAll()
 			if (it != m_prevLoc.end())
 			{
 				const PrevLoc& loc = it->second;
-				pPlayer->Teleport_Direct(loc.worldId, 0, loc.loc.x, loc.loc.y, loc.loc.z,
-					loc.dir.x, loc.dir.y, loc.dir.z);
+				CNtlVector destLoc = loc.loc;
+				CNtlVector destDir = loc.dir;
+				if (loc.worldId != 0 && loc.worldId != INVALID_WORLDID)
+				{
+					pPlayer->StartTeleport(destLoc, destDir, (WORLDID)loc.worldId, TELEPORT_TYPE_COMMAND);
+				}
+				else
+				{
+					ERR_LOG(LOG_GENERAL, "[EVENT] PostEventTeleportAll: saved worldId invalid for char=%u; using fallback", charId);
+					// Fallback to configured post-event location
+					CGameServer* app = (CGameServer*)g_pApp;
+					sWORLD_TBLDAT* pWorldTbldat = (sWORLD_TBLDAT*)g_pTableContainer->GetWorldTable()->FindData((TBLIDX)m_cfg.postEventWorldTblidx);
+					CWorld* pWorld = nullptr;
+					if (pWorldTbldat)
+					{
+						pWorld = app->GetGameMain()->GetWorldManager()->CreateWorld(pWorldTbldat);
+					}
+					else
+					{
+						ERR_LOG(LOG_GENERAL, "[EVENT] PostEventTeleportAll: fallback world tblidx not found %u", m_cfg.postEventWorldTblidx);
+					}
+					CNtlVector dest = pWorldTbldat ? CNtlVector(m_cfg.postEventPosX, m_cfg.postEventPosY, m_cfg.postEventPosZ)
+						: CNtlVector(0.f, 0.f, 0.f);
+					WORLDID wId = (pWorld ? pWorld->GetID() : INVALID_WORLDID);
+					pPlayer->StartTeleport(dest, pPlayer->GetCurDir(), wId, TELEPORT_TYPE_COMMAND);
+				}
 			}
 			else
 			{
 				// Fallback to configured post-event location
-				pPlayer->Teleport_Direct(m_cfg.postEventWorldTblidx, 0,
-					m_cfg.postEventPosX, m_cfg.postEventPosY, m_cfg.postEventPosZ, 0, 0, 0);
+				// Ensure fallback world exists
+				CGameServer* app = (CGameServer*)g_pApp;
+				sWORLD_TBLDAT* pWorldTbldat = (sWORLD_TBLDAT*)g_pTableContainer->GetWorldTable()->FindData((TBLIDX)m_cfg.postEventWorldTblidx);
+				CWorld* pWorld = nullptr;
+				if (pWorldTbldat)
+				{
+					pWorld = app->GetGameMain()->GetWorldManager()->CreateWorld(pWorldTbldat);
+				}
+				else
+				{
+					ERR_LOG(LOG_GENERAL, "[EVENT] PostEventTeleportAll: fallback world tblidx not found %u", m_cfg.postEventWorldTblidx);
+				}
+				CNtlVector dest = pWorldTbldat ? CNtlVector(m_cfg.postEventPosX, m_cfg.postEventPosY, m_cfg.postEventPosZ)
+					: CNtlVector(0.f, 0.f, 0.f);
+				WORLDID wId = (pWorld ? pWorld->GetID() : INVALID_WORLDID);
+				pPlayer->StartTeleport(dest, pPlayer->GetCurDir(), wId, TELEPORT_TYPE_COMMAND);
 			}
 		}
 	}
+}
+
+bool CEventManager::TeleportOneToWorldTblidx(CPlayer* pPlayer, unsigned int worldTblidx, float posX, float posY, float posZ)
+{
+	if (!pPlayer || !pPlayer->IsInitialized()) return false;
+	if (worldTblidx == 0) return false;
+
+	CGameServer* app = (CGameServer*)g_pApp;
+	sWORLD_TBLDAT* pWorldTbldat = (sWORLD_TBLDAT*)g_pTableContainer->GetWorldTable()->FindData((TBLIDX)worldTblidx);
+	if (!pWorldTbldat) return false;
+
+	CWorld* pWorld = nullptr;
+	// Reuse current event instance when applicable
+	if (m_eventWorldId)
+		pWorld = app->GetGameMain()->GetWorldManager()->FindWorld((WORLDID)m_eventWorldId);
+	if (!pWorld)
+	{
+		pWorld = app->GetGameMain()->GetWorldManager()->CreateWorld(pWorldTbldat);
+		if (!pWorld) return false;
+		m_eventWorldId = (unsigned int)pWorld->GetID();
+	}
+
+	CNtlVector destLoc = pWorldTbldat->vStart1Loc;
+	if (!(posX == 0.f && posY == 0.f && posZ == 0.f))
+	{
+		destLoc.x = posX; destLoc.y = posY; destLoc.z = posZ;
+	}
+
+	// Use COMMAND teleport type
+	pPlayer->StartTeleport(destLoc, pPlayer->GetCurDir(), pWorld->GetID(), TELEPORT_TYPE_COMMAND);
+	return true;
+}
+
+bool CEventManager::TeleportOneToWorldTblidxDir(CPlayer* pPlayer, unsigned int worldTblidx, float posX, float posY, float posZ, float dirX, float dirY, float dirZ)
+{
+	if (!pPlayer) return false;
+	if (!TeleportOneToWorldTblidx(pPlayer, worldTblidx, posX, posY, posZ)) return false;
+	CNtlVector vDir(dirX, dirY, dirZ);
+	if (!vDir.IsZero())
+		pPlayer->SetCurDir(vDir);
+	return true;
 }
 
 void CEventManager::OnPlayerEnterWorld(CPlayer* pPlayer)
@@ -1010,12 +1253,50 @@ void CEventManager::OnPlayerEnterWorld(CPlayer* pPlayer)
 	if (!pPlayer || !IsParticipant(pPlayer))
 		return;
 
-	// Player entered event world, sync state if needed
-	if (m_state == State::IN_ROUND && m_roundTimerActive)
+	// Player entered event world, resync phase UI if needed
+	if (m_eventWorldId != 0 && (unsigned int)pPlayer->GetWorldID() != m_eventWorldId)
+		return; // only resync inside event world
+
+	if (m_state == State::PRE_ROUND)
 	{
-		// Send round timer to player
-		unsigned int seconds = (unsigned int)(m_roundRemainMs / 1000);
-		// Could send dungeon state or timer here
+		// Start fallback countdown for the player if active
+		SendCountdownTo(pPlayer, true);
+	}
+	else if (m_state == State::IN_ROUND)
+	{
+		if (m_roundTimerActive)
+		{
+			unsigned int seconds = (unsigned int)(m_roundRemainMs / 1000);
+			SendRoundTimerStartTo(pPlayer, seconds);
+		}
+		else
+		{
+			// Ensure countdown UI is off for the player
+			SendCountdownTo(pPlayer, false);
+		}
+	}
+}
+
+void CEventManager::OnPlayerEnterWorldComplete(CPlayer* pPlayer)
+{
+	if (!pPlayer || !m_cfg.enabled) return;
+
+	// If enrollment is open and this channel is valid, show a lightweight notice to the logging-in player
+	if (m_state == State::ENROLLMENT && IsChannelValid())
+	{
+		unsigned int secRemain = (unsigned int)(m_enrollmentRemainMs / 1000);
+		wchar_t msg[192];
+		if (secRemain > 0)
+			swprintf_s(msg, _countof(msg), L"[EVENT] Enrollment is OPEN. Type @participate to join. (%us left)", secRemain);
+		else
+			swprintf_s(msg, _countof(msg), L"[EVENT] Enrollment is OPEN. Type @participate to join.");
+		SendSystemTo(pPlayer, msg, SERVER_TEXT_SYSTEM);
+	}
+
+	// If this player is already a participant and enters the event world later, reuse the resync path
+	if (IsParticipant(pPlayer))
+	{
+		OnPlayerEnterWorld(pPlayer);
 	}
 }
 
@@ -1027,6 +1308,9 @@ void CEventManager::StartRoundTimer(unsigned int seconds)
 	if (m_eventWorldId > 0)
 	{
 		BroadcastRoundTimerStartToWorld(m_eventWorldId, seconds);
+		// Also start a generic countdown UI for redundancy (some maps ignore dungeon timer)
+		BroadcastCountdownToWorld(m_eventWorldId, true);
+		m_countdownActive = true;
 	}
 }
 
@@ -1038,39 +1322,129 @@ void CEventManager::StopRoundTimer()
 	if (m_eventWorldId > 0)
 	{
 		BroadcastRoundTimerEndToWorld(m_eventWorldId);
+		// End fallback countdown as well
+		BroadcastCountdownToWorld(m_eventWorldId, false);
+		m_countdownActive = false;
 	}
 }
 
 void CEventManager::BroadcastRoundTimerStartToWorld(unsigned int worldId, unsigned int seconds)
 {
-	CNtlPacket packet(sizeof(sGU_DUNGEON_TIMER_START));
-	sGU_DUNGEON_TIMER_START* res = (sGU_DUNGEON_TIMER_START*)packet.GetPacketData();
-	res->wOpCode = GU_DUNGEON_TIMER_START;
+	CGameServer* app = (CGameServer*)g_pApp;
+	CWorld* pWorld = app->GetGameMain()->GetWorldManager()->FindWorld((WORLDID)worldId);
+	if (!pWorld) return;
+	CNtlPacket packet(sizeof(sGU_BATTLE_DUNGEON_LIMIT_TIME_START_NFY));
+	sGU_BATTLE_DUNGEON_LIMIT_TIME_START_NFY* res = (sGU_BATTLE_DUNGEON_LIMIT_TIME_START_NFY*)packet.GetPacketData();
+	res->wOpCode = GU_BATTLE_DUNGEON_LIMIT_TIME_START_NFY;
 	res->dwLimitTime = seconds;
-	packet.SetPacketLen(sizeof(sGU_DUNGEON_TIMER_START));
-	g_pObjectManager->SendPacketToWorld(worldId, &packet, false);
+	packet.SetPacketLen(sizeof(sGU_BATTLE_DUNGEON_LIMIT_TIME_START_NFY));
+	pWorld->Broadcast(&packet);
 }
 
 void CEventManager::BroadcastRoundTimerEndToWorld(unsigned int worldId)
 {
-	CNtlPacket packet(sizeof(sGU_DUNGEON_TIMER_END));
-	sGU_DUNGEON_TIMER_END* res = (sGU_DUNGEON_TIMER_END*)packet.GetPacketData();
-	res->wOpCode = GU_DUNGEON_TIMER_END;
-	packet.SetPacketLen(sizeof(sGU_DUNGEON_TIMER_END));
-	g_pObjectManager->SendPacketToWorld(worldId, &packet, false);
+	CGameServer* app = (CGameServer*)g_pApp;
+	CWorld* pWorld = app->GetGameMain()->GetWorldManager()->FindWorld((WORLDID)worldId);
+	if (!pWorld) return;
+	CNtlPacket packet(sizeof(sGU_BATTLE_DUNGEON_LIMIT_TIME_END_NFY));
+	sGU_BATTLE_DUNGEON_LIMIT_TIME_END_NFY* res = (sGU_BATTLE_DUNGEON_LIMIT_TIME_END_NFY*)packet.GetPacketData();
+	res->wOpCode = GU_BATTLE_DUNGEON_LIMIT_TIME_END_NFY;
+	packet.SetPacketLen(sizeof(sGU_BATTLE_DUNGEON_LIMIT_TIME_END_NFY));
+	pWorld->Broadcast(&packet);
 }
 
 void CEventManager::BroadcastDungeonStateToWorld(unsigned int worldId, unsigned char byStage, unsigned int titleTblidx)
 {
-	CNtlPacket packet(sizeof(sGU_DUNGEON_DUNGEON_STATE));
-	sGU_DUNGEON_DUNGEON_STATE* res = (sGU_DUNGEON_DUNGEON_STATE*)packet.GetPacketData();
-	res->wOpCode = GU_DUNGEON_DUNGEON_STATE;
+	CGameServer* app = (CGameServer*)g_pApp;
+	CWorld* pWorld = app->GetGameMain()->GetWorldManager()->FindWorld((WORLDID)worldId);
+	if (!pWorld) return;
+	CNtlPacket packet(sizeof(sGU_BATTLE_DUNGEON_STATE_UPATE_NFY));
+	sGU_BATTLE_DUNGEON_STATE_UPATE_NFY* res = (sGU_BATTLE_DUNGEON_STATE_UPATE_NFY*)packet.GetPacketData();
+	res->wOpCode = GU_BATTLE_DUNGEON_STATE_UPATE_NFY;
+	res->titleTblidx = titleTblidx;
+	res->subTitleTblidx = 0;
 	res->byStage = byStage;
-	res->dwLimitTime = 0;
-	res->dungeonState.dungeonName = titleTblidx;
-	res->dungeonState.subDungeonName = 0;
-	packet.SetPacketLen(sizeof(sGU_DUNGEON_DUNGEON_STATE));
-	g_pObjectManager->SendPacketToWorld(worldId, &packet, false);
+	packet.SetPacketLen(sizeof(sGU_BATTLE_DUNGEON_STATE_UPATE_NFY));
+	pWorld->Broadcast(&packet);
+}
+
+void CEventManager::BroadcastCountdownToWorld(unsigned int worldId, bool bStart)
+{
+	CGameServer* app = (CGameServer*)g_pApp;
+	CWorld* pWorld = app->GetGameMain()->GetWorldManager()->FindWorld((WORLDID)worldId);
+	if (!pWorld)
+		return;
+
+	CNtlPacket packet(sizeof(sGU_TIMEQUEST_COUNTDOWN_NFY));
+	sGU_TIMEQUEST_COUNTDOWN_NFY* res = (sGU_TIMEQUEST_COUNTDOWN_NFY*)packet.GetPacketData();
+	res->wOpCode = GU_TIMEQUEST_COUNTDOWN_NFY;
+	res->bCountDown = bStart;
+	packet.SetPacketLen(sizeof(sGU_TIMEQUEST_COUNTDOWN_NFY));
+	for (auto cid : m_participants)
+	{
+		CPlayer* pRecv = g_pObjectManager->FindByChar((CHARACTERID)cid);
+		if (!pRecv || !pRecv->IsInitialized() || (unsigned int)pRecv->GetWorldID() != worldId) continue;
+		pRecv->SendPacket(&packet);
+	}
+}
+
+void CEventManager::SendCountdownTo(CPlayer* pPlayer, bool bStart)
+{
+	if (!pPlayer) return;
+	CNtlPacket packet(sizeof(sGU_TIMEQUEST_COUNTDOWN_NFY));
+	sGU_TIMEQUEST_COUNTDOWN_NFY* res = (sGU_TIMEQUEST_COUNTDOWN_NFY*)packet.GetPacketData();
+	res->wOpCode = GU_TIMEQUEST_COUNTDOWN_NFY;
+	res->bCountDown = bStart;
+	packet.SetPacketLen(sizeof(sGU_TIMEQUEST_COUNTDOWN_NFY));
+	pPlayer->SendPacket(&packet);
+}
+
+void CEventManager::SendRoundTimerStartTo(CPlayer* pPlayer, unsigned int seconds)
+{
+	if (!pPlayer) return;
+	CNtlPacket packet(sizeof(sGU_BATTLE_DUNGEON_LIMIT_TIME_START_NFY));
+	sGU_BATTLE_DUNGEON_LIMIT_TIME_START_NFY* res = (sGU_BATTLE_DUNGEON_LIMIT_TIME_START_NFY*)packet.GetPacketData();
+	res->wOpCode = GU_BATTLE_DUNGEON_LIMIT_TIME_START_NFY;
+	res->dwLimitTime = seconds;
+	packet.SetPacketLen(sizeof(sGU_BATTLE_DUNGEON_LIMIT_TIME_START_NFY));
+	pPlayer->SendPacket(&packet);
+	// Also ensure countdown is on as redundancy
+	SendCountdownTo(pPlayer, true);
+}
+
+void CEventManager::SendRoundTimerEndTo(CPlayer* pPlayer)
+{
+	if (!pPlayer) return;
+	CNtlPacket packet(sizeof(sGU_BATTLE_DUNGEON_LIMIT_TIME_END_NFY));
+	sGU_BATTLE_DUNGEON_LIMIT_TIME_END_NFY* res = (sGU_BATTLE_DUNGEON_LIMIT_TIME_END_NFY*)packet.GetPacketData();
+	res->wOpCode = GU_BATTLE_DUNGEON_LIMIT_TIME_END_NFY;
+	packet.SetPacketLen(sizeof(sGU_BATTLE_DUNGEON_LIMIT_TIME_END_NFY));
+	pPlayer->SendPacket(&packet);
+	// End fallback countdown
+	SendCountdownTo(pPlayer, false);
+}
+
+void CEventManager::BeginNow()
+{
+	if (m_state == State::ENROLLMENT)
+	{
+		m_enrollmentRemainMs = 0;
+		if (!m_participants.empty())
+		{
+			BroadcastSystem(L"[EVENT] Enrollment closed. Teleporting participants (forced)...");
+			SendNotice(L"[EVENT] Enrollment closed. Teleporting participants (forced)...", SERVER_TEXT_SYSNOTICE);
+			TeleportParticipants();
+			m_state = State::PRE_ROUND;
+			m_startDelayRemainMs = ToMs(m_cfg.startDelaySeconds);
+			m_nextPreRoundAnnounceSec = (unsigned int)(m_startDelayRemainMs / 1000);
+		}
+		else
+		{
+			BroadcastSystem(L"[EVENT] No participants. Event cancelled.");
+			SendNotice(L"[EVENT] No participants. Event cancelled.", SERVER_TEXT_SYSNOTICE);
+			m_state = State::IDLE;
+		}
+	}
 }
 
 unsigned int CEventManager::GetWorldForRound(unsigned int roundIndex)
@@ -1141,7 +1515,8 @@ bool CEventManager::IsChannelValid()
 	std::transform(want.begin(), want.end(), want.begin(), ::tolower);
 	std::transform(got.begin(), got.end(), got.begin(), ::tolower);
 
-	return got.find(want) != std::string::npos;
+	// Allow both configured channel and TEST channel
+	return got.find(want) != std::string::npos || got.find("test") != std::string::npos;
 }
 
 void CEventManager::BroadcastSystem(const wchar_t* msg, unsigned char byType)
@@ -1150,9 +1525,10 @@ void CEventManager::BroadcastSystem(const wchar_t* msg, unsigned char byType)
 	sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
 	res->wOpCode = GU_SYSTEM_DISPLAY_TEXT;
 	res->byDisplayType = byType;
-	NTL_SAFE_WCSCPY(res->awchMessage, msg);
+	res->wMessageLengthInUnicode = (WORD)wcslen(msg);
+	wcscpy_s(res->awchMessage, NTL_MAX_LENGTH_OF_CHAT_MESSAGE + 1, msg);
 	packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
-	g_pApp->BroadCast(&packet);
+	g_pObjectManager->SendPacketToAll(&packet);
 }
 
 void CEventManager::SendSystemTo(CPlayer* pPlayer, const wchar_t* msg, unsigned char byType)
@@ -1164,9 +1540,30 @@ void CEventManager::SendSystemTo(CPlayer* pPlayer, const wchar_t* msg, unsigned 
 	sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
 	res->wOpCode = GU_SYSTEM_DISPLAY_TEXT;
 	res->byDisplayType = byType;
-	NTL_SAFE_WCSCPY(res->awchMessage, msg);
+	res->wMessageLengthInUnicode = (WORD)wcslen(msg);
+	wcscpy_s(res->awchMessage, NTL_MAX_LENGTH_OF_CHAT_MESSAGE + 1, msg);
 	packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
 	pPlayer->SendPacket(&packet);
+}
+
+void CEventManager::SendNotice(const wchar_t* msg, unsigned char byType)
+{
+	// Mirror Arena's chat broadcast so messages go through ChatServer too
+	CGameServer* app = (CGameServer*)g_pApp;
+	if (!app || !app->GetChatServerSession())
+	{
+		// Fallback to in-world broadcast if ChatServer not available
+		BroadcastSystem(msg, byType);
+		return;
+	}
+	CNtlPacket packet(sizeof(sGT_SYSTEM_DISPLAY_TEXT));
+	sGT_SYSTEM_DISPLAY_TEXT* res = (sGT_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+	res->wOpCode = GT_SYSTEM_DISPLAY_TEXT;
+	res->serverChannelId = INVALID_SERVERCHANNELID;
+	res->byDisplayType = byType;
+	wcsncpy_s(res->wszMessage, NTL_MAX_LENGTH_OF_CHAT_MESSAGE + 1, msg, _TRUNCATE);
+	packet.SetPacketLen(sizeof(sGT_SYSTEM_DISPLAY_TEXT));
+	app->SendTo(app->GetChatServerSession(), &packet);
 }
 
 void CEventManager::StatusTo(CPlayer* pWho)
@@ -1189,4 +1586,24 @@ void CEventManager::StatusTo(CPlayer* pWho)
 	swprintf_s(msg, L"[EVENT] State: %s | Round: %u/%u | Participants: %u",
 		stateStr, m_currentRound + 1, (unsigned)m_cfg.rounds.size(), (unsigned)m_participants.size());
 	SendSystemTo(pWho, msg);
+}
+
+bool CEventManager::ReloadConfigFromDefault()
+{
+	const char* eventIni = ".\\config\\Events.cfg";
+	bool ok = LoadConfigFromIniPath(eventIni);
+	NTL_PRINT(PRINT_APP, ok ? "[EVENT] Config reloaded" : "[EVENT] Config reload failed");
+	return ok;
+}
+
+void CEventManager::ResetAutomation(bool startIfZeroDelay)
+{
+	m_autoState = AutoState::OFF;
+	m_autoRemainMs = 0;
+
+	if (startIfZeroDelay && m_cfg.autoEnabled && m_cfg.autoInitialDelaySeconds == 0 && m_state == State::IDLE && IsChannelValid())
+	{
+		Start();
+		m_autoState = AutoState::ENROLLMENT_OPEN;
+	}
 }

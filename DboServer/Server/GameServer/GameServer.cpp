@@ -45,6 +45,8 @@
 #include "Fairy Event.h"
 #include "CustomDropEvent.h"
 #include "PlayerModifiers.h"
+#include "FeatureFlags.h"
+#include "VirtualTransformationManager.h"
 #include "HelperNpcManager.h"
 #include "SkillTable.h"
 #include "ArenaManager.h"
@@ -323,6 +325,35 @@ int CGameServer::OnAppStart()
 		const char* eventIni = ".\\config\\Events.cfg";
 		bool ok = g_pEventManager->LoadConfigFromIniPath(eventIni);
 		NTL_PRINT(PRINT_APP, ok ? "[EVENT] Config loaded" : "[EVENT] Config not found or invalid");
+	}
+
+	NTL_PRINT(PRINT_APP, "Prepare Feature Flags System");
+	CFeatureFlags* pFeatureFlags = new CFeatureFlags;
+	UNREFERENCED_PARAMETER(pFeatureFlags);
+
+	// Load Feature Flags config
+	{
+		const char* featureFlagsIni = ".\\config\\FeatureFlags.cfg";
+		NTL_PRINT(PRINT_APP, "[FEATURE_FLAGS] Loading config from: %s", featureFlagsIni);
+		bool ok = g_pFeatureFlags->LoadFromFile(featureFlagsIni);
+		NTL_PRINT(PRINT_APP, ok ? "[FEATURE_FLAGS] Config loaded successfully" : "[FEATURE_FLAGS] Config not found, using defaults");
+	}
+
+	NTL_PRINT(PRINT_APP, "Prepare Virtual Transformation System");
+	CVirtualTransformationManager* pVirtualTransformationManager = new CVirtualTransformationManager;
+	UNREFERENCED_PARAMETER(pVirtualTransformationManager);
+
+	// Load Virtual Transformation config only if feature is enabled
+	if (g_pFeatureFlags->IsVirtualTransformationsEnabled())
+	{
+		const char* vtransformIni = ".\\config\\VirtualTransforms.cfg";
+		NTL_PRINT(PRINT_APP, "[VTRANSFORM] Loading config from: %s", vtransformIni);
+		bool ok = g_pVirtualTransformManager->LoadConfigFromIniPath(vtransformIni);
+		NTL_PRINT(PRINT_APP, ok ? "[VTRANSFORM] Config loaded successfully" : "[VTRANSFORM] Config not found or invalid");
+	}
+	else
+	{
+		NTL_PRINT(PRINT_APP, "[VTRANSFORM] Virtual Transformations are DISABLED by feature flag - skipping config load");
 	}
 
 	int rc = NTL_SUCCESS;
