@@ -21,6 +21,7 @@
 #include "StoneDropEvent.h"
 #include "CustomDropEvent.h"
 #include "Fairy Event.h"
+#include "EventManager.h"
 #include <queue>
 
 
@@ -614,16 +615,47 @@ bool CMonster::Faint(CCharacterObject* pkKiller, eFAINT_REASON byReason)
 {
 	if (CCharacterObject::Faint(pkKiller, byReason))
 	{
+		// Notify EventManager that this mob was killed (for round tracking)
+		if (g_pEventManager && g_pEventManager->IsEnabled())
+		{
+			g_pEventManager->OnMobKilled(GetID());
+		}
+
 		if (pkKiller && GetCurWorld() && (pkKiller->IsPC() || pkKiller->IsSummonPet()))
 		{
 			CPlayer* pKiller = (pkKiller->IsSummonPet() == false) ? (CPlayer*)pkKiller : ((CSummonPet*)pkKiller)->GetOwner();
-			
+
 			if (pKiller->GetLevel() > DBO_DRAGONBALL_EVENT_DROP_LEVEL_DIFF)
 			{
 				m_byKillerLevel = pKiller->GetLevel();
 			}
 
 			m_hKillerCharID = pKiller->GetCharID();
+
+			// Track participation for EventManager (anti-AFK measure)
+			// Award damage credit equal to mob's max LP to the killer
+			if (g_pEventManager && g_pEventManager->IsEnabled())
+			{
+				g_pEventManager->OnPlayerDamageEventMob(pKiller->GetCharID(), GetMaxLP());
+				// Track kill for engagement features (combos, leaderboard, announcements)
+				const char* mobNameAnsi = "Mob";
+				if (GetTbldat())
+				{
+					// Prefer ANSI name if available, else fallback to wide char truncated
+					if (GetTbldat()->szNameText[0] != '\0')
+					{
+						mobNameAnsi = GetTbldat()->szNameText;
+					}
+					else if (GetTbldat()->wszNameText[0] != L'\0')
+					{
+						static char s_buf[DBO_MAX_LENGTH_BOT_NAME_TEXT + 1];
+						size_t out = 0; s_buf[0] = '\0';
+						wcstombs_s(&out, s_buf, GetTbldat()->wszNameText, _TRUNCATE);
+						if (s_buf[0] != '\0') mobNameAnsi = s_buf;
+					}
+				}
+				g_pEventManager->OnPlayerKilledMob(pKiller, mobNameAnsi);
+			}
 
 			CreateKillReward(GetCurWorld()->GetRuleType() != GAMERULE_CCBATTLEDUNGEON);
 			g_pDynamicFieldSystemEvent->Update(this, pKiller);
@@ -637,7 +669,7 @@ bool CMonster::Faint(CCharacterObject* pkKiller, eFAINT_REASON byReason)
 			{
 				int killBonus = 0 + rand() % 10;
 				pKiller->UpdateNetPyPoints(pKiller->GetNetPyPoints() + killBonus, killBonus, true);
-			}			
+			}
 			FaintBuffReward(pKiller);
 
 			if (pKiller->GetTMQ())

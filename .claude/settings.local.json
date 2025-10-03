@@ -21,7 +21,9 @@
       "Bash(xxd:*)",
       "Bash(\"C:\\Program Files\\Git\\usr\\bin\\xxd.exe\" \"C:\\Users\\claud\\Downloads\\DBOLegacy V1.5 - FULL\\DBOLegacy\\Berserkers.vmp.dll\")",
       "Bash(\"C:\\Program Files\\Git\\usr\\bin\\xxd.exe\" -s 0x26fd0 -l 128 \"C:\\Users\\claud\\Downloads\\DBOLegacy V1.5 - FULL\\DBOLegacy\\Berserkers.vmp.dll\")",
-      "Bash(code .)"
+      "Bash(code .)",
+      "Bash(msbuild:*)",
+      "Read(//d/Nico/projects/dbo-legacy/**)"
     ],
     "deny": [],
     "ask": []

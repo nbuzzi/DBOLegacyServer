@@ -24,8 +24,8 @@ echo Found MSBuild: %MSBUILD%
 echo.
 
 REM Build GameServer
-echo Building GameServer (Release x64)...
-%MSBUILD% "DboServer\Server\GameServer\GameServer.vcxproj" /p:Configuration=Release /p:Platform=x64 /t:Rebuild /m
+echo Building Solution (Release4Server x64)...
+%MSBUILD% "DboServer\DboServer.sln" /p:Configuration=Release4Server /p:Platform=x64 /t:Build /m
 
 if errorlevel 1 (
     echo.
@@ -39,8 +39,12 @@ echo ============================================
 echo Build successful! Deploying to ExecutionEnv
 echo ============================================
 
-REM Copy the built exe to ExecutionEnv
-copy /Y "DboServer\Server\GameServer\x64\Release\GameServer.exe" "DboServer\ExecutionEnv\GameServer.exe"
+REM Copy the built exe to ExecutionEnv (in case OutDir didn't already place it there)
+if exist "DboServer\Server\GameServer\x64\Release\GameServer.exe" (
+    copy /Y "DboServer\Server\GameServer\x64\Release\GameServer.exe" "DboServer\ExecutionEnv\GameServer.exe"
+) else (
+    echo NOTE: GameServer.exe not found under x64\Release; assuming it was emitted directly to ExecutionEnv by project OutDir.
+)
 
 if errorlevel 1 (
     echo ERROR: Failed to copy GameServer.exe

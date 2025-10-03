@@ -20,6 +20,8 @@
 #include <sstream>
 #include <cstdarg>
 #include <cstdio>
+#include <random>
+#include <vector>
 
 static unsigned long ToMs(unsigned int seconds) { return seconds * 1000UL; }
 
@@ -52,11 +54,68 @@ CEventManager::CEventManager()
 	, m_roundRemainMs(0)
 	, m_roundTimerActive(false)
 	, m_postEventTeleportRemainMs(0)
+	, m_roundStartTime(0)
+	, m_teamRedDamage(0)
+	, m_teamBlueDamage(0)
+	, m_teamRedKills(0)
+	, m_teamBlueKills(0)
 {
 }
 
 CEventManager::~CEventManager()
 {
+}
+
+// Centralized helper: get a world instance for a tblidx.
+// - If the world is static (bDynamic==false), reuse the existing instance by tblidx as WORLDID.
+// - If dynamic, reuse m_eventWorldId if valid and matches, otherwise create a new world and record m_eventWorldId.
+CWorld* CEventManager::GetOrCreateWorld(unsigned int worldTblidx)
+{
+	CGameServer* app = (CGameServer*)g_pApp;
+	if (!app) return nullptr;
+	sWORLD_TBLDAT* pWorldTbldat = (sWORLD_TBLDAT*)g_pTableContainer->GetWorldTable()->FindData((TBLIDX)worldTblidx);
+	if (!pWorldTbldat) return nullptr;
+
+	// If dynamic, prefer reusing current event instance when compatible
+	if (pWorldTbldat->bDynamic)
+	{
+		if (m_eventWorldId)
+		{
+			CWorld* reuse = app->GetGameMain()->GetWorldManager()->FindWorld((WORLDID)m_eventWorldId);
+			if (reuse)
+			{
+				sWORLD_TBLDAT* curTbldat = reuse->GetTbldat();
+				if (curTbldat && curTbldat->tblidx == (TBLIDX)worldTblidx)
+					return reuse;
+			}
+		}
+		CWorld* created = app->GetGameMain()->GetWorldManager()->CreateWorld(pWorldTbldat);
+		if (!created) return nullptr;
+		m_eventWorldId = (unsigned int)created->GetID();
+		return created;
+	}
+
+	// Static world: it should already exist, find by tblidx
+	CWorld* pStatic = app->GetGameMain()->GetWorldManager()->FindWorld((WORLDID)pWorldTbldat->tblidx);
+	if (pStatic)
+	{
+		m_eventWorldId = (unsigned int)pStatic->GetID();
+		return pStatic;
+	}
+	return nullptr;
+}
+
+// Compute a destination location for a world: use world start loc then apply override if provided (non-zero vector)
+bool CEventManager::ComputeDestForWorld(unsigned int worldTblidx, float overrideX, float overrideY, float overrideZ, CNtlVector& outDest)
+{
+	sWORLD_TBLDAT* pWorldTbldat = (sWORLD_TBLDAT*)g_pTableContainer->GetWorldTable()->FindData((TBLIDX)worldTblidx);
+	if (!pWorldTbldat) return false;
+	outDest = pWorldTbldat->vStart1Loc;
+	if (!(overrideX == 0.f && overrideY == 0.f && overrideZ == 0.f))
+	{
+		outDest.x = overrideX; outDest.y = overrideY; outDest.z = overrideZ;
+	}
+	return true;
 }
 
 bool CEventManager::LoadConfigFromIniPath(const char* iniPath)
@@ -193,6 +252,69 @@ bool CEventManager::LoadConfigFromIniPath(const char* iniPath)
 	int verbose = 0;
 	if (file.Read("Event", "VerboseLogs", verbose))
 		m_cfg.verboseLogs = (verbose != 0);
+
+	// Engagement features
+	int leaderboard = 1;
+	if (file.Read("Engagement", "EnableLeaderboard", leaderboard))
+		m_cfg.enableLeaderboard = (leaderboard != 0);
+
+	unsigned int mvpBonus = 0;
+	if (file.Read("Engagement", "MVPBonusMudosa", mvpBonus))
+		m_cfg.mvpBonusMudosa = mvpBonus;
+
+	int killAnnounce = 1;
+	if (file.Read("Engagement", "EnableKillAnnouncements", killAnnounce))
+		m_cfg.enableKillAnnouncements = (killAnnounce != 0);
+
+	int comboBonus = 1;
+	if (file.Read("Engagement", "EnableComboBonus", comboBonus))
+		m_cfg.enableComboBonus = (comboBonus != 0);
+
+	unsigned int comboTimeout = 0;
+	if (file.Read("Engagement", "ComboTimeoutSeconds", comboTimeout))
+		m_cfg.comboTimeoutSeconds = comboTimeout;
+
+	float comboMult = 0;
+	if (file.Read("Engagement", "ComboMultiplier", comboMult))
+		m_cfg.comboMultiplier = comboMult;
+
+	int dynDiff = 1;
+	if (file.Read("Engagement", "EnableDynamicDifficulty", dynDiff))
+		m_cfg.enableDynamicDifficulty = (dynDiff != 0);
+
+	float diffPerPlayer = 0;
+	if (file.Read("Engagement", "DifficultyPerPlayer", diffPerPlayer))
+		m_cfg.difficultyPerPlayer = diffPerPlayer;
+
+	int timeAttack = 1;
+	if (file.Read("Engagement", "EnableTimeAttack", timeAttack))
+		m_cfg.enableTimeAttack = (timeAttack != 0);
+
+	unsigned int goldTime = 0, silverTime = 0, bronzeTime = 0, timeBonus = 0;
+	if (file.Read("Engagement", "TimeAttackGoldSeconds", goldTime))
+		m_cfg.timeAttackGoldSeconds = goldTime;
+	if (file.Read("Engagement", "TimeAttackSilverSeconds", silverTime))
+		m_cfg.timeAttackSilverSeconds = silverTime;
+	if (file.Read("Engagement", "TimeAttackBronzeSeconds", bronzeTime))
+		m_cfg.timeAttackBronzeSeconds = bronzeTime;
+	if (file.Read("Engagement", "TimeAttackBonusMudosa", timeBonus))
+		m_cfg.timeAttackBonusMudosa = timeBonus;
+
+	int partyBonus = 1;
+	if (file.Read("Engagement", "EnablePartyBonus", partyBonus))
+		m_cfg.enablePartyBonus = (partyBonus != 0);
+
+	float partyMult = 0;
+	if (file.Read("Engagement", "PartyBonusMultiplier", partyMult))
+		m_cfg.partyBonusMultiplier = partyMult;
+
+	int teamComp = 0;
+	if (file.Read("Engagement", "EnableTeamCompetition", teamComp))
+		m_cfg.enableTeamCompetition = (teamComp != 0);
+
+	unsigned int teamBonus = 0;
+	if (file.Read("Engagement", "TeamCompetitionBonusMudosa", teamBonus))
+		m_cfg.teamCompetitionBonusMudosa = teamBonus;
 
 	// Parse rounds configuration
 	CNtlString roundsCsv = file.Read("Event", "Rounds");
@@ -519,30 +641,25 @@ void CEventManager::AutomationTick(unsigned long dwTickDiff)
 	if (!IsChannelValid())
 		return;
 
+	// Initialize automation if currently off (like Arena does)
+	if (m_autoState == AutoState::OFF)
+	{
+		m_autoState = AutoState::WAIT_NEXT;
+		// Calculate prep time before opening enrollment
+		unsigned int firstDelay = m_cfg.autoInitialDelaySeconds;
+		unsigned int prepWaitSec = 0;
+		if (firstDelay > m_cfg.enrollmentSeconds)
+			prepWaitSec = firstDelay - m_cfg.enrollmentSeconds;
+		else
+			prepWaitSec = 0; // open enrollment immediately
+		m_autoRemainMs = ToMs(prepWaitSec);
+		EVENT_VLOG(m_cfg, LOG_GENERAL, "[EVENT][AUTO] Initialized: firstDelay=%u enrollmentSeconds=%u prepWaitSec=%u",
+			firstDelay, m_cfg.enrollmentSeconds, prepWaitSec);
+		return;
+	}
+
 	switch (m_autoState)
 	{
-	case AutoState::OFF:
-		// If initial delay is zero, start immediately; otherwise wait
-		if (m_cfg.autoInitialDelaySeconds == 0)
-		{
-			if (m_state == State::IDLE)
-			{
-				Start();
-				m_autoState = AutoState::ENROLLMENT_OPEN;
-			}
-			else
-			{
-				m_autoState = AutoState::WAIT_NEXT;
-				m_autoRemainMs = ToMs(60);
-			}
-		}
-		else
-		{
-			m_autoState = AutoState::WAIT_NEXT;
-			m_autoRemainMs = ToMs(m_cfg.autoInitialDelaySeconds);
-		}
-		break;
-
 	case AutoState::WAIT_NEXT:
 		if (m_autoRemainMs > dwTickDiff)
 		{
@@ -551,15 +668,16 @@ void CEventManager::AutomationTick(unsigned long dwTickDiff)
 		else
 		{
 			m_autoRemainMs = 0;
-			if (m_state == State::IDLE)
+			// Don't interrupt an active event; defer until it returns to IDLE
+			if (m_state != State::IDLE)
 			{
-				Start();
-				m_autoState = AutoState::ENROLLMENT_OPEN;
+				m_autoRemainMs = ToMs(5); // Check again in 5 seconds
+				return;
 			}
-			else
-			{
-				m_autoRemainMs = ToMs(60); // Check again in 1 minute
-			}
+			// Start enrollment
+			Start();
+			m_autoState = AutoState::ENROLLMENT_OPEN;
+			EVENT_VLOG(m_cfg, LOG_GENERAL, "[EVENT][AUTO] Enrollment opened");
 		}
 		break;
 
@@ -678,6 +796,23 @@ void CEventManager::StartNextRound()
 
 	const EventRound& round = m_cfg.rounds[m_currentRound];
 	m_killedMobs.clear();
+	m_roundContribution.clear(); // Reset damage tracking for new round
+
+	// Reset engagement tracking
+	m_playerKillCount.clear();
+	m_playerComboCount.clear();
+	m_lastKillTime.clear();
+	m_roundStartTime = GetTickCount(); // Time attack timer
+
+	// Team competition setup
+	if (m_cfg.enableTeamCompetition)
+	{
+		AssignTeams();
+		m_teamRedDamage = 0;
+		m_teamBlueDamage = 0;
+		m_teamRedKills = 0;
+		m_teamBlueKills = 0;
+	}
 
 	// Get world for this round (supports rotation)
 	unsigned int worldTblidx = GetWorldForRound(m_currentRound);
@@ -717,6 +852,23 @@ void CEventManager::CompleteCurrentRound()
 
 	StopRoundTimer();
 
+	// Check time attack bonus
+	CheckTimeAttackBonus();
+
+	// Team competition results
+	if (m_cfg.enableTeamCompetition)
+	{
+		ShowTeamScores();
+		AwardTeamBonuses();
+	}
+
+	// Show leaderboard and award MVP bonuses
+	if (m_cfg.enableLeaderboard)
+	{
+		ShowLeaderboard();
+		AwardMVPBonuses();
+	}
+
 	wchar_t msg[256];
 	swprintf_s(msg, L"[EVENT] Round %u completed!", m_currentRound + 1);
 	BroadcastSystem(msg);
@@ -745,18 +897,27 @@ void CEventManager::CompleteCurrentRound()
 		m_state = State::COMPLETE;
 		m_postEventTeleportRemainMs = m_cfg.postEventTeleportDelayMs;
 
-		// Award completion bonus
+		// Award completion bonus only to participants who fought in the last round
 		if (m_cfg.mudosaEventComplete > 0)
 		{
+			unsigned int bonusAwarded = 0;
 			for (unsigned int charId : m_participants)
 			{
-				CPlayer* pPlayer = g_pObjectManager->GetPC(charId);
-				if (pPlayer && pPlayer->IsInitialized())
+				// Check if they participated in the last round
+				auto it = m_roundContribution.find(charId);
+				if (it != m_roundContribution.end() && it->second > 0)
 				{
-					// UpdateMudosaPoints expects an absolute value; add to current total
-					pPlayer->UpdateMudosaPoints(pPlayer->GetMudosaPoints() + m_cfg.mudosaEventComplete, true);
+					CPlayer* pPlayer = g_pObjectManager->GetPC(charId);
+					if (pPlayer && pPlayer->IsInitialized())
+					{
+						// UpdateMudosaPoints expects an absolute value; add to current total
+						pPlayer->UpdateMudosaPoints(pPlayer->GetMudosaPoints() + m_cfg.mudosaEventComplete, true);
+						bonusAwarded++;
+					}
 				}
 			}
+			EVENT_VLOG(m_cfg, LOG_GENERAL, "[EVENT] Awarded completion bonus to %u/%u participants",
+				bonusAwarded, (unsigned)m_participants.size());
 		}
 
 		BroadcastSystem(L"[EVENT] All rounds completed! Congratulations!");
@@ -768,35 +929,12 @@ void CEventManager::SpawnRoundMobs(const EventRound& round)
 	// Get world for current round
 	unsigned int worldTblidx = GetWorldForRound(m_currentRound);
 
-	// Resolve or create world instance via WorldManager
-	CGameServer* app = (CGameServer*)g_pApp;
-	sWORLD_TBLDAT* pWorldTbldat = (sWORLD_TBLDAT*)g_pTableContainer->GetWorldTable()->FindData((TBLIDX)worldTblidx);
-	if (!pWorldTbldat)
-	{
-		ERR_LOG(LOG_GENERAL, "[EVENT] World tblidx not found: %u", worldTblidx);
-		return;
-	}
-	CWorld* pWorld = nullptr;
-	if (m_eventWorldId)
-	{
-		pWorld = app->GetGameMain()->GetWorldManager()->FindWorld((WORLDID)m_eventWorldId);
-		if (pWorld)
-		{
-			// If existing world has different tblidx, recreate
-			sWORLD_TBLDAT* curTbldat = pWorld->GetTbldat();
-			if (!curTbldat || curTbldat->tblidx != (TBLIDX)worldTblidx)
-				pWorld = nullptr;
-		}
-	}
+	// Resolve world instance
+	CWorld* pWorld = GetOrCreateWorld(worldTblidx);
 	if (!pWorld)
 	{
-		pWorld = app->GetGameMain()->GetWorldManager()->CreateWorld(pWorldTbldat);
-		if (!pWorld)
-		{
-			ERR_LOG(LOG_GENERAL, "[EVENT] Failed to create event world tblidx=%u", worldTblidx);
-			return;
-		}
-		m_eventWorldId = pWorld->GetID();
+		ERR_LOG(LOG_GENERAL, "[EVENT] SpawnRoundMobs: could not resolve world for tblidx=%u", worldTblidx);
+		return;
 	}
 
 	// Get spawn position for current round
@@ -904,16 +1042,42 @@ void CEventManager::SpawnMinionsAroundBoss(const CNtlVector& bossPos, const Mini
 
 void CEventManager::AwardRoundRewards(const EventRound& round)
 {
+	// Only award to participants who contributed damage this round (prevent AFK farming)
+	std::unordered_set<unsigned int> activeParticipants;
+	unsigned int minDamageRequired = 1; // Must have dealt at least 1 damage
+
+	for (unsigned int charId : m_participants)
+	{
+		auto it = m_roundContribution.find(charId);
+		if (it != m_roundContribution.end() && it->second >= minDamageRequired)
+		{
+			activeParticipants.insert(charId);
+		}
+		else
+		{
+			CPlayer* pPlayer = g_pObjectManager->GetPC(charId);
+			if (pPlayer && pPlayer->IsInitialized())
+			{
+				SendSystemTo(pPlayer, L"[EVENT] No rewards: you did not participate in combat this round.");
+			}
+			EVENT_VLOG(m_cfg, LOG_GENERAL, "[EVENT] Player charId=%u skipped for rewards: damage=%u (min=%u)",
+				charId, (it != m_roundContribution.end() ? it->second : 0), minDamageRequired);
+		}
+	}
+
 	if (round.useLootRange && round.lootRangeItemId > 0)
 	{
-		// Create loot in range
-		CNtlVector center(m_cfg.spawnPosX, m_cfg.spawnPosY, m_cfg.spawnPosZ);
+		// Create loot in range (all can pick up if they participated)
+		float x, y, z;
+		GetSpawnPosForRound(m_currentRound, x, y, z);
+		CNtlVector center(x, y, z);
 		CreateLootInRange(round.lootRangeItemId, round.lootRangeCount, center, m_cfg.mobSpawnRadius);
 	}
 	else
 	{
-		// Award fixed rewards to all participants
-		for (unsigned int charId : m_participants)
+		// Award fixed rewards only to active participants
+		unsigned int rewarded = 0;
+		for (unsigned int charId : activeParticipants)
 		{
 			CPlayer* pPlayer = g_pObjectManager->GetPC(charId);
 			if (pPlayer && pPlayer->IsInitialized())
@@ -925,10 +1089,23 @@ void CEventManager::AwardRoundRewards(const EventRound& round)
 
 				if (m_cfg.mudosaPerRound > 0)
 				{
-					pPlayer->UpdateMudosaPoints(pPlayer->GetMudosaPoints() + m_cfg.mudosaPerRound, true);
+					// Apply party bonus if applicable
+					float partyMultiplier = GetPartyBonusMultiplier(pPlayer);
+					unsigned int finalMudosa = (unsigned int)(m_cfg.mudosaPerRound * partyMultiplier);
+					pPlayer->UpdateMudosaPoints(pPlayer->GetMudosaPoints() + finalMudosa, true);
+
+					if (partyMultiplier > 1.0f)
+					{
+						wchar_t msg[128];
+						swprintf_s(msg, L"[EVENT] Party Bonus! +%.0f%% Mudosa!", (partyMultiplier - 1.0f) * 100.0f);
+						SendSystemTo(pPlayer, msg);
+					}
 				}
+				rewarded++;
 			}
 		}
+		EVENT_VLOG(m_cfg, LOG_GENERAL, "[EVENT] Rewarded %u/%u participants (active damage dealers only)",
+			rewarded, (unsigned)m_participants.size());
 	}
 }
 
@@ -994,6 +1171,32 @@ void CEventManager::OnMobKilled(unsigned int mobHandle)
 		m_killedMobs.insert(mobHandle);
 		EVENT_VLOG(m_cfg, LOG_GENERAL, "[EVENT] Mob killed: handle=%u (%u/%u)",
 			mobHandle, (unsigned)m_killedMobs.size(), (unsigned)m_spawnedMobs.size());
+	}
+}
+
+void CEventManager::OnPlayerDamageEventMob(unsigned int charId, unsigned int damage)
+{
+	// Only track if player is participant and event is active
+	if (m_state != State::IN_ROUND)
+		return;
+
+	if (!IsParticipantId(charId))
+		return;
+
+	// Accumulate damage for this round
+	m_roundContribution[charId] += damage;
+
+	// Track team damage if team competition enabled
+	if (m_cfg.enableTeamCompetition)
+	{
+		auto teamIt = m_playerTeam.find(charId);
+		if (teamIt != m_playerTeam.end())
+		{
+			if (teamIt->second == Team::RED)
+				m_teamRedDamage += damage;
+			else if (teamIt->second == Team::BLUE)
+				m_teamBlueDamage += damage;
+		}
 	}
 }
 
@@ -1082,13 +1285,13 @@ void CEventManager::TeleportParticipants()
 		}
 	}
 
-	// Teleport to event world
+	// Teleport to event world (coords from config are optional override; 0,0,0 means use world default)
 	TeleportParticipantsToWorld(m_cfg.eventWorldTblidx, m_cfg.teleportPosX, m_cfg.teleportPosY, m_cfg.teleportPosZ);
 }
 
 void CEventManager::TeleportParticipantsToWorld(unsigned int worldTblidx, float x, float y, float z)
 {
-	// Ensure world exists / create if needed. Default to world start position when coords are zero.
+	// Get world table data first to determine spawn position
 	CGameServer* app = (CGameServer*)g_pApp;
 	if (!app)
 	{
@@ -1103,6 +1306,16 @@ void CEventManager::TeleportParticipantsToWorld(unsigned int worldTblidx, float 
 		return;
 	}
 
+	// Determine destination: world start or override
+	CNtlVector destLoc;
+	bool haveDest = ComputeDestForWorld(worldTblidx, x, y, z, destLoc);
+	bool usingConfigOverride = !(x == 0.f && y == 0.f && z == 0.f);
+
+	EVENT_VLOG(m_cfg, LOG_GENERAL, "[EVENT] TeleportParticipantsToWorld: worldTblidx=%u worldStart=(%.2f,%.2f,%.2f) configOverride=%d finalPos=(%.2f,%.2f,%.2f) participants=%u",
+		worldTblidx, pWorldTbldat->vStart1Loc.x, pWorldTbldat->vStart1Loc.y, pWorldTbldat->vStart1Loc.z,
+		usingConfigOverride, destLoc.x, destLoc.y, destLoc.z, (unsigned)m_participants.size());
+
+	// Create or find world instance (handle static worlds like Arena)
 	CWorld* pWorld = nullptr;
 	if (m_eventWorldId)
 	{
@@ -1111,34 +1324,63 @@ void CEventManager::TeleportParticipantsToWorld(unsigned int worldTblidx, float 
 		{
 			sWORLD_TBLDAT* curTbldat = pWorld->GetTbldat();
 			if (!curTbldat || curTbldat->tblidx != (TBLIDX)worldTblidx)
-				pWorld = nullptr; // will recreate
+				pWorld = nullptr; // will resolve fresh below
 		}
 	}
 	if (!pWorld)
 	{
-		pWorld = app->GetGameMain()->GetWorldManager()->CreateWorld(pWorldTbldat);
-		if (!pWorld)
+		if (!pWorldTbldat->bDynamic)
 		{
-			ERR_LOG(LOG_GENERAL, "[EVENT] TeleportParticipantsToWorld: failed to create world %u", worldTblidx);
-			return;
+			// Static world already exists; find by tblidx
+			pWorld = app->GetGameMain()->GetWorldManager()->FindWorld((WORLDID)pWorldTbldat->tblidx);
+			if (!pWorld)
+			{
+				ERR_LOG(LOG_GENERAL, "[EVENT] TeleportParticipantsToWorld: static world instance not found (tblidx=%u)", worldTblidx);
+				return;
+			}
+			m_eventWorldId = (unsigned int)pWorld->GetID();
+			EVENT_VLOG(m_cfg, LOG_GENERAL, "[EVENT] Using static world: tblidx=%u worldId=%u", worldTblidx, m_eventWorldId);
 		}
-		m_eventWorldId = pWorld->GetID();
+		else
+		{
+			pWorld = app->GetGameMain()->GetWorldManager()->CreateWorld(pWorldTbldat);
+			if (!pWorld)
+			{
+				ERR_LOG(LOG_GENERAL, "[EVENT] TeleportParticipantsToWorld: failed to create world %u", worldTblidx);
+				return;
+			}
+			m_eventWorldId = (unsigned int)pWorld->GetID();
+			EVENT_VLOG(m_cfg, LOG_GENERAL, "[EVENT] Created event world: tblidx=%u worldId=%u", worldTblidx, m_eventWorldId);
+		}
 	}
 
-	CNtlVector destLoc = pWorldTbldat->vStart1Loc;
-	if (!(x == 0.f && y == 0.f && z == 0.f))
-	{
-		destLoc.x = x; destLoc.y = y; destLoc.z = z;
-	}
-
+	// Teleport all participants using COMMAND type (like Arena)
+	unsigned int teleported = 0;
 	for (unsigned int charId : m_participants)
 	{
 		CPlayer* pPlayer = g_pObjectManager->GetPC(charId);
 		if (pPlayer && pPlayer->IsInitialized())
 		{
+			// Guard against invalid coords (INF/NaN) – recompute from world start if needed
+			if (!std::isfinite(destLoc.x) || !std::isfinite(destLoc.y) || !std::isfinite(destLoc.z))
+			{
+				ComputeDestForWorld(worldTblidx, 0.f, 0.f, 0.f, destLoc);
+			}
 			pPlayer->StartTeleport(destLoc, pPlayer->GetCurDir(), pWorld->GetID(), TELEPORT_TYPE_COMMAND);
+			teleported++;
+			EVENT_VLOG(m_cfg, LOG_GENERAL, "[EVENT] Teleporting player %s (charId=%u) to (%.2f,%.2f,%.2f) worldId=%u type=COMMAND",
+				pPlayer->GetCharName(), charId, destLoc.x, destLoc.y, destLoc.z, pWorld->GetID());
+		}
+		else if (pPlayer)
+		{
+			// Queue teleport for when the player finishes loading
+			m_pendingTeleports.insert(charId);
+			EVENT_VLOG(m_cfg, LOG_GENERAL, "[EVENT] Queued deferred teleport for charId=%u (player not initialized)", charId);
 		}
 	}
+
+	ERR_LOG(LOG_GENERAL, "[EVENT] TeleportParticipantsToWorld completed: %u/%u players teleported to world %u at (%.2f,%.2f,%.2f)",
+		teleported, (unsigned)m_participants.size(), m_eventWorldId, destLoc.x, destLoc.y, destLoc.z);
 }
 
 void CEventManager::PostEventTeleportAll()
@@ -1216,22 +1458,11 @@ bool CEventManager::TeleportOneToWorldTblidx(CPlayer* pPlayer, unsigned int worl
 	sWORLD_TBLDAT* pWorldTbldat = (sWORLD_TBLDAT*)g_pTableContainer->GetWorldTable()->FindData((TBLIDX)worldTblidx);
 	if (!pWorldTbldat) return false;
 
-	CWorld* pWorld = nullptr;
-	// Reuse current event instance when applicable
-	if (m_eventWorldId)
-		pWorld = app->GetGameMain()->GetWorldManager()->FindWorld((WORLDID)m_eventWorldId);
-	if (!pWorld)
-	{
-		pWorld = app->GetGameMain()->GetWorldManager()->CreateWorld(pWorldTbldat);
-		if (!pWorld) return false;
-		m_eventWorldId = (unsigned int)pWorld->GetID();
-	}
+	CWorld* pWorld = GetOrCreateWorld(worldTblidx);
+	if (!pWorld) return false;
 
-	CNtlVector destLoc = pWorldTbldat->vStart1Loc;
-	if (!(posX == 0.f && posY == 0.f && posZ == 0.f))
-	{
-		destLoc.x = posX; destLoc.y = posY; destLoc.z = posZ;
-	}
+	CNtlVector destLoc;
+	if (!ComputeDestForWorld(worldTblidx, posX, posY, posZ, destLoc)) return false;
 
 	// Use COMMAND teleport type
 	pPlayer->StartTeleport(destLoc, pPlayer->GetCurDir(), pWorld->GetID(), TELEPORT_TYPE_COMMAND);
@@ -1297,6 +1528,28 @@ void CEventManager::OnPlayerEnterWorldComplete(CPlayer* pPlayer)
 	if (IsParticipant(pPlayer))
 	{
 		OnPlayerEnterWorld(pPlayer);
+	}
+
+	// Handle any deferred teleport if enrollment already closed or PRE_ROUND
+	if (IsParticipant(pPlayer) && m_pendingTeleports.find(pPlayer->GetCharID()) != m_pendingTeleports.end())
+	{
+		if (m_state == State::PRE_ROUND || m_state == State::IN_ROUND)
+		{
+			unsigned int worldTblidx = (m_state == State::PRE_ROUND) ? GetWorldForRound(m_currentRound) : GetWorldForRound(m_currentRound);
+			CNtlVector dest;
+			ComputeDestForWorld(worldTblidx, m_cfg.teleportPosX, m_cfg.teleportPosY, m_cfg.teleportPosZ, dest);
+			CWorld* pWorld = GetOrCreateWorld(worldTblidx);
+			if (pWorld)
+			{
+				if (!std::isfinite(dest.x) || !std::isfinite(dest.y) || !std::isfinite(dest.z))
+				{
+					ComputeDestForWorld(worldTblidx, 0.f, 0.f, 0.f, dest);
+				}
+				pPlayer->StartTeleport(dest, pPlayer->GetCurDir(), pWorld->GetID(), TELEPORT_TYPE_COMMAND);
+				EVENT_VLOG(m_cfg, LOG_GENERAL, "[EVENT] Deferred teleport executed for %s (charId=%u)", pPlayer->GetCharName(), pPlayer->GetCharID());
+			}
+		}
+		m_pendingTeleports.erase(pPlayer->GetCharID());
 	}
 }
 
@@ -1481,7 +1734,38 @@ unsigned int CEventManager::GetWorldForRound(unsigned int roundIndex)
 
 void CEventManager::GetSpawnPosForRound(unsigned int roundIndex, float& outX, float& outY, float& outZ)
 {
-	// Check if round has custom spawn position
+	// Get world for this round to determine default spawn
+	unsigned int worldTblidx = GetWorldForRound(roundIndex);
+	sWORLD_TBLDAT* pWorldTbldat = (sWORLD_TBLDAT*)g_pTableContainer->GetWorldTable()->FindData((TBLIDX)worldTblidx);
+
+	// Default to world table spawn position
+	if (pWorldTbldat)
+	{
+		outX = pWorldTbldat->vStart1Loc.x;
+		outY = pWorldTbldat->vStart1Loc.y;
+		outZ = pWorldTbldat->vStart1Loc.z;
+	}
+	else
+	{
+		// Fallback if world not found
+		outX = 0.0f;
+		outY = 0.0f;
+		outZ = 0.0f;
+		ERR_LOG(LOG_GENERAL, "[EVENT] GetSpawnPosForRound: world tblidx not found %u", worldTblidx);
+		return;
+	}
+
+	// Override with config spawn position if provided (not 0,0,0)
+	if (m_cfg.spawnPosX != 0 || m_cfg.spawnPosY != 0 || m_cfg.spawnPosZ != 0)
+	{
+		outX = m_cfg.spawnPosX;
+		outY = m_cfg.spawnPosY;
+		outZ = m_cfg.spawnPosZ;
+		EVENT_VLOG(m_cfg, LOG_GENERAL, "[EVENT] Using config spawn override: (%.2f,%.2f,%.2f)", outX, outY, outZ);
+		return;
+	}
+
+	// Check if round has custom spawn position (highest priority)
 	if (roundIndex < m_cfg.rounds.size())
 	{
 		const EventRound& round = m_cfg.rounds[roundIndex];
@@ -1490,14 +1774,12 @@ void CEventManager::GetSpawnPosForRound(unsigned int roundIndex, float& outX, fl
 			outX = round.spawnPosX;
 			outY = round.spawnPosY;
 			outZ = round.spawnPosZ;
+			EVENT_VLOG(m_cfg, LOG_GENERAL, "[EVENT] Using round-specific spawn: (%.2f,%.2f,%.2f)", outX, outY, outZ);
 			return;
 		}
 	}
 
-	// Use default spawn position
-	outX = m_cfg.spawnPosX;
-	outY = m_cfg.spawnPosY;
-	outZ = m_cfg.spawnPosZ;
+	EVENT_VLOG(m_cfg, LOG_GENERAL, "[EVENT] Using world table spawn: (%.2f,%.2f,%.2f) for world %u", outX, outY, outZ, worldTblidx);
 }
 
 bool CEventManager::IsChannelValid()
@@ -1605,5 +1887,418 @@ void CEventManager::ResetAutomation(bool startIfZeroDelay)
 	{
 		Start();
 		m_autoState = AutoState::ENROLLMENT_OPEN;
+	}
+}
+
+//--------------------------------------------------------------------------------------//
+//  ENGAGEMENT FEATURES
+//--------------------------------------------------------------------------------------//
+
+void CEventManager::OnPlayerKilledMob(CPlayer* pKiller, const char* mobName)
+{
+	if (!pKiller || m_state != State::IN_ROUND)
+		return;
+
+	unsigned int charId = pKiller->GetCharID();
+	if (!IsParticipantId(charId))
+		return;
+
+	// Track kill count
+	m_playerKillCount[charId]++;
+
+	// Track team kills if team competition enabled
+	if (m_cfg.enableTeamCompetition)
+	{
+		auto teamIt = m_playerTeam.find(charId);
+		if (teamIt != m_playerTeam.end())
+		{
+			if (teamIt->second == Team::RED)
+				m_teamRedKills++;
+			else if (teamIt->second == Team::BLUE)
+				m_teamBlueKills++;
+		}
+	}
+
+	// Process combo system
+	if (m_cfg.enableComboBonus)
+	{
+		ProcessKillCombo(charId);
+	}
+
+	// Kill announcements
+	if (m_cfg.enableKillAnnouncements)
+	{
+		wchar_t msg[256];
+		unsigned int combo = m_playerComboCount[charId];
+
+		// Team competition announcement
+		if (m_cfg.enableTeamCompetition)
+		{
+			auto teamIt = m_playerTeam.find(charId);
+			const wchar_t* teamColor = (teamIt != m_playerTeam.end()) ? GetTeamColor(teamIt->second) : L"";
+
+			if (combo >= 3)
+			{
+				swprintf_s(msg, L"[EVENT] %s%s killed %S! (x%u COMBO!)", teamColor, pKiller->GetCharName(), mobName, combo);
+			}
+			else
+			{
+				swprintf_s(msg, L"[EVENT] %s%s killed %S!", teamColor, pKiller->GetCharName(), mobName);
+			}
+		}
+		else
+		{
+			// Regular announcement
+			if (combo >= 3)
+			{
+				swprintf_s(msg, L"[EVENT] %s killed %S! (x%u COMBO!)", pKiller->GetCharName(), mobName, combo);
+			}
+			else
+			{
+				swprintf_s(msg, L"[EVENT] %s killed %S!", pKiller->GetCharName(), mobName);
+			}
+		}
+		BroadcastSystem(msg);
+	}
+}
+
+void CEventManager::ProcessKillCombo(unsigned int charId)
+{
+	unsigned long currentTime = GetTickCount();
+	unsigned long lastKill = m_lastKillTime[charId];
+	unsigned long timeSinceLastKill = (lastKill > 0) ? (currentTime - lastKill) : UINT_MAX;
+
+	// Check if combo still active
+	if (timeSinceLastKill < ToMs(m_cfg.comboTimeoutSeconds))
+	{
+		// Increment combo
+		m_playerComboCount[charId]++;
+
+		unsigned int combo = m_playerComboCount[charId];
+		CPlayer* pPlayer = g_pObjectManager->GetPC(charId);
+		if (pPlayer && pPlayer->IsInitialized())
+		{
+			// Award combo bonus
+			unsigned int bonusMudosa = (unsigned int)(m_cfg.mudosaPerRound * m_cfg.comboMultiplier * (combo - 1));
+			if (bonusMudosa > 0 && combo >= 2)
+			{
+				pPlayer->UpdateMudosaPoints(pPlayer->GetMudosaPoints() + bonusMudosa, true);
+
+				wchar_t msg[128];
+				swprintf_s(msg, L"[EVENT] COMBO x%u! Bonus: +%u Mudosa!", combo, bonusMudosa);
+				SendSystemTo(pPlayer, msg);
+			}
+		}
+	}
+	else
+	{
+		// Reset combo
+		m_playerComboCount[charId] = 1;
+	}
+
+	m_lastKillTime[charId] = currentTime;
+}
+
+void CEventManager::ShowLeaderboard()
+{
+	if (m_roundContribution.empty())
+		return;
+
+	// Sort players by damage
+	std::vector<std::pair<unsigned int, unsigned int>> rankings; // charId, damage
+	for (const auto& entry : m_roundContribution)
+	{
+		rankings.push_back(entry);
+	}
+	std::sort(rankings.begin(), rankings.end(),
+		[](const std::pair<unsigned int, unsigned int>& a, const std::pair<unsigned int, unsigned int>& b) { return a.second > b.second; });
+
+	// Display top 10 (ASCII-only to avoid codepage issues)
+	BroadcastSystem(L"================ LEADERBOARD ================");
+	BroadcastSystem(L"            EVENT DAMAGE RANKING            ");
+	BroadcastSystem(L"============================================");
+
+	unsigned int shown = 0;
+	for (size_t i = 0; i < rankings.size() && shown < 10; i++)
+	{
+		CPlayer* pPlayer = g_pObjectManager->GetPC(rankings[i].first);
+		if (pPlayer && pPlayer->IsInitialized())
+		{
+			const wchar_t* medal = L"";
+			if (i == 0) medal = L"[1st]";
+			else if (i == 1) medal = L"[2nd]";
+			else if (i == 2) medal = L"[3rd]";
+
+			wchar_t msg[256];
+			swprintf_s(msg, L"%s #%u: %s - %u damage (%u kills)",
+				medal, (unsigned)(i + 1), pPlayer->GetCharName(),
+				rankings[i].second, m_playerKillCount[rankings[i].first]);
+			BroadcastSystem(msg);
+			shown++;
+		}
+	}
+}
+
+void CEventManager::AwardMVPBonuses()
+{
+	if (m_roundContribution.empty() || m_cfg.mvpBonusMudosa == 0)
+		return;
+
+	// Sort players by damage
+	std::vector<std::pair<unsigned int, unsigned int>> rankings;
+	for (const auto& entry : m_roundContribution)
+	{
+		rankings.push_back(entry);
+	}
+	std::sort(rankings.begin(), rankings.end(),
+		[](const std::pair<unsigned int, unsigned int>& a, const std::pair<unsigned int, unsigned int>& b) { return a.second > b.second; });
+
+	// Award top 3
+	for (size_t i = 0; i < rankings.size() && i < 3; i++)
+	{
+		CPlayer* pPlayer = g_pObjectManager->GetPC(rankings[i].first);
+		if (pPlayer && pPlayer->IsInitialized())
+		{
+			unsigned int bonus = m_cfg.mvpBonusMudosa;
+			if (i == 1) bonus = (unsigned int)(bonus * 0.7f); // 2nd place: 70%
+			else if (i == 2) bonus = (unsigned int)(bonus * 0.5f); // 3rd place: 50%
+
+			pPlayer->UpdateMudosaPoints(pPlayer->GetMudosaPoints() + bonus, true);
+
+			wchar_t msg[128];
+			const wchar_t* rank = (i == 0) ? L"MVP" : (i == 1) ? L"2nd Place" : L"3rd Place";
+			swprintf_s(msg, L"[EVENT] %s Bonus: +%u Mudosa!", rank, bonus);
+			SendSystemTo(pPlayer, msg);
+		}
+	}
+}
+
+void CEventManager::CheckTimeAttackBonus()
+{
+	if (!m_cfg.enableTimeAttack || m_roundStartTime == 0)
+		return;
+
+	unsigned long elapsed = GetTickCount() - m_roundStartTime;
+	unsigned int elapsedSeconds = (unsigned int)(elapsed / 1000);
+
+	const wchar_t* tier = nullptr;
+	unsigned int bonusMudosa = 0;
+
+	if (elapsedSeconds <= m_cfg.timeAttackGoldSeconds)
+	{
+		tier = L"GOLD";
+		bonusMudosa = m_cfg.timeAttackBonusMudosa;
+	}
+	else if (elapsedSeconds <= m_cfg.timeAttackSilverSeconds)
+	{
+		tier = L"SILVER";
+		bonusMudosa = (unsigned int)(m_cfg.timeAttackBonusMudosa * 0.7f);
+	}
+	else if (elapsedSeconds <= m_cfg.timeAttackBronzeSeconds)
+	{
+		tier = L"BRONZE";
+		bonusMudosa = (unsigned int)(m_cfg.timeAttackBonusMudosa * 0.5f);
+	}
+
+	if (tier && bonusMudosa > 0)
+	{
+		wchar_t msg[256];
+		swprintf_s(msg, L"[EVENT] TIME ATTACK: %s Tier! (%u seconds) +%u Mudosa for all!",
+			tier, elapsedSeconds, bonusMudosa);
+		BroadcastSystem(msg);
+		SendNotice(msg, SERVER_TEXT_SYSNOTICE);
+
+		// Award time bonus to all active participants
+		for (unsigned int charId : m_participants)
+		{
+			auto it = m_roundContribution.find(charId);
+			if (it != m_roundContribution.end() && it->second > 0)
+			{
+				CPlayer* pPlayer = g_pObjectManager->GetPC(charId);
+				if (pPlayer && pPlayer->IsInitialized())
+				{
+					pPlayer->UpdateMudosaPoints(pPlayer->GetMudosaPoints() + bonusMudosa, true);
+				}
+			}
+		}
+	}
+}
+
+unsigned int CEventManager::GetDynamicMobCount(unsigned int baseCount)
+{
+	if (!m_cfg.enableDynamicDifficulty)
+		return baseCount;
+
+	unsigned int participantCount = (unsigned int)m_participants.size();
+	if (participantCount <= 1)
+		return baseCount;
+
+	// Scale based on participant count
+	float multiplier = 1.0f + (m_cfg.difficultyPerPlayer * (participantCount - 1));
+	unsigned int scaledCount = (unsigned int)(baseCount * multiplier);
+
+	EVENT_VLOG(m_cfg, LOG_GENERAL, "[EVENT] Dynamic difficulty: %u participants, %u -> %u mobs (x%.2f)",
+		participantCount, baseCount, scaledCount, multiplier);
+
+	return scaledCount;
+}
+
+float CEventManager::GetPartyBonusMultiplier(CPlayer* pPlayer)
+{
+	if (!m_cfg.enablePartyBonus || !pPlayer)
+		return 1.0f;
+
+	// Check if player is in party (use existing Party API)
+	if (pPlayer->GetParty() && pPlayer->GetParty()->GetPartyMemberCount() > 1)
+	{
+		return m_cfg.partyBonusMultiplier;
+	}
+
+	return 1.0f;
+}
+
+//--------------------------------------------------------------------------------------//
+//  TEAM COMPETITION MODE
+//--------------------------------------------------------------------------------------//
+
+void CEventManager::AssignTeams()
+{
+	m_playerTeam.clear();
+
+	// Convert participants to vector for shuffling
+	std::vector<unsigned int> participantList(m_participants.begin(), m_participants.end());
+
+	// Shuffle for random team assignment (use rand for simplicity)
+	for (size_t i = participantList.size() - 1; i > 0; --i)
+	{
+		size_t j = rand() % (i + 1);
+		std::swap(participantList[i], participantList[j]);
+	}
+
+	// Split evenly into Red and Blue teams
+	size_t halfPoint = participantList.size() / 2;
+
+	for (size_t i = 0; i < participantList.size(); i++)
+	{
+		Team assignedTeam = (i < halfPoint) ? Team::RED : Team::BLUE;
+		m_playerTeam[participantList[i]] = assignedTeam;
+
+		// Notify player of their team
+		CPlayer* pPlayer = g_pObjectManager->GetPC(participantList[i]);
+		if (pPlayer && pPlayer->IsInitialized())
+		{
+			wchar_t msg[128];
+			swprintf_s(msg, L"[EVENT] You are on %s! Work together to win!", GetTeamName(assignedTeam));
+			SendSystemTo(pPlayer, msg);
+		}
+	}
+
+	// Announce team setup
+	wchar_t msg[256];
+	unsigned int redCount = (unsigned int)halfPoint;
+	unsigned int blueCount = (unsigned int)(participantList.size() - halfPoint);
+	swprintf_s(msg, L"[EVENT] RED TEAM (%u players) vs BLUE TEAM (%u players)!", redCount, blueCount);
+	BroadcastSystem(msg);
+	SendNotice(msg, SERVER_TEXT_SYSNOTICE);
+}
+
+void CEventManager::ShowTeamScores()
+{
+	if (m_teamRedDamage == 0 && m_teamBlueDamage == 0)
+		return;
+
+	BroadcastSystem(L"============= TEAM RESULTS =============");
+	BroadcastSystem(L"         TEAM COMPETITION RESULTS        ");
+	BroadcastSystem(L"=========================================");
+
+	wchar_t msg[256];
+
+	// Red team stats
+	swprintf_s(msg, L"RED TEAM: %u damage | %u kills", m_teamRedDamage, m_teamRedKills);
+	BroadcastSystem(msg);
+
+	// Blue team stats
+	swprintf_s(msg, L"BLUE TEAM: %u damage | %u kills", m_teamBlueDamage, m_teamBlueKills);
+	BroadcastSystem(msg);
+
+	// Determine winner
+	Team winningTeam = Team::NONE;
+	if (m_teamRedDamage > m_teamBlueDamage)
+		winningTeam = Team::RED;
+	else if (m_teamBlueDamage > m_teamRedDamage)
+		winningTeam = Team::BLUE;
+
+	if (winningTeam != Team::NONE)
+	{
+		swprintf_s(msg, L"%s WINS! Bonus rewards awarded!", GetTeamName(winningTeam));
+		BroadcastSystem(msg);
+		SendNotice(msg, SERVER_TEXT_SYSNOTICE);
+	}
+	else
+	{
+		BroadcastSystem(L"IT'S A TIE! Both teams performed equally!");
+	}
+}
+
+void CEventManager::AwardTeamBonuses()
+{
+	if (m_cfg.teamCompetitionBonusMudosa == 0)
+		return;
+
+	// Determine winning team
+	Team winningTeam = Team::NONE;
+	if (m_teamRedDamage > m_teamBlueDamage)
+		winningTeam = Team::RED;
+	else if (m_teamBlueDamage > m_teamRedDamage)
+		winningTeam = Team::BLUE;
+
+	if (winningTeam == Team::NONE)
+		return; // No bonus on tie
+
+	// Award bonus to winning team members
+	unsigned int bonusAwarded = 0;
+	for (const auto& entry : m_playerTeam)
+	{
+		if (entry.second != winningTeam)
+			continue;
+
+		// Check if player participated (dealt damage)
+		auto damageIt = m_roundContribution.find(entry.first);
+		if (damageIt == m_roundContribution.end() || damageIt->second == 0)
+			continue;
+
+		CPlayer* pPlayer = g_pObjectManager->GetPC(entry.first);
+		if (pPlayer && pPlayer->IsInitialized())
+		{
+			pPlayer->UpdateMudosaPoints(pPlayer->GetMudosaPoints() + m_cfg.teamCompetitionBonusMudosa, true);
+
+			wchar_t msg[128];
+			swprintf_s(msg, L"[EVENT] Team Victory Bonus: +%u Mudosa!", m_cfg.teamCompetitionBonusMudosa);
+			SendSystemTo(pPlayer, msg);
+			bonusAwarded++;
+		}
+	}
+
+	EVENT_VLOG(m_cfg, LOG_GENERAL, "[EVENT] Team competition: %s won, %u players awarded bonus",
+		GetTeamName(winningTeam) == L"RED TEAM" ? "RED" : "BLUE", bonusAwarded);
+}
+
+const wchar_t* CEventManager::GetTeamName(Team team)
+{
+	switch (team)
+	{
+	case Team::RED: return L"RED TEAM";
+	case Team::BLUE: return L"BLUE TEAM";
+	default: return L"NO TEAM";
+	}
+}
+
+const wchar_t* CEventManager::GetTeamColor(Team team)
+{
+	switch (team)
+	{
+	case Team::RED: return L"[RED] ";
+	case Team::BLUE: return L"[BLUE] ";
+	default: return L"";
 	}
 }

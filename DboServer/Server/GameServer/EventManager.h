@@ -3,6 +3,7 @@
 #include "NtlSingleton.h"
 #include "NtlString.h"
 #include "NtlObject.h"
+#include "NtlVector.h"
 #include <vector>
 #include <string>
 #include <utility>
@@ -11,6 +12,7 @@
 
 class CNtlIniFile;
 class CPlayer;
+class CWorld; // forward declaration for world pointers used in helpers
 
 class CEventManager : public CNtlSingleton<CEventManager>
 {
@@ -97,6 +99,24 @@ public:
 		bool spectatorsEnabled;
 		// Verbose logging
 		bool verboseLogs;
+		// Engagement features
+		bool enableLeaderboard;                   // Show damage leaderboard and MVP
+		unsigned int mvpBonusMudosa;              // Bonus mudosa for top 3 players
+		bool enableKillAnnouncements;             // Announce when players kill bosses
+		bool enableComboBonus;                    // Combo kill bonuses
+		unsigned int comboTimeoutSeconds;         // Time to maintain combo
+		float comboMultiplier;                    // Damage multiplier per combo level
+		bool enableDynamicDifficulty;             // Scale mobs based on participant count
+		float difficultyPerPlayer;                // Multiplier per player (e.g., 0.5 = +50% per player)
+		bool enableTimeAttack;                    // Time-based bonus rewards
+		unsigned int timeAttackGoldSeconds;       // Gold tier time
+		unsigned int timeAttackSilverSeconds;     // Silver tier time
+		unsigned int timeAttackBronzeSeconds;     // Bronze tier time
+		unsigned int timeAttackBonusMudosa;       // Bonus mudosa for time tiers
+		bool enablePartyBonus;                    // Bonus rewards for party members
+		float partyBonusMultiplier;               // Reward multiplier for party (e.g., 1.2 = +20%)
+		bool enableTeamCompetition;               // Enable Red vs Blue team competition
+		unsigned int teamCompetitionBonusMudosa;  // Bonus mudosa for winning team
 
 		Config()
 			: enabled(false), channelNameContains("EVENTS"),
@@ -113,7 +133,16 @@ public:
 			  autoRestartOnComplete(false), autoRestartDelaySeconds(300),
 			  worldRotationEnabled(false), randomizeWorlds(false),
 			  mobSpawnRadius(50.0f), randomMobPositions(true),
-			  spectatorsEnabled(false), verboseLogs(false) {}
+			  spectatorsEnabled(false), verboseLogs(false),
+			  enableLeaderboard(true), mvpBonusMudosa(2000),
+			  enableKillAnnouncements(true), enableComboBonus(true),
+			  comboTimeoutSeconds(10), comboMultiplier(1.5f),
+			  enableDynamicDifficulty(true), difficultyPerPlayer(0.3f),
+			  enableTimeAttack(true), timeAttackGoldSeconds(120),
+			  timeAttackSilverSeconds(180), timeAttackBronzeSeconds(240),
+			  timeAttackBonusMudosa(1000), enablePartyBonus(true),
+			  partyBonusMultiplier(1.2f), enableTeamCompetition(false),
+			  teamCompetitionBonusMudosa(3000) {}
 	};
 
 public:
@@ -161,8 +190,14 @@ public:
 	// Called when player has fully loaded into the world (login complete)
 	void OnPlayerEnterWorldComplete(CPlayer* pPlayer);
 	void OnMobKilled(unsigned int mobHandle);
+	// Track player damage contribution to prevent AFK reward farming
+	void OnPlayerDamageEventMob(unsigned int charId, unsigned int damage);
+	// Track player kills for engagement features (leaderboard, combos, announcements)
+	void OnPlayerKilledMob(CPlayer* pKiller, const char* mobName);
 
 private:
+	// Forward declare team enum so it can be used in method prototypes
+	enum class Team : unsigned char { NONE = 0, RED = 1, BLUE = 2 };
 	// ChatServer-wide notice (like Arena): broadcasts to channel via ChatServer
 	void SendNotice(const wchar_t* msg, unsigned char byType = 2);
 	void BroadcastSystem(const wchar_t* msg, unsigned char byType = 2);
@@ -188,6 +223,22 @@ private:
 	void SendRoundTimerEndTo(CPlayer* pPlayer);
 	unsigned int GetWorldForRound(unsigned int roundIndex);
 	void GetSpawnPosForRound(unsigned int roundIndex, float& outX, float& outY, float& outZ);
+	// Internal helpers to avoid duplicated logic
+	CWorld* GetOrCreateWorld(unsigned int worldTblidx); // Handles static vs dynamic and maintains m_eventWorldId
+	bool ComputeDestForWorld(unsigned int worldTblidx, float overrideX, float overrideY, float overrideZ, CNtlVector& outDest);
+	// Engagement features
+	void ShowLeaderboard();
+	void AwardMVPBonuses();
+	void ProcessKillCombo(unsigned int charId);
+	void CheckTimeAttackBonus();
+	unsigned int GetDynamicMobCount(unsigned int baseCount);
+	float GetPartyBonusMultiplier(CPlayer* pPlayer);
+	// Team competition
+	void AssignTeams();
+	void ShowTeamScores();
+	void AwardTeamBonuses();
+	const wchar_t* GetTeamName(Team team);
+	const wchar_t* GetTeamColor(Team team);
 
 	// Automation
 	enum class AutoState : unsigned char { OFF = 0, WAIT_NEXT, ENROLLMENT_OPEN, WAIT_RESTART };
@@ -211,12 +262,31 @@ private:
 	std::vector<HOBJECT> m_spawnedMobs;               // Handles of spawned event mobs
 	std::unordered_set<HOBJECT> m_killedMobs;         // Track killed mobs this round
 
+	// Track participant contribution this round (charId -> total damage dealt)
+	std::unordered_map<unsigned int, unsigned int> m_roundContribution;
+
+	// Engagement features tracking
+	std::unordered_map<unsigned int, unsigned int> m_playerKillCount;   // Kills this round
+	std::unordered_map<unsigned int, unsigned int> m_playerComboCount;  // Current combo
+	std::unordered_map<unsigned int, unsigned long> m_lastKillTime;     // Last kill timestamp (ms)
+	unsigned long m_roundStartTime;                                      // Round start time for time attack
+
+	// Team competition (Red vs Blue)
+	std::unordered_map<unsigned int, Team> m_playerTeam;                 // charId -> team
+	unsigned int m_teamRedDamage;                                        // Total Red team damage
+	unsigned int m_teamBlueDamage;                                       // Total Blue team damage
+	unsigned int m_teamRedKills;                                         // Total Red team kills
+	unsigned int m_teamBlueKills;                                        // Total Blue team kills
+
 	// Saved locations for teleport back
 	struct PrevLoc { unsigned int worldId; CNtlVector loc; CNtlVector dir; };
 	std::unordered_map<unsigned int, PrevLoc> m_prevLoc;
 
 	// Post-event teleport delay
 	unsigned long m_postEventTeleportRemainMs;
+
+	// Participants awaiting deferred teleport (e.g., not initialized at teleport time)
+	std::unordered_set<unsigned int> m_pendingTeleports; // CHARACTERID set
 
 	// Enrollment announcement helper to avoid spamming every tick
 	unsigned int m_nextEnrollmentAnnounceSec = 0;
