@@ -692,6 +692,8 @@ ACMD(do_event)
 	// @event stop [abort]
 	// @event status
 	// @event beginnow
+	// @event nextround
+	// @event restartround
 	pToken->PopToPeek();
 	std::wstring wsub = pToken->PeekNextToken(NULL, &iLine);
 	if (wsub.empty())
@@ -730,12 +732,76 @@ ACMD(do_event)
 		if (g_pEventManager)
 			g_pEventManager->BeginNow();
 	}
+	else if (sub == "nextround")
+	{
+		if (g_pEventManager)
+		{
+			if (g_pEventManager->GetState() == CEventManager::State::IN_ROUND)
+			{
+				g_pEventManager->CompleteCurrentRound();
+				CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+				sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+				res->wOpCode = GU_SYSTEM_DISPLAY_TEXT; res->byDisplayType = SERVER_TEXT_SYSTEM;
+				const wchar_t* wmsg = L"[EVENT] Skipping to next round...";
+				res->wMessageLengthInUnicode = (WORD)wcslen(wmsg);
+				NTL_SAFE_WCSCPY(res->awchMessage, wmsg);
+				packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+				pPlayer->SendPacket(&packet);
+			}
+			else
+			{
+				CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+				sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+				res->wOpCode = GU_SYSTEM_DISPLAY_TEXT; res->byDisplayType = SERVER_TEXT_SYSTEM;
+				const wchar_t* wmsg = L"[EVENT] No active round to skip.";
+				res->wMessageLengthInUnicode = (WORD)wcslen(wmsg);
+				NTL_SAFE_WCSCPY(res->awchMessage, wmsg);
+				packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+				pPlayer->SendPacket(&packet);
+			}
+		}
+	}
+	else if (sub == "restartround")
+	{
+		if (g_pEventManager)
+		{
+			if (g_pEventManager->GetState() == CEventManager::State::IN_ROUND)
+			{
+				// Force restart current round by going back one and then completing
+				unsigned int currentRound = g_pEventManager->GetCurrentRound();
+				if (currentRound > 0)
+				{
+					g_pEventManager->SetCurrentRound(currentRound - 1);
+				}
+				g_pEventManager->CompleteCurrentRound();
+				CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+				sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+				res->wOpCode = GU_SYSTEM_DISPLAY_TEXT; res->byDisplayType = SERVER_TEXT_SYSTEM;
+				const wchar_t* wmsg = L"[EVENT] Restarting current round...";
+				res->wMessageLengthInUnicode = (WORD)wcslen(wmsg);
+				NTL_SAFE_WCSCPY(res->awchMessage, wmsg);
+				packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+				pPlayer->SendPacket(&packet);
+			}
+			else
+			{
+				CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+				sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+				res->wOpCode = GU_SYSTEM_DISPLAY_TEXT; res->byDisplayType = SERVER_TEXT_SYSTEM;
+				const wchar_t* wmsg = L"[EVENT] No active round to restart.";
+				res->wMessageLengthInUnicode = (WORD)wcslen(wmsg);
+				NTL_SAFE_WCSCPY(res->awchMessage, wmsg);
+				packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+				pPlayer->SendPacket(&packet);
+			}
+		}
+	}
 	else
 	{
 		CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
 		sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
 		res->wOpCode = GU_SYSTEM_DISPLAY_TEXT; res->byDisplayType = SERVER_TEXT_SYSTEM;
-		const wchar_t* wmsg = L"Usage: @event start | stop [abort] | status | beginnow";
+		const wchar_t* wmsg = L"Usage: @event start | stop [abort] | status | beginnow | nextround | restartround";
 		res->wMessageLengthInUnicode = (WORD)wcslen(wmsg);
 		NTL_SAFE_WCSCPY(res->awchMessage, wmsg);
 		packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));

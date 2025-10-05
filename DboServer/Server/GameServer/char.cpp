@@ -20,6 +20,7 @@
 
 #include "RangeCheck.h"
 #include "HelperNpcManager.h"
+#include "EventManager.h"
 
 
 
@@ -1874,7 +1875,16 @@ void	CCharacter::SendCharStateFaint(BYTE byReason)
 	packet.SetPacketLen(sizeof(sGU_UPDATE_CHAR_STATE));
 
 	if (GetStateManager()->CopyFrom(&res->sCharState))	//if change state success then broadcast
+	{
 		Broadcast(&packet);
+
+		// Notify event manager if this is a player death during event
+		CPlayer* pPlayer = dynamic_cast<CPlayer*>(this);
+		if (pPlayer && g_pEventManager)
+		{
+			g_pEventManager->OnPlayerDeath(pPlayer);
+		}
+	}
 }
 
 //--------------------------------------------------------------------------------------//

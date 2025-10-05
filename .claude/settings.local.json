@@ -23,7 +23,12 @@
       "Bash(\"C:\\Program Files\\Git\\usr\\bin\\xxd.exe\" -s 0x26fd0 -l 128 \"C:\\Users\\claud\\Downloads\\DBOLegacy V1.5 - FULL\\DBOLegacy\\Berserkers.vmp.dll\")",
       "Bash(code .)",
       "Bash(msbuild:*)",
-      "Read(//d/Nico/projects/dbo-legacy/**)"
+      "Read(//d/Nico/projects/dbo-legacy/**)",
+      "Bash(if [ -f \"D:\\projects\\dbo-legacy\\OpenDBO-Core\\DboServer\\ExecutionEnv\\config\\Mobs.txt\" ])",
+      "Bash(then head -30 \"D:\\projects\\dbo-legacy\\OpenDBO-Core\\DboServer\\ExecutionEnv\\config\\Mobs.txt\")",
+      "Bash(else echo \"File not found\")",
+      "Bash(fi)",
+      "Bash(find:*)"
     ],
     "deny": [],
     "ask": []

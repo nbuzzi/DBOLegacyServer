@@ -216,6 +216,18 @@ int CBotAiCondition_SkillUse::OnUpdate(DWORD dwTickDiff, float fMultiple)
 				// Clear attack target to refocus on heal/buff
 				if (GetBot()->GetTargetHandle() != INVALID_HOBJECT)
 					GetBot()->SetTargetHandle(INVALID_HOBJECT);
+				// Force immediate refollow to ensure helper doesn't get stuck in idle
+				if (pHelperCfg && pHelperCfg->bFollowLeader)
+				{
+					CPlayer* pLeader = (CPlayer*)g_pObjectManager->GetChar(GetBot()->GetLinkPc());
+					if (pLeader && pLeader->IsInitialized())
+					{
+						sVECTOR3 vDest = { pLeader->GetCurLoc().x, pLeader->GetCurLoc().y, pLeader->GetCurLoc().z };
+						GetBot()->SendCharStateFollowing(pLeader->GetID(), 2.0f, DBO_MOVE_FOLLOW_FRIENDLY, vDest, true, true);
+						if (pHelperCfg->bVerboseLogs)
+							ERR_LOG(LOG_BOTAI, "HelperNPC: resuming follow after resurrection");
+					}
+				}
 				// Trigger immediate heal scan on next fast cadence
 				DWORD healCad = (pHelperCfg && pHelperCfg->dwHealScanCooldownMs > 0) ? pHelperCfg->dwHealScanCooldownMs : 150;
 				m_dwSinceLastHealScanMs = healCad;

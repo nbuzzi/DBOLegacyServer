@@ -233,6 +233,7 @@ bool CWpsScriptAlgoAction_CCBD_stage::CheckPlayersState()
 
 	DWORD dwPlayerFaintCount = 0;
 	DWORD dwPlayerCount = 0;
+	DWORD dwPlayerDisconnectedCount = 0;
 
 	CPlayer* pPlayer = GetOwner()->GetPlayersFirst();
 	while (pPlayer)
@@ -248,13 +249,18 @@ bool CWpsScriptAlgoAction_CCBD_stage::CheckPlayersState()
 		}
 		else
 		{
+			// Player disconnected or in transition - count them separately
+			// Don't fail the dungeon immediately if players are just reconnecting
+			++dwPlayerDisconnectedCount;
 			ERR_LOG(LOG_GENERAL, "User is registered for ccbd but has different world id (%u != %u) !!!", pPlayer->GetWorldID(), GetOwner()->GetWorld()->GetID());
 		}
 
 		pPlayer = GetOwner()->GetPlayersNext();
 	}
 
-	if (dwPlayerFaintCount >= dwPlayerCount)
+	// Only fail if all CONNECTED players are fainting AND there's at least one connected player
+	// Don't fail if players are just disconnected/reconnecting
+	if (dwPlayerCount > 0 && dwPlayerFaintCount >= dwPlayerCount)
 	{
 		CNtlPacket packet(sizeof(sGU_BATTLE_DUNGEON_FAIL_NFY));
 		sGU_BATTLE_DUNGEON_FAIL_NFY* res = (sGU_BATTLE_DUNGEON_FAIL_NFY *)packet.GetPacketData();

@@ -1,6 +1,16 @@
 # OpenDBO
 DBO Client, Server and Tools software.
 
+## 🤖 AI Assistant / Automation Guidelines (Summary)
+For full rules see `.github/copilot-instructions.md`.
+- Do not edit: `ExecutionEnv/`, `Database/migrations/`, `resource/`, `x64/`.
+- Keep diffs minimal; no mass reformatting.
+- New features should prefer a config key with a documented default.
+- Preserve logging (`ERR_LOG`, `NTL_PRINT`, `EVENT_VLOG`). Add diagnostics on failures.
+- EventManager is editable; mark any large refactors with a short rationale comment.
+
+---
+
 ## Setting everything up
 All required third party tools can be obtained from [our 3rd party repository](https://github.com/OpenDBO/OpenDBO-3rdParty/releases).
 <details>

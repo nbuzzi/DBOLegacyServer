@@ -115,6 +115,9 @@ public:
 	CMonster* Add_Monster(TBLIDX mobTblidx, const CNtlVector& spawnPos, const CNtlVector& spawnDir, BYTE bySpawnFuncFlag);
 
 public:
+	// Get world boundaries (for safe position calculation)
+	inline CNtlVector		GetStartBoundary() const { return m_vStartBoundary; }
+	inline CNtlVector		GetEndBoundary() const { return m_vEndBoundary; }
 
 	bool					AddScript(CScriptAlgoObject* pScript);
 	void					RemScript(DWORD dwScriptID);

@@ -22,6 +22,14 @@
 #include <cstdio>
 #include <random>
 #include <vector>
+#include <fstream>
+#include <regex>
+#include <PortalTable.h>
+
+// Guard against Windows GDI macro collision (GetObject) only; keep original ERR_LOG implementation from logging system.
+#ifdef GetObject
+#undef GetObject
+#endif
 
 static unsigned long ToMs(unsigned int seconds) { return seconds * 1000UL; }
 
@@ -105,12 +113,156 @@ CWorld* CEventManager::GetOrCreateWorld(unsigned int worldTblidx)
 	return nullptr;
 }
 
-// Compute a destination location for a world: use world start loc then apply override if provided (non-zero vector)
+// Compute a destination location for a world: use world default loc (like @world command) then apply override if provided (non-zero vector)
 bool CEventManager::ComputeDestForWorld(unsigned int worldTblidx, float overrideX, float overrideY, float overrideZ, CNtlVector& outDest)
 {
 	sWORLD_TBLDAT* pWorldTbldat = (sWORLD_TBLDAT*)g_pTableContainer->GetWorldTable()->FindData((TBLIDX)worldTblidx);
 	if (!pWorldTbldat) return false;
-	outDest = pWorldTbldat->vStart1Loc;
+
+	// For dynamic worlds (dungeons), use world table's default position unless we have a specific override
+	if (pWorldTbldat->bDynamic)
+	{
+		NTL_PRINT(PRINT_APP, "[EVENT] World %u is dynamic, using position lookup", worldTblidx);
+
+		// First check if config override is provided (TeleportPosX/Y/Z in Events.cfg)
+		if (!(overrideX == 0.f && overrideY == 0.f && overrideZ == 0.f))
+		{
+			outDest.x = overrideX;
+			outDest.y = overrideY;
+			outDest.z = overrideZ;
+			NTL_PRINT(PRINT_APP, "[EVENT] Using config override position for world %u: (%.2f,%.2f,%.2f)",
+				worldTblidx, outDest.x, outDest.y, outDest.z);
+			return true;
+		}
+
+		// Known problematic worlds that need hardcoded safe positions
+		// Only add worlds here if their vDefaultLoc is known to be bad
+		struct SafePos { float x, y, z; };
+		static const std::map<unsigned int, SafePos> SAFE_POSITIONS = {
+			// Add worlds here ONLY if vDefaultLoc doesn't work
+			// Example: {600000, {-320.0f, 49.0f, 95.0f}},
+		};
+
+		auto it = SAFE_POSITIONS.find(worldTblidx);
+		if (it != SAFE_POSITIONS.end())
+		{
+			outDest.x = it->second.x;
+			outDest.y = it->second.y;
+			outDest.z = it->second.z;
+			NTL_PRINT(PRINT_APP, "[EVENT] Using hardcoded safe position for world %u: (%.2f,%.2f,%.2f)",
+				worldTblidx, outDest.x, outDest.y, outDest.z);
+			return true;
+		}
+
+		// Default: use world table's vDefaultLoc (same as @world command)
+		if (pWorldTbldat->vDefaultLoc.x != 0.0f || pWorldTbldat->vDefaultLoc.y != 0.0f || pWorldTbldat->vDefaultLoc.z != 0.0f)
+		{
+			outDest.x = pWorldTbldat->vDefaultLoc.x;
+			outDest.y = pWorldTbldat->vDefaultLoc.y;
+			outDest.z = pWorldTbldat->vDefaultLoc.z;
+			NTL_PRINT(PRINT_APP, "[EVENT] Using vDefaultLoc for world %u: (%.2f,%.2f,%.2f)",
+				worldTblidx, outDest.x, outDest.y, outDest.z);
+			return true;
+		}
+
+		// Last resort: try vStart1Loc
+		if (pWorldTbldat->vStart1Loc.x != 0.0f || pWorldTbldat->vStart1Loc.y != 0.0f || pWorldTbldat->vStart1Loc.z != 0.0f)
+		{
+			outDest.x = pWorldTbldat->vStart1Loc.x;
+			outDest.y = pWorldTbldat->vStart1Loc.y;
+			outDest.z = pWorldTbldat->vStart1Loc.z;
+			NTL_PRINT(PRINT_APP, "[EVENT] Using vStart1Loc for world %u: (%.2f,%.2f,%.2f)",
+				worldTblidx, outDest.x, outDest.y, outDest.z);
+			return true;
+		}
+
+		// Absolute fallback: origin
+		outDest.x = 0.0f;
+		outDest.y = 0.0f;
+		outDest.z = 0.0f;
+		NTL_PRINT(PRINT_APP, "[EVENT] WARNING: No position data for world %u, using origin", worldTblidx);
+		return true;
+	}
+
+	CGameServer* app = (CGameServer*)g_pApp;
+	CWorld* pWorld = nullptr;
+
+	// Try to find existing world instance to get actual boundaries (static worlds only)
+	if (app && app->GetGameMain() && app->GetGameMain()->GetWorldManager())
+	{
+		// For static worlds, find by tblidx
+		if (!pWorldTbldat->bDynamic)
+		{
+			pWorld = app->GetGameMain()->GetWorldManager()->FindWorld((WORLDID)worldTblidx);
+		}
+	}
+
+	// If we have world instance with valid boundaries, calculate center position
+	bool usedBoundaryCenter = false;
+	if (pWorld)
+	{
+		CNtlVector startBoundary = pWorld->GetStartBoundary();
+		CNtlVector endBoundary = pWorld->GetEndBoundary();
+
+		// Log boundaries for debugging
+		NTL_PRINT(PRINT_APP, "[EVENT] World %u boundaries: start(%.2f,%.2f,%.2f) end(%.2f,%.2f,%.2f)",
+			worldTblidx, startBoundary.x, startBoundary.y, startBoundary.z,
+			endBoundary.x, endBoundary.y, endBoundary.z);
+
+		// Validate boundaries are reasonable (not zero or garbage)
+		auto IsValidBoundary = [](const CNtlVector& start, const CNtlVector& end) -> bool {
+			const float MAX_COORD = 100000.0f;
+			return std::isfinite(start.x) && std::isfinite(start.z) &&
+			       std::isfinite(end.x) && std::isfinite(end.z) &&
+			       fabsf(start.x) < MAX_COORD && fabsf(start.z) < MAX_COORD &&
+			       fabsf(end.x) < MAX_COORD && fabsf(end.z) < MAX_COORD &&
+			       (start.x != 0.0f || start.z != 0.0f || end.x != 0.0f || end.z != 0.0f);
+		};
+
+		if (IsValidBoundary(startBoundary, endBoundary))
+		{
+			// Calculate center of the world boundaries - ALWAYS SAFE!
+			outDest.x = (startBoundary.x + endBoundary.x) / 2.0f;
+			outDest.y = 0.0f; // Y will be adjusted by terrain later
+			outDest.z = (startBoundary.z + endBoundary.z) / 2.0f;
+			usedBoundaryCenter = true;
+
+			NTL_PRINT(PRINT_APP, "[EVENT] Using world boundary center for world %u: (%.2f,%.2f,%.2f)",
+				worldTblidx, outDest.x, outDest.y, outDest.z);
+		}
+		else
+		{
+			NTL_PRINT(PRINT_APP, "[EVENT] World %u has invalid boundaries, using fallback", worldTblidx);
+		}
+	}
+	else
+	{
+		NTL_PRINT(PRINT_APP, "[EVENT] World instance not found for tblidx %u, using fallback", worldTblidx);
+	}
+
+	// Fallback: use vDefaultLoc if boundary center not available
+	if (!usedBoundaryCenter)
+	{
+		outDest = pWorldTbldat->vDefaultLoc;
+
+		// Validate default position
+		auto IsValidPos = [](float x, float y, float z) -> bool {
+			const float MAX_COORD = 100000.0f;
+			return std::isfinite(x) && std::isfinite(y) && std::isfinite(z) &&
+			       fabsf(x) < MAX_COORD && fabsf(y) < MAX_COORD && fabsf(z) < MAX_COORD;
+		};
+
+		if (!IsValidPos(outDest.x, outDest.y, outDest.z))
+		{
+			ERR_LOG(LOG_GENERAL, _T("[EVENT] World %u has invalid vDefaultLoc (%.2f,%.2f,%.2f), using generic center"),
+				worldTblidx, outDest.x, outDest.y, outDest.z);
+			outDest.x = 0.0f;
+			outDest.y = 0.0f;
+			outDest.z = 0.0f;
+		}
+	}
+
+	// Apply override if provided
 	if (!(overrideX == 0.f && overrideY == 0.f && overrideZ == 0.f))
 	{
 		outDest.x = overrideX; outDest.y = overrideY; outDest.z = overrideZ;
@@ -181,6 +333,10 @@ bool CEventManager::LoadConfigFromIniPath(const char* iniPath)
 	if (file.Read("Event", "StartDelaySeconds", startDelay))
 		m_cfg.startDelaySeconds = startDelay;
 
+	unsigned int interm = 0;
+	if (file.Read("Event", "IntermissionSeconds", interm))
+		m_cfg.intermissionSeconds = interm;
+
 	if (file.Read("Event", "TeleportPosX", posX)) m_cfg.teleportPosX = posX;
 	if (file.Read("Event", "TeleportPosY", posY)) m_cfg.teleportPosY = posY;
 	if (file.Read("Event", "TeleportPosZ", posZ)) m_cfg.teleportPosZ = posZ;
@@ -244,6 +400,18 @@ bool CEventManager::LoadConfigFromIniPath(const char* iniPath)
 	int randomPos = 1;
 	if (file.Read("Event", "RandomMobPositions", randomPos))
 		m_cfg.randomMobPositions = (randomPos != 0);
+
+	int enableWaves = 1;
+	if (file.Read("Event", "EnableWaveSpawning", enableWaves))
+		m_cfg.enableWaveSpawning = (enableWaves != 0);
+
+	int waveInterval = 10;
+	if (file.Read("Event", "WaveIntervalSeconds", waveInterval))
+		m_cfg.waveIntervalSeconds = (unsigned int)waveInterval;
+
+	int mobsPerWave = 5;
+	if (file.Read("Event", "MobsPerWave", mobsPerWave))
+		m_cfg.mobsPerWave = (unsigned int)mobsPerWave;
 
 	int spectators = 0;
 	if (file.Read("Event", "SpectatorsEnabled", spectators))
@@ -320,7 +488,31 @@ bool CEventManager::LoadConfigFromIniPath(const char* iniPath)
 	CNtlString roundsCsv = file.Read("Event", "Rounds");
 	ParseRoundsCsv(roundsCsv);
 
-	ERR_LOG(LOG_GENERAL, "[EVENT] Loaded config: enabled=%d channel='%s' rounds=%u",
+	// Mob pool integration
+	int mobPoolEn = 0;
+	if (file.Read("Event", "MobPoolEnabled", mobPoolEn))
+		m_cfg.mobPoolEnabled = (mobPoolEn != 0);
+	CNtlString mobPoolFile = file.Read("Event", "MobPoolFile");
+	if (mobPoolFile.c_str() && mobPoolFile.c_str()[0] != '\0')
+		m_cfg.mobPoolFile = mobPoolFile;
+	unsigned int rndDefault = 0;
+	if (file.Read("Event", "RandomMobsPerRound", rndDefault))
+		m_cfg.randomMobsPerRound = rndDefault;
+	if (m_cfg.mobPoolEnabled)
+		LoadMobPool();
+
+	// Auto-resurrection config
+	int autoResurrectEn = m_cfg.autoResurrectEnabled ? 1 : 0;
+	if (file.Read("Event", "AutoResurrectEnabled", autoResurrectEn))
+		m_cfg.autoResurrectEnabled = (autoResurrectEn != 0);
+	unsigned int maxDeaths = 30;
+	if (file.Read("Event", "MaxDeathsBeforeElimination", maxDeaths))
+		m_cfg.maxDeathsBeforeElimination = maxDeaths;
+	unsigned int autoResDelay = 3000;
+	if (file.Read("Event", "AutoResurrectDelayMs", autoResDelay))
+		m_cfg.autoResurrectDelayMs = autoResDelay;
+
+	EVENT_VLOG(m_cfg, LOG_GENERAL, "[EVENT] Loaded config: enabled=%d channel='%s' rounds=%u",
 		(int)m_cfg.enabled, m_cfg.channelNameContains.c_str(), (unsigned)m_cfg.rounds.size());
 
 	return true;
@@ -377,14 +569,34 @@ void CEventManager::ParseRoundsCsv(const CNtlString& csv)
 
 			if (partIdx == 0)
 			{
-				// Mobs list: "mob1,mob2,mob3"
-				std::istringstream mobSs(part);
-				std::string mobToken;
-				while (std::getline(mobSs, mobToken, ','))
+				// Mobs list or RANDOM spec: "mob1,mob2" | "RANDOM" | "RANDOM5"
+				std::string first = part;
+				if (first.rfind("RANDOM", 0) == 0)
 				{
-					unsigned int mobId = (unsigned int)atoi(mobToken.c_str());
-					if (mobId > 0)
-						round.mobTblidxList.push_back(mobId);
+					// Extract optional count
+					unsigned int want = m_cfg.randomMobsPerRound;
+					if (first.size() > 6)
+					{
+						std::string num = first.substr(6);
+						unsigned int v = (unsigned int)atoi(num.c_str());
+						if (v > 0) want = v;
+					}
+					// Defer actual random selection until StartNextRound by storing 0 sentinel entries if list empty now
+					// We'll detect empty mobTblidxList + a stored desired random count via negative marker technique
+					// Simpler: store placeholder 0 repeated 'want' times so size known for spawn radius usage
+					for (unsigned int i = 0; i < want; ++i)
+						round.mobTblidxList.push_back(0); // 0 means choose later
+				}
+				else
+				{
+					std::istringstream mobSs(part);
+					std::string mobToken;
+					while (std::getline(mobSs, mobToken, ','))
+					{
+						unsigned int mobId = (unsigned int)atoi(mobToken.c_str());
+						if (mobId > 0)
+							round.mobTblidxList.push_back(mobId);
+					}
 				}
 			}
 			else if (partIdx == 1)
@@ -426,14 +638,38 @@ void CEventManager::ParseRoundsCsv(const CNtlString& csv)
 				}
 				else
 				{
-					// Optional world ID for fixed rewards
-					round.worldTblidx = (unsigned int)atoi(part.c_str());
+					// Optional world/portal ID for fixed rewards
+					// Format: "P54" for portal, "1" for world
+					if (!part.empty() && part[0] == 'P')
+					{
+						// Portal ID (e.g., "P54")
+						round.portalTblidx = (unsigned int)atoi(part.c_str() + 1);
+						round.worldTblidx = 0;
+					}
+					else
+					{
+						// World ID
+						round.worldTblidx = (unsigned int)atoi(part.c_str());
+						round.portalTblidx = 0;
+					}
 				}
 			}
 			else if (partIdx == 5)
 			{
-				// Optional world ID (for range-based loot format)
-				round.worldTblidx = (unsigned int)atoi(part.c_str());
+				// Optional world/portal ID (for range-based loot format)
+				// Format: "P54" for portal, "1" for world
+				if (!part.empty() && part[0] == 'P')
+				{
+					// Portal ID (e.g., "P54")
+					round.portalTblidx = (unsigned int)atoi(part.c_str() + 1);
+					round.worldTblidx = 0;
+				}
+				else
+				{
+					// World ID
+					round.worldTblidx = (unsigned int)atoi(part.c_str());
+					round.portalTblidx = 0;
+				}
 			}
 			else if (partIdx == 6)
 			{
@@ -488,6 +724,51 @@ void CEventManager::ParseRoundsCsv(const CNtlString& csv)
 	}
 }
 
+// Load external mob pool (Mobs.txt format) similar to Arena approach but simpler: detect lines that start with "@addmob <id>"
+void CEventManager::LoadMobPool()
+{
+	if (!m_cfg.mobPoolEnabled) return;
+	std::ifstream in(m_cfg.mobPoolFile.c_str());
+	if (!in.is_open())
+	{
+		EVENT_VLOG(m_cfg, LOG_GENERAL, "[EVENT] MobPool file not found: %s", m_cfg.mobPoolFile.c_str());
+		return;
+	}
+	m_mobPool.clear();
+	std::string line; unsigned int lineNo = 0; std::regex rgx("^@addmob\\s+([0-9]+)\\b");
+	while (std::getline(in, line))
+	{
+		++lineNo;
+		if (line.empty()) continue;
+		std::smatch m; if (std::regex_search(line, m, rgx))
+		{
+			unsigned int id = (unsigned int)strtoul(m[1].str().c_str(), nullptr, 10);
+			if (id != 0)
+				m_mobPool.push_back(id);
+		}
+	}
+	EVENT_VLOG(m_cfg, LOG_GENERAL, "[EVENT] Loaded mob pool: %u entries from %s", (unsigned)m_mobPool.size(), m_cfg.mobPoolFile.c_str());
+}
+
+std::vector<unsigned int> CEventManager::GetRandomMobs(unsigned int count)
+{
+	std::vector<unsigned int> out;
+	if (m_mobPool.empty() || count == 0)
+		return out;
+	if (count >= m_mobPool.size())
+	{
+		out = m_mobPool; // all (could shuffle)
+		std::shuffle(out.begin(), out.end(), std::mt19937{ std::random_device{}() });
+		out.resize(count);
+		return out;
+	}
+	// Reservoir sample style
+	std::vector<unsigned int> pool = m_mobPool;
+	std::shuffle(pool.begin(), pool.end(), std::mt19937{ std::random_device{}() });
+	for (unsigned int i = 0; i < count; ++i) out.push_back(pool[i]);
+	return out;
+}
+
 void CEventManager::TickProcess(unsigned long dwTickDiff)
 {
 	if (!m_cfg.enabled)
@@ -521,9 +802,19 @@ void CEventManager::TickProcess(unsigned long dwTickDiff)
 			// Start event if we have participants
 			if (m_participants.size() > 0)
 			{
-				BroadcastSystem(L"[EVENT] Enrollment closed. Teleporting participants...");
-				SendNotice(L"[EVENT] Enrollment closed. Teleporting participants...", SERVER_TEXT_SYSNOTICE);
-				TeleportParticipants();
+				// Skip initial teleport if world rotation is enabled OR first round uses portal
+				bool firstRoundHasPortal = !m_cfg.rounds.empty() && m_cfg.rounds[0].portalTblidx > 0;
+				if (m_cfg.worldRotationEnabled || firstRoundHasPortal)
+				{
+					BroadcastSystem(L"[EVENT] Enrollment closed. Get ready!");
+					SendNotice(L"[EVENT] Enrollment closed. Preparing round 1...", SERVER_TEXT_SYSNOTICE);
+				}
+				else
+				{
+					BroadcastSystem(L"[EVENT] Enrollment closed. Teleporting participants...");
+					SendNotice(L"[EVENT] Enrollment closed. Teleporting participants...", SERVER_TEXT_SYSNOTICE);
+					TeleportParticipants();
+				}
 				m_state = State::PRE_ROUND;
 				m_startDelayRemainMs = ToMs(m_cfg.startDelaySeconds);
 			}
@@ -532,6 +823,8 @@ void CEventManager::TickProcess(unsigned long dwTickDiff)
 				BroadcastSystem(L"[EVENT] No participants. Event cancelled.");
 				SendNotice(L"[EVENT] No participants. Event cancelled.", SERVER_TEXT_SYSNOTICE);
 				m_state = State::IDLE;
+				// Schedule next automatic attempt
+				ScheduleAutoAfterTermination(true);
 			}
 		}
 		break;
@@ -565,12 +858,80 @@ void CEventManager::TickProcess(unsigned long dwTickDiff)
 		break;
 
 	case State::IN_ROUND:
+		// Wave spawning system
+		if (m_cfg.enableWaveSpawning)
+		{
+			if (m_waveRemainMs <= dwTickDiff)
+			{
+				// Time to spawn next wave
+				if (m_currentRound < m_cfg.rounds.size())
+				{
+					const EventRound& round = m_cfg.rounds[m_currentRound];
+
+					// Create a mini-round with MIX of random mobs for this wave
+					// Each mob is individually randomly picked from the round's mob list
+					EventRound waveRound = round;
+					waveRound.mobTblidxList.clear();
+
+					// Pick a random mob type for EACH individual mob in the wave
+					for (unsigned int i = 0; i < m_cfg.mobsPerWave && !round.mobTblidxList.empty(); i++)
+					{
+						unsigned int randomIdx = RandomRange(0, (int)round.mobTblidxList.size() - 1);
+						waveRound.mobTblidxList.push_back(round.mobTblidxList[randomIdx]);
+					}
+
+					// Spawn the wave (with fallback if some mobs fail)
+					if (!waveRound.mobTblidxList.empty())
+					{
+						SpawnRoundMobs(waveRound);
+						m_waveCount++;
+
+						wchar_t waveMsg[128];
+						swprintf_s(waveMsg, L"[EVENT] Wave %u spawned! %u enemies incoming!",
+							m_waveCount, (unsigned)waveRound.mobTblidxList.size());
+						BroadcastSystem(waveMsg);
+					}
+				}
+
+				// Reset wave timer
+				m_waveRemainMs = ToMs(m_cfg.waveIntervalSeconds);
+			}
+			else
+			{
+				m_waveRemainMs -= dwTickDiff;
+			}
+		}
+
 		// Update round timer
 		if (m_roundTimerActive)
 		{
 			if (m_roundRemainMs > dwTickDiff)
 			{
 				m_roundRemainMs -= dwTickDiff;
+
+				// Announce remaining time at key intervals
+				unsigned int sec = (unsigned int)(m_roundRemainMs / 1000);
+				if (sec != m_nextRoundAnnounceSec)
+				{
+					// Announce at: 10min, 5min, 3min, 2min, 1min, 30s, 10s, 5-1s
+					if (sec == 600 || sec == 300 || sec == 180 || sec == 120 || sec == 60 || sec == 30 || sec == 10 || (sec <= 5 && sec >= 1))
+					{
+						wchar_t msg[128];
+						if (sec >= 60)
+						{
+							unsigned int minutes = sec / 60;
+							swprintf_s(msg, L"[EVENT] Round %u/%u - %u minute%s remaining!",
+								m_currentRound + 1, (unsigned)m_cfg.rounds.size(), minutes, minutes == 1 ? L"" : L"s");
+						}
+						else
+						{
+							swprintf_s(msg, L"[EVENT] Round %u/%u - %u second%s remaining!",
+								m_currentRound + 1, (unsigned)m_cfg.rounds.size(), sec, sec == 1 ? L"" : L"s");
+						}
+						BroadcastSystem(msg);
+					}
+					m_nextRoundAnnounceSec = sec;
+				}
 			}
 			else
 			{
@@ -581,8 +942,79 @@ void CEventManager::TickProcess(unsigned long dwTickDiff)
 			}
 		}
 
-		// Check if all mobs killed
-		CheckRoundCompletion();
+		// Auto-resurrection check
+		if (m_cfg.autoResurrectEnabled)
+		{
+			unsigned long currentTime = GetTickCount();
+			for (auto it = m_playerDeathTime.begin(); it != m_playerDeathTime.end(); )
+			{
+				unsigned int charId = it->first;
+				unsigned long deathTime = it->second;
+
+				// Check if enough time has passed for resurrection
+				if (currentTime - deathTime >= m_cfg.autoResurrectDelayMs)
+				{
+					CPlayer* pPlayer = g_pObjectManager->FindByChar((CHARACTERID)charId);
+					if (pPlayer && pPlayer->IsInitialized() && pPlayer->IsFainting())
+					{
+						// Find a safe spawn position (use event spawn or near a random participant)
+						CNtlVector spawnPos;
+						float spawnX, spawnY, spawnZ;
+						GetSpawnPosForRound(m_currentRound, spawnX, spawnY, spawnZ);
+						spawnPos.x = spawnX;
+						spawnPos.y = spawnY;
+						spawnPos.z = spawnZ;
+
+						// Try to spawn near a random alive player instead
+						std::vector<CNtlVector> alivePlayerPositions;
+						for (unsigned int pCharId : m_participants)
+						{
+							if (pCharId == charId) continue; // skip dead player
+							CPlayer* pAlive = g_pObjectManager->FindByChar((CHARACTERID)pCharId);
+							if (pAlive && pAlive->IsInitialized() && !pAlive->IsFainting() &&
+								pAlive->GetWorldID() == (WORLDID)m_eventWorldId)
+							{
+								alivePlayerPositions.push_back(pAlive->GetCurLoc());
+							}
+						}
+						if (!alivePlayerPositions.empty())
+						{
+							unsigned int randomIdx = RandomRange(0, (int)alivePlayerPositions.size() - 1);
+							spawnPos = alivePlayerPositions[randomIdx];
+							// Add small random offset to avoid exact overlap
+							float angle = RandomRangeF(0.0f, 6.28318530718f);
+							float distance = RandomRangeF(2.0f, 5.0f);
+							spawnPos.x += cosf(angle) * distance;
+							spawnPos.z += sinf(angle) * distance;
+						}
+
+						// Resurrect player
+						pPlayer->Revival(spawnPos, pPlayer->GetWorldID(), REVIVAL_TYPE_RESCUED);
+						EVENT_VLOG(m_cfg, LOG_GENERAL, "[EVENT] Auto-resurrected player %s at (%.2f,%.2f,%.2f)",
+							pPlayer->GetCharName(), spawnPos.x, spawnPos.y, spawnPos.z);
+
+						wchar_t msg[128];
+						swprintf_s(msg, L"[EVENT] You have been resurrected!");
+						SendSystemTo(pPlayer, msg);
+					}
+
+					// Remove from death time tracking
+					it = m_playerDeathTime.erase(it);
+				}
+				else
+				{
+					++it;
+				}
+			}
+		}
+
+		// Note: Wave spawning mode doesn't check for round completion based on mob kills
+		// Rounds end only when timer expires
+		if (!m_cfg.enableWaveSpawning)
+		{
+			// Check if all mobs killed (traditional mode only)
+			CheckRoundCompletion();
+		}
 		break;
 
 	case State::INTERMISSION:
@@ -625,12 +1057,17 @@ void CEventManager::TickProcess(unsigned long dwTickDiff)
 			m_killedMobs.clear();
 			m_prevLoc.clear();
 			m_currentRound = 0;
+			// Schedule next automatic event (restart or interval-based)
+			ScheduleAutoAfterTermination(false);
 		}
 		break;
 
 	default:
 		break;
 	}
+
+	// Always tick automation system (handles auto-scheduling and restarts)
+	AutomationTick(dwTickDiff);
 }
 
 void CEventManager::AutomationTick(unsigned long dwTickDiff)
@@ -730,13 +1167,13 @@ void CEventManager::Start()
 {
 	if (!IsChannelValid())
 	{
-		ERR_LOG(LOG_GENERAL, "[EVENT] Cannot start: invalid channel");
+		EVENT_VLOG(m_cfg, LOG_GENERAL, "[EVENT] Cannot start: invalid channel");
 		return;
 	}
 
 	if (m_state != State::IDLE)
 	{
-		ERR_LOG(LOG_GENERAL, "[EVENT] Cannot start: already running (state=%d)", (int)m_state);
+		ERR_LOG(LOG_GENERAL, _T("[EVENT] Cannot start: already running (state=%d)"), (int)m_state);
 		return;
 	}
 
@@ -784,6 +1221,12 @@ void CEventManager::Stop(bool abort)
 	m_killedMobs.clear();
 	m_prevLoc.clear();
 	m_currentRound = 0;
+	// Clear auto-resurrection tracking
+	m_playerDeathCount.clear();
+	m_playerDeathTime.clear();
+	m_eliminatedPlayers.clear();
+
+	ScheduleAutoAfterTermination(false);
 }
 
 void CEventManager::StartNextRound()
@@ -794,7 +1237,29 @@ void CEventManager::StartNextRound()
 		return;
 	}
 
-	const EventRound& round = m_cfg.rounds[m_currentRound];
+	EventRound& round = m_cfg.rounds[m_currentRound];
+
+	// Resolve any RANDOM placeholders (mob id 0) before spawning
+	if (m_cfg.mobPoolEnabled)
+	{
+		unsigned int unresolved = 0;
+		for (auto id : round.mobTblidxList) if (id == 0) ++unresolved;
+		if (unresolved > 0)
+		{
+			std::vector<unsigned int> rnd = GetRandomMobs(unresolved);
+			if (rnd.size() == unresolved)
+			{
+				// Replace zeros sequentially
+				unsigned int idx = 0;
+				for (auto& id : round.mobTblidxList) if (id == 0) id = rnd[idx++];
+				EVENT_VLOG(m_cfg, LOG_GENERAL, "[EVENT] Resolved %u RANDOM mob slots for round %u", unresolved, m_currentRound + 1);
+			}
+			else
+			{
+				ERR_LOG(LOG_GENERAL, _T("[EVENT] Could not resolve enough random mobs: needed %u pool=%u"), unresolved, (unsigned)m_mobPool.size());
+			}
+		}
+	}
 	m_killedMobs.clear();
 	m_roundContribution.clear(); // Reset damage tracking for new round
 
@@ -814,12 +1279,16 @@ void CEventManager::StartNextRound()
 		m_teamBlueKills = 0;
 	}
 
-	// Get world for this round (supports rotation)
-	unsigned int worldTblidx = GetWorldForRound(m_currentRound);
-
-	// Teleport participants to the round's world if it changed
-	if (m_cfg.worldRotationEnabled || round.worldTblidx > 0)
+	// Teleport participants to portal or world location
+	if (round.portalTblidx > 0)
 	{
+		// Use portal location (like @teleport command)
+		TeleportParticipantsToPortal(round.portalTblidx);
+	}
+	else if (m_cfg.worldRotationEnabled || round.worldTblidx > 0)
+	{
+		// Use world location (original behavior)
+		unsigned int worldTblidx = GetWorldForRound(m_currentRound);
 		float x, y, z;
 		GetSpawnPosForRound(m_currentRound, x, y, z);
 		TeleportParticipantsToWorld(worldTblidx, x, y, z);
@@ -832,15 +1301,41 @@ void CEventManager::StartNextRound()
 	SendNotice(msg, SERVER_TEXT_SYSNOTICE);
 
 	m_state = State::IN_ROUND;
-	SpawnRoundMobs(round);
+
+	// Initialize wave spawning
+	if (m_cfg.enableWaveSpawning)
+	{
+		m_waveCount = 0;
+		// Delay first wave spawn by 3 seconds to allow players to finish teleporting and loading
+		m_waveRemainMs = 3000; // 3 seconds delay before first wave
+		EVENT_VLOG(m_cfg, LOG_GENERAL, "[EVENT] Wave spawning enabled: %u mobs every %u seconds (first wave in 3s)",
+			m_cfg.mobsPerWave, m_cfg.waveIntervalSeconds);
+	}
+	else
+	{
+		// Traditional single spawn at round start
+		SpawnRoundMobs(round);
+	}
 
 	if (round.durationSeconds > 0)
 	{
 		StartRoundTimer(round.durationSeconds);
+		// Reset announcement tracker for this round
+		// Set to value higher than duration so first announcement triggers immediately
+		m_nextRoundAnnounceSec = (unsigned int)round.durationSeconds + 1;
 	}
 
-	EVENT_VLOG(m_cfg, LOG_GENERAL, "[EVENT] Round %u started: %u mobs, %u seconds, world=%u",
-		m_currentRound + 1, (unsigned)round.mobTblidxList.size(), round.durationSeconds, worldTblidx);
+	if (round.portalTblidx > 0)
+	{
+		EVENT_VLOG(m_cfg, LOG_GENERAL, "[EVENT] Round %u started: %u mobs, %u seconds, portal=%u",
+			m_currentRound + 1, (unsigned)round.mobTblidxList.size(), round.durationSeconds, round.portalTblidx);
+	}
+	else
+	{
+		unsigned int worldTblidx = GetWorldForRound(m_currentRound);
+		EVENT_VLOG(m_cfg, LOG_GENERAL, "[EVENT] Round %u started: %u mobs, %u seconds, world=%u",
+			m_currentRound + 1, (unsigned)round.mobTblidxList.size(), round.durationSeconds, worldTblidx);
+	}
 }
 
 void CEventManager::CompleteCurrentRound()
@@ -882,7 +1377,7 @@ void CEventManager::CompleteCurrentRound()
 	if (m_currentRound < m_cfg.rounds.size())
 	{
 		m_state = State::INTERMISSION;
-		m_startDelayRemainMs = ToMs(5); // 5 second intermission
+		m_startDelayRemainMs = ToMs(m_cfg.intermissionSeconds);
 		m_nextPreRoundAnnounceSec = (unsigned int)(m_startDelayRemainMs / 1000);
 		// Start a brief countdown UI for intermission
 		if (m_eventWorldId)
@@ -907,7 +1402,7 @@ void CEventManager::CompleteCurrentRound()
 				auto it = m_roundContribution.find(charId);
 				if (it != m_roundContribution.end() && it->second > 0)
 				{
-					CPlayer* pPlayer = g_pObjectManager->GetPC(charId);
+					CPlayer* pPlayer = g_pObjectManager->FindByChar((CHARACTERID)charId);
 					if (pPlayer && pPlayer->IsInitialized())
 					{
 						// UpdateMudosaPoints expects an absolute value; add to current total
@@ -926,26 +1421,56 @@ void CEventManager::CompleteCurrentRound()
 
 void CEventManager::SpawnRoundMobs(const EventRound& round)
 {
-	// Get world for current round
-	unsigned int worldTblidx = GetWorldForRound(m_currentRound);
-
-	// Resolve world instance
-	CWorld* pWorld = GetOrCreateWorld(worldTblidx);
-	if (!pWorld)
+	// Use m_eventWorldId directly if already set (from portal or world teleport)
+	// Otherwise fall back to GetWorldForRound
+	CWorld* pWorld = nullptr;
+	if (m_eventWorldId != 0)
 	{
-		ERR_LOG(LOG_GENERAL, "[EVENT] SpawnRoundMobs: could not resolve world for tblidx=%u", worldTblidx);
-		return;
+		CGameServer* app = (CGameServer*)g_pApp;
+		pWorld = app->GetGameMain()->GetWorldManager()->FindWorld((WORLDID)m_eventWorldId);
 	}
 
-	// Get spawn position for current round
+	if (!pWorld)
+	{
+		// Fallback to GetWorldForRound if m_eventWorldId not set or world not found
+		unsigned int worldTblidx = GetWorldForRound(m_currentRound);
+		pWorld = GetOrCreateWorld(worldTblidx);
+		if (!pWorld)
+		{
+			ERR_LOG(LOG_GENERAL, _T("[EVENT] SpawnRoundMobs: could not resolve world (eventWorldId=%u)"), m_eventWorldId);
+			return;
+		}
+	}
+
+	// Get spawn position for current round (used as fallback)
 	float spawnX, spawnY, spawnZ;
 	GetSpawnPosForRound(m_currentRound, spawnX, spawnY, spawnZ);
 	CNtlVector spawnCenter(spawnX, spawnY, spawnZ);
 
+	// Collect all participant positions for spawning around players
+	std::vector<CNtlVector> playerPositions;
+	for (unsigned int charId : m_participants)
+	{
+		CPlayer* pPlayer = g_pObjectManager->FindByChar((CHARACTERID)charId);
+		if (pPlayer && pPlayer->IsInitialized() && pPlayer->GetWorldID() == (WORLDID)pWorld->GetID())
+		{
+			playerPositions.push_back(pPlayer->GetCurLoc());
+		}
+	}
+
+	unsigned int spawnAttempts = 0;
+	unsigned int spawnSuccess = 0;
 	for (unsigned int mobTblidx : round.mobTblidxList)
 	{
+		// Choose spawn center: random player position if available, otherwise round spawn center
 		CNtlVector spawnPos = spawnCenter;
+		if (!playerPositions.empty())
+		{
+			unsigned int randomPlayerIdx = RandomRange(0, (int)playerPositions.size() - 1);
+			spawnPos = playerPositions[randomPlayerIdx];
+		}
 
+		// Randomize position around chosen center
 		if (m_cfg.randomMobPositions && m_cfg.mobSpawnRadius > 0)
 		{
 			float angle = RandomRangeF(0.0f, 6.28318530718f); // 2*PI
@@ -956,10 +1481,12 @@ void CEventManager::SpawnRoundMobs(const EventRound& round)
 
 		CNtlVector dir(0.0f, 0.0f, 0.0f);
 		CMonster* pMob = pWorld->Add_Monster(mobTblidx, spawnPos, dir, 0xFF);
+		spawnAttempts++;
 
 		if (pMob)
 		{
 			m_spawnedMobs.push_back(pMob->GetID());
+			spawnSuccess++;
 
 			// Apply CustomDropEvent modifications if enabled
 			if (round.useCustomDropMobs && g_pCustomDropEvent && g_pCustomDropEvent->m_bOn)
@@ -979,6 +1506,17 @@ void CEventManager::SpawnRoundMobs(const EventRound& round)
 				SpawnMinionsAroundBoss(spawnPos, minionGroup, m_eventWorldId);
 			}
 		}
+		else
+		{
+			ERR_LOG(LOG_GENERAL, _T("[EVENT] SpawnRoundMobs: failed to spawn mob tblidx=%u in world %u"), mobTblidx, (unsigned)pWorld->GetID());
+		}
+	}
+
+	if (spawnAttempts > 0 && spawnSuccess == 0)
+	{
+		ERR_LOG(LOG_GENERAL, _T("[EVENT] SpawnRoundMobs: all %u spawn attempts failed in round %u (world %u). Forcing round completion."), spawnAttempts, m_currentRound + 1, (unsigned)pWorld->GetID());
+		CompleteCurrentRound();
+		return;
 	}
 }
 
@@ -1079,7 +1617,7 @@ void CEventManager::AwardRoundRewards(const EventRound& round)
 		unsigned int rewarded = 0;
 		for (unsigned int charId : activeParticipants)
 		{
-			CPlayer* pPlayer = g_pObjectManager->GetPC(charId);
+			CPlayer* pPlayer = g_pObjectManager->FindByChar((CHARACTERID)charId);
 			if (pPlayer && pPlayer->IsInitialized())
 			{
 				for (const auto& reward : round.fixedRewards)
@@ -1147,7 +1685,7 @@ void CEventManager::CheckRoundCompletion()
 		if (m_killedMobs.find(mobHandle) == m_killedMobs.end())
 		{
 			// Check if mob still exists
-			CCharacter* pMob = (CCharacter*)g_pObjectManager->GetObject(mobHandle);
+			CCharacter* pMob = (CCharacter*)g_pObjectManager->GetObjectA(mobHandle);
 			if (pMob && !pMob->IsFainting())
 			{
 				allKilled = false;
@@ -1274,7 +1812,8 @@ void CEventManager::TeleportParticipants()
 	EVENT_VLOG(m_cfg, LOG_GENERAL, "[EVENT] TeleportParticipants: count=%u to worldTblidx=%u", (unsigned)m_participants.size(), (unsigned)m_cfg.eventWorldTblidx);
 	for (unsigned int charId : m_participants)
 	{
-		CPlayer* pPlayer = g_pObjectManager->GetPC(charId);
+		// m_participants stores CHARACTERID, so resolve via FindByChar instead of GetPC (which expects handle)
+		CPlayer* pPlayer = g_pObjectManager->FindByChar((CHARACTERID)charId);
 		if (pPlayer && pPlayer->IsInitialized())
 		{
 			PrevLoc loc;
@@ -1295,14 +1834,14 @@ void CEventManager::TeleportParticipantsToWorld(unsigned int worldTblidx, float 
 	CGameServer* app = (CGameServer*)g_pApp;
 	if (!app)
 	{
-		ERR_LOG(LOG_GENERAL, "[EVENT] TeleportParticipantsToWorld failed: app is null");
+		ERR_LOG(LOG_GENERAL, _T("[EVENT] TeleportParticipantsToWorld failed: app is null"));
 		return;
 	}
 
 	sWORLD_TBLDAT* pWorldTbldat = (sWORLD_TBLDAT*)g_pTableContainer->GetWorldTable()->FindData((TBLIDX)worldTblidx);
 	if (!pWorldTbldat)
 	{
-		ERR_LOG(LOG_GENERAL, "[EVENT] TeleportParticipantsToWorld: world tblidx not found %u", worldTblidx);
+		ERR_LOG(LOG_GENERAL, _T("[EVENT] TeleportParticipantsToWorld: world tblidx not found %u"), worldTblidx);
 		return;
 	}
 
@@ -1311,9 +1850,17 @@ void CEventManager::TeleportParticipantsToWorld(unsigned int worldTblidx, float 
 	bool haveDest = ComputeDestForWorld(worldTblidx, x, y, z, destLoc);
 	bool usingConfigOverride = !(x == 0.f && y == 0.f && z == 0.f);
 
-	EVENT_VLOG(m_cfg, LOG_GENERAL, "[EVENT] TeleportParticipantsToWorld: worldTblidx=%u worldStart=(%.2f,%.2f,%.2f) configOverride=%d finalPos=(%.2f,%.2f,%.2f) participants=%u",
+	// Validate destination (avoid absurd values observed in logs) and fall back if needed
+	auto IsBadCoord = [](float f) -> bool { return !std::isfinite(f) || fabs(f) > 1000000.f; };
+	if (IsBadCoord(destLoc.x) || IsBadCoord(destLoc.y) || IsBadCoord(destLoc.z))
+	{
+		ERR_LOG(LOG_GENERAL, _T("[EVENT] TeleportParticipantsToWorld: invalid destination (%.2f,%.2f,%.2f) for world %u. Using world start."), destLoc.x, destLoc.y, destLoc.z, worldTblidx);
+		ComputeDestForWorld(worldTblidx, 0.f, 0.f, 0.f, destLoc);
+	}
+
+	EVENT_VLOG(m_cfg, LOG_GENERAL, "[EVENT] TeleportParticipantsToWorld: worldTblidx=%u worldStart=(%.2f,%.2f,%.2f) configOverride=%d finalPos=(%.2f,%.2f,%.2f) participants=%u worldIdCached=%u",
 		worldTblidx, pWorldTbldat->vStart1Loc.x, pWorldTbldat->vStart1Loc.y, pWorldTbldat->vStart1Loc.z,
-		usingConfigOverride, destLoc.x, destLoc.y, destLoc.z, (unsigned)m_participants.size());
+		usingConfigOverride, destLoc.x, destLoc.y, destLoc.z, (unsigned)m_participants.size(), m_eventWorldId);
 
 	// Create or find world instance (handle static worlds like Arena)
 	CWorld* pWorld = nullptr;
@@ -1335,7 +1882,7 @@ void CEventManager::TeleportParticipantsToWorld(unsigned int worldTblidx, float 
 			pWorld = app->GetGameMain()->GetWorldManager()->FindWorld((WORLDID)pWorldTbldat->tblidx);
 			if (!pWorld)
 			{
-				ERR_LOG(LOG_GENERAL, "[EVENT] TeleportParticipantsToWorld: static world instance not found (tblidx=%u)", worldTblidx);
+				ERR_LOG(LOG_GENERAL, _T("[EVENT] TeleportParticipantsToWorld: static world instance not found (tblidx=%u)"), worldTblidx);
 				return;
 			}
 			m_eventWorldId = (unsigned int)pWorld->GetID();
@@ -1346,7 +1893,7 @@ void CEventManager::TeleportParticipantsToWorld(unsigned int worldTblidx, float 
 			pWorld = app->GetGameMain()->GetWorldManager()->CreateWorld(pWorldTbldat);
 			if (!pWorld)
 			{
-				ERR_LOG(LOG_GENERAL, "[EVENT] TeleportParticipantsToWorld: failed to create world %u", worldTblidx);
+				ERR_LOG(LOG_GENERAL, _T("[EVENT] TeleportParticipantsToWorld: failed to create world %u"), worldTblidx);
 				return;
 			}
 			m_eventWorldId = (unsigned int)pWorld->GetID();
@@ -1356,31 +1903,109 @@ void CEventManager::TeleportParticipantsToWorld(unsigned int worldTblidx, float 
 
 	// Teleport all participants using COMMAND type (like Arena)
 	unsigned int teleported = 0;
+	unsigned int queued = 0;
 	for (unsigned int charId : m_participants)
 	{
-		CPlayer* pPlayer = g_pObjectManager->GetPC(charId);
-		if (pPlayer && pPlayer->IsInitialized())
+		CPlayer* pPlayer = g_pObjectManager->FindByChar((CHARACTERID)charId);
+		if (pPlayer)
 		{
-			// Guard against invalid coords (INF/NaN) – recompute from world start if needed
+			if (!pPlayer->IsInitialized())
+			{
+				m_pendingTeleports.insert(charId);
+				queued++;
+				EVENT_VLOG(m_cfg, LOG_GENERAL, "[EVENT] Deferred teleport: player not initialized yet (charId=%u)", charId);
+				continue;
+			}
+			// If player already in the target world, still teleport them to the event spawn position
+			// (don't skip - they need to be moved to the event spawn point)
+			// Only skip if somehow they're already at a bad/invalid position
+			if ((unsigned int)pPlayer->GetWorldID() == (unsigned int)pWorld->GetID())
+			{
+				CNtlVector cur = pPlayer->GetCurLoc();
+				if (!std::isfinite(cur.x) || !std::isfinite(cur.y) || !std::isfinite(cur.z))
+				{
+					// Player has invalid position, force teleport
+					EVENT_VLOG(m_cfg, LOG_GENERAL, "[EVENT] Force teleport: player %s has invalid position in world %u", pPlayer->GetCharName(), pWorld->GetID());
+				}
+				else
+				{
+					// Player in correct world, just teleport to event spawn point
+					EVENT_VLOG(m_cfg, LOG_GENERAL, "[EVENT] Teleporting player %s to event spawn (already in world %u)", pPlayer->GetCharName(), pWorld->GetID());
+				}
+			}
 			if (!std::isfinite(destLoc.x) || !std::isfinite(destLoc.y) || !std::isfinite(destLoc.z))
 			{
 				ComputeDestForWorld(worldTblidx, 0.f, 0.f, 0.f, destLoc);
 			}
-			pPlayer->StartTeleport(destLoc, pPlayer->GetCurDir(), pWorld->GetID(), TELEPORT_TYPE_COMMAND);
+
+			// Clear UI elements before teleport to ensure clean entry (like Arena does)
+			pPlayer->SendCharStateStanding();
+
+			WORLDID targetWorldId = pWorld->GetID();
+			ERR_LOG(LOG_GENERAL, _T("[EVENT] DEBUG: About to teleport player %s (charId=%u) to world tblidx=%u worldId=%u pos=(%.2f,%.2f,%.2f) currentWorld=%u"),
+				pPlayer->GetCharName(), charId, worldTblidx, (unsigned)targetWorldId, destLoc.x, destLoc.y, destLoc.z, (unsigned)pPlayer->GetWorldID());
+
+			pPlayer->StartTeleport(destLoc, pPlayer->GetCurDir(), targetWorldId, TELEPORT_TYPE_COMMAND);
 			teleported++;
 			EVENT_VLOG(m_cfg, LOG_GENERAL, "[EVENT] Teleporting player %s (charId=%u) to (%.2f,%.2f,%.2f) worldId=%u type=COMMAND",
-				pPlayer->GetCharName(), charId, destLoc.x, destLoc.y, destLoc.z, pWorld->GetID());
+				pPlayer->GetCharName(), charId, destLoc.x, destLoc.y, destLoc.z, (unsigned)targetWorldId);
 		}
-		else if (pPlayer)
+		else // player object missing
 		{
-			// Queue teleport for when the player finishes loading
 			m_pendingTeleports.insert(charId);
-			EVENT_VLOG(m_cfg, LOG_GENERAL, "[EVENT] Queued deferred teleport for charId=%u (player not initialized)", charId);
+			queued++;
+			ERR_LOG(LOG_GENERAL, _T("[EVENT] TeleportParticipantsToWorld: player object missing for charId=%u; deferred teleport queued"), charId);
 		}
 	}
 
-	ERR_LOG(LOG_GENERAL, "[EVENT] TeleportParticipantsToWorld completed: %u/%u players teleported to world %u at (%.2f,%.2f,%.2f)",
-		teleported, (unsigned)m_participants.size(), m_eventWorldId, destLoc.x, destLoc.y, destLoc.z);
+	ERR_LOG(LOG_GENERAL, _T("[EVENT] TeleportParticipantsToWorld completed: %u/%u players teleported (%u queued) to world %u at (%.2f,%.2f,%.2f)"),
+		teleported, (unsigned)m_participants.size(), queued, m_eventWorldId, destLoc.x, destLoc.y, destLoc.z);
+}
+
+void CEventManager::TeleportParticipantsToPortal(unsigned int portalTblidx)
+{
+	// Lookup portal table data (like @teleport command does)
+	sPORTAL_TBLDAT* pPortalTblData = (sPORTAL_TBLDAT*)g_pTableContainer->GetPortalTable()->FindData(portalTblidx);
+	if (!pPortalTblData)
+	{
+		ERR_LOG(LOG_GENERAL, _T("[EVENT] TeleportParticipantsToPortal: portal not found (portalTblidx=%u)"), portalTblidx);
+		return;
+	}
+
+	EVENT_VLOG(m_cfg, LOG_GENERAL, "[EVENT] TeleportParticipantsToPortal: portalTblidx=%u worldId=%u pos=(%.2f,%.2f,%.2f) participants=%u",
+		portalTblidx, pPortalTblData->worldId, pPortalTblData->vLoc.x, pPortalTblData->vLoc.y, pPortalTblData->vLoc.z, (unsigned)m_participants.size());
+
+	// Update event world ID to match portal's world
+	m_eventWorldId = (unsigned int)pPortalTblData->worldId;
+
+	unsigned int teleported = 0;
+	unsigned int queued = 0;
+
+	for (unsigned int charId : m_participants)
+	{
+		CPlayer* pPlayer = g_pObjectManager->FindByChar((CHARACTERID)charId);
+		if (pPlayer && pPlayer->IsInitialized())
+		{
+			// Clear UI elements before teleport
+			pPlayer->SendCharStateStanding();
+
+			// Use StartTeleport just like @teleport command does
+			pPlayer->StartTeleport(pPortalTblData->vLoc, pPortalTblData->vDir, pPortalTblData->worldId, TELEPORT_TYPE_COMMAND);
+			teleported++;
+
+			EVENT_VLOG(m_cfg, LOG_GENERAL, "[EVENT] Teleporting player %s (charId=%u) to portal %u at (%.2f,%.2f,%.2f) worldId=%u",
+				pPlayer->GetCharName(), charId, portalTblidx, pPortalTblData->vLoc.x, pPortalTblData->vLoc.y, pPortalTblData->vLoc.z, pPortalTblData->worldId);
+		}
+		else
+		{
+			m_pendingTeleports.insert(charId);
+			queued++;
+			ERR_LOG(LOG_GENERAL, _T("[EVENT] TeleportParticipantsToPortal: player object missing for charId=%u; deferred teleport queued"), charId);
+		}
+	}
+
+	ERR_LOG(LOG_GENERAL, _T("[EVENT] TeleportParticipantsToPortal completed: %u/%u players teleported (%u queued) to portal %u"),
+		teleported, (unsigned)m_participants.size(), queued, portalTblidx);
 }
 
 void CEventManager::PostEventTeleportAll()
@@ -1388,9 +2013,14 @@ void CEventManager::PostEventTeleportAll()
 	if (!m_cfg.postEventTeleport)
 		return;
 
+	// CRITICAL FIX: Stop the round timer before teleporting
+	// EventManager sends GU_BATTLE_DUNGEON_LIMIT_TIME_START_NFY when rounds start,
+	// so we MUST send the END packet before teleporting out to prevent stuck UI timers
+	StopRoundTimer();
+
 	for (unsigned int charId : m_participants)
 	{
-		CPlayer* pPlayer = g_pObjectManager->GetPC(charId);
+		CPlayer* pPlayer = g_pObjectManager->FindByChar((CHARACTERID)charId);
 		if (pPlayer && pPlayer->IsInitialized())
 		{
 			// Try to teleport to saved location first
@@ -1406,7 +2036,7 @@ void CEventManager::PostEventTeleportAll()
 				}
 				else
 				{
-					ERR_LOG(LOG_GENERAL, "[EVENT] PostEventTeleportAll: saved worldId invalid for char=%u; using fallback", charId);
+					ERR_LOG(LOG_GENERAL, _T("[EVENT] PostEventTeleportAll: saved worldId invalid for char=%u; using fallback"), charId);
 					// Fallback to configured post-event location
 					CGameServer* app = (CGameServer*)g_pApp;
 					sWORLD_TBLDAT* pWorldTbldat = (sWORLD_TBLDAT*)g_pTableContainer->GetWorldTable()->FindData((TBLIDX)m_cfg.postEventWorldTblidx);
@@ -1417,7 +2047,7 @@ void CEventManager::PostEventTeleportAll()
 					}
 					else
 					{
-						ERR_LOG(LOG_GENERAL, "[EVENT] PostEventTeleportAll: fallback world tblidx not found %u", m_cfg.postEventWorldTblidx);
+						ERR_LOG(LOG_GENERAL, _T("[EVENT] PostEventTeleportAll: fallback world tblidx not found %u"), m_cfg.postEventWorldTblidx);
 					}
 					CNtlVector dest = pWorldTbldat ? CNtlVector(m_cfg.postEventPosX, m_cfg.postEventPosY, m_cfg.postEventPosZ)
 						: CNtlVector(0.f, 0.f, 0.f);
@@ -1438,7 +2068,7 @@ void CEventManager::PostEventTeleportAll()
 				}
 				else
 				{
-					ERR_LOG(LOG_GENERAL, "[EVENT] PostEventTeleportAll: fallback world tblidx not found %u", m_cfg.postEventWorldTblidx);
+					ERR_LOG(LOG_GENERAL, _T("[EVENT] PostEventTeleportAll: fallback world tblidx not found %u"), m_cfg.postEventWorldTblidx);
 				}
 				CNtlVector dest = pWorldTbldat ? CNtlVector(m_cfg.postEventPosX, m_cfg.postEventPosY, m_cfg.postEventPosZ)
 					: CNtlVector(0.f, 0.f, 0.f);
@@ -1533,20 +2163,45 @@ void CEventManager::OnPlayerEnterWorldComplete(CPlayer* pPlayer)
 	// Handle any deferred teleport if enrollment already closed or PRE_ROUND
 	if (IsParticipant(pPlayer) && m_pendingTeleports.find(pPlayer->GetCharID()) != m_pendingTeleports.end())
 	{
-		if (m_state == State::PRE_ROUND || m_state == State::IN_ROUND)
+		// Check if current round uses portal teleportation
+		bool usePortal = false;
+		unsigned int portalId = 0;
+		if ((m_state == State::PRE_ROUND || m_state == State::IN_ROUND) && m_currentRound < m_cfg.rounds.size())
 		{
-			unsigned int worldTblidx = (m_state == State::PRE_ROUND) ? GetWorldForRound(m_currentRound) : GetWorldForRound(m_currentRound);
+			const EventRound& round = m_cfg.rounds[m_currentRound];
+			if (round.portalTblidx > 0)
+			{
+				usePortal = true;
+				portalId = round.portalTblidx;
+			}
+		}
+
+		if (usePortal)
+		{
+			// Use portal teleportation
+			sPORTAL_TBLDAT* pPortalTblData = (sPORTAL_TBLDAT*)g_pTableContainer->GetPortalTable()->FindData(portalId);
+			if (pPortalTblData)
+			{
+				pPlayer->StartTeleport(pPortalTblData->vLoc, pPortalTblData->vDir, pPortalTblData->worldId, TELEPORT_TYPE_COMMAND);
+				EVENT_VLOG(m_cfg, LOG_GENERAL, "[EVENT] Deferred teleport to portal %u executed for %s (charId=%u)", portalId, pPlayer->GetCharName(), pPlayer->GetCharID());
+			}
+		}
+		else
+		{
+			// Use world teleportation (original behavior)
+			unsigned int worldTblidx = (m_state == State::PRE_ROUND || m_state == State::IN_ROUND) ? GetWorldForRound(m_currentRound) : m_cfg.eventWorldTblidx;
 			CNtlVector dest;
 			ComputeDestForWorld(worldTblidx, m_cfg.teleportPosX, m_cfg.teleportPosY, m_cfg.teleportPosZ, dest);
 			CWorld* pWorld = GetOrCreateWorld(worldTblidx);
 			if (pWorld)
 			{
 				if (!std::isfinite(dest.x) || !std::isfinite(dest.y) || !std::isfinite(dest.z))
-				{
 					ComputeDestForWorld(worldTblidx, 0.f, 0.f, 0.f, dest);
+				if ((unsigned int)pPlayer->GetWorldID() != (unsigned int)pWorld->GetID())
+				{
+					pPlayer->StartTeleport(dest, pPlayer->GetCurDir(), pWorld->GetID(), TELEPORT_TYPE_COMMAND);
+					EVENT_VLOG(m_cfg, LOG_GENERAL, "[EVENT] Deferred teleport to world %u executed for %s (charId=%u)", worldTblidx, pPlayer->GetCharName(), pPlayer->GetCharID());
 				}
-				pPlayer->StartTeleport(dest, pPlayer->GetCurDir(), pWorld->GetID(), TELEPORT_TYPE_COMMAND);
-				EVENT_VLOG(m_cfg, LOG_GENERAL, "[EVENT] Deferred teleport executed for %s (charId=%u)", pPlayer->GetCharName(), pPlayer->GetCharID());
 			}
 		}
 		m_pendingTeleports.erase(pPlayer->GetCharID());
@@ -1684,9 +2339,19 @@ void CEventManager::BeginNow()
 		m_enrollmentRemainMs = 0;
 		if (!m_participants.empty())
 		{
-			BroadcastSystem(L"[EVENT] Enrollment closed. Teleporting participants (forced)...");
-			SendNotice(L"[EVENT] Enrollment closed. Teleporting participants (forced)...", SERVER_TEXT_SYSNOTICE);
-			TeleportParticipants();
+			// Skip initial teleport if world rotation is enabled OR first round uses portal
+			bool firstRoundHasPortal = !m_cfg.rounds.empty() && m_cfg.rounds[0].portalTblidx > 0;
+			if (m_cfg.worldRotationEnabled || firstRoundHasPortal)
+			{
+				BroadcastSystem(L"[EVENT] Enrollment closed (forced). Get ready!");
+				SendNotice(L"[EVENT] Enrollment closed. Preparing round 1...", SERVER_TEXT_SYSNOTICE);
+			}
+			else
+			{
+				BroadcastSystem(L"[EVENT] Enrollment closed. Teleporting participants (forced)...");
+				SendNotice(L"[EVENT] Enrollment closed. Teleporting participants (forced)...", SERVER_TEXT_SYSNOTICE);
+				TeleportParticipants();
+			}
 			m_state = State::PRE_ROUND;
 			m_startDelayRemainMs = ToMs(m_cfg.startDelaySeconds);
 			m_nextPreRoundAnnounceSec = (unsigned int)(m_startDelayRemainMs / 1000);
@@ -1696,8 +2361,54 @@ void CEventManager::BeginNow()
 			BroadcastSystem(L"[EVENT] No participants. Event cancelled.");
 			SendNotice(L"[EVENT] No participants. Event cancelled.", SERVER_TEXT_SYSNOTICE);
 			m_state = State::IDLE;
+			ScheduleAutoAfterTermination(true);
 		}
 	}
+}
+void CEventManager::ScheduleAutoAfterTermination(bool cancelledNoParticipants)
+{
+	if (!m_cfg.enabled || !m_cfg.autoEnabled)
+		return;
+
+	// If automation engine is OFF (e.g., manual start earlier), initialize it.
+	if (m_autoState == AutoState::OFF)
+	{
+		m_autoState = AutoState::WAIT_NEXT;
+	}
+
+	// If event completed normally and autoRestartOnComplete is set, WAIT_RESTART logic will already handle it.
+	// For cancellations with no participants or manual stop, we schedule a fresh WAIT_NEXT interval.
+	if (m_autoState == AutoState::ENROLLMENT_OPEN)
+	{
+		// Enrollment just closed with no participants or we aborted; move to WAIT_NEXT.
+		m_autoState = AutoState::WAIT_NEXT;
+	}
+
+	// Choose interval: if no participants, we can retry sooner (e.g., 1/4 of normal) but not less than 60s.
+	unsigned int baseInterval = m_cfg.autoIntervalSeconds;
+	unsigned int retrySeconds = baseInterval;
+	if (cancelledNoParticipants && baseInterval > 0)
+	{
+		retrySeconds = baseInterval / 4;
+		if (retrySeconds < 60) retrySeconds = (baseInterval < 60 ? baseInterval : 60);
+	}
+
+	// If autoRestartOnComplete and this was a completion path, let existing logic run.
+	if (!cancelledNoParticipants && m_cfg.autoRestartOnComplete)
+	{
+		// Defer to WAIT_RESTART if not already set elsewhere; if we're IDLE we convert to WAIT_RESTART.
+		if (m_autoState != AutoState::WAIT_RESTART)
+		{
+			m_autoState = AutoState::WAIT_RESTART;
+			m_autoRemainMs = ToMs(m_cfg.autoRestartDelaySeconds);
+		}
+		return;
+	}
+
+	// Normal scheduling
+	m_autoState = AutoState::WAIT_NEXT;
+	m_autoRemainMs = ToMs(retrySeconds);
+	EVENT_VLOG(m_cfg, LOG_GENERAL, "[EVENT][AUTO] Scheduled next enrollment in %u seconds (cancelled=%d)", retrySeconds, (int)cancelledNoParticipants);
 }
 
 unsigned int CEventManager::GetWorldForRound(unsigned int roundIndex)
@@ -1736,22 +2447,22 @@ void CEventManager::GetSpawnPosForRound(unsigned int roundIndex, float& outX, fl
 {
 	// Get world for this round to determine default spawn
 	unsigned int worldTblidx = GetWorldForRound(roundIndex);
-	sWORLD_TBLDAT* pWorldTbldat = (sWORLD_TBLDAT*)g_pTableContainer->GetWorldTable()->FindData((TBLIDX)worldTblidx);
 
-	// Default to world table spawn position
-	if (pWorldTbldat)
+	// Use ComputeDestForWorld which intelligently calculates safe positions using world boundaries
+	CNtlVector dest;
+	if (ComputeDestForWorld(worldTblidx, 0.0f, 0.0f, 0.0f, dest))
 	{
-		outX = pWorldTbldat->vStart1Loc.x;
-		outY = pWorldTbldat->vStart1Loc.y;
-		outZ = pWorldTbldat->vStart1Loc.z;
+		outX = dest.x;
+		outY = dest.y;
+		outZ = dest.z;
 	}
 	else
 	{
-		// Fallback if world not found
+		// Fallback if computation failed
 		outX = 0.0f;
 		outY = 0.0f;
 		outZ = 0.0f;
-		ERR_LOG(LOG_GENERAL, "[EVENT] GetSpawnPosForRound: world tblidx not found %u", worldTblidx);
+		ERR_LOG(LOG_GENERAL, _T("[EVENT] GetSpawnPosForRound: failed to compute dest for world %u"), worldTblidx);
 		return;
 	}
 
@@ -1874,7 +2585,7 @@ bool CEventManager::ReloadConfigFromDefault()
 {
 	const char* eventIni = ".\\config\\Events.cfg";
 	bool ok = LoadConfigFromIniPath(eventIni);
-	NTL_PRINT(PRINT_APP, ok ? "[EVENT] Config reloaded" : "[EVENT] Config reload failed");
+	NTL_PRINT(PRINT_APP, ok ? _T("[EVENT] Config reloaded") : _T("[EVENT] Config reload failed"));
 	return ok;
 }
 
@@ -1960,6 +2671,57 @@ void CEventManager::OnPlayerKilledMob(CPlayer* pKiller, const char* mobName)
 		}
 		BroadcastSystem(msg);
 	}
+}
+
+void CEventManager::OnPlayerDeath(CPlayer* pPlayer)
+{
+	if (!pPlayer || m_state != State::IN_ROUND)
+		return;
+
+	unsigned int charId = pPlayer->GetCharID();
+	if (!IsParticipantId(charId))
+		return;
+
+	// Check if already eliminated
+	if (m_eliminatedPlayers.find(charId) != m_eliminatedPlayers.end())
+		return;
+
+	if (!m_cfg.autoResurrectEnabled)
+		return;
+
+	// Increment death count
+	m_playerDeathCount[charId]++;
+	m_playerDeathTime[charId] = GetTickCount();
+
+	unsigned int deaths = m_playerDeathCount[charId];
+
+	EVENT_VLOG(m_cfg, LOG_GENERAL, "[EVENT] Player %s died (death #%u/%u)",
+		pPlayer->GetCharName(), deaths, m_cfg.maxDeathsBeforeElimination);
+
+	// Check if eliminated
+	if (deaths >= m_cfg.maxDeathsBeforeElimination)
+	{
+		m_eliminatedPlayers.insert(charId);
+		wchar_t msg[256];
+		swprintf_s(msg, L"[EVENT] %s was eliminated due to too many deaths! (%u deaths)",
+			pPlayer->GetCharName(), deaths);
+		BroadcastSystem(msg);
+		SendNotice(msg, SERVER_TEXT_SYSNOTICE);
+
+		// Remove from participants to prevent rewards
+		m_participants.erase(charId);
+
+		EVENT_VLOG(m_cfg, LOG_GENERAL, "[EVENT] Player %s eliminated after %u deaths",
+			pPlayer->GetCharName(), deaths);
+		return;
+	}
+
+	// Send death message with remaining lives
+	unsigned int remaining = m_cfg.maxDeathsBeforeElimination - deaths;
+	wchar_t msg[256];
+	swprintf_s(msg, L"[EVENT] You died! Respawning in %u seconds... (%u lives remaining)",
+		m_cfg.autoResurrectDelayMs / 1000, remaining);
+	SendSystemTo(pPlayer, msg);
 }
 
 void CEventManager::ProcessKillCombo(unsigned int charId)
