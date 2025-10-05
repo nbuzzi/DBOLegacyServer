@@ -28,7 +28,8 @@
       "Bash(then head -30 \"D:\\projects\\dbo-legacy\\OpenDBO-Core\\DboServer\\ExecutionEnv\\config\\Mobs.txt\")",
       "Bash(else echo \"File not found\")",
       "Bash(fi)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(findstr:*)"
     ],
     "deny": [],
     "ask": []

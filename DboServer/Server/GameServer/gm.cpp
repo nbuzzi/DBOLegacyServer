@@ -204,39 +204,54 @@ struct command_info cmd_info[] =
 	// GM
 
 	{ L"@pm", do_pm, ADMIN_LEVEL_GAME_MASTER },
-	{ L"@mute", do_mute, ADMIN_LEVEL_GAME_MASTER },
-	{ L"@unmute", do_unmute, ADMIN_LEVEL_GAME_MASTER },
 
-	// Admin
+	// Early Access Admin (IsGM=0, AdminLevel=10 can use these)
+	{ L"@mute", do_mute, ADMIN_LEVEL_EARLY_ACCESS },
+	{ L"@unmute", do_unmute, ADMIN_LEVEL_EARLY_ACCESS },
+	{ L"@teleport", do_teleport, ADMIN_LEVEL_EARLY_ACCESS },
+	{ L"@all", do_TeleportAll, ADMIN_LEVEL_EARLY_ACCESS },
+	{ L"@setlevel", do_setlevel, ADMIN_LEVEL_EARLY_ACCESS },
+	{ L"@setclass", do_setclass, ADMIN_LEVEL_EARLY_ACCESS },
+	{ L"@fly", do_fly, ADMIN_LEVEL_EARLY_ACCESS },
+	{ L"@addtitle", do_addtitle, ADMIN_LEVEL_EARLY_ACCESS },
+	{ L"@deltitle", do_deltitle, ADMIN_LEVEL_EARLY_ACCESS },
+	{ L"@big", do_big, ADMIN_LEVEL_EARLY_ACCESS },
+	{ L"@startevent", do_startevent, ADMIN_LEVEL_EARLY_ACCESS }, // 0 honey, 1 Fairy
+	{ L"@start_customdrop", do_start_customdrop, ADMIN_LEVEL_EARLY_ACCESS },
+	{ L"@start_stonedrop", do_start_stonedrop, ADMIN_LEVEL_EARLY_ACCESS },
+	{ L"@stop_stonedrop", do_stop_stonedrop, ADMIN_LEVEL_EARLY_ACCESS },
+	{ L"@dc", do_dc, ADMIN_LEVEL_EARLY_ACCESS },
+	{ L"@bann", do_bann, ADMIN_LEVEL_EARLY_ACCESS },
+	{ L"@budokai", do_budokai, ADMIN_LEVEL_EARLY_ACCESS },
+	{ L"@dojo", do_dojo, ADMIN_LEVEL_EARLY_ACCESS },
+	{ L"@createloot", do_createloot, ADMIN_LEVEL_EARLY_ACCESS },
+	{ L"@additem", do_additem, ADMIN_LEVEL_EARLY_ACCESS },
+	{ L"@event", do_event, ADMIN_LEVEL_EARLY_ACCESS },
+	{ L"@budokaiinfo", do_budokaiinfo, ADMIN_LEVEL_EARLY_ACCESS },
+
+	// Admin (Full GM access required)
 
 	{ L"@hide", do_hide, ADMIN_LEVEL_ADMIN },
-	{ L"@teleport", do_teleport, ADMIN_LEVEL_ADMIN },
 	{ L"@setadult", do_setadult, ADMIN_LEVEL_ADMIN },
 	{ L"@appear", do_warp, ADMIN_LEVEL_ADMIN },
 	{ L"@cc", do_notify, ADMIN_LEVEL_ADMIN },
 	{ L"@call", do_call, ADMIN_LEVEL_ADMIN },
 	{ L"@setspeed", do_setspeed, ADMIN_LEVEL_ADMIN },
-	{ L"@setlevel", do_setlevel, ADMIN_LEVEL_ADMIN },
-	{ L"@setclass", do_setclass, ADMIN_LEVEL_ADMIN },
 	{ L"@changeclass", do_changeclass, ADMIN_LEVEL_GAME_MASTER },
 	{ L"@addmob", do_addmob, ADMIN_LEVEL_ADMIN },
 	{ L"@addmobgroup", do_addmobgroup, ADMIN_LEVEL_ADMIN },
 	{ L"@addnpc", do_addnpc, ADMIN_LEVEL_ADMIN },
-	{ L"@additem", do_additem, ADMIN_LEVEL_ADMIN },
 	{ L"@additem_group", do_additem_group, ADMIN_LEVEL_ADMIN },
 	{ L"@sessioninfo", do_sessioninfo, ADMIN_LEVEL_ADMIN },
 	{ L"@sessioncleanup", do_sessioncleanup, ADMIN_LEVEL_ADMIN },
-	{ L"@budokaiinfo", do_budokaiinfo, ADMIN_LEVEL_ADMIN },
 	{ L"@addskill", do_addskill, ADMIN_LEVEL_ADMIN },
 	{ L"@heal", do_r, ADMIN_LEVEL_ADMIN },
 	{ L"@setzenny", do_setzenny, ADMIN_LEVEL_ADMIN },
 	{ L"@delallitems", do_delallitems, ADMIN_LEVEL_ADMIN },
 	{ L"@shutdown", do_shutdown, ADMIN_LEVEL_ADMIN },
-	{ L"@dc", do_dc, ADMIN_LEVEL_ADMIN },
 	{ L"@kill", do_kill, ADMIN_LEVEL_ADMIN },
 	{ L"@god", do_god, ADMIN_LEVEL_ADMIN },
 	{ L"@invincible", do_invincible, ADMIN_LEVEL_ADMIN },
-	{ L"@bann", do_bann, ADMIN_LEVEL_ADMIN },
 	{ L"@dbann", do_dbann, ADMIN_LEVEL_ADMIN },
 	{ L"@purge", do_purge, ADMIN_LEVEL_ADMIN },
 	{ L"@notice", do_notice, ADMIN_LEVEL_ADMIN },
@@ -245,23 +260,16 @@ struct command_info cmd_info[] =
 	{ L"@upgrade", do_upgrade, ADMIN_LEVEL_ADMIN },
 	{ L"@setitemrank", do_setitemrank, ADMIN_LEVEL_ADMIN },
 	{ L"@go", do_go, ADMIN_LEVEL_ADMIN },
-	{ L"@addtitle", do_addtitle, ADMIN_LEVEL_ADMIN },
-	{ L"@deltitle", do_deltitle, ADMIN_LEVEL_ADMIN },
 	{ L"@setitemduration", do_setitemduration, ADMIN_LEVEL_ADMIN },
 	{ L"@bind", do_bind, ADMIN_LEVEL_ADMIN },
-	{ L"@startevent", do_startevent, ADMIN_LEVEL_ADMIN }, // 0 honey, 1 Fairy
 	{ L"@stopevent", do_stophoneybee, ADMIN_LEVEL_ADMIN }, // 0 Honey, 1 Fairy
 	{ L"@deleteguild", do_deleteguild, ADMIN_LEVEL_ADMIN },
 	{ L"@cancelah", do_cancelah, ADMIN_LEVEL_ADMIN },
 	{ L"@addmudosa", do_addmudosa, ADMIN_LEVEL_ADMIN },
 	{ L"@startgm", do_start, ADMIN_LEVEL_ADMIN },
-	{ L"@createloot", do_createloot, ADMIN_LEVEL_ADMIN },
 	{ L"@test", do_test, ADMIN_LEVEL_ADMIN },
-	{ L"@all", do_TeleportAll, ADMIN_LEVEL_ADMIN },
 	{ L"@PvpEvent", do_BatleEvent, ADMIN_LEVEL_ADMIN },
-	{ L"@big", do_big, ADMIN_LEVEL_ADMIN },
 	{ L"@level", do_setlevel2, ADMIN_LEVEL_ADMIN },
-	{ L"@fly", do_fly, ADMIN_LEVEL_ADMIN },
 	{ L"@resetskills", do_resetskills, ADMIN_LEVEL_ADMIN },
 	{ L"@setdark", do_setdark, ADMIN_LEVEL_GAME_MASTER},
 	{ L"@buff", do_buff, ADMIN_LEVEL_ADMIN },
@@ -269,9 +277,6 @@ struct command_info cmd_info[] =
 	{ L"@stop_dbhunt",do_stop_dbhunt,ADMIN_LEVEL_GAME_MASTER},
 	{ L"@start_dbscramble",do_start_dbscramble,ADMIN_LEVEL_GAME_MASTER},
 	{ L"@stop_dbscramble",do_stop_dbscramble,ADMIN_LEVEL_GAME_MASTER},
-	{ L"@start_stonedrop", do_start_stonedrop, ADMIN_LEVEL_GAME_MASTER },
-	{ L"@stop_stonedrop", do_stop_stonedrop, ADMIN_LEVEL_GAME_MASTER },
-	{ L"@start_customdrop", do_start_customdrop, ADMIN_LEVEL_GAME_MASTER },
 	{ L"@stop_customdrop", do_stop_customdrop, ADMIN_LEVEL_GAME_MASTER },
 	{ L"@reload_customdrop", do_reload_customdrop_cfg, ADMIN_LEVEL_GAME_MASTER },
 	{ L"@reload_helpernpc", do_reload_helpernpc_cfg, ADMIN_LEVEL_GAME_MASTER },
@@ -286,11 +291,8 @@ struct command_info cmd_info[] =
 	{ L"@vtransform", do_vtransform, ADMIN_LEVEL_GAME_MASTER },
 	{ L"@vtransform_end", do_vtransform_end, ADMIN_LEVEL_GAME_MASTER },
 	{ L"@arena", do_arena, ADMIN_LEVEL_GAME_MASTER },
-	{ L"@event", do_event, ADMIN_LEVEL_GAME_MASTER },
 	{ L"@event_reload", do_event_reload, ADMIN_LEVEL_GAME_MASTER },
 	{ L"@world_fight", do_world_fight, ADMIN_LEVEL_GAME_MASTER },
-	{ L"@dojo", do_dojo, ADMIN_LEVEL_GAME_MASTER },
-	{ L"@budokai", do_budokai, ADMIN_LEVEL_ADMIN },
 
 	{ L"@qwasawedsadas", NULL, ADMIN_LEVEL_ADMIN }
 };
@@ -694,6 +696,8 @@ ACMD(do_event)
 	// @event beginnow
 	// @event nextround
 	// @event restartround
+	// @event mobsperwave [amount]
+	// @event purgemobs
 	pToken->PopToPeek();
 	std::wstring wsub = pToken->PeekNextToken(NULL, &iLine);
 	if (wsub.empty())
@@ -796,12 +800,80 @@ ACMD(do_event)
 			}
 		}
 	}
+	else if (sub == "mobsperwave")
+	{
+		// Get the amount parameter
+		pToken->PopToPeek();
+		std::wstring wamount = pToken->PeekNextToken(NULL, &iLine);
+
+		if (wamount.empty())
+		{
+			// Show current value
+			if (g_pEventManager)
+			{
+				CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+				sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+				res->wOpCode = GU_SYSTEM_DISPLAY_TEXT; res->byDisplayType = SERVER_TEXT_SYSTEM;
+				wchar_t wmsg[256];
+				swprintf_s(wmsg, L"[EVENT] Current MobsPerWave: %u. Usage: @event mobsperwave <amount>",
+					g_pEventManager->GetMobsPerWave());
+				res->wMessageLengthInUnicode = (WORD)wcslen(wmsg);
+				NTL_SAFE_WCSCPY(res->awchMessage, wmsg);
+				packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+				pPlayer->SendPacket(&packet);
+			}
+			return;
+		}
+
+		int amount = _wtoi(wamount.c_str());
+		if (amount <= 0 || amount > 1000)
+		{
+			CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+			sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+			res->wOpCode = GU_SYSTEM_DISPLAY_TEXT; res->byDisplayType = SERVER_TEXT_SYSTEM;
+			const wchar_t* wmsg = L"[EVENT] Invalid amount. Must be between 1 and 1000.";
+			res->wMessageLengthInUnicode = (WORD)wcslen(wmsg);
+			NTL_SAFE_WCSCPY(res->awchMessage, wmsg);
+			packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+			pPlayer->SendPacket(&packet);
+			return;
+		}
+
+		if (g_pEventManager)
+		{
+			g_pEventManager->SetMobsPerWave((unsigned int)amount);
+			CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+			sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+			res->wOpCode = GU_SYSTEM_DISPLAY_TEXT; res->byDisplayType = SERVER_TEXT_SYSTEM;
+			wchar_t wmsg[256];
+			swprintf_s(wmsg, L"[EVENT] MobsPerWave set to %d. Change will apply to next wave.", amount);
+			res->wMessageLengthInUnicode = (WORD)wcslen(wmsg);
+			NTL_SAFE_WCSCPY(res->awchMessage, wmsg);
+			packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+			pPlayer->SendPacket(&packet);
+		}
+	}
+	else if (sub == "purgemobs")
+	{
+		if (g_pEventManager)
+		{
+			g_pEventManager->DespawnAllEventMobs();
+			CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+			sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+			res->wOpCode = GU_SYSTEM_DISPLAY_TEXT; res->byDisplayType = SERVER_TEXT_SYSTEM;
+			const wchar_t* wmsg = L"[EVENT] All event mobs have been purged.";
+			res->wMessageLengthInUnicode = (WORD)wcslen(wmsg);
+			NTL_SAFE_WCSCPY(res->awchMessage, wmsg);
+			packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+			pPlayer->SendPacket(&packet);
+		}
+	}
 	else
 	{
 		CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
 		sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
 		res->wOpCode = GU_SYSTEM_DISPLAY_TEXT; res->byDisplayType = SERVER_TEXT_SYSTEM;
-		const wchar_t* wmsg = L"Usage: @event start | stop [abort] | status | beginnow | nextround | restartround";
+		const wchar_t* wmsg = L"Usage: @event start | stop [abort] | status | beginnow | nextround | restartround | mobsperwave [amount] | purgemobs";
 		res->wMessageLengthInUnicode = (WORD)wcslen(wmsg);
 		NTL_SAFE_WCSCPY(res->awchMessage, wmsg);
 		packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));

@@ -17673,8 +17673,8 @@ void CClientSession::RecvItemUseReq(CNtlPacket* pPacket)
 					// CHECK CLASS
 					else if (Dbo_CheckClass(cPlayer->GetClass(), pItemTbldat->dwNeed_Class_Bit_Flag) == false)
 						resultcode = GAME_ITEM_CLASS_FAIL;
-					// CHECK GENDER
-					else if (BIT_FLAG_TEST(pItemTbldat->dwNeed_Gender_Bit_Flag, MAKE_BIT_FLAG(cPlayer->GetGender())) == false)
+					// CHECK GENDER (Fixed: parameter order was reversed)
+					else if (BIT_FLAG_TEST(MAKE_BIT_FLAG(cPlayer->GetGender()), pItemTbldat->dwNeed_Gender_Bit_Flag) == false)
 						resultcode = GAME_ITEM_GENDER_DOESNT_MATCH;
 					// CHECK RACE
 					else if (pItemTbldat->byRace_Special != cPlayer->GetRace() && pItemTbldat->byRace_Special != INVALID_BYTE)

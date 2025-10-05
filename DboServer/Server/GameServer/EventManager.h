@@ -130,6 +130,14 @@ public:
 		bool autoResurrectEnabled;                // Enable auto-resurrection when players die
 		unsigned int maxDeathsBeforeElimination;  // Max deaths before player is eliminated (default 30)
 		unsigned int autoResurrectDelayMs;        // Delay before auto-resurrecting (default 3000ms = 3s)
+		// Event Helpers
+		bool eventHelpersEnabled;                 // Enable NPC helpers during event
+		unsigned int helpersPerPlayer;            // Number of helpers per player (0=disabled, 1=one per player)
+		unsigned int helperMobId;                 // Mob ID to use for helpers
+		float helperFollowDistance;               // Distance helpers maintain from player
+		bool helperEnableHealing;                 // Enable healing capability
+		bool helperEnableBuffing;                 // Enable buffing capability
+		bool helperEnableAttacking;               // Enable attacking capability
 
 		Config()
 			: enabled(false), channelNameContains("EVENTS"),
@@ -158,7 +166,10 @@ public:
 			  partyBonusMultiplier(1.2f), enableTeamCompetition(false),
 			  teamCompetitionBonusMudosa(3000),
 			  mobPoolEnabled(false), mobPoolFile(".\\config\\Mobs.txt"), randomMobsPerRound(1),
-			  autoResurrectEnabled(true), maxDeathsBeforeElimination(30), autoResurrectDelayMs(3000) {}
+			  autoResurrectEnabled(true), maxDeathsBeforeElimination(30), autoResurrectDelayMs(3000),
+			  eventHelpersEnabled(true), helpersPerPlayer(1), helperMobId(3416101),
+			  helperFollowDistance(3.0f), helperEnableHealing(true), helperEnableBuffing(true),
+			  helperEnableAttacking(true) {}
 	};
 
 public:
@@ -196,6 +207,8 @@ public:
 
 	// State queries
 	State GetState() const { return m_state; }
+	unsigned int GetMobsPerWave() const { return m_cfg.mobsPerWave; }
+	void SetMobsPerWave(unsigned int amount) { m_cfg.mobsPerWave = amount; }
 	const Config& GetConfig() const { return m_cfg; }
 	bool IsEnabled() const { return m_cfg.enabled; }
 	unsigned int GetCurrentRound() const { return m_currentRound; }
@@ -213,6 +226,9 @@ public:
 	void OnPlayerKilledMob(CPlayer* pKiller, const char* mobName);
 	// Called when a player dies during the event
 	void OnPlayerDeath(CPlayer* pPlayer);
+
+	// Mob cleanup (can be called by GM command)
+	void DespawnAllEventMobs();
 
 private:
 	// Forward declare team enum so it can be used in method prototypes
@@ -335,6 +351,15 @@ private:
 	std::unordered_map<unsigned int, unsigned int> m_playerDeathCount; // charId -> death count
 	std::unordered_map<unsigned int, unsigned long> m_playerDeathTime; // charId -> death timestamp (for delay)
 	std::unordered_set<unsigned int> m_eliminatedPlayers;               // charIds eliminated from rewards
+
+	// Event helpers tracking
+	std::vector<HOBJECT> m_eventHelpers;                               // Helper mob handles
+	std::unordered_map<unsigned int, HOBJECT> m_playerHelpers;         // charId -> helper handle
+
+	// Helper management functions
+	void SpawnEventHelpers();
+	void DespawnEventHelpers();
+	void DespawnPlayerHelper(unsigned int charId);
 };
 
 #define GetEventManager() CEventManager::GetInstance()

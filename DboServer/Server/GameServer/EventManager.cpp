@@ -486,7 +486,9 @@ bool CEventManager::LoadConfigFromIniPath(const char* iniPath)
 
 	// Parse rounds configuration
 	CNtlString roundsCsv = file.Read("Event", "Rounds");
+	ERR_LOG(LOG_GENERAL, _T("[EVENT] Rounds config length: %u characters"), (unsigned)strlen(roundsCsv.c_str()));
 	ParseRoundsCsv(roundsCsv);
+	ERR_LOG(LOG_GENERAL, _T("[EVENT] Parsed %u rounds from config"), (unsigned)m_cfg.rounds.size());
 
 	// Mob pool integration
 	int mobPoolEn = 0;
@@ -511,6 +513,29 @@ bool CEventManager::LoadConfigFromIniPath(const char* iniPath)
 	unsigned int autoResDelay = 3000;
 	if (file.Read("Event", "AutoResurrectDelayMs", autoResDelay))
 		m_cfg.autoResurrectDelayMs = autoResDelay;
+
+	// Event Helpers config
+	int eventHelpersEn = m_cfg.eventHelpersEnabled ? 1 : 0;
+	if (file.Read("Event", "EventHelpersEnabled", eventHelpersEn))
+		m_cfg.eventHelpersEnabled = (eventHelpersEn != 0);
+	unsigned int helpersPerPlayer = 1;
+	if (file.Read("Event", "HelpersPerPlayer", helpersPerPlayer))
+		m_cfg.helpersPerPlayer = helpersPerPlayer;
+	unsigned int helperMobId = 3416101;
+	if (file.Read("Event", "HelperMobId", helperMobId))
+		m_cfg.helperMobId = helperMobId;
+	float helperFollowDist = 3.0f;
+	if (file.Read("Event", "HelperFollowDistance", helperFollowDist))
+		m_cfg.helperFollowDistance = helperFollowDist;
+	int helperHealing = m_cfg.helperEnableHealing ? 1 : 0;
+	if (file.Read("Event", "HelperEnableHealing", helperHealing))
+		m_cfg.helperEnableHealing = (helperHealing != 0);
+	int helperBuffing = m_cfg.helperEnableBuffing ? 1 : 0;
+	if (file.Read("Event", "HelperEnableBuffing", helperBuffing))
+		m_cfg.helperEnableBuffing = (helperBuffing != 0);
+	int helperAttacking = m_cfg.helperEnableAttacking ? 1 : 0;
+	if (file.Read("Event", "HelperEnableAttacking", helperAttacking))
+		m_cfg.helperEnableAttacking = (helperAttacking != 0);
 
 	EVENT_VLOG(m_cfg, LOG_GENERAL, "[EVENT] Loaded config: enabled=%d channel='%s' rounds=%u",
 		(int)m_cfg.enabled, m_cfg.channelNameContains.c_str(), (unsigned)m_cfg.rounds.size());
@@ -869,15 +894,29 @@ void CEventManager::TickProcess(unsigned long dwTickDiff)
 					const EventRound& round = m_cfg.rounds[m_currentRound];
 
 					// Create a mini-round with MIX of random mobs for this wave
-					// Each mob is individually randomly picked from the round's mob list
+					// Use round-robin distribution to ensure variety: cycle through all mob types
 					EventRound waveRound = round;
 					waveRound.mobTblidxList.clear();
 
-					// Pick a random mob type for EACH individual mob in the wave
-					for (unsigned int i = 0; i < m_cfg.mobsPerWave && !round.mobTblidxList.empty(); i++)
+					if (!round.mobTblidxList.empty())
 					{
-						unsigned int randomIdx = RandomRange(0, (int)round.mobTblidxList.size() - 1);
-						waveRound.mobTblidxList.push_back(round.mobTblidxList[randomIdx]);
+						// Create a shuffled copy of the mob list for better randomness
+						std::vector<TBLIDX> shuffledMobs = round.mobTblidxList;
+
+						// Shuffle the list once
+						for (size_t i = shuffledMobs.size() - 1; i > 0; i--)
+						{
+							size_t j = RandomRange(0, (int)i);
+							std::swap(shuffledMobs[i], shuffledMobs[j]);
+						}
+
+						// Fill the wave by cycling through the shuffled list
+						// This ensures even distribution of all mob types
+						for (unsigned int i = 0; i < m_cfg.mobsPerWave; i++)
+						{
+							unsigned int mobIdx = i % shuffledMobs.size();
+							waveRound.mobTblidxList.push_back(shuffledMobs[mobIdx]);
+						}
 					}
 
 					// Spawn the wave (with fallback if some mobs fail)
@@ -913,8 +952,17 @@ void CEventManager::TickProcess(unsigned long dwTickDiff)
 				unsigned int sec = (unsigned int)(m_roundRemainMs / 1000);
 				if (sec != m_nextRoundAnnounceSec)
 				{
-					// Announce at: 10min, 5min, 3min, 2min, 1min, 30s, 10s, 5-1s
-					if (sec == 600 || sec == 300 || sec == 180 || sec == 120 || sec == 60 || sec == 30 || sec == 10 || (sec <= 5 && sec >= 1))
+					// Announce every minute (60s intervals), plus important milestones
+					bool shouldAnnounce = false;
+
+					// Every minute (60 second intervals)
+					if (sec >= 60 && sec % 60 == 0)
+						shouldAnnounce = true;
+					// Important milestones under 1 minute
+					else if (sec == 30 || sec == 10 || (sec <= 5 && sec >= 1))
+						shouldAnnounce = true;
+
+					if (shouldAnnounce)
 					{
 						wchar_t msg[128];
 						if (sec >= 60)
@@ -990,6 +1038,10 @@ void CEventManager::TickProcess(unsigned long dwTickDiff)
 
 						// Resurrect player
 						pPlayer->Revival(spawnPos, pPlayer->GetWorldID(), REVIVAL_TYPE_RESCUED);
+
+						// Force player to standing state to prevent being stuck
+						pPlayer->SendCharStateStanding();
+
 						EVENT_VLOG(m_cfg, LOG_GENERAL, "[EVENT] Auto-resurrected player %s at (%.2f,%.2f,%.2f)",
 							pPlayer->GetCharName(), spawnPos.x, spawnPos.y, spawnPos.z);
 
@@ -1049,6 +1101,8 @@ void CEventManager::TickProcess(unsigned long dwTickDiff)
 		else
 		{
 			m_postEventTeleportRemainMs = 0;
+			// Despawn all helpers before teleporting players back
+			DespawnEventHelpers();
 			PostEventTeleportAll();
 			m_state = State::IDLE;
 			m_participants.clear();
@@ -1211,6 +1265,9 @@ void CEventManager::Stop(bool abort)
 	else
 		BroadcastSystem(L"[EVENT] Event stopped.");
 
+	// Despawn all helpers
+	DespawnEventHelpers();
+
 	// Teleport everyone back
 	PostEventTeleportAll();
 
@@ -1302,6 +1359,12 @@ void CEventManager::StartNextRound()
 
 	m_state = State::IN_ROUND;
 
+	// Spawn helpers for first round only (they persist across rounds)
+	if (m_currentRound == 0)
+	{
+		SpawnEventHelpers();
+	}
+
 	// Initialize wave spawning
 	if (m_cfg.enableWaveSpawning)
 	{
@@ -1371,6 +1434,9 @@ void CEventManager::CompleteCurrentRound()
 
 	// Award rewards
 	AwardRoundRewards(round);
+
+	// Despawn all remaining event mobs before moving to next round
+	DespawnAllEventMobs();
 
 	m_currentRound++;
 
@@ -1512,7 +1578,13 @@ void CEventManager::SpawnRoundMobs(const EventRound& round)
 		}
 	}
 
-	if (spawnAttempts > 0 && spawnSuccess == 0)
+	// Log spawn results
+	EVENT_VLOG(m_cfg, LOG_GENERAL, "[EVENT] SpawnRoundMobs: spawned %u/%u mobs successfully in round %u",
+		spawnSuccess, spawnAttempts, m_currentRound + 1);
+
+	// Only force round completion if we're NOT using wave spawning and ALL spawns failed
+	// With wave spawning, it's OK if some mob IDs are invalid - just keep trying with valid ones
+	if (spawnAttempts > 0 && spawnSuccess == 0 && !m_cfg.enableWaveSpawning)
 	{
 		ERR_LOG(LOG_GENERAL, _T("[EVENT] SpawnRoundMobs: all %u spawn attempts failed in round %u (world %u). Forcing round completion."), spawnAttempts, m_currentRound + 1, (unsigned)pWorld->GetID());
 		CompleteCurrentRound();
@@ -1694,7 +1766,9 @@ void CEventManager::CheckRoundCompletion()
 		}
 	}
 
-	if (allKilled && m_spawnedMobs.size() > 0)
+	// With wave spawning enabled, don't end round early - let it run for full duration
+	// New waves will continue spawning until time expires
+	if (allKilled && m_spawnedMobs.size() > 0 && !m_cfg.enableWaveSpawning)
 	{
 		CompleteCurrentRound();
 	}
@@ -3063,4 +3137,203 @@ const wchar_t* CEventManager::GetTeamColor(Team team)
 	case Team::BLUE: return L"[BLUE] ";
 	default: return L"";
 	}
+}
+
+// ========================================
+// Event Helpers System
+// ========================================
+
+void CEventManager::SpawnEventHelpers()
+{
+	if (!m_cfg.eventHelpersEnabled || m_cfg.helpersPerPlayer == 0)
+	{
+		EVENT_VLOG(m_cfg, LOG_GENERAL, "[EVENT] Helper spawn skipped: enabled=%d helpersPerPlayer=%u",
+			m_cfg.eventHelpersEnabled, m_cfg.helpersPerPlayer);
+		return;
+	}
+
+	if (m_cfg.helperMobId == 0)
+	{
+		ERR_LOG(LOG_GENERAL, _T("[EVENT] Cannot spawn helpers: helperMobId is 0. Please configure a valid mob ID."));
+		return;
+	}
+
+	CGameServer* app = (CGameServer*)g_pApp;
+	if (!app || m_eventWorldId == 0)
+	{
+		ERR_LOG(LOG_GENERAL, _T("[EVENT] Cannot spawn helpers: app=%p eventWorldId=%u"), app, m_eventWorldId);
+		return;
+	}
+
+	CWorld* pWorld = app->GetGameMain()->GetWorldManager()->FindWorld((WORLDID)m_eventWorldId);
+	if (!pWorld)
+	{
+		ERR_LOG(LOG_GENERAL, _T("[EVENT] Cannot spawn helpers: event world %u not found"), m_eventWorldId);
+		return;
+	}
+
+	EVENT_VLOG(m_cfg, LOG_GENERAL, "[EVENT] Starting helper spawn: world=%u participants=%u helperMobId=%u",
+		m_eventWorldId, (unsigned)m_participants.size(), m_cfg.helperMobId);
+
+	unsigned int spawnedCount = 0;
+	unsigned int skippedCount = 0;
+	for (unsigned int charId : m_participants)
+	{
+		CPlayer* pPlayer = g_pObjectManager->FindByChar((CHARACTERID)charId);
+		if (!pPlayer || !pPlayer->IsInitialized())
+		{
+			EVENT_VLOG(m_cfg, LOG_GENERAL, "[EVENT] Skipping helper for charId=%u: player not found or not initialized", charId);
+			skippedCount++;
+			continue;
+		}
+
+		// Check if player already has a helper
+		if (m_playerHelpers.find(charId) != m_playerHelpers.end())
+		{
+			EVENT_VLOG(m_cfg, LOG_GENERAL, "[EVENT] Skipping helper for %s: already has helper", pPlayer->GetCharName());
+			skippedCount++;
+			continue;
+		}
+
+		// Spawn helpers for this player
+		for (unsigned int i = 0; i < m_cfg.helpersPerPlayer; i++)
+		{
+			CNtlVector spawnPos = pPlayer->GetCurLoc();
+			// Offset slightly to avoid spawning on top of player
+			float angle = RandomRangeF(0.0f, 6.28318530718f);
+			spawnPos.x += cosf(angle) * m_cfg.helperFollowDistance;
+			spawnPos.z += sinf(angle) * m_cfg.helperFollowDistance;
+
+			CNtlVector dir(0.0f, 0.0f, 0.0f);
+			CMonster* pHelper = pWorld->Add_Monster(m_cfg.helperMobId, spawnPos, dir, 0xFF);
+
+			if (pHelper)
+			{
+				// Link helper to player (using charId and handle)
+				pHelper->SetLinkPc(charId, pPlayer->GetID());
+
+				// Track helper
+				m_eventHelpers.push_back(pHelper->GetID());
+				m_playerHelpers[charId] = pHelper->GetID();
+				spawnedCount++;
+
+				EVENT_VLOG(m_cfg, LOG_GENERAL, "[EVENT] Spawned helper (mobId=%u handle=%u) for player %s (charId=%u)",
+					m_cfg.helperMobId, pHelper->GetID(), pPlayer->GetCharName(), charId);
+
+				// Send follow command (method is on CNpc, not BotAiController)
+				sVECTOR3 vDest = { pPlayer->GetCurLoc().x, pPlayer->GetCurLoc().y, pPlayer->GetCurLoc().z };
+				pHelper->SendCharStateFollowing(pPlayer->GetID(), m_cfg.helperFollowDistance,
+					DBO_MOVE_FOLLOW_FRIENDLY, vDest, true);
+			}
+			else
+			{
+				ERR_LOG(LOG_GENERAL, _T("[EVENT] Failed to spawn helper (mobId=%u) for player %s"),
+					m_cfg.helperMobId, pPlayer->GetCharName());
+			}
+		}
+	}
+
+	EVENT_VLOG(m_cfg, LOG_GENERAL, "[EVENT] Helper spawn complete: spawned=%u skipped=%u total=%u",
+		spawnedCount, skippedCount, (unsigned)m_participants.size());
+
+	if (spawnedCount > 0)
+	{
+		wchar_t msg[256];
+		swprintf_s(msg, L"[EVENT] %u NPC helper%s have joined the battle!", spawnedCount, spawnedCount == 1 ? L"" : L"s");
+		BroadcastSystem(msg);
+	}
+	else if (m_participants.size() > 0)
+	{
+		ERR_LOG(LOG_GENERAL, _T("[EVENT] Failed to spawn any helpers despite having %u participants"), (unsigned)m_participants.size());
+	}
+}
+
+void CEventManager::DespawnEventHelpers()
+{
+	if (m_eventHelpers.empty())
+		return;
+
+	unsigned int despawnedCount = 0;
+	for (HOBJECT helperHandle : m_eventHelpers)
+	{
+		CNpc* pHelper = g_pObjectManager->GetNpc(helperHandle);
+		if (pHelper && pHelper->IsInitialized())
+		{
+			// Use bot controller to despawn
+			CBotAiController* pAI = (CBotAiController*)pHelper->GetBotController();
+			if (pAI)
+			{
+				pAI->ChangeControlState_Despawn();
+				despawnedCount++;
+			}
+		}
+	}
+
+	m_eventHelpers.clear();
+	m_playerHelpers.clear();
+
+	EVENT_VLOG(m_cfg, LOG_GENERAL, "[EVENT] Despawned %u helpers", despawnedCount);
+}
+
+void CEventManager::DespawnPlayerHelper(unsigned int charId)
+{
+	auto it = m_playerHelpers.find(charId);
+	if (it == m_playerHelpers.end())
+		return;
+
+	HOBJECT helperHandle = it->second;
+	CNpc* pHelper = g_pObjectManager->GetNpc(helperHandle);
+	if (pHelper && pHelper->IsInitialized())
+	{
+		CBotAiController* pAI = (CBotAiController*)pHelper->GetBotController();
+		if (pAI)
+		{
+			pAI->ChangeControlState_Despawn();
+			EVENT_VLOG(m_cfg, LOG_GENERAL, "[EVENT] Despawned helper for player charId=%u", charId);
+		}
+	}
+
+	// Remove from tracking
+	m_playerHelpers.erase(it);
+	auto vecIt = std::find(m_eventHelpers.begin(), m_eventHelpers.end(), helperHandle);
+	if (vecIt != m_eventHelpers.end())
+		m_eventHelpers.erase(vecIt);
+}
+
+void CEventManager::DespawnAllEventMobs()
+{
+	if (m_spawnedMobs.empty())
+		return;
+
+	unsigned int despawnedCount = 0;
+	unsigned int alreadyDeadCount = 0;
+
+	for (HOBJECT mobHandle : m_spawnedMobs)
+	{
+		// Skip if already killed
+		if (m_killedMobs.find(mobHandle) != m_killedMobs.end())
+		{
+			alreadyDeadCount++;
+			continue;
+		}
+
+		CCharacter* pChar = g_pObjectManager->GetChar(mobHandle);
+		CMonster* pMob = dynamic_cast<CMonster*>(pChar);
+		if (pMob && pMob->IsInitialized() && pMob->GetCurWorld())
+		{
+			// Use bot controller to safely despawn the mob (same as Arena)
+			if (pMob->GetBotController())
+			{
+				pMob->GetBotController()->ChangeControlState_Despawn();
+				despawnedCount++;
+			}
+		}
+	}
+
+	// Clear tracking lists
+	m_spawnedMobs.clear();
+	m_killedMobs.clear();
+
+	EVENT_VLOG(m_cfg, LOG_GENERAL, "[EVENT] Mob cleanup: despawned=%u dead=%u total=%u",
+		despawnedCount, alreadyDeadCount, despawnedCount + alreadyDeadCount);
 }
