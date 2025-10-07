@@ -21,7 +21,7 @@
 #include "RangeCheck.h"
 #include "HelperNpcManager.h"
 #include "EventManager.h"
-
+#include "BattlePassManager.h"
 
 
 CCharacter::CCharacter(eOBJTYPE eObjType)
@@ -1880,9 +1880,15 @@ void	CCharacter::SendCharStateFaint(BYTE byReason)
 
 		// Notify event manager if this is a player death during event
 		CPlayer* pPlayer = dynamic_cast<CPlayer*>(this);
-		if (pPlayer && g_pEventManager)
+		if (pPlayer && g_pEventManager && g_pEventManager->IsEnabled())
 		{
 			g_pEventManager->OnPlayerDeath(pPlayer);
+		}
+
+		// Battle Pass death hook (safe if disabled / no season)
+		if (g_pBattlePassManager && g_pBattlePassManager->IsEnabled() && g_pBattlePassManager->IsMasterEnabled() && pPlayer)
+		{
+			g_pBattlePassManager->OnPlayerDeath(pPlayer);
 		}
 	}
 }

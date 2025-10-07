@@ -14,7 +14,7 @@
 #include "ItemDrop.h"
 #include "DiceManager.h"
 #include "HelperNpcManager.h"
-
+#include "BattlePassManager.h" // Battle Pass dungeon clear hook
 
 
 CPartyManager::CPartyManager()
@@ -1829,6 +1829,14 @@ void CParty::DecidePartySelect()
 					WORLDID destWorldID = pWorld->GetTbldat()->outWorldTblidx;
 
 					g_pItemManager->CreateItem(pPlayer, m_rewardItemIdx, 1);
+
+					// FEATURE: BattlePass dungeon clear XP (CCBD) – award once when party exits after final stage
+					if (g_pBattlePassManager && g_pBattlePassManager->IsEnabled() && g_pBattlePassManager->IsMasterEnabled() && pPlayer && m_bLastStage)
+					{
+						// Pass 0 for dungeonId until real ID wiring is implemented
+						g_pBattlePassManager->OnDungeonClear(pPlayer, 0);
+					}
+					
 					pPlayer->StartTeleport(destLoc, pPlayer->GetCurDir(), destWorldID, TELEPORT_TYPE_WORLD_MOVE);
 
 				}

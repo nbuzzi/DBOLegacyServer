@@ -1331,7 +1331,7 @@ const sHELPER_NPC_CONFIG* CHelperNpcManager::GetConfigForHelper(CNpc* pNpc) cons
 
 void CHelperNpcManager::TickWatchdog(DWORD dwNow)
 {
-	const DWORD WATCHDOG_INTERVAL_MS = 2000; // light check
+	const DWORD WATCHDOG_INTERVAL_MS = 1000; // light check
 	if (m_dwLastWatchdogTick != 0 && (dwNow - m_dwLastWatchdogTick) < WATCHDOG_INTERVAL_MS)
 		return;
 	m_dwLastWatchdogTick = dwNow;

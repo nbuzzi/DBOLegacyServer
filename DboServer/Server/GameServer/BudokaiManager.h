@@ -182,6 +182,9 @@ public:
 	BYTE                                GetMajorMatchMaxScore() const { return m_byMajorMatchMaxScore; }
 	BYTE                                GetFinalMatchMaxScore() const { return m_byFinalMatchMaxScore; }
 
+	void                                SetTeamMaxMembers(BYTE v);
+	BYTE                                GetTeamMaxMembers() const { return m_byTeamMaxMembers; }
+
 	CBudokaiManager();
 	virtual ~CBudokaiManager();
 
@@ -447,6 +450,7 @@ private:
 	// Configurable caps (defaults aligned with legacy)
 	BYTE                                m_byMajorMatchMaxScore = 3;
 	BYTE                                m_byFinalMatchMaxScore = 4;
+	BYTE                                m_byTeamMaxMembers = NTL_MAX_MEMBER_IN_PARTY; // Default to 5
 
 };
 

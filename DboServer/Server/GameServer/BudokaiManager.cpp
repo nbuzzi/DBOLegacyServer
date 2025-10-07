@@ -12,6 +12,7 @@
 #include "GameMain.h"
 #include "DiceManager.h"
 #include "NtlIniFile.h"
+#include "BattlePassManager.h" // Battle Pass integration (participation & win XP)
 
 
 struct sprelim_sorting
@@ -3369,6 +3370,35 @@ bool CBudokaiManager::ProcessMajorMatch(sTOURNAMENT_MATCH * match, BYTE byMatchI
 
 void CBudokaiManager::UpdateMajorMatchScore(sTOURNAMENT_MATCH * match, BYTE byMatchIndex, BYTE byMatchResult, TEAMTYPE wMatchWinner, BYTE byWins/* = 1*/)
 {
+	// FEATURE: BattlePass Budokai participation XP (award once per match when first stage concludes)
+	if (g_pBattlePassManager && g_pBattlePassManager->IsEnabled() && g_pBattlePassManager->IsMasterEnabled()) {
+		if (match->byStage == 0) // before increment later
+		{
+			if (m_matchType == BUDOKAI_MATCH_TYPE_INDIVIDIAUL)
+			{
+				for (std::map<HOBJECT, sPLAYER_INFO>::iterator itP = match->m_mapIndividual.begin(); itP != match->m_mapIndividual.end(); ++itP)
+				{
+					CPlayer* pPl = g_pObjectManager->GetPC(itP->first);
+					if (pPl && pPl->GetMatchIndex() == byMatchIndex)
+						g_pBattlePassManager->OnBudokaiParticipation(pPl, false);
+				}
+			}
+			else // team
+			{
+				for (std::map<JOINID, sPARTY_INFO>::iterator itTeam = match->m_mapTeam.begin(); itTeam != match->m_mapTeam.end(); ++itTeam)
+				{
+					sPARTY_INFO & party = itTeam->second;
+					for (BYTE m = 0; m < party.byMemberCount; ++m)
+					{
+						CPlayer* pPl = g_pObjectManager->GetPC(party.charHandle[m]);
+						if (pPl && pPl->GetMatchIndex() == byMatchIndex)
+							g_pBattlePassManager->OnBudokaiParticipation(pPl, false);
+					}
+				}
+			}
+		}
+	}
+
 	if (wMatchWinner == MATCH_TEAM_TYPE_TEAM1)
 	{
 		match->data.byScore1 += byWins;
@@ -3404,6 +3434,37 @@ void CBudokaiManager::UpdateMajorMatchScore(sTOURNAMENT_MATCH * match, BYTE byMa
 	{
 		ERR_LOG(LOG_GENERAL, "BUDOKAI: Update Tournament Major Match. Index %u. Winner-Team = %u. Score1 = %u, Score2 = %u, byMatchResult = %u ",
 			byMatchIndex, wMatchWinner, match->data.byScore1, match->data.byScore2, byMatchResult);
+
+		// FEATURE: BattlePass Budokai win XP (award once when match finishes)
+		if (g_pBattlePassManager && g_pBattlePassManager->IsEnabled() && g_pBattlePassManager->IsMasterEnabled())
+		{
+			if (m_matchType == BUDOKAI_MATCH_TYPE_INDIVIDIAUL)
+			{
+				for (std::map<HOBJECT, sPLAYER_INFO>::iterator itP = match->m_mapIndividual.begin(); itP != match->m_mapIndividual.end(); ++itP)
+				{
+					CPlayer* pPl = g_pObjectManager->GetPC(itP->first);
+					if (pPl && pPl->GetMatchIndex() == byMatchIndex)
+					{
+						bool win = (pPl->GetBudokaiTeamType() == wMatchWinner);
+						if (win)
+							g_pBattlePassManager->OnBudokaiParticipation(pPl, true);
+					}
+				}
+			}
+			else // team match
+			{
+				for (std::map<JOINID, sPARTY_INFO>::iterator itTeam = match->m_mapTeam.begin(); itTeam != match->m_mapTeam.end(); ++itTeam)
+				{
+					sPARTY_INFO & party = itTeam->second;
+					for (BYTE m = 0; m < party.byMemberCount; ++m)
+					{
+						CPlayer* pPl = g_pObjectManager->GetPC(party.charHandle[m]);
+						if (pPl && pPl->GetMatchIndex() == byMatchIndex && pPl->GetBudokaiTeamType() == wMatchWinner)
+							g_pBattlePassManager->OnBudokaiParticipation(pPl, true);
+					}
+				}
+			}
+		}
 
 		match->bFinishMatch = true;
 	}
@@ -4800,6 +4861,35 @@ bool CBudokaiManager::ProcessFinalMatch(sTOURNAMENT_MATCH * match, BYTE byMatchI
 
 void CBudokaiManager::UpdateFinalMatchScore(sTOURNAMENT_MATCH * match, BYTE byMatchIndex, BYTE byMatchResult, TEAMTYPE wMatchWinner, BYTE byWins/* = 1*/)
 {
+	// FEATURE: BattlePass Budokai participation XP (final match, award once at first stage like major)
+	if(g_pBattlePassManager && g_pBattlePassManager->IsEnabled() && g_pBattlePassManager->IsMasterEnabled()) {
+		if (match->byStage == 0)
+		{
+			if (m_matchType == BUDOKAI_MATCH_TYPE_INDIVIDIAUL)
+			{
+				for (std::map<HOBJECT, sPLAYER_INFO>::iterator itP = match->m_mapIndividual.begin(); itP != match->m_mapIndividual.end(); ++itP)
+				{
+					CPlayer* pPl = g_pObjectManager->GetPC(itP->first);
+					if (pPl && pPl->GetMatchIndex() == byMatchIndex)
+						g_pBattlePassManager->OnBudokaiParticipation(pPl, false);
+				}
+			}
+			else
+			{
+				for (std::map<JOINID, sPARTY_INFO>::iterator itTeam = match->m_mapTeam.begin(); itTeam != match->m_mapTeam.end(); ++itTeam)
+				{
+					sPARTY_INFO & party = itTeam->second;
+					for (BYTE m = 0; m < party.byMemberCount; ++m)
+					{
+						CPlayer* pPl = g_pObjectManager->GetPC(party.charHandle[m]);
+						if (pPl && pPl->GetMatchIndex() == byMatchIndex)
+							g_pBattlePassManager->OnBudokaiParticipation(pPl, false);
+					}
+				}
+			}
+		}
+	}
+
 	if (wMatchWinner == MATCH_TEAM_TYPE_TEAM1)
 	{
 		match->data.byScore1 += byWins;
@@ -4836,6 +4926,36 @@ void CBudokaiManager::UpdateFinalMatchScore(sTOURNAMENT_MATCH * match, BYTE byMa
 	{
 		ERR_LOG(LOG_GENERAL, "BUDOKAI: Update Tournament Final Match. Index %u. Winner-Team = %u. Score1 = %u, Score2 = %u, byMatchResult = %u ",
 			byMatchIndex, wMatchWinner, match->data.byScore1, match->data.byScore2, byMatchResult);
+
+		// FEATURE: BattlePass Budokai win XP for final match
+		if (g_pBattlePassManager && g_pBattlePassManager->IsEnabled() && g_pBattlePassManager->IsMasterEnabled())
+		{
+			if (m_matchType == BUDOKAI_MATCH_TYPE_INDIVIDIAUL)
+			{
+				for (std::map<HOBJECT, sPLAYER_INFO>::iterator itP = match->m_mapIndividual.begin(); itP != match->m_mapIndividual.end(); ++itP)
+				{
+					CPlayer* pPl = g_pObjectManager->GetPC(itP->first);
+					if (pPl && pPl->GetMatchIndex() == byMatchIndex)
+					{
+						if (pPl->GetBudokaiTeamType() == wMatchWinner)
+							g_pBattlePassManager->OnBudokaiParticipation(pPl, true);
+					}
+				}
+			}
+			else
+			{
+				for (std::map<JOINID, sPARTY_INFO>::iterator itTeam = match->m_mapTeam.begin(); itTeam != match->m_mapTeam.end(); ++itTeam)
+				{
+					sPARTY_INFO & party = itTeam->second;
+					for (BYTE m = 0; m < party.byMemberCount; ++m)
+					{
+						CPlayer* pPl = g_pObjectManager->GetPC(party.charHandle[m]);
+						if (pPl && pPl->GetMatchIndex() == byMatchIndex && pPl->GetBudokaiTeamType() == wMatchWinner)
+							g_pBattlePassManager->OnBudokaiParticipation(pPl, true);
+					}
+				}
+			}
+		}
 
 		match->bFinishMatch = true;
 	}

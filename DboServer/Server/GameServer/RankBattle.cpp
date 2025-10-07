@@ -8,6 +8,7 @@
 #include "GameMain.h"
 #include "TriggerObject.h"
 #include "DiceManager.h"
+#include "BattlePassManager.h"
 
 
 
@@ -1150,6 +1151,12 @@ void CRankbattleBattle::DecideMatchWinner()
 		CPlayer* pPlayer = g_pObjectManager->GetPC(it->first);
 		if (pPlayer)
 		{
+			// Battle Pass participation hook (only once per finished match)
+			if (g_pBattlePassManager && g_pBattlePassManager->IsEnabled() && g_pBattlePassManager->IsMasterEnabled() && pPlayer)
+			{
+				g_pBattlePassManager->OnRankBattleParticipation(pPlayer, false);
+			}
+			
 			if (pPlayer->GetCharID() == it->second)
 			{
 				sRANK_BATTLE_DATA* pRankData = pPlayer->GetRankBattleData();
@@ -1208,6 +1215,16 @@ void CRankbattleBattle::DecideMatchWinner()
 
 					res->sMatchResult.fRankPoint = fRankPoints;
 					pPlayer->SendPacket(&packet);
+				}
+
+				// Battle Pass win hook: award only to actual winners
+				if(g_pBattlePassManager && g_pBattlePassManager->IsEnabled() && g_pBattlePassManager->IsMasterEnabled() && pPlayer && eResult != RANKBATTLE_MATCH_DRAW)
+				{
+					if ( (eResult == RANKBATTLE_MATCH_WIN_OWNER && pRankData->eTeamType == RANKBATTLE_TEAM_OWNER) ||
+						 (eResult == RANKBATTLE_MATCH_WIN_CHALLENGER && pRankData->eTeamType == RANKBATTLE_TEAM_CHALLENGER) )
+					{
+						g_pBattlePassManager->OnRankBattleParticipation(pPlayer, true);
+					}
 				}
 			}
 			else

@@ -1,7 +1,9 @@
 #include "stdafx.h"
 #include "WpsScriptAlgoAction_CCBD_stage_clear.h"
 #include "CPlayer.h"
+#include "Party.h" // for party enumeration
 #include "NtlPacketGU.h"
+#include "BattlePassManager.h" // Battle Pass dungeon stage hook
 
 
 CWpsScriptAlgoAction_CCBD_stage_clear::CWpsScriptAlgoAction_CCBD_stage_clear(CWpsAlgoObject* pObject) :

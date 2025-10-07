@@ -41,6 +41,7 @@
 #include "ArenaManager.h"
 #include "DojoManager.h"
 #include "EventManager.h"
+#include "BattlePassManager.h"
 #include <algorithm>
 
 void gm_read_command(sUG_SERVER_COMMAND* sPacket, CPlayer* pPlayer)
@@ -183,6 +184,12 @@ ACMD(do_world_fight);
 ACMD(do_budokai);
 ACMD(do_dojo);
 ACMD(do_budokai_findteam);
+ACMD(do_battlepass);
+ACMD(do_battlepass_setxp);
+ACMD(do_battlepass_addxp);
+ACMD(do_battlepass_status);
+ACMD(do_battlepass_flush);
+ACMD(do_battlepass_master);
 
 struct command_info cmd_info[] =
 {
@@ -228,6 +235,7 @@ struct command_info cmd_info[] =
 	{ L"@additem", do_additem, ADMIN_LEVEL_EARLY_ACCESS },
 	{ L"@event", do_event, ADMIN_LEVEL_EARLY_ACCESS },
 	{ L"@budokaiinfo", do_budokaiinfo, ADMIN_LEVEL_EARLY_ACCESS },
+	{ L"@battlepass", do_battlepass, ADMIN_LEVEL_NONE }, // Show your Battle Pass progress
 
 	// Admin (Full GM access required)
 
@@ -258,6 +266,11 @@ struct command_info cmd_info[] =
 	{ L"@world", do_world, ADMIN_LEVEL_ADMIN },
 	{ L"@warfog", do_warfog, ADMIN_LEVEL_ADMIN },
 	{ L"@upgrade", do_upgrade, ADMIN_LEVEL_ADMIN },
+	{ L"@battlepass_setxp", do_battlepass_setxp, ADMIN_LEVEL_ADMIN }, // Set current level XP (absolute, dev/admin)
+	{ L"@battlepass_addxp", do_battlepass_addxp, ADMIN_LEVEL_ADMIN }, // Add raw XP (bypasses action mapping)
+	{ L"@battlepass_master", do_battlepass_master, ADMIN_LEVEL_ADMIN }, // Toggle master enable flag
+	{ L"@battlepass_status", do_battlepass_status, ADMIN_LEVEL_ADMIN }, // Show extended Battle Pass system status
+	{ L"@battlepass_flush", do_battlepass_flush, ADMIN_LEVEL_ADMIN }, // Force immediate persistence flush
 	{ L"@setitemrank", do_setitemrank, ADMIN_LEVEL_ADMIN },
 	{ L"@go", do_go, ADMIN_LEVEL_ADMIN },
 	{ L"@setitemduration", do_setitemduration, ADMIN_LEVEL_ADMIN },
@@ -296,6 +309,151 @@ struct command_info cmd_info[] =
 
 	{ L"@qwasawedsadas", NULL, ADMIN_LEVEL_ADMIN }
 };
+
+// ------------------------------------------------------------
+// Battle Pass GM / Public helper commands
+// ------------------------------------------------------------
+ACMD(do_battlepass)
+{
+	if (!g_pBattlePassManager->IsMasterEnabled())
+	{
+		CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+		sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+		res->wOpCode = GU_SYSTEM_DISPLAY_TEXT;
+		res->byDisplayType = SERVER_TEXT_SYSNOTICE;
+		const wchar_t* txt = L"[BattlePass] System disabled (master switch).";
+		res->wMessageLengthInUnicode = (WORD)wcslen(txt);
+		wcsncpy_s(res->awchMessage, NTL_MAX_LENGTH_OF_CHAT_MESSAGE + 1, txt, _TRUNCATE);
+		packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+		pPlayer->SendPacket(&packet);
+		return;
+	}
+	auto* prog = g_pBattlePassManager->GetProgress(pPlayer->GetCharID());
+	wchar_t msg[256];
+	unsigned need = g_pBattlePassManager->GetXpForLevel(prog->level);
+	swprintf_s(msg, L"[BattlePass] Season %u Level %u (%u/%u XP) TotalXP=%u", prog->seasonId, prog->level, prog->xp, need, prog->totalXp);
+	CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+	sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+	res->wOpCode = GU_SYSTEM_DISPLAY_TEXT; res->byDisplayType = SERVER_TEXT_SYSNOTICE; res->wMessageLengthInUnicode = (WORD)wcslen(msg);
+	wcsncpy_s(res->awchMessage, NTL_MAX_LENGTH_OF_CHAT_MESSAGE + 1, msg, _TRUNCATE);
+	packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+	pPlayer->SendPacket(&packet);
+}
+
+// ADMIN: Set current level XP (not total). Does not recalc level.
+ACMD(do_battlepass_setxp)
+{
+	if (!g_pBattlePassManager->IsMasterEnabled()) return;
+	std::wstring tok = pToken->PeekNextToken(NULL, &iLine);
+	if (tok.empty()) return;
+	unsigned val = (unsigned)_wtoi(tok.c_str());
+	auto* prog = g_pBattlePassManager->GetProgress(pPlayer->GetCharID());
+	prog->xp = val;
+	CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+	sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+	res->wOpCode = GU_SYSTEM_DISPLAY_TEXT; res->byDisplayType = SERVER_TEXT_SYSNOTICE; const wchar_t* txt = L"[BattlePass] XP set.";
+	res->wMessageLengthInUnicode = (WORD)wcslen(txt); wcsncpy_s(res->awchMessage, NTL_MAX_LENGTH_OF_CHAT_MESSAGE + 1, txt, _TRUNCATE);
+	packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT)); pPlayer->SendPacket(&packet);
+}
+
+// ADMIN: Add raw XP (triggers level ups & mudosa rewards).
+ACMD(do_battlepass_addxp)
+{
+	if (!g_pBattlePassManager->IsMasterEnabled()) return;
+	std::wstring tok = pToken->PeekNextToken(NULL, &iLine);
+	if (tok.empty()) return;
+	unsigned add = (unsigned)_wtoi(tok.c_str());
+	if (add == 0) return;
+	// Reuse internal Award path by synthesizing a temporary action override
+	auto* prog = g_pBattlePassManager->GetProgress(pPlayer->GetCharID());
+	unsigned beforeLvl = prog->level;
+	unsigned beforeXp = prog->xp;
+	g_pBattlePassManager->AddActionXp(pPlayer, CBattlePassManager::Action::MOB_KILL, add); // customOverrideXp path used
+	wchar_t msg[256];
+	swprintf_s(msg, L"[BattlePass] Added %u XP (L%u %u->%u/%u).", add, prog->level, beforeXp, prog->xp, g_pBattlePassManager->GetXpForLevel(prog->level));
+	CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+	sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+	res->wOpCode = GU_SYSTEM_DISPLAY_TEXT; res->byDisplayType = SERVER_TEXT_SYSNOTICE; res->wMessageLengthInUnicode = (WORD)wcslen(msg);
+	wcsncpy_s(res->awchMessage, NTL_MAX_LENGTH_OF_CHAT_MESSAGE + 1, msg, _TRUNCATE);
+	packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+	pPlayer->SendPacket(&packet);
+}
+
+// ADMIN: Show Battle Pass system status (config + runtime counters summary size)
+ACMD(do_battlepass_status)
+{
+	CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+	sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+	res->wOpCode = GU_SYSTEM_DISPLAY_TEXT; res->byDisplayType = SERVER_TEXT_SYSNOTICE;
+	if (!g_pBattlePassManager->IsEnabled())
+	{
+		const wchar_t* txt = L"[BattlePass] Disabled (Enabled=0)";
+		res->wMessageLengthInUnicode = (WORD)wcslen(txt);
+		wcsncpy_s(res->awchMessage, NTL_MAX_LENGTH_OF_CHAT_MESSAGE + 1, txt, _TRUNCATE);
+		packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+		pPlayer->SendPacket(&packet);
+		return;
+	}
+	bool master = g_pBattlePassManager->IsMasterEnabled();
+	const CBattlePassManager::Config& cfg = g_pBattlePassManager->GetConfig();
+	wchar_t msg[256];
+	swprintf_s(msg, L"[BattlePass] Master=%s Season=%u DB=%s Flush=%us MinDelta=%u", master?L"ON":L"OFF", cfg.seasonId, cfg.useDatabase?L"ON":L"OFF", cfg.flushSeconds, cfg.minDeltaXp);
+	res->wMessageLengthInUnicode = (WORD)wcslen(msg);
+	wcsncpy_s(res->awchMessage, NTL_MAX_LENGTH_OF_CHAT_MESSAGE + 1, msg, _TRUNCATE);
+	packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+	pPlayer->SendPacket(&packet);
+}
+
+// ADMIN: Force immediate DB/file flush depending on mode
+ACMD(do_battlepass_flush)
+{
+	if (!g_pBattlePassManager->IsEnabled()) return;
+	if (!g_pBattlePassManager->IsMasterEnabled()) return;
+	if (g_pBattlePassManager->GetConfig().useDatabase)
+		g_pBattlePassManager->ForceFlushToDatabase();
+	else
+		g_pBattlePassManager->ForceAutosave();
+	CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+	sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+	res->wOpCode = GU_SYSTEM_DISPLAY_TEXT; res->byDisplayType = SERVER_TEXT_SYSNOTICE;
+	const wchar_t* txt = L"[BattlePass] Flush triggered.";
+	res->wMessageLengthInUnicode = (WORD)wcslen(txt);
+	wcsncpy_s(res->awchMessage, NTL_MAX_LENGTH_OF_CHAT_MESSAGE + 1, txt, _TRUNCATE);
+	packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+	pPlayer->SendPacket(&packet);
+}
+
+// ADMIN: Toggle or show master enable flag
+ACMD(do_battlepass_master)
+{
+	// Usage: @battlepass_master            -> show state
+	//        @battlepass_master on|off     -> set state
+	pToken->PopToPeek();
+	std::wstring sub = pToken->PeekNextToken(NULL, &iLine);
+	bool queryOnly = sub.empty();
+	bool newState = g_pBattlePassManager->IsMasterEnabled();
+	if (!queryOnly)
+	{
+		std::wstring lower = sub;
+		for (auto &ch : lower) ch = (wchar_t)towlower(ch);
+		if (lower == L"on" || lower == L"1" || lower == L"true") newState = true;
+		else if (lower == L"off" || lower == L"0" || lower == L"false") newState = false;
+		// apply: direct access to config (safe—admin only command)
+		g_pBattlePassManager->GetConfig().enabled; // no-op read to silence potential unused macro expansions
+		// We need a setter; modifying internal config via a helper lambda to keep minimal diff
+		g_pBattlePassManager->SetMasterEnable(newState);
+	}
+	bool finalState = g_pBattlePassManager->IsMasterEnabled();
+	wchar_t msg[96];
+	swprintf_s(msg, L"[BattlePass] MasterEnable is %s", finalState ? L"ON" : L"OFF");
+	CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+	sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+	res->wOpCode = GU_SYSTEM_DISPLAY_TEXT; res->byDisplayType = SERVER_TEXT_SYSNOTICE;
+	res->wMessageLengthInUnicode = (WORD)wcslen(msg);
+	wcsncpy_s(res->awchMessage, NTL_MAX_LENGTH_OF_CHAT_MESSAGE + 1, msg, _TRUNCATE);
+	packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+	pPlayer->SendPacket(&packet);
+}
 ACMD(do_arena)
 {
 	// Syntax:

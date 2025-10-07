@@ -22,6 +22,7 @@
 #include "CustomDropEvent.h"
 #include "Fairy Event.h"
 #include "EventManager.h"
+#include "BattlePassManager.h" // Battle Pass progression (mob kill XP)
 #include <queue>
 
 
@@ -654,6 +655,8 @@ bool CMonster::Faint(CCharacterObject* pkKiller, eFAINT_REASON byReason)
 						if (s_buf[0] != '\0') mobNameAnsi = s_buf;
 					}
 				}
+				// Notify EventManager of the kill for tracking purposes
+				// (also used by combo system, so don't remove this)
 				g_pEventManager->OnPlayerKilledMob(pKiller, mobNameAnsi);
 			}
 
@@ -663,6 +666,13 @@ bool CMonster::Faint(CCharacterObject* pkKiller, eFAINT_REASON byReason)
 			g_pStoneDropEvent->Update(this, pKiller);
 			g_pFairyEvent->Update(this, pKiller);
 			g_pCustomDropEvent->Update(this, pKiller);
+	
+			// Battle Pass hook – award XP for mob kill (safe if feature disabled or season inactive)
+			if (g_pBattlePassManager && g_pBattlePassManager->IsEnabled() && g_pBattlePassManager->IsMasterEnabled() && pKiller)
+			{
+				g_pBattlePassManager->OnMobKill(pKiller, GetTblidx());
+			}
+
 			int l_LevelGap = abs(pKiller->GetLevel() - GetLevel());
 			//printf("l_LevelGap %d \n", l_LevelGap);
 			if (l_LevelGap <= 10)

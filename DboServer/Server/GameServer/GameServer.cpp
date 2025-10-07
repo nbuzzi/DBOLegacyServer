@@ -51,6 +51,7 @@
 #include "SkillTable.h"
 #include "ArenaManager.h"
 #include "EventManager.h"
+#include "BattlePassManager.h"
 // --- INICIO SOCKET COMANDOS ---
 #include <thread>
 #include <atomic>
@@ -319,6 +320,15 @@ int CGameServer::OnAppStart()
 	NTL_PRINT(PRINT_APP, "Prepare Event System");
 	CEventManager* pEventManager = new CEventManager;
 	UNREFERENCED_PARAMETER(pEventManager);
+	NTL_PRINT(PRINT_APP, "Prepare Battle Pass System");
+	CBattlePassManager* pBattlePassMgr = new CBattlePassManager;
+	UNREFERENCED_PARAMETER(pBattlePassMgr);
+	{
+		const char* bpIni = ".\\config\\BattlePass.cfg";
+		g_pBattlePassManager->LoadConfigFromIniPath(bpIni);
+		// Load progress snapshot (non-fatal if missing)
+		g_pBattlePassManager->LoadProgressFromFile(".\\config\\BattlePassProgress.dat");
+	}
 
 	// Load Event config now that the manager singleton exists
 	{

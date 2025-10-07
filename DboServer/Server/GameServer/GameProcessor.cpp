@@ -25,6 +25,7 @@
 #include "ArenaManager.h"
 #include "EventManager.h"
 #include "PlayerModifiers.h"
+#include "BattlePassManager.h" // Battle Pass periodic tick (daily reset + autosave)
 
 
 CGameProcessor::CGameProcessor()
@@ -153,6 +154,9 @@ void CGameProcessor::Run(DWORD dwTickCount)
 
 			// Player modifiers auto-schedule
 			g_pPlayerModifiers->AutoScheduleTick(dwTickDiff);
+
+			// BattlePass periodic tick (daily reset + autosave). Use server current time.
+			g_pBattlePassManager->Tick(dwTickDiff);
 		}
 
 		g_pPartyManager->TickProcess(dwTickDiff);
