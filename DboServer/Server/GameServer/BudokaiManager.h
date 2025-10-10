@@ -185,6 +185,12 @@ public:
 	void                                SetTeamMaxMembers(BYTE v);
 	BYTE                                GetTeamMaxMembers() const { return m_byTeamMaxMembers; }
 
+	// Schedule configuration
+	void                                SetAdultSoloSchedule(BYTE wday, BYTE hour);
+	void                                SetJuniorSoloSchedule(BYTE wday, BYTE hour);
+	void                                SetAdultPartySchedule(BYTE wday, BYTE hour);
+	void                                SetJuniorPartySchedule(BYTE wday, BYTE hour);
+
 	CBudokaiManager();
 	virtual ~CBudokaiManager();
 
@@ -451,6 +457,20 @@ private:
 	BYTE                                m_byMajorMatchMaxScore = 3;
 	BYTE                                m_byFinalMatchMaxScore = 4;
 	BYTE                                m_byTeamMaxMembers = NTL_MAX_MEMBER_IN_PARTY; // Default to 5
+
+	// Schedule configuration (wday: 0=Sunday, 1=Monday, ..., 6=Saturday)
+	// Adult Solo: Up to 9 time slots (use 255 for unused slots)
+	BYTE                                m_byAdultSoloWday[9] = {6, 4, 255, 255, 255, 255, 255, 255, 255};
+	BYTE                                m_byAdultSoloHour[9] = {18, 23, 0, 0, 0, 0, 0, 0, 0};
+	// Junior Solo: Single time slot
+	BYTE                                m_byJuniorSoloWday = 2;
+	BYTE                                m_byJuniorSoloHour = 14;
+	// Adult Party: Up to 3 time slots (use 255 for unused slots)
+	BYTE                                m_byAdultPartyWday[3] = {0, 255, 255};
+	BYTE                                m_byAdultPartyHour[3] = {13, 0, 0};
+	// Junior Party: Single time slot
+	BYTE                                m_byJuniorPartyWday = 5;
+	BYTE                                m_byJuniorPartyHour = 17;
 
 };
 

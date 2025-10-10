@@ -12081,7 +12081,9 @@ void CClientSession::RecvSellAuctionHouseReq(CNtlPacket* pPacket)
 								res->dwFee = dwSellFee;
 								res->dwPrice = req->dwPrice;
 								res->itemId = pItem->GetItemID();
-								res->dwTime = 86400;
+                            	// Auction listing duration (seconds)
+                            	// Previously 1 day (86400). Increased to 90 days as requested.
+                           	 	res->dwTime = 90 * 86400; // 7,776,000 seconds
 								packet.SetPacketLen(sizeof(sGT_TENKAICHIDAISIJYOU_SELL_REQ));
 								app->SendTo(app->GetChatServerSession(), &packet);
 								if (pItem->GetCount() - req->byCount <= 0)

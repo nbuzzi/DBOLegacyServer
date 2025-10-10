@@ -1382,10 +1382,18 @@ void CItem::Cast()
 						{
 							pTarget->SetLpEpEventID(res->dwLpEpEventId);
 
+							// Mirror female excitation behavior: apply buff and grant RP based on CommonConfig
+							sCOMMONCONFIG_VALUE_DATA* commonConfig = g_pTableContainer->GetCommonConfigTable()->FindCommonConfig((TBLIDX)m_pUseItemTbldat->aSystem_Effect_Value[e]);
+
 							buffInfo.aBuffParameter[e].byBuffParameterType = DBO_BUFF_PARAMETER_TYPE_DOT;
 							buffInfo.aBuffParameter[e].buffParameter.fParameter = (float)m_pUseItemTbldat->aSystem_Effect_Value[e];
 							buffInfo.aBuffParameter[e].buffParameter.commonConfigTblidx = (TBLIDX)m_pUseItemTbldat->aSystem_Effect_Value[e];
 							buffInfo.aBuffParameter[e].buffParameter.dwRemainTime = m_pUseItemTbldat->dwKeepTimeInMilliSecs;
+
+							if (pTarget->GetBuffManager()->RegisterSubBuff(&buffInfo, effectCode, m_pOwner->GetID(), m_pUseItemTbldat->byBuff_Group, res->wResultCode, m_pUseItemTbldat->abySystem_Effect_Type))
+								pTarget->UpdateCurRP((WORD)commonConfig->adwValue[1], true, false);
+
+							bAddBuff = false;
 						}
 					}
 					else res->wResultCode = GAME_ITEM_CANNOT_USE_INVALID_TARGET;

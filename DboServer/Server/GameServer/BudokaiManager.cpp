@@ -213,8 +213,17 @@ void CBudokaiManager::TickProcess(DWORD dwTickDiff)
 	// -- ADULT SOLO BUDOKAI
 	if (m_bAdultBudokaiBegan == false)
 	{
-		if ((timeStruct.tm_wday == 6 && timeStruct.tm_hour == 18)//check if its saturday 17 o clock
-			|| (timeStruct.tm_wday == 4 && timeStruct.tm_hour == 23)) //check if its thursday 0 o clock
+		bool bShouldStart = false;
+		for (BYTE i = 0; i < 9; i++)
+		{
+			if (m_byAdultSoloWday[i] != 255 && timeStruct.tm_wday == m_byAdultSoloWday[i] && timeStruct.tm_hour == m_byAdultSoloHour[i])
+			{
+				bShouldStart = true;
+				break;
+			}
+		}
+
+		if (bShouldStart)
 		{
 			//start adult solo budokai
 			m_bAdultBudokaiBegan = true;
@@ -236,11 +245,11 @@ void CBudokaiManager::TickProcess(DWORD dwTickDiff)
 	// -- JUNIOR SOLO BUDOKAI
 	if (m_bJuniorBudokaiBegan == false)
 	{
-		if (timeStruct.tm_wday == 2 && timeStruct.tm_hour == 14) //check if its tuesday 14 o clock
+		if (timeStruct.tm_wday == m_byJuniorSoloWday && timeStruct.tm_hour == m_byJuniorSoloHour)
 		{
 			//start junior solo budokai
 			m_bJuniorBudokaiBegan = true;
-			
+
 			CreateBudokai(BUDOKAI_TYPE_JUNIOR, BUDOKAI_MATCH_TYPE_INDIVIDIAUL, (BUDOKAITIME)curTime, m_pTableInfo);
 		}
 	}
@@ -257,7 +266,17 @@ void CBudokaiManager::TickProcess(DWORD dwTickDiff)
 	// -- ADULT PARTY BUDOKAI
 	if (m_bPartyAdultBudokaiBegan == false)
 	{
-		if (timeStruct.tm_wday == 0 && timeStruct.tm_hour == 13) //check if its sunday 13 o clock
+		bool bShouldStart = false;
+		for (BYTE i = 0; i < 3; i++)
+		{
+			if (m_byAdultPartyWday[i] != 255 && timeStruct.tm_wday == m_byAdultPartyWday[i] && timeStruct.tm_hour == m_byAdultPartyHour[i])
+			{
+				bShouldStart = true;
+				break;
+			}
+		}
+
+		if (bShouldStart)
 		{
 			//start adult party budokai
 			m_bPartyAdultBudokaiBegan = true;
@@ -277,7 +296,7 @@ void CBudokaiManager::TickProcess(DWORD dwTickDiff)
 	// -- JUNIOR PARTY BUDOKAI
 	if (m_bPartyJuniorBudokaiBegan == false)
 	{
-		if (timeStruct.tm_wday == 5 && timeStruct.tm_hour == 17) //check if its friday 17 o clock
+		if (timeStruct.tm_wday == m_byJuniorPartyWday && timeStruct.tm_hour == m_byJuniorPartyHour)
 		{
 			//start junior party budokai
 			m_bPartyJuniorBudokaiBegan = true;
@@ -5017,6 +5036,44 @@ bool CBudokaiManager::LoadConfigFromIniPath(const char* iniPath)
 
 	if (file.Read("BUDOKAI", "MajorMatchMaxScore", val)) SetMajorMatchMaxScore((BYTE)val);
 	if (file.Read("BUDOKAI", "FinalMatchMaxScore", val)) SetFinalMatchMaxScore((BYTE)val);
+	if (file.Read("BUDOKAI", "TeamMaxMembers", val)) SetTeamMaxMembers((BYTE)val);
+
+	// Schedule configuration
+	// Adult Solo: Up to 9 slots
+	if (file.Read("BUDOKAI", "AdultSoloWday1", val)) m_byAdultSoloWday[0] = (BYTE)val;
+	if (file.Read("BUDOKAI", "AdultSoloHour1", val)) m_byAdultSoloHour[0] = (BYTE)val;
+	if (file.Read("BUDOKAI", "AdultSoloWday2", val)) m_byAdultSoloWday[1] = (BYTE)val;
+	if (file.Read("BUDOKAI", "AdultSoloHour2", val)) m_byAdultSoloHour[1] = (BYTE)val;
+	if (file.Read("BUDOKAI", "AdultSoloWday3", val)) m_byAdultSoloWday[2] = (BYTE)val;
+	if (file.Read("BUDOKAI", "AdultSoloHour3", val)) m_byAdultSoloHour[2] = (BYTE)val;
+	if (file.Read("BUDOKAI", "AdultSoloWday4", val)) m_byAdultSoloWday[3] = (BYTE)val;
+	if (file.Read("BUDOKAI", "AdultSoloHour4", val)) m_byAdultSoloHour[3] = (BYTE)val;
+	if (file.Read("BUDOKAI", "AdultSoloWday5", val)) m_byAdultSoloWday[4] = (BYTE)val;
+	if (file.Read("BUDOKAI", "AdultSoloHour5", val)) m_byAdultSoloHour[4] = (BYTE)val;
+	if (file.Read("BUDOKAI", "AdultSoloWday6", val)) m_byAdultSoloWday[5] = (BYTE)val;
+	if (file.Read("BUDOKAI", "AdultSoloHour6", val)) m_byAdultSoloHour[5] = (BYTE)val;
+	if (file.Read("BUDOKAI", "AdultSoloWday7", val)) m_byAdultSoloWday[6] = (BYTE)val;
+	if (file.Read("BUDOKAI", "AdultSoloHour7", val)) m_byAdultSoloHour[6] = (BYTE)val;
+	if (file.Read("BUDOKAI", "AdultSoloWday8", val)) m_byAdultSoloWday[7] = (BYTE)val;
+	if (file.Read("BUDOKAI", "AdultSoloHour8", val)) m_byAdultSoloHour[7] = (BYTE)val;
+	if (file.Read("BUDOKAI", "AdultSoloWday9", val)) m_byAdultSoloWday[8] = (BYTE)val;
+	if (file.Read("BUDOKAI", "AdultSoloHour9", val)) m_byAdultSoloHour[8] = (BYTE)val;
+
+	// Junior Solo: Single slot
+	if (file.Read("BUDOKAI", "JuniorSoloWday", val)) m_byJuniorSoloWday = (BYTE)val;
+	if (file.Read("BUDOKAI", "JuniorSoloHour", val)) m_byJuniorSoloHour = (BYTE)val;
+
+	// Adult Party: Up to 3 slots
+	if (file.Read("BUDOKAI", "AdultPartyWday1", val)) m_byAdultPartyWday[0] = (BYTE)val;
+	if (file.Read("BUDOKAI", "AdultPartyHour1", val)) m_byAdultPartyHour[0] = (BYTE)val;
+	if (file.Read("BUDOKAI", "AdultPartyWday2", val)) m_byAdultPartyWday[1] = (BYTE)val;
+	if (file.Read("BUDOKAI", "AdultPartyHour2", val)) m_byAdultPartyHour[1] = (BYTE)val;
+	if (file.Read("BUDOKAI", "AdultPartyWday3", val)) m_byAdultPartyWday[2] = (BYTE)val;
+	if (file.Read("BUDOKAI", "AdultPartyHour3", val)) m_byAdultPartyHour[2] = (BYTE)val;
+
+	// Junior Party: Single slot
+	if (file.Read("BUDOKAI", "JuniorPartyWday", val)) m_byJuniorPartyWday = (BYTE)val;
+	if (file.Read("BUDOKAI", "JuniorPartyHour", val)) m_byJuniorPartyHour = (BYTE)val;
 
 	return true;
 }
@@ -5041,6 +5098,31 @@ DWORD CBudokaiManager::GetBudokaiEndTime() const { return m_pTableInfo ? m_pTabl
 
 void CBudokaiManager::SetMajorMatchMaxScore(BYTE v) { m_byMajorMatchMaxScore = v ? v : m_byMajorMatchMaxScore; }
 void CBudokaiManager::SetFinalMatchMaxScore(BYTE v) { m_byFinalMatchMaxScore = v ? v : m_byFinalMatchMaxScore; }
+void CBudokaiManager::SetTeamMaxMembers(BYTE v) { m_byTeamMaxMembers = v ? v : m_byTeamMaxMembers; }
+
+void CBudokaiManager::SetAdultSoloSchedule(BYTE wday, BYTE hour)
+{
+	m_byAdultSoloWday[0] = wday;
+	m_byAdultSoloHour[0] = hour;
+}
+
+void CBudokaiManager::SetJuniorSoloSchedule(BYTE wday, BYTE hour)
+{
+	m_byJuniorSoloWday = wday;
+	m_byJuniorSoloHour = hour;
+}
+
+void CBudokaiManager::SetAdultPartySchedule(BYTE wday, BYTE hour)
+{
+	m_byAdultPartyWday[0] = wday;
+	m_byAdultPartyHour[0] = hour;
+}
+
+void CBudokaiManager::SetJuniorPartySchedule(BYTE wday, BYTE hour)
+{
+	m_byJuniorPartyWday = wday;
+	m_byJuniorPartyHour = hour;
+}
 
 void CBudokaiManager::FinalMatchMatchFinish(sTOURNAMENT_MATCH * match, BYTE byMatchIndex)
 {
@@ -7411,7 +7493,7 @@ WORD CBudokaiManager::CheckBudokaiOpen(CPlayer * pPlayer)
 					return GAME_PARTY_YOU_ARE_NOT_IN_PARTY;
 				if(pParty->GetPartyLeaderID() != pPlayer->GetID())
 					return GAME_BUDOKAI_YOU_ARE_NOT_A_TEAM_LEADER;
-				if(pParty->GetPartyMemberCount() < NTL_MAX_MEMBER_IN_PARTY)
+				if(pParty->GetPartyMemberCount() < GetTeamMaxMembers())
 					return GAME_BUDOKAI_NEED_MORE_MEMBER;
 
 				for (BYTE i = 0; i < pParty->GetPartyMemberCount(); i++)
@@ -7447,7 +7529,7 @@ WORD CBudokaiManager::CheckBudokaiOpen(CPlayer * pPlayer)
 					return GAME_PARTY_YOU_ARE_NOT_IN_PARTY;
 				if (pParty->GetPartyLeaderID() != pPlayer->GetID())
 					return GAME_BUDOKAI_YOU_ARE_NOT_A_TEAM_LEADER;
-				if (pParty->GetPartyMemberCount() < NTL_MAX_MEMBER_IN_PARTY)
+				if (pParty->GetPartyMemberCount() < GetTeamMaxMembers())
 					return GAME_BUDOKAI_NEED_MORE_MEMBER;
 
 				for (BYTE i = 0; i < pParty->GetPartyMemberCount(); i++)

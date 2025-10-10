@@ -4418,9 +4418,25 @@ unsigned int CArenaManager::EnsureCurrentWorldId()
 			}
 		}
 
-		NTL_PRINT(PRINT_APP, _T("[ARENA] Attempting to create dynamic world: tblidx=%u name='%s'"),
-			m_currentWorldTblidx, pWorldTbldat->wszName);
-		ARENA_VLOG(m_cfg, LOG_GENERAL, "[ARENA] CreateWorld CC mode: tblidx=%u", (unsigned)m_currentWorldTblidx);
+		// Check if a world instance with this tblidx already exists
+		CWorld* pExistingByTblidx = app->GetGameMain()->GetWorldManager()->FindWorld((TBLIDX)m_currentWorldTblidx);
+		if (pExistingByTblidx)
+		{
+			if (IsArenaWorld(pExistingByTblidx) && ShouldOverrideRuleForWorld(m_currentWorldTblidx))
+			{
+				pExistingByTblidx->SetRuleOverride(GAMERULE_RANKBATTLE);
+				m_worldsWithOverride.insert((unsigned int)pExistingByTblidx->GetID());
+			}
+			m_currentWorldId = (unsigned int)pExistingByTblidx->GetID();
+			NTL_PRINT(PRINT_APP, _T("[ARENA] CC Mode: Found existing world instance ID %u for tblidx %u"),
+				m_currentWorldId, m_currentWorldTblidx);
+			ARENA_VLOG(m_cfg, LOG_GENERAL, "[ARENA] Reused existing world: id=%u tblidx=%u", (unsigned)m_currentWorldId, (unsigned)m_currentWorldTblidx);
+			return m_currentWorldId;
+		}
+
+		NTL_PRINT(PRINT_APP, _T("[ARENA] Attempting to create dynamic world: tblidx=%u name='%s' mapName='%s' dynamic=%d"),
+			m_currentWorldTblidx, pWorldTbldat->wszName, pWorldTbldat->szName, (int)pWorldTbldat->bDynamic);
+		ARENA_VLOG(m_cfg, LOG_GENERAL, "[ARENA] CreateWorld CC mode: tblidx=%u dynamic=%d", (unsigned)m_currentWorldTblidx, (int)pWorldTbldat->bDynamic);
 
 		CWorld* pWorld = app->GetGameMain()->GetWorldManager()->CreateWorld(pWorldTbldat);
 		if (pWorld)
@@ -4457,24 +4473,35 @@ unsigned int CArenaManager::EnsureCurrentWorldId()
 				if (fallbackTblidx == m_currentWorldTblidx) continue; // Skip the one that already failed
 
 				sWORLD_TBLDAT* pFallbackTbldat = (sWORLD_TBLDAT*)g_pTableContainer->GetWorldTable()->FindData((TBLIDX)fallbackTblidx);
-				if (pFallbackTbldat)
+				if (!pFallbackTbldat) continue; // Skip if table data not found
+
+				// First check if the fallback world already exists
+				CWorld* pFallbackWorld = app->GetGameMain()->GetWorldManager()->FindWorld((TBLIDX)fallbackTblidx);
+
+				// If it doesn't exist, try to create it
+				if (!pFallbackWorld)
 				{
-					CWorld* pFallbackWorld = app->GetGameMain()->GetWorldManager()->CreateWorld(pFallbackTbldat);
-					if (pFallbackWorld)
+					pFallbackWorld = app->GetGameMain()->GetWorldManager()->CreateWorld(pFallbackTbldat);
+					if (!pFallbackWorld)
 					{
-						if (IsArenaWorld(pFallbackWorld) && ShouldOverrideRuleForWorld(fallbackTblidx))
-						{
-							pFallbackWorld->SetRuleOverride(GAMERULE_RANKBATTLE);
-							m_worldsWithOverride.insert((unsigned int)pFallbackWorld->GetID());
-						}
-						m_currentWorldId = (unsigned int)pFallbackWorld->GetID();
-						m_currentWorldTblidx = fallbackTblidx; // Update the current tblidx to the working one
-						NTL_PRINT(PRINT_APP, _T("[ARENA] Using fallback world: tblidx=%u name='%s' worldId=%u"),
-							fallbackTblidx, pFallbackTbldat->wszName, m_currentWorldId);
-						ARENA_VLOG(m_cfg, LOG_GENERAL, "[ARENA] Fallback world selected: tblidx=%u worldId=%u", (unsigned)fallbackTblidx, (unsigned)m_currentWorldId);
-						break;
+						// Creation failed, skip to next fallback world
+						NTL_PRINT(PRINT_APP, _T("[ARENA] Failed to create fallback world tblidx=%u, trying next..."), fallbackTblidx);
+						continue;
 					}
 				}
+
+				// At this point we have a valid world (either found or created)
+				if (IsArenaWorld(pFallbackWorld) && ShouldOverrideRuleForWorld(fallbackTblidx))
+				{
+					pFallbackWorld->SetRuleOverride(GAMERULE_RANKBATTLE);
+					m_worldsWithOverride.insert((unsigned int)pFallbackWorld->GetID());
+				}
+				m_currentWorldId = (unsigned int)pFallbackWorld->GetID();
+				m_currentWorldTblidx = fallbackTblidx; // Update the current tblidx to the working one
+				NTL_PRINT(PRINT_APP, _T("[ARENA] Using fallback world: tblidx=%u name='%s' worldId=%u"),
+					fallbackTblidx, pFallbackTbldat->wszName, m_currentWorldId);
+				ARENA_VLOG(m_cfg, LOG_GENERAL, "[ARENA] Fallback world selected: tblidx=%u worldId=%u", (unsigned)fallbackTblidx, (unsigned)m_currentWorldId);
+				break;
 			}
 		}
 		return m_currentWorldId;
@@ -4550,23 +4577,34 @@ unsigned int CArenaManager::EnsureCurrentWorldId()
 			if (fallbackTblidx == m_currentWorldTblidx) continue; // Skip the one that already failed
 
 			sWORLD_TBLDAT* pFallbackTbldat = (sWORLD_TBLDAT*)g_pTableContainer->GetWorldTable()->FindData((TBLIDX)fallbackTblidx);
-			if (pFallbackTbldat)
+			if (!pFallbackTbldat) continue; // Skip if table data not found
+
+			// First check if the fallback world already exists
+			CWorld* pFallbackWorld = app->GetGameMain()->GetWorldManager()->FindWorld((TBLIDX)fallbackTblidx);
+
+			// If it doesn't exist, try to create it
+			if (!pFallbackWorld)
 			{
-				CWorld* pFallbackWorld = app->GetGameMain()->GetWorldManager()->CreateWorld(pFallbackTbldat);
-				if (pFallbackWorld)
+				pFallbackWorld = app->GetGameMain()->GetWorldManager()->CreateWorld(pFallbackTbldat);
+				if (!pFallbackWorld)
 				{
-					if (IsArenaWorld(pFallbackWorld) && ShouldOverrideRuleForWorld(fallbackTblidx))
-					{
-						pFallbackWorld->SetRuleOverride(GAMERULE_RANKBATTLE);
-						m_worldsWithOverride.insert((unsigned int)pFallbackWorld->GetID());
-					}
-					m_currentWorldId = (unsigned int)pFallbackWorld->GetID();
-					m_currentWorldTblidx = fallbackTblidx; // Update the current tblidx to the working one
-					NTL_PRINT(PRINT_APP, _T("[ARENA] Normal Mode: Using fallback world: tblidx=%u name='%s' worldId=%u"),
-						fallbackTblidx, pFallbackTbldat->wszName, m_currentWorldId);
-					break;
+					// Creation failed, skip to next fallback world
+					NTL_PRINT(PRINT_APP, _T("[ARENA] Failed to create fallback world tblidx=%u, trying next..."), fallbackTblidx);
+					continue;
 				}
 			}
+
+			// At this point we have a valid world (either found or created)
+			if (IsArenaWorld(pFallbackWorld) && ShouldOverrideRuleForWorld(fallbackTblidx))
+			{
+				pFallbackWorld->SetRuleOverride(GAMERULE_RANKBATTLE);
+				m_worldsWithOverride.insert((unsigned int)pFallbackWorld->GetID());
+			}
+			m_currentWorldId = (unsigned int)pFallbackWorld->GetID();
+			m_currentWorldTblidx = fallbackTblidx; // Update the current tblidx to the working one
+			NTL_PRINT(PRINT_APP, _T("[ARENA] Normal Mode: Using fallback world: tblidx=%u name='%s' worldId=%u"),
+				fallbackTblidx, pFallbackTbldat->wszName, m_currentWorldId);
+			break;
 		}
 	}
 	return m_currentWorldId;
