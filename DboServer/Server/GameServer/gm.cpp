@@ -266,8 +266,6 @@ struct command_info cmd_info[] =
 	{ L"@findteam", do_budokai_findteam, ADMIN_LEVEL_NONE }, // Public: join Team Budokai matchmaking queue
 	{ L"@battlepass", do_battlepass, ADMIN_LEVEL_NONE }, // Show your Battle Pass progress
 
-	// GM
-	{ L"@pm", do_pm, ADMIN_LEVEL_GAME_MASTER },
 
 	// Admin (Full GM access required)
 	{ L"@mute", do_mute, ADMIN_LEVEL_ADMIN },
@@ -360,6 +358,7 @@ struct command_info cmd_info[] =
 	{ L"@arena", do_arena, ADMIN_LEVEL_GAME_MASTER },
 	{ L"@event_reload", do_event_reload, ADMIN_LEVEL_GAME_MASTER },
 	{ L"@world_fight", do_world_fight, ADMIN_LEVEL_GAME_MASTER },
+	{ L"@pm", do_pm, ADMIN_LEVEL_GAME_MASTER },
 
 	{ L"@qwasawedsadas", NULL, ADMIN_LEVEL_ADMIN }
 };

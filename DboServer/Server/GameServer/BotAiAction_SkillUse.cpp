@@ -241,4 +241,6 @@ int CBotAiAction_SkillUse::OnUpdate(DWORD dwTickDiff, float fMultiple)
 		}
 		m_status = COMPLETED; return m_status;
 	}
+
+	return m_status;
 }
