@@ -1391,7 +1391,13 @@ void CItem::Cast()
 							buffInfo.aBuffParameter[e].buffParameter.dwRemainTime = m_pUseItemTbldat->dwKeepTimeInMilliSecs;
 
 							if (pTarget->GetBuffManager()->RegisterSubBuff(&buffInfo, effectCode, m_pOwner->GetID(), m_pUseItemTbldat->byBuff_Group, res->wResultCode, m_pUseItemTbldat->abySystem_Effect_Type))
-								pTarget->UpdateCurRP((WORD)commonConfig->adwValue[1], true, false);
+							{
+								if (commonConfig)
+									pTarget->UpdateCurRP((WORD)commonConfig->adwValue[1], true, false);
+								else
+									ERR_LOG(LOG_GENERAL, "Male excitation: CommonConfig not found for tblidx %u", m_pUseItemTbldat->aSystem_Effect_Value[e]);
+							}
+							//pPlayer->UpdateCurRP(pPlayer->GetCharAtt()->GetMaxRP(), false, false);
 
 							bAddBuff = false;
 						}
@@ -1409,7 +1415,7 @@ void CItem::Cast()
 				{
 					if (pTarget->IsPC())
 					{
-						if (pTarget->GetGender() != GENDER_MALE) //only nemkian and female
+						//if (pTarget->GetGender() != GENDER_MALE) //only nemkian and female
 						{
 							pTarget->SetLpEpEventID(res->dwLpEpEventId);
 
@@ -1421,7 +1427,12 @@ void CItem::Cast()
 							buffInfo.aBuffParameter[e].buffParameter.dwRemainTime = m_pUseItemTbldat->dwKeepTimeInMilliSecs;
 
 							if (pTarget->GetBuffManager()->RegisterSubBuff(&buffInfo, effectCode, m_pOwner->GetID(), m_pUseItemTbldat->byBuff_Group, res->wResultCode, m_pUseItemTbldat->abySystem_Effect_Type))
-								pTarget->UpdateCurRP((WORD)commonConfig->adwValue[1], true, false);
+							{
+								if (commonConfig)
+									pTarget->UpdateCurRP((WORD)commonConfig->adwValue[1], true, false);
+								else
+									ERR_LOG(LOG_GENERAL, "Female excitation: CommonConfig not found for tblidx %u", m_pUseItemTbldat->aSystem_Effect_Value[e]);
+							}
 
 							bAddBuff = false;
 						}

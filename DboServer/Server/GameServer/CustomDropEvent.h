@@ -133,6 +133,9 @@ public:
     bool IsDebuffImmunityEnabled() const { return m_debuffImmuneEnabled; }
     bool IsDebuffEffectBlocked(int code) const { return m_blockDebuffEffects.find(code) != m_blockDebuffEffects.end(); }
     size_t GetBlockedDebuffEffectCount() const { return m_blockDebuffEffects.size(); }
+    // Always-on mode (24/7 enabled, no time expiry)
+    void SetAlwaysOn(bool on) { m_alwaysOn = on; }
+    bool IsAlwaysOn() const { return m_alwaysOn; }
 
 private:
     DBOTIME m_timeStart;
@@ -192,6 +195,7 @@ private:
     bool m_autoStartAllChannels;         // if true, applies to all channels
     std::unordered_set<BYTE> m_autoStartChannels; // specific channels which should auto-start
     bool m_autoStartPending;             // schedule StartEvent() on the next TickProcess
+    bool m_alwaysOn;                     // if true, always enabled (24/7 mode, no time expiry)
 
 public:
     // Returns replacement mob tblidx for given source, or 0 if none configured or exempted

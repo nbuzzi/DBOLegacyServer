@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//d/projects/dbo-legacy/OpenDBO-Core/DboServer/ExecutionEnv/resource/server_data/table/rdf/**)",
+      "Read(//d/projects/dbo-legacy/OpenDBO-Core/**)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

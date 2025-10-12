@@ -1,4 +1,4 @@
-﻿#include "stdafx.h"
+#include "stdafx.h"
 #include "NtlPacketGU.h"
 #include "NtlPacketUG.h"
 #include "NtlPacketGM.h"
@@ -1060,9 +1060,19 @@ void CClientSession::RecvCharMove(CNtlPacket* pPacket)
 	NtlLocationDecompress(&req->vCurLoc, &vLoc.x, &vLoc.y, &vLoc.z);
 
 	// to do: speed hack check
-
 	auto pWorld = cPlayer->GetCurWorld();
 	auto worldId = cPlayer->GetWorldID();
+
+	// Floor fall detection - only for COLISEODEMON map (world IDs 900044-900144) - kill player if they fall through the floor
+	// Check Y coordinate first for short-circuit optimization (most players are at normal height)
+	if (vLoc.y < 14.0f && worldId >= 900044 && worldId <= 900144)
+	{
+		// Kill the player
+		if (cPlayer && cPlayer->IsInitialized())
+			cPlayer->Faint(cPlayer, FAINT_REASON_COMMAND);
+		return;
+	}
+
 	if (cPlayer->SetCurLoc(vLoc, pWorld))
 	{
 		CNtlVector vDir;
@@ -1283,6 +1293,17 @@ void CClientSession::RecvCharAirMoveSync(CNtlPacket* pPacket)
 
 	auto pWorld = cPlayer->GetCurWorld();
 	auto worldId = cPlayer->GetWorldID();
+
+	// Floor fall detection - only for COLISEODEMON map (world IDs 900044-900144) - kill player if they fall through the floor
+	// Check Y coordinate first for short-circuit optimization (most players are at normal height)
+	if (vLoc.y < 14.0f && worldId >= 900044 && worldId <= 900144)
+	{
+		// Kill the player
+		if (cPlayer && cPlayer->IsInitialized())
+			cPlayer->Faint(cPlayer, FAINT_REASON_COMMAND);
+		return;
+	}
+
 	if (cPlayer->SetCurLoc(vLoc, pWorld))
 	{
 		CNtlVector sDir;
@@ -4470,7 +4491,8 @@ void CClientSession::RecvPartyLeaveReq(CNtlPacket* pPacket)
 
 	WORD resultcode = GAME_SUCCESS;
 
-	if (cPlayer->GetParty())
+	CParty* pParty = cPlayer->GetParty();
+	if (pParty)
 	{
 		if (cPlayer->HasEventType(EVENT_TELEPORT_PROPOSAL))
 			resultcode = GAME_PARTY_LEAVING_IS_NOT_ALLOWED;
@@ -4479,7 +4501,16 @@ void CClientSession::RecvPartyLeaveReq(CNtlPacket* pPacket)
 		else if (cPlayer->GetTMQ() || cPlayer->GetCCBD())
 			resultcode = GAME_FAIL;
 		else
-			cPlayer->GetParty()->LeaveParty(cPlayer);
+		{
+			// Check if this is the last member before leaving
+			BYTE byMemberCount = pParty->GetPartyMemberCount();
+			pParty->LeaveParty(cPlayer);
+
+			// If this was the last member, disband the party AFTER LeaveParty returns
+			// This prevents deleting 'this' from within a member function
+			if (byMemberCount == 1)
+				g_pPartyManager->DisbandParty(pParty);
+		}
 	}
 	else
 		resultcode = GAME_COMMON_YOU_ARE_NOT_IN_A_PARTY;

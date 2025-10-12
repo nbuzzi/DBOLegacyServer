@@ -7,6 +7,7 @@
 #include <unordered_map>
 #include <string>
 #include <functional>
+#include <unordered_set>
 
 class CCharacterAttPC;
 
@@ -53,9 +54,15 @@ public:
         unsigned int intervalHours;        // Hours between sessions
         unsigned int initialDelayMinutes;  // Initial delay after server start
 
+        // Channel filtering
+        bool channelFilterEnabled;         // Enable channel-based filtering
+        std::unordered_set<BYTE> allowedChannels; // Allowed channel numbers (empty = all)
+        CNtlString channelNameContains;    // Channel name filter (case-insensitive, like EventManager)
+
         AutoScheduleConfig()
             : enabled(false), daysPerWeek(3), durationHours(3),
-              intervalHours(56), initialDelayMinutes(30) {}
+              intervalHours(56), initialDelayMinutes(30),
+              channelFilterEnabled(false), channelNameContains("") {}
     };
 
 public:
@@ -77,11 +84,16 @@ public:
     bool IsAutoScheduleActive() const { return m_autoScheduleActive; }
     unsigned long GetAutoScheduleRemainingMs() const { return m_autoScheduleRemainingMs; }
 
+    // Always-on mode (24/7 enabled, no auto-schedule)
+    void SetAlwaysOn(bool on) { m_alwaysOn = on; }
+    bool IsAlwaysOn() const { return m_alwaysOn; }
+
 private:
     void Init();
     bool LoadConfigInternal(const char* path);
     void StartAutoScheduleSession();
     void EndAutoScheduleSession();
+    bool IsChannelAllowed() const;  // Check if current channel is allowed
 
 private:
     bool m_enabled;
@@ -97,6 +109,7 @@ private:
     AutoScheduleState m_autoScheduleState;
     bool m_autoScheduleActive;          // Is a session currently active?
     unsigned long m_autoScheduleRemainingMs; // Time remaining in current state (wait or active)
+    bool m_alwaysOn;                    // If true, always enabled (24/7 mode, no scheduling)
 };
 
 #define GetPlayerModifiers() CPlayerModifiers::GetInstance()

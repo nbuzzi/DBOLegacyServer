@@ -86,6 +86,7 @@ void CCustomDropEvent::Init()
 	m_autoStartHours = 3;
 	m_autoStartChannels.clear();
 	m_autoStartPending = false;
+	m_alwaysOn = false; // default: not always-on
 	LoadConfigInternal(m_cfgPath.c_str());
 	LoadLevelsSidecar(m_cfgPath.c_str());
 }
@@ -512,6 +513,10 @@ bool CCustomDropEvent::LoadConfigInternal(const char* path)
 							tok = strtok(nullptr, ",| ");
 						}
 					}
+					else if (_stricmp(key, "alwaysOn") == 0)
+					{
+						m_alwaysOn = (atoi(val) != 0);
+					}
 				}
 				t = strtok(nullptr, " \t\n\r");
 			}
@@ -756,7 +761,11 @@ void CCustomDropEvent::StartEvent(BYTE byHours /* = 3*/)
 
 	m_bOn = true;
 	m_timeStart = app->GetTime();
-	m_timeEnd = m_timeStart + (byHours * 3600);
+	// If always-on mode, set end time to 0 (infinite)
+	if (m_alwaysOn || byHours == 0)
+		m_timeEnd = 0;
+	else
+		m_timeEnd = m_timeStart + (byHours * 3600);
 
 	CNtlStringW msg;
 
@@ -774,6 +783,10 @@ void CCustomDropEvent::TickProcess(DWORD dwTick)
 {
 	CGameServer* app = (CGameServer*)g_pApp;
 
+	// Performance optimization: Skip custom drop event logic on non-event channels
+	// if (!app->IsCustomDropEventChannel())
+	// 	return;
+
 	if (dwTick < m_dwNextUpdateTick)
 		return;
 
@@ -785,9 +798,13 @@ void CCustomDropEvent::TickProcess(DWORD dwTick)
 
 	if (m_bOn)
 	{
-		if (app->GetTime() >= m_timeEnd)
+		// Skip time-based expiry if always-on mode or infinite duration (timeEnd == 0)
+		if (m_timeEnd != 0 && !m_alwaysOn)
 		{
-			EndEvent();
+			if (app->GetTime() >= m_timeEnd)
+			{
+				EndEvent();
+			}
 		}
 	}
 
@@ -946,6 +963,11 @@ void CCustomDropEvent::ApplyAutoStartPolicy()
 
 void CCustomDropEvent::Update(CMonster* pMob, CCharacter* pPlayer)
 {
+	// Performance optimization: Skip custom drop event logic on non-event channels
+	// CGameServer* app = (CGameServer*)g_pApp;
+	// if (!app->IsCustomDropEventChannel())
+	// 	return;
+
 	if (!pPlayer->GetCurWorld()) { m_eventSpawned.erase(pMob->GetID()); return; }
 
 	// Allow CustomDropEvent in all worlds except competitive/PvP-only modes

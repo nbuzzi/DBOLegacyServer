@@ -43,6 +43,62 @@
 #include "EventManager.h"
 #include "BattlePassManager.h"
 #include <algorithm>
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#pragma comment(lib, "ws2_32.lib")
+
+// Helper function to send commands to other GameServer channels via command socket
+static bool SendCommandToChannel(BYTE byTargetChannel, const std::string& sCmd, std::string* pResponse = nullptr)
+{
+	// Calculate target port (6666 + channel number)
+	int targetPort = 6666 + byTargetChannel;
+
+	WSADATA wsaData;
+	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
+		return false;
+
+	SOCKET sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+	if (sock == INVALID_SOCKET)
+	{
+		WSACleanup();
+		return false;
+	}
+
+	// Set timeout to avoid hanging
+	DWORD timeout = 3000; // 3 seconds
+	setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout, sizeof(timeout));
+	setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO, (const char*)&timeout, sizeof(timeout));
+
+	sockaddr_in serverAddr{};
+	serverAddr.sin_family = AF_INET;
+	serverAddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+	serverAddr.sin_port = htons(targetPort);
+
+	if (connect(sock, (sockaddr*)&serverAddr, sizeof(serverAddr)) == SOCKET_ERROR)
+	{
+		closesocket(sock);
+		WSACleanup();
+		return false;
+	}
+
+	std::string cmdWithNewline = sCmd + "\n";
+	send(sock, cmdWithNewline.c_str(), (int)cmdWithNewline.length(), 0);
+
+	char buffer[256] = { 0 };
+	int bytes = recv(sock, buffer, sizeof(buffer) - 1, 0);
+	bool success = (bytes > 0 && strstr(buffer, "OK") != nullptr);
+
+	if (pResponse && bytes > 0)
+	{
+		buffer[bytes] = '\0';
+		*pResponse = std::string(buffer);
+	}
+
+	closesocket(sock);
+	WSACleanup();
+
+	return success;
+}
 
 void gm_read_command(sUG_SERVER_COMMAND* sPacket, CPlayer* pPlayer)
 {
@@ -184,6 +240,7 @@ ACMD(do_world_fight);
 ACMD(do_budokai);
 ACMD(do_dojo);
 ACMD(do_budokai_findteam);
+ACMD(do_budokai_start);
 ACMD(do_battlepass);
 ACMD(do_battlepass_setxp);
 ACMD(do_battlepass_addxp);
@@ -207,38 +264,35 @@ struct command_info cmd_info[] =
 	{ L"@arenajoinguild", do_arena_joinguild_public, ADMIN_LEVEL_NONE }, // Public: guild join (guild member only)
 	{ L"@participate", do_event_participate, ADMIN_LEVEL_NONE }, // Public: join EVENT channel
 	{ L"@findteam", do_budokai_findteam, ADMIN_LEVEL_NONE }, // Public: join Team Budokai matchmaking queue
-
-	// GM
-
-	{ L"@pm", do_pm, ADMIN_LEVEL_GAME_MASTER },
-
-	// Early Access Admin (IsGM=0, AdminLevel=10 can use these)
-	{ L"@mute", do_mute, ADMIN_LEVEL_EARLY_ACCESS },
-	{ L"@unmute", do_unmute, ADMIN_LEVEL_EARLY_ACCESS },
-	{ L"@teleport", do_teleport, ADMIN_LEVEL_EARLY_ACCESS },
-	{ L"@all", do_TeleportAll, ADMIN_LEVEL_EARLY_ACCESS },
-	{ L"@setlevel", do_setlevel, ADMIN_LEVEL_EARLY_ACCESS },
-	{ L"@setclass", do_setclass, ADMIN_LEVEL_EARLY_ACCESS },
-	{ L"@fly", do_fly, ADMIN_LEVEL_EARLY_ACCESS },
-	{ L"@addtitle", do_addtitle, ADMIN_LEVEL_EARLY_ACCESS },
-	{ L"@deltitle", do_deltitle, ADMIN_LEVEL_EARLY_ACCESS },
-	{ L"@big", do_big, ADMIN_LEVEL_EARLY_ACCESS },
-	{ L"@startevent", do_startevent, ADMIN_LEVEL_EARLY_ACCESS }, // 0 honey, 1 Fairy
-	{ L"@start_customdrop", do_start_customdrop, ADMIN_LEVEL_EARLY_ACCESS },
-	{ L"@start_stonedrop", do_start_stonedrop, ADMIN_LEVEL_EARLY_ACCESS },
-	{ L"@stop_stonedrop", do_stop_stonedrop, ADMIN_LEVEL_EARLY_ACCESS },
-	{ L"@dc", do_dc, ADMIN_LEVEL_EARLY_ACCESS },
-	{ L"@bann", do_bann, ADMIN_LEVEL_EARLY_ACCESS },
-	{ L"@budokai", do_budokai, ADMIN_LEVEL_EARLY_ACCESS },
-	{ L"@dojo", do_dojo, ADMIN_LEVEL_EARLY_ACCESS },
-	{ L"@createloot", do_createloot, ADMIN_LEVEL_EARLY_ACCESS },
-	{ L"@additem", do_additem, ADMIN_LEVEL_EARLY_ACCESS },
-	{ L"@event", do_event, ADMIN_LEVEL_EARLY_ACCESS },
-	{ L"@budokaiinfo", do_budokaiinfo, ADMIN_LEVEL_EARLY_ACCESS },
 	{ L"@battlepass", do_battlepass, ADMIN_LEVEL_NONE }, // Show your Battle Pass progress
 
-	// Admin (Full GM access required)
+	// GM
+	{ L"@pm", do_pm, ADMIN_LEVEL_GAME_MASTER },
 
+	// Admin (Full GM access required)
+	{ L"@mute", do_mute, ADMIN_LEVEL_ADMIN },
+	{ L"@unmute", do_unmute, ADMIN_LEVEL_ADMIN },
+	{ L"@teleport", do_teleport, ADMIN_LEVEL_ADMIN },
+	{ L"@all", do_TeleportAll, ADMIN_LEVEL_ADMIN },
+	{ L"@setlevel", do_setlevel, ADMIN_LEVEL_ADMIN },
+	{ L"@setclass", do_setclass, ADMIN_LEVEL_ADMIN },
+	{ L"@fly", do_fly, ADMIN_LEVEL_ADMIN },
+	{ L"@addtitle", do_addtitle, ADMIN_LEVEL_ADMIN },
+	{ L"@deltitle", do_deltitle, ADMIN_LEVEL_ADMIN },
+	{ L"@big", do_big, ADMIN_LEVEL_ADMIN },
+	{ L"@startevent", do_startevent, ADMIN_LEVEL_ADMIN }, // 0 honey, 1 Fairy
+	{ L"@start_customdrop", do_start_customdrop, ADMIN_LEVEL_ADMIN },
+	{ L"@start_stonedrop", do_start_stonedrop, ADMIN_LEVEL_ADMIN },
+	{ L"@stop_stonedrop", do_stop_stonedrop, ADMIN_LEVEL_ADMIN },
+	{ L"@dc", do_dc, ADMIN_LEVEL_ADMIN },
+	{ L"@bann", do_bann, ADMIN_LEVEL_ADMIN },
+	{ L"@budokai", do_budokai, ADMIN_LEVEL_ADMIN },
+	{ L"@dojo", do_dojo, ADMIN_LEVEL_ADMIN },
+	{ L"@budokaistart", do_budokai_start, ADMIN_LEVEL_ADMIN }, // Start Budokai on channel 9 remotely
+	{ L"@createloot", do_createloot, ADMIN_LEVEL_ADMIN },
+	{ L"@additem", do_additem, ADMIN_LEVEL_ADMIN },
+	{ L"@event", do_event, ADMIN_LEVEL_ADMIN },
+	{ L"@budokaiinfo", do_budokaiinfo, ADMIN_LEVEL_ADMIN },
 	{ L"@hide", do_hide, ADMIN_LEVEL_ADMIN },
 	{ L"@setadult", do_setadult, ADMIN_LEVEL_ADMIN },
 	{ L"@appear", do_warp, ADMIN_LEVEL_ADMIN },
@@ -1243,6 +1297,98 @@ ACMD(do_budokai)
 			else if (which == "final") g_pBudokaiManager->SetFinalMatchMaxScore(v);
 		}
 	}
+}
+
+// @budokaistart - Start Budokai tournaments on channel 9 from any channel
+// Usage: @budokaistart <adultsolo|adultteam|juniorsolo|juniorteam>
+ACMD(do_budokai_start)
+{
+	pToken->PopToPeek();
+	std::wstring wtype = pToken->PeekNextToken(NULL, &iLine);
+
+	if (wtype.empty())
+	{
+		CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+		sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+		res->wOpCode = GU_SYSTEM_DISPLAY_TEXT;
+		res->byDisplayType = SERVER_TEXT_SYSTEM;
+		wcscpy_s(res->awchMessage, NTL_MAX_LENGTH_OF_CHAT_MESSAGE + 1,
+			L"Usage: @budokaistart <adultsolo|adultteam|juniorsolo|juniorteam>");
+		packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+		((CGameServer*)g_pApp)->Send(pPlayer->GetClientSessionID(), &packet);
+		return;
+	}
+
+	// Convert to lowercase for comparison
+	std::string type;
+	for (wchar_t wc : wtype)
+		type += (char)tolower((char)wc);
+
+	// Map user-friendly command to actual server command
+	std::string serverCmd;
+	std::string displayName;
+
+	if (type == "adultsolo")
+	{
+		serverCmd = "StartAdultSolo";
+		displayName = "Adult Solo Budokai";
+	}
+	else if (type == "adultteam" || type == "adultparty")
+	{
+		serverCmd = "StartAdultTeam";
+		displayName = "Adult Team Budokai";
+	}
+	else if (type == "juniorsolo")
+	{
+		serverCmd = "StartJuniorSolo";
+		displayName = "Junior Solo Budokai";
+	}
+	else if (type == "juniorteam" || type == "juniorparty")
+	{
+		serverCmd = "StartJuniorTeam";
+		displayName = "Junior Team Budokai";
+	}
+	else
+	{
+		CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+		sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+		res->wOpCode = GU_SYSTEM_DISPLAY_TEXT;
+		res->byDisplayType = SERVER_TEXT_SYSTEM;
+		wcscpy_s(res->awchMessage, NTL_MAX_LENGTH_OF_CHAT_MESSAGE + 1,
+			L"Invalid type! Use: adultsolo, adultteam, juniorsolo, or juniorteam");
+		packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+		((CGameServer*)g_pApp)->Send(pPlayer->GetClientSessionID(), &packet);
+		return;
+	}
+
+	// Send command to Budokai channel (channel 9)
+	const BYTE BUDOKAI_CHANNEL = 9;
+	std::string response;
+	bool success = SendCommandToChannel(BUDOKAI_CHANNEL, serverCmd, &response);
+
+	// Prepare response message
+	CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+	sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+	res->wOpCode = GU_SYSTEM_DISPLAY_TEXT;
+	res->byDisplayType = SERVER_TEXT_SYSTEM;
+
+	if (success)
+	{
+		char msg[NTL_MAX_LENGTH_OF_CHAT_MESSAGE + 1];
+		sprintf_s(msg, "[BUDOKAI] %s has been started on channel 9!", displayName.c_str());
+		std::wstring wmsg;
+		for (char c : std::string(msg))
+			wmsg += (wchar_t)c;
+		wcscpy_s(res->awchMessage, NTL_MAX_LENGTH_OF_CHAT_MESSAGE + 1, wmsg.c_str());
+	}
+	else
+	{
+		wcscpy_s(res->awchMessage, NTL_MAX_LENGTH_OF_CHAT_MESSAGE + 1,
+			L"[BUDOKAI] Failed to start - Is channel 9 (Budokai server) running?");
+	}
+
+	packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+	((CGameServer*)g_pApp)->Send(pPlayer->GetClientSessionID(), &packet);
 }
 
 // @dojo control for starting/stopping dojo wars from in-game GM

@@ -796,6 +796,11 @@ std::vector<unsigned int> CEventManager::GetRandomMobs(unsigned int count)
 
 void CEventManager::TickProcess(unsigned long dwTickDiff)
 {
+	// Performance optimization: Skip event logic on non-event channels
+	CGameServer* app = (CGameServer*)g_pApp;
+	if (m_cfg.channelNameContains.c_str()[0] != '\0' && !app->IsEventsChannel())
+		return;
+
 	if (!m_cfg.enabled)
 		return;
 
@@ -1126,6 +1131,11 @@ void CEventManager::TickProcess(unsigned long dwTickDiff)
 
 void CEventManager::AutomationTick(unsigned long dwTickDiff)
 {
+	// Performance optimization: Skip automation on non-event channels
+	CGameServer* app = (CGameServer*)g_pApp;
+	if (m_cfg.channelNameContains.c_str()[0] != '\0' && !app->IsEventsChannel())
+		return;
+
 	if (!m_cfg.enabled || !m_cfg.autoEnabled)
 		return;
 

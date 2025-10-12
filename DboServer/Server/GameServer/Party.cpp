@@ -514,7 +514,8 @@ void CParty::LeaveParty(CPlayer* player)
 
 	if(m_byMemberInfoCount == 1) //delete party if last member leaves
 	{
-		g_pPartyManager->DisbandParty(this);
+		// Don't delete 'this' from within member function - let the caller handle it
+		// Just return and signal that the party should be disbanded
 		return;
 	}
 

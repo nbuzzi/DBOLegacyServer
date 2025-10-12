@@ -99,6 +99,11 @@ public:
 
 	inline bool		IsDojoChannel() { return m_config.byChannel == DOJO_CHANNEL_INDEX; }
 
+	// Centralized channel name-based checks for feature gating (performance optimization)
+	inline CNtlString GetChannelName() const { return m_config.ChannelName; }
+	bool IsArenaChannel() const;
+	bool IsEventsChannel() const;
+	bool IsCustomDropEventChannel() const;
 
 	CActionPatternSystem*			GetActionPatternSystem() { return m_pActionPatternSystem; }
 	CGameData*						GetGameData() { return m_pGameData; }

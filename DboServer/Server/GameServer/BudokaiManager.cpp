@@ -7493,8 +7493,12 @@ WORD CBudokaiManager::CheckBudokaiOpen(CPlayer * pPlayer)
 					return GAME_PARTY_YOU_ARE_NOT_IN_PARTY;
 				if(pParty->GetPartyLeaderID() != pPlayer->GetID())
 					return GAME_BUDOKAI_YOU_ARE_NOT_A_TEAM_LEADER;
-				if(pParty->GetPartyMemberCount() < GetTeamMaxMembers())
+				// Check exact party size match: must equal configured team size
+				BYTE byRequiredMembers = GetTeamMaxMembers();
+				if(pParty->GetPartyMemberCount() < byRequiredMembers)
 					return GAME_BUDOKAI_NEED_MORE_MEMBER;
+				if(pParty->GetPartyMemberCount() > byRequiredMembers)
+					return GAME_BUDOKAI_NEED_MORE_MEMBER; // Using same error for consistency
 
 				for (BYTE i = 0; i < pParty->GetPartyMemberCount(); i++)
 				{
@@ -7529,8 +7533,12 @@ WORD CBudokaiManager::CheckBudokaiOpen(CPlayer * pPlayer)
 					return GAME_PARTY_YOU_ARE_NOT_IN_PARTY;
 				if (pParty->GetPartyLeaderID() != pPlayer->GetID())
 					return GAME_BUDOKAI_YOU_ARE_NOT_A_TEAM_LEADER;
-				if (pParty->GetPartyMemberCount() < GetTeamMaxMembers())
+				// Check exact party size match: must equal configured team size
+				BYTE byRequiredMembers = GetTeamMaxMembers();
+				if (pParty->GetPartyMemberCount() < byRequiredMembers)
 					return GAME_BUDOKAI_NEED_MORE_MEMBER;
+				if (pParty->GetPartyMemberCount() > byRequiredMembers)
+					return GAME_BUDOKAI_NEED_MORE_MEMBER; // Using same error for consistency
 
 				for (BYTE i = 0; i < pParty->GetPartyMemberCount(); i++)
 				{

@@ -944,6 +944,11 @@ static void ArenaBroadcastBudokaiPlayerStateToWorld(CWorld* pWorld, const std::u
 
 void CArenaManager::TickProcess(unsigned long dwTickDiff)
 {
+	// Performance optimization: Skip arena logic on non-arena channels
+	CGameServer* app = (CGameServer*)g_pApp;
+	if (m_cfg.onlyOnArenaChannel && !app->IsArenaChannel())
+		return;
+
 	// Do nothing unless the Arena feature is enabled and actively started
 	if (!m_cfg.enabled || m_state == State::IDLE)
 		return;
@@ -2148,6 +2153,11 @@ void CArenaManager::TickProcess(unsigned long dwTickDiff)
 // Drive automation even when the arena state is IDLE (called from game loop)
 void CArenaManager::AutomationTick(unsigned long dwTickDiff)
 {
+	// Performance optimization: Skip automation on non-arena channels
+	CGameServer* app = (CGameServer*)g_pApp;
+	if (m_cfg.autoChannelName.c_str() && m_cfg.autoChannelName.c_str()[0] != '\0' && !app->IsArenaChannel())
+		return;
+
 	if (!m_cfg.autoEnabled)
 		return;
 
@@ -2166,8 +2176,6 @@ void CArenaManager::AutomationTick(unsigned long dwTickDiff)
 		m_autoEnsureRemainMs = (m_autoEnsureRemainMs > dwTickDiff) ? (m_autoEnsureRemainMs - dwTickDiff) : 0;
 	}
 
-	// Optional channel-name filter: only run on matching channels
-	CGameServer* app = (CGameServer*)g_pApp;
 	if (m_cfg.autoChannelName.c_str() && m_cfg.autoChannelName.c_str()[0] != '\0')
 	{
 		std::string want = m_cfg.autoChannelName.c_str();

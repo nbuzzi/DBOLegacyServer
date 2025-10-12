@@ -883,9 +883,28 @@ bool CCharacter::IsTargetAttackble(CCharacter* pTarget, WORD wRange)
 			CNpc* pSelfNpc = static_cast<CNpc*>(this);
 			if (pSelfNpc->GetLinkPc() != INVALID_HOBJECT && pSelfNpc->GetPcRelation() == RELATION_TYPE_ALLIENCE)
 			{
-				// Only block if this NPC is a registered helper managed by HelperNpcManager
+				// Block if this NPC is a registered helper managed by HelperNpcManager
 				if (GetHelperNpcManager()->IsRegisteredHelper(pSelfNpc))
 					return false;
+
+				// Also block if this is an ALLIENCE NPC (even if not registered as helper) and target is in the same party as the linked PC
+				// This prevents script-spawned helper NPCs from attacking party members
+				CPlayer* pTargetPlayer = static_cast<CPlayer*>(pTarget);
+				CPlayer* pLinkedPlayer = (CPlayer*)g_pObjectManager->GetPC(pSelfNpc->GetLinkPc());
+				if (pLinkedPlayer && pLinkedPlayer->IsInitialized())
+				{
+					// Check if both players are in the same party
+					if (pLinkedPlayer->GetParty() && pTargetPlayer->GetParty() &&
+						pLinkedPlayer->GetParty() == pTargetPlayer->GetParty())
+					{
+						return false; // Cannot attack party members
+					}
+					// Also block if targeting the linked PC directly
+					if (pTargetPlayer == pLinkedPlayer)
+					{
+						return false;
+					}
+				}
 			}
 		}
 

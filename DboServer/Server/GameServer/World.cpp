@@ -1275,7 +1275,7 @@ CMonster* CWorld::Add_Monster(TBLIDX mobTblidx, const CNtlVector& spawnPos, cons
 	BYTE funcFlags = (bySpawnFuncFlag != 0xFF) ? bySpawnFuncFlag : (SPAWN_FUNC_FLAG_RESPAWN | SPAWN_FUNC_FLAG_NO_SPAWN_WAIT);
 	if (pMob->CreateDataAndSpawn(m_worldID, pMobTbldat, &spawn, false, funcFlags))
 	{
-		pMob->SetStandAlone(true); // Mark as standalone so it doesn't respawn automatically
+		pMob->SetStandAlone(false); // Mark as standalone false so that we can kill them
 		return pMob;
 	}
 	else

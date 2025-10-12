@@ -5,6 +5,7 @@
 #include "NtlSharedType.h"
 #include <NtlBattle.h>
 #include "CPlayer.h"
+#include "GameServer.h"
 #include <cwctype>
 #include <wchar.h>
 
@@ -38,6 +39,7 @@ void CPlayerModifiers::Init()
     m_autoScheduleState = AutoScheduleState::IDLE;
     m_autoScheduleActive = false;
     m_autoScheduleRemainingMs = 0;
+    m_alwaysOn = false;  // Default: not always-on
 
     LoadConfigInternal(m_cfgPath.c_str());
 }
@@ -188,6 +190,51 @@ bool CPlayerModifiers::LoadConfigInternal(const char* path)
                 {
                     if (scope == Scope_Global)
                         m_autoScheduleCfg.initialDelayMinutes = (unsigned int)val;
+                }
+                // Channel filtering
+                else if (_stricmp(key, "ChannelFilterEnabled") == 0)
+                {
+                    if (scope == Scope_Global)
+                        m_autoScheduleCfg.channelFilterEnabled = (val != 0.f);
+                }
+                else if (_stricmp(key, "AllowedChannels") == 0 || _stricmp(key, "Channels") == 0)
+                {
+                    // Parse comma-separated list of channel numbers
+                    if (scope == Scope_Global)
+                    {
+                        char buf[256];
+                        strncpy_s(buf, sizeof(buf), eq + 1, _TRUNCATE);
+                        char* tok = strtok(buf, ",; ");
+                        while (tok)
+                        {
+                            int ch = atoi(tok);
+                            if (ch >= 0 && ch <= 255)
+                                m_autoScheduleCfg.allowedChannels.insert((BYTE)ch);
+                            tok = strtok(nullptr, ",; ");
+                        }
+                    }
+                }
+                else if (_stricmp(key, "ChannelNameContains") == 0)
+                {
+                    if (scope == Scope_Global && eq + 1)
+                    {
+                        // Trim and copy channel name filter
+                        const char* v = eq + 1;
+                        while (*v == ' ' || *v == '\t') ++v;
+                        char buf[64];
+                        strncpy_s(buf, sizeof(buf), v, _TRUNCATE);
+                        // Trim trailing whitespace/newline
+                        char* end = buf + strlen(buf) - 1;
+                        while (end >= buf && (*end == ' ' || *end == '\t' || *end == '\n' || *end == '\r'))
+                            *end-- = '\0';
+                        m_autoScheduleCfg.channelNameContains = buf;
+                    }
+                }
+                // Always-on mode
+                else if (_stricmp(key, "AlwaysOn") == 0)
+                {
+                    if (scope == Scope_Global)
+                        m_alwaysOn = (val != 0.f);
                 }
             }
             t = strtok(nullptr, " \t\n\r");
@@ -388,6 +435,21 @@ void CPlayerModifiers::ApplyTo(CCharacterAttPC* att)
 
 void CPlayerModifiers::AutoScheduleTick(unsigned long dwTickDiff)
 {
+    // Always-on mode: keep enabled and skip scheduling
+    if (m_alwaysOn)
+    {
+        if (!m_enabled)
+        {
+            SetEnabled(true);
+            if (g_pObjectManager)
+            {
+                g_pObjectManager->RecalculateAllPlayers();
+                NTL_PRINT(PRINT_APP, _T("[PlayerModifiers] Always-on mode enabled"));
+            }
+        }
+        return;
+    }
+
     if (!m_autoScheduleCfg.enabled)
         return;
 
@@ -427,6 +489,15 @@ void CPlayerModifiers::AutoScheduleTick(unsigned long dwTickDiff)
 
 void CPlayerModifiers::StartAutoScheduleSession()
 {
+    // Check if current channel is allowed
+    if (!IsChannelAllowed())
+    {
+        NTL_PRINT(PRINT_APP, _T("[PlayerModifiers Auto-Schedule] Skipped session - channel not allowed"));
+        m_autoScheduleState = AutoScheduleState::WAIT_NEXT;
+        m_autoScheduleRemainingMs = m_autoScheduleCfg.intervalHours * 3600 * 1000UL;
+        return;
+    }
+
     m_autoScheduleState = AutoScheduleState::ACTIVE;
     m_autoScheduleActive = true;
     m_autoScheduleRemainingMs = m_autoScheduleCfg.durationHours * 3600 * 1000UL;
@@ -459,4 +530,48 @@ void CPlayerModifiers::EndAutoScheduleSession()
         NTL_PRINT(PRINT_APP, _T("[PlayerModifiers Auto-Schedule] Ended session (next session in %u hours, %zu players recalculated)"),
             m_autoScheduleCfg.intervalHours, n);
     }
+}
+
+bool CPlayerModifiers::IsChannelAllowed() const
+{
+    // If channel filtering is disabled, all channels are allowed
+    if (!m_autoScheduleCfg.channelFilterEnabled)
+        return true;
+
+    CGameServer* app = (CGameServer*)g_pApp;
+    if (!app)
+        return false;
+
+    // Check channel number filter (if allowedChannels is not empty)
+    if (!m_autoScheduleCfg.allowedChannels.empty())
+    {
+        BYTE currentChannel = app->m_config.byChannel;
+        if (m_autoScheduleCfg.allowedChannels.find(currentChannel) != m_autoScheduleCfg.allowedChannels.end())
+            return true;
+    }
+
+    // Check channel name filter (if channelNameContains is set)
+    const char* channelFilter = m_autoScheduleCfg.channelNameContains.c_str();
+    if (channelFilter && *channelFilter)
+    {
+        // Get server name which typically includes channel name
+        const char* serverName = app->m_config.ServerName.c_str();
+        if (serverName && *serverName)
+        {
+            // Case-insensitive substring search
+            std::string nameUpper(serverName);
+            std::string filterUpper(channelFilter);
+
+            // Convert to uppercase for case-insensitive comparison
+            for (auto& c : nameUpper) c = (char)toupper(c);
+            for (auto& c : filterUpper) c = (char)toupper(c);
+
+            if (nameUpper.find(filterUpper) != std::string::npos)
+                return true;
+        }
+    }
+
+    // If we have filters but none matched, channel is not allowed
+    const char* channelFilterCheck = m_autoScheduleCfg.channelNameContains.c_str();
+    return m_autoScheduleCfg.allowedChannels.empty() && (!channelFilterCheck || !*channelFilterCheck);
 }

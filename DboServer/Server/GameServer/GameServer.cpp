@@ -28,6 +28,7 @@
 #include "GameMain.h"
 #include "ActionPatternSystem.h"
 #include "ug_opcodes.h"
+#include "ChannelUtility.h"
 #include "qg_opcodes.h"
 #include "tg_opcodes.h"
 #include "mg_opcodes.h"
@@ -1197,6 +1198,25 @@ void CGameServer::DoUpdateSessionLog(DWORD dwNow)
 		
 		m_dwLastTimeSessionLogged = dwNow;
 	}
+}
+
+
+//-----------------------------------------------------------------------------------
+// Centralized channel-based feature gating (performance optimization)
+//-----------------------------------------------------------------------------------
+bool CGameServer::IsArenaChannel() const
+{
+	return CChannelUtility::IsArenaChannel(m_config.ChannelName);
+}
+
+bool CGameServer::IsEventsChannel() const
+{
+	return CChannelUtility::IsEventsChannel(m_config.ChannelName);
+}
+
+bool CGameServer::IsCustomDropEventChannel() const
+{
+	return CChannelUtility::IsCustomDropEventChannel(m_config.ChannelName);
 }
 
 
