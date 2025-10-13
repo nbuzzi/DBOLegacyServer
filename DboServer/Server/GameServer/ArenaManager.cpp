@@ -2435,33 +2435,102 @@ unsigned int CArenaManager::GetOrCreateCurrentWorldId()
 	return m_currentWorldId ? m_currentWorldId : EnsureCurrentWorldId();
 }
 
+bool CArenaManager::ShouldAllowArenaPvP(CPlayer* pPlayer) const
+{
+	if (!pPlayer)
+		return false;
+
+	// Arena must be enabled
+	if (!m_cfg.enabled)
+		return false;
+
+	// Arena must be in active round (not IDLE, ENROLLMENT, etc.)
+	if (m_state != State::IN_ROUND)
+		return false;
+
+	// Player must be a participant (not spectator or random player)
+	if (!IsParticipant(const_cast<CPlayer*>(pPlayer)))
+		return false;
+
+	// Channel check: Arena PvP only allowed on arena channel (if onlyOnArenaChannel is true)
+	if (m_cfg.onlyOnArenaChannel)
+	{
+		CGameServer* app = (CGameServer*)g_pApp;
+		if (!app || !app->IsArenaChannel())
+			return false;
+	}
+
+	return true;
+}
+
 bool CArenaManager::IsArenaWorldTblidx(unsigned int worldTblidx) const
 {
+	// Simple cache to avoid repeated table lookups for the same world ID
+	// Uses thread_local for thread safety without locks (GameServer is typically single-threaded per instance)
+	static thread_local std::unordered_map<unsigned int, bool> s_arenaCache;
+	static thread_local size_t s_cacheHits = 0;
+	static thread_local size_t s_cacheMisses = 0;
+
+	// Check cache first
+	auto it = s_arenaCache.find(worldTblidx);
+	if (it != s_arenaCache.end())
+	{
+		++s_cacheHits;
+		return it->second;
+	}
+
+	++s_cacheMisses;
+
 	// Primary: name-based Arena detection (TORNEOPODER etc.)
+	// This is the most reliable method and works with dynamic arena instances
 	if (IsArenaWorldByTblidxName((TBLIDX)worldTblidx))
+	{
+		s_arenaCache[worldTblidx] = true;
 		return true;
+	}
 
 	// Configured Arena rotation list (main Arena worlds)
 	for (unsigned int v : m_cfg.worldTblidxList)
-		if (v == worldTblidx) return true;
+	{
+		if (v == worldTblidx)
+		{
+			s_arenaCache[worldTblidx] = true;
+			return true;
+		}
+	}
 
 	// AutoArena world(s)
 	if (m_cfg.autoWorldTblidx && m_cfg.autoWorldTblidx == worldTblidx)
+	{
+		s_arenaCache[worldTblidx] = true;
 		return true;
-	for (unsigned int v : m_cfg.autoWorldTblidxList)
-		if (v == worldTblidx) return true;
+	}
 
-	// Instance expansion heuristic: if worldTblidx matches any configured base within small range
-	// Example: base 10000 implies instances 10000..10100 are considered arena. Keep small to avoid false positives.
-	auto within = [&](unsigned int base, unsigned int id) -> bool {
-		const unsigned int kSpan = 200; // +/- range
-		return id >= base && id <= base + kSpan;
-		};
-	for (unsigned int base : m_cfg.autoWorldTblidxList)
-		if (within(base, worldTblidx)) return true;
-	for (unsigned int base : m_cfg.worldTblidxList)
-		if (within(base, worldTblidx)) return true;
-	if (m_cfg.autoWorldTblidx && within(m_cfg.autoWorldTblidx, worldTblidx)) return true;
+	for (unsigned int v : m_cfg.autoWorldTblidxList)
+	{
+		if (v == worldTblidx)
+		{
+			s_arenaCache[worldTblidx] = true;
+			return true;
+		}
+	}
+
+	// ID-based range detection disabled to prevent false positives with dungeons
+	// All arena detection should now be name-based (TORNEOPODER) or explicit config
+	// If you need multiple arena instances, they will auto-detect via name matching
+
+	// Cache negative result
+	s_arenaCache[worldTblidx] = false;
+
+	// Limit cache size to prevent memory growth
+	if (s_arenaCache.size() > 1000)
+	{
+		s_arenaCache.clear();
+		// Optional: log cache stats
+		// printf("Arena cache cleared. Hits: %zu, Misses: %zu\n", s_cacheHits, s_cacheMisses);
+		s_cacheHits = 0;
+		s_cacheMisses = 0;
+	}
 
 	return false;
 }

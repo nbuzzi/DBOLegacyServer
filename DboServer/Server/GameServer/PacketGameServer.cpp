@@ -64,12 +64,10 @@
 #include "BusSystem.h"
 #include "scsManager.h"
 #include "WPShopContainer.h"
-// Arena runtime (custom PvP flow)
 #include "ArenaManager.h"
-
-// Local helpers: detect Broly worlds by name instead of numeric IDs
 #include <string>
 #include <algorithm>
+
 static bool IsBrolyWorld(CWorld* pWorld)
 {
 	if (!pWorld) return false;
@@ -79,6 +77,7 @@ static bool IsBrolyWorld(CWorld* pWorld)
 	std::transform(s.begin(), s.end(), s.begin(), ::tolower);
 	return s.find("broly") != std::string::npos;
 }
+
 static bool IsBrolyWorldId(WORLDID worldId)
 {
 	CGameServer* app = (CGameServer*)g_pApp;
@@ -1063,13 +1062,12 @@ void CClientSession::RecvCharMove(CNtlPacket* pPacket)
 	auto pWorld = cPlayer->GetCurWorld();
 	auto worldId = cPlayer->GetWorldID();
 
-	// Floor fall detection - only for COLISEODEMON map (world IDs 900044-900144) - kill player if they fall through the floor
+	// Floor fall detection - only for COLISEODEMON map (world IDs 900044-900047) - kill player if they fall through the floor
 	// Check Y coordinate first for short-circuit optimization (most players are at normal height)
-	if (vLoc.y < 14.0f && worldId >= 900044 && worldId <= 900144)
+	if (vLoc.y < 16.0f && worldId >= 900044 && worldId <= 900047)
 	{
 		// Kill the player
-		if (cPlayer && cPlayer->IsInitialized())
-			cPlayer->Faint(cPlayer, FAINT_REASON_COMMAND);
+		cPlayer->Faint(cPlayer, FAINT_REASON_COMMAND);
 		return;
 	}
 
@@ -1294,13 +1292,12 @@ void CClientSession::RecvCharAirMoveSync(CNtlPacket* pPacket)
 	auto pWorld = cPlayer->GetCurWorld();
 	auto worldId = cPlayer->GetWorldID();
 
-	// Floor fall detection - only for COLISEODEMON map (world IDs 900044-900144) - kill player if they fall through the floor
+	// Floor fall detection - only for COLISEODEMON map (world IDs 900044-900047) - kill player if they fall through the floor
 	// Check Y coordinate first for short-circuit optimization (most players are at normal height)
-	if (vLoc.y < 14.0f && worldId >= 900044 && worldId <= 900144)
+	if (vLoc.y < 16.0f && worldId >= 900044 && worldId <= 900047)
 	{
 		// Kill the player
-		if (cPlayer && cPlayer->IsInitialized())
-			cPlayer->Faint(cPlayer, FAINT_REASON_COMMAND);
+		cPlayer->Faint(cPlayer, FAINT_REASON_COMMAND);
 		return;
 	}
 

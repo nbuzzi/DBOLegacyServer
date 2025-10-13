@@ -874,8 +874,8 @@ float CCharacter::GetAttackFollowRange()
 //-------------------------------------------------------------------//
 bool CCharacter::IsTargetAttackble(CCharacter* pTarget, WORD wRange)
 {
-	// Registered helpers (NPC/Monster) linked to a PC and allied should never attack PCs.
-	// Legacy non-helper NPCs/mobs must continue to evaluate original attackability rules.
+	// Registered helpers (NPC/Monster) linked to a PC and allied should never attack any PCs (allies or party members).
+	// Helpers should only attack mobs/monsters. Legacy non-helper NPCs/mobs must continue to evaluate original attackability rules.
 	if (pTarget && pTarget->IsInitialized())
 	{
 		if ((IsNPC() || IsMonster()) && pTarget->IsPC())
@@ -883,9 +883,11 @@ bool CCharacter::IsTargetAttackble(CCharacter* pTarget, WORD wRange)
 			CNpc* pSelfNpc = static_cast<CNpc*>(this);
 			if (pSelfNpc->GetLinkPc() != INVALID_HOBJECT && pSelfNpc->GetPcRelation() == RELATION_TYPE_ALLIENCE)
 			{
-				// Block if this NPC is a registered helper managed by HelperNpcManager
+				// Block if this NPC is a registered helper managed by HelperNpcManager - helpers should ONLY attack mobs, never PCs
 				if (GetHelperNpcManager()->IsRegisteredHelper(pSelfNpc))
-					return false;
+				{
+					return false; // Helpers cannot attack any PC (allies, party members, or anyone)
+				}
 
 				// Also block if this is an ALLIENCE NPC (even if not registered as helper) and target is in the same party as the linked PC
 				// This prevents script-spawned helper NPCs from attacking party members

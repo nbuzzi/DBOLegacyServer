@@ -250,8 +250,25 @@ CSkill* CSkillManager::FindSkill(TBLIDX tblidx)
 CSkill* CSkillManager::GetSkillWithSkillIndex(BYTE byIndex)
 {
 	if (m_dwMaxNumberOfSkill > byIndex)
-		return m_ppSkill[byIndex];
-	
+	{
+		// First try direct array access
+		if (m_ppSkill[byIndex] != NULL)
+			return m_ppSkill[byIndex];
+
+		// Fallback: search the list and repair the array if skill exists but array is NULL
+		for (unsigned int pos = m_skillList.Begin(); pos != m_skillList.End(); pos = m_skillList.Next(pos))
+		{
+			CSkill* pSkill = m_skillList.GetAt(pos);
+			if (pSkill && pSkill->GetSkillIndex() == byIndex)
+			{
+				// Repair the array - skill exists in list but not in array
+				m_ppSkill[byIndex] = pSkill;
+				//ERR_LOG(LOG_GENERAL, "Repaired skill array desynchronization: skill index %u was in list but not in array", byIndex);
+				return pSkill;
+			}
+		}
+	}
+
 	return NULL;
 }
 

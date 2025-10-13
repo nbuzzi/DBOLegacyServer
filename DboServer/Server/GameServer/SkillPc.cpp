@@ -143,14 +143,10 @@ void CSkillPc::CastSkill(HOBJECT hAppointTargetHandle, BYTE byApplyTargetCount, 
 				else if (pTarget->IsPC())
 				{
 					BYTE byWorldRuleType = m_pPlayerRef->GetCurWorld()->GetTbldat()->byWorldRuleType;
-					// Force treat Arena worlds as RANKBATTLE for Arena combat
-					if (m_pPlayerRef->GetCurWorld())
+					// Force treat Arena worlds as RANKBATTLE for Arena combat when all conditions are met
+					if (g_pArenaManager && g_pArenaManager->ShouldAllowArenaPvP(m_pPlayerRef))
 					{
-						bool isArenaWorld = ArenaWorld::IsArenaWorldByWideName(m_pPlayerRef->GetCurWorld()->GetTbldat()->wszName);
-						bool arenaActive = (isArenaWorld && g_pArenaManager && g_pArenaManager->IsEnabled() &&
-							g_pArenaManager->GetState() == CArenaManager::State::IN_ROUND && g_pArenaManager->IsParticipant(m_pPlayerRef));
-						if (arenaActive)
-							byWorldRuleType = GAMERULE_RANKBATTLE;
+						byWorldRuleType = GAMERULE_RANKBATTLE;
 					}
 					CPlayer* pTargetPc = (CPlayer*)pTarget;
 
@@ -163,8 +159,7 @@ void CSkillPc::CastSkill(HOBJECT hAppointTargetHandle, BYTE byApplyTargetCount, 
 							continue;
 						}
 						// Arena: allow harmful skills vs other participants during RUN, honoring team modes
-						if (g_pArenaManager->IsEnabled() && g_pArenaManager->GetState() == CArenaManager::State::IN_ROUND
-							&& g_pArenaManager->IsParticipant(m_pPlayerRef) && g_pArenaManager->IsParticipant(pTargetPc))
+						if (g_pArenaManager && g_pArenaManager->ShouldAllowArenaPvP(m_pPlayerRef) && g_pArenaManager->IsParticipant(pTargetPc))
 						{
 							bool allow = true;
 							switch (g_pArenaManager->GetMode())
@@ -210,8 +205,7 @@ void CSkillPc::CastSkill(HOBJECT hAppointTargetHandle, BYTE byApplyTargetCount, 
 					else if (byWorldRuleType == GAMERULE_RANKBATTLE)
 					{
 						// Allow arena participants to use skills during RUN even in RANKBATTLE worlds
-						if (g_pArenaManager->IsEnabled() && g_pArenaManager->GetState() == CArenaManager::State::IN_ROUND
-							&& g_pArenaManager->IsParticipant(m_pPlayerRef) && g_pArenaManager->IsParticipant(pTargetPc))
+						if (g_pArenaManager && g_pArenaManager->ShouldAllowArenaPvP(m_pPlayerRef) && g_pArenaManager->IsParticipant(pTargetPc))
 						{
 							bool allow = true;
 							switch (g_pArenaManager->GetMode())
