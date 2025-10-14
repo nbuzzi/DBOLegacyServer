@@ -1771,6 +1771,42 @@ GameStage(0)
 			--]
 			End()
 
+			-- BOSS RAGE PHASE 1: Apply MULTIPLE ATTACK buffs to boss!
+			Action( "register buff" )
+			--[
+				Param( "target type", "mob" )
+				Param( "target index", 68131410 )
+				Param( "buff index", 6620 )
+			--]
+			End()
+
+			-- STACK SECOND ATTACK BUFF!
+			Action( "register buff" )
+			--[
+				Param( "target type", "mob" )
+				Param( "target index", 68131410 )
+				Param( "buff index", 6620 )
+			--]
+			End()
+
+			-- Add Speed buff early!
+			Action( "register buff" )
+			--[
+				Param( "target type", "mob" )
+				Param( "target index", 68131410 )
+				Param( "buff index", 6622 )
+			--]
+			End()
+
+			-- Add Critical buff early!
+			Action( "register buff" )
+			--[
+				Param( "target type", "mob" )
+				Param( "target index", 68131410 )
+				Param( "buff index", 6623 )
+			--]
+			End()
+
 			-- Spawn Eggs
 			Action( "add mobgroup" )
 			--[
@@ -2265,12 +2301,54 @@ GameStage(0)
 			--]
 			End()
 
-			-- Make boss INVINCIBLE
+			-- Make boss INVINCIBLE (FIXED TARGET INDEX!)
 			Action( "register buff" )
 			--[
 				Param( "target type", "mob" )
-				Param( "target index", 86012 )
+				Param( "target index", 68131410 )
 				Param( "buff index", 2385 )
+			--]
+			End()
+
+			-- BOSS RAGE PHASE 2: Stack MULTIPLE SPEED buffs!
+			Action( "register buff" )
+			--[
+				Param( "target type", "mob" )
+				Param( "target index", 68131410 )
+				Param( "buff index", 6622 )
+			--]
+			End()
+
+			Action( "register buff" )
+			--[
+				Param( "target type", "mob" )
+				Param( "target index", 68131410 )
+				Param( "buff index", 6622 )
+			--]
+			End()
+
+			-- Stack MORE ATTACK POWER!
+			Action( "register buff" )
+			--[
+				Param( "target type", "mob" )
+				Param( "target index", 68131410 )
+				Param( "buff index", 6620 )
+			--]
+			End()
+
+			Action( "register buff" )
+			--[
+				Param( "target type", "mob" )
+				Param( "target index", 68131410 )
+				Param( "buff index", 6620 )
+			--]
+			End()
+
+			Action( "register buff" )
+			--[
+				Param( "target type", "mob" )
+				Param( "target index", 68131410 )
+				Param( "buff index", 6620 )
 			--]
 			End()
 
@@ -2556,11 +2634,11 @@ GameStage(0)
 			--]
 			End()
 
-			-- Remove invincibility
+			-- Remove invincibility (FIXED TARGET INDEX!)
 			Action( "unregister buff" )
 			--[
 				Param( "target type", "mob" )
-				Param( "target index", 86012 )
+				Param( "target index", 68131410 )
 				Param( "buff index", 2385 )
 			--]
 			End()
@@ -2619,12 +2697,87 @@ GameStage(0)
 			--]
 			End()
 
-			-- Make boss INVINCIBLE again
+			-- Make boss INVINCIBLE again (FIXED TARGET INDEX!)
 			Action( "register buff" )
 			--[
 				Param( "target type", "mob" )
-				Param( "target index", 86012 )
+				Param( "target index", 68131410 )
 				Param( "buff index", 2385 )
+			--]
+			End()
+
+			-- BOSS RAGE PHASE 3: Stack MULTIPLE DEFENSE buffs!
+			Action( "register buff" )
+			--[
+				Param( "target type", "mob" )
+				Param( "target index", 68131410 )
+				Param( "buff index", 6621 )
+			--]
+			End()
+
+			Action( "register buff" )
+			--[
+				Param( "target type", "mob" )
+				Param( "target index", 68131410 )
+				Param( "buff index", 6621 )
+			--]
+			End()
+
+			Action( "register buff" )
+			--[
+				Param( "target type", "mob" )
+				Param( "target index", 68131410 )
+				Param( "buff index", 6621 )
+			--]
+			End()
+
+			-- Stack EVEN MORE ATTACK POWER!
+			Action( "register buff" )
+			--[
+				Param( "target type", "mob" )
+				Param( "target index", 68131410 )
+				Param( "buff index", 6620 )
+			--]
+			End()
+
+			Action( "register buff" )
+			--[
+				Param( "target type", "mob" )
+				Param( "target index", 68131410 )
+				Param( "buff index", 6620 )
+			--]
+			End()
+
+			Action( "register buff" )
+			--[
+				Param( "target type", "mob" )
+				Param( "target index", 68131410 )
+				Param( "buff index", 6620 )
+			--]
+			End()
+
+			Action( "register buff" )
+			--[
+				Param( "target type", "mob" )
+				Param( "target index", 68131410 )
+				Param( "buff index", 6620 )
+			--]
+			End()
+
+			-- Stack CRITICAL buffs!
+			Action( "register buff" )
+			--[
+				Param( "target type", "mob" )
+				Param( "target index", 68131410 )
+				Param( "buff index", 6623 )
+			--]
+			End()
+
+			Action( "register buff" )
+			--[
+				Param( "target type", "mob" )
+				Param( "target index", 68131410 )
+				Param( "buff index", 6623 )
 			--]
 			End()
 
@@ -3048,11 +3201,11 @@ GameStage(0)
 			--]
 			End()
 
-			-- Remove invincibility
+			-- Remove invincibility (FIXED TARGET INDEX!)
 			Action( "unregister buff" )
 			--[
 				Param( "target type", "mob" )
-				Param( "target index", 86012 )
+				Param( "target index", 68131410 )
 				Param( "buff index", 2385 )
 			--]
 			End()
@@ -3092,6 +3245,97 @@ GameStage(0)
 					Param( "lp", 30 )
 				--]
 				End()
+			--]
+			End()
+
+			-- BOSS RAGE PHASE 4: Stack MASSIVE ATTACK POWER!
+			Action( "register buff" )
+			--[
+				Param( "target type", "mob" )
+				Param( "target index", 68131410 )
+				Param( "buff index", 6620 )
+			--]
+			End()
+
+			Action( "register buff" )
+			--[
+				Param( "target type", "mob" )
+				Param( "target index", 68131410 )
+				Param( "buff index", 6620 )
+			--]
+			End()
+
+			Action( "register buff" )
+			--[
+				Param( "target type", "mob" )
+				Param( "target index", 68131410 )
+				Param( "buff index", 6620 )
+			--]
+			End()
+
+			Action( "register buff" )
+			--[
+				Param( "target type", "mob" )
+				Param( "target index", 68131410 )
+				Param( "buff index", 6620 )
+			--]
+			End()
+
+			Action( "register buff" )
+			--[
+				Param( "target type", "mob" )
+				Param( "target index", 68131410 )
+				Param( "buff index", 6620 )
+			--]
+			End()
+
+			-- BOSS CRITICAL BOOST: Stack MULTIPLE crit buffs!
+			Action( "register buff" )
+			--[
+				Param( "target type", "mob" )
+				Param( "target index", 68131410 )
+				Param( "buff index", 6623 )
+			--]
+			End()
+
+			Action( "register buff" )
+			--[
+				Param( "target type", "mob" )
+				Param( "target index", 68131410 )
+				Param( "buff index", 6623 )
+			--]
+			End()
+
+			Action( "register buff" )
+			--[
+				Param( "target type", "mob" )
+				Param( "target index", 68131410 )
+				Param( "buff index", 6623 )
+			--]
+			End()
+
+			-- Stack SPEED for rapid attacks!
+			Action( "register buff" )
+			--[
+				Param( "target type", "mob" )
+				Param( "target index", 68131410 )
+				Param( "buff index", 6622 )
+			--]
+			End()
+
+			Action( "register buff" )
+			--[
+				Param( "target type", "mob" )
+				Param( "target index", 68131410 )
+				Param( "buff index", 6622 )
+			--]
+			End()
+
+			Action( "register buff" )
+			--[
+				Param( "target type", "mob" )
+				Param( "target index", 68131410 )
+				Param( "buff index", 6622 )
 			--]
 			End()
 
@@ -3482,6 +3726,302 @@ GameStage(0)
 					Param( "lp", 10 )
 				--]
 				End()
+			--]
+			End()
+
+			-- !!!!! BOSS ULTIMATE ENRAGE MODE !!!!!
+			-- Stack INSANE amounts of buffs for MAXIMUM DEATH!
+
+			-- ENRAGE: Stack 10x Attack Power buffs!!!
+			Action( "register buff" )
+			--[
+				Param( "target type", "mob" )
+				Param( "target index", 68131410 )
+				Param( "buff index", 6620 )
+			--]
+			End()
+
+			Action( "register buff" )
+			--[
+				Param( "target type", "mob" )
+				Param( "target index", 68131410 )
+				Param( "buff index", 6620 )
+			--]
+			End()
+
+			Action( "register buff" )
+			--[
+				Param( "target type", "mob" )
+				Param( "target index", 68131410 )
+				Param( "buff index", 6620 )
+			--]
+			End()
+
+			Action( "register buff" )
+			--[
+				Param( "target type", "mob" )
+				Param( "target index", 68131410 )
+				Param( "buff index", 6620 )
+			--]
+			End()
+
+			Action( "register buff" )
+			--[
+				Param( "target type", "mob" )
+				Param( "target index", 68131410 )
+				Param( "buff index", 6620 )
+			--]
+			End()
+
+			Action( "register buff" )
+			--[
+				Param( "target type", "mob" )
+				Param( "target index", 68131410 )
+				Param( "buff index", 6620 )
+			--]
+			End()
+
+			Action( "register buff" )
+			--[
+				Param( "target type", "mob" )
+				Param( "target index", 68131410 )
+				Param( "buff index", 6620 )
+			--]
+			End()
+
+			Action( "register buff" )
+			--[
+				Param( "target type", "mob" )
+				Param( "target index", 68131410 )
+				Param( "buff index", 6620 )
+			--]
+			End()
+
+			Action( "register buff" )
+			--[
+				Param( "target type", "mob" )
+				Param( "target index", 68131410 )
+				Param( "buff index", 6620 )
+			--]
+			End()
+
+			Action( "register buff" )
+			--[
+				Param( "target type", "mob" )
+				Param( "target index", 68131410 )
+				Param( "buff index", 6620 )
+			--]
+			End()
+
+			-- ENRAGE: Stack 7x Defense buffs!
+			Action( "register buff" )
+			--[
+				Param( "target type", "mob" )
+				Param( "target index", 68131410 )
+				Param( "buff index", 6621 )
+			--]
+			End()
+
+			Action( "register buff" )
+			--[
+				Param( "target type", "mob" )
+				Param( "target index", 68131410 )
+				Param( "buff index", 6621 )
+			--]
+			End()
+
+			Action( "register buff" )
+			--[
+				Param( "target type", "mob" )
+				Param( "target index", 68131410 )
+				Param( "buff index", 6621 )
+			--]
+			End()
+
+			Action( "register buff" )
+			--[
+				Param( "target type", "mob" )
+				Param( "target index", 68131410 )
+				Param( "buff index", 6621 )
+			--]
+			End()
+
+			Action( "register buff" )
+			--[
+				Param( "target type", "mob" )
+				Param( "target index", 68131410 )
+				Param( "buff index", 6621 )
+			--]
+			End()
+
+			Action( "register buff" )
+			--[
+				Param( "target type", "mob" )
+				Param( "target index", 68131410 )
+				Param( "buff index", 6621 )
+			--]
+			End()
+
+			Action( "register buff" )
+			--[
+				Param( "target type", "mob" )
+				Param( "target index", 68131410 )
+				Param( "buff index", 6621 )
+			--]
+			End()
+
+			-- ENRAGE: Stack 7x Speed buffs!
+			Action( "register buff" )
+			--[
+				Param( "target type", "mob" )
+				Param( "target index", 68131410 )
+				Param( "buff index", 6622 )
+			--]
+			End()
+
+			Action( "register buff" )
+			--[
+				Param( "target type", "mob" )
+				Param( "target index", 68131410 )
+				Param( "buff index", 6622 )
+			--]
+			End()
+
+			Action( "register buff" )
+			--[
+				Param( "target type", "mob" )
+				Param( "target index", 68131410 )
+				Param( "buff index", 6622 )
+			--]
+			End()
+
+			Action( "register buff" )
+			--[
+				Param( "target type", "mob" )
+				Param( "target index", 68131410 )
+				Param( "buff index", 6622 )
+			--]
+			End()
+
+			Action( "register buff" )
+			--[
+				Param( "target type", "mob" )
+				Param( "target index", 68131410 )
+				Param( "buff index", 6622 )
+			--]
+			End()
+
+			Action( "register buff" )
+			--[
+				Param( "target type", "mob" )
+				Param( "target index", 68131410 )
+				Param( "buff index", 6622 )
+			--]
+			End()
+
+			Action( "register buff" )
+			--[
+				Param( "target type", "mob" )
+				Param( "target index", 68131410 )
+				Param( "buff index", 6622 )
+			--]
+			End()
+
+			-- ENRAGE: Stack 7x Crit buffs!
+			Action( "register buff" )
+			--[
+				Param( "target type", "mob" )
+				Param( "target index", 68131410 )
+				Param( "buff index", 6623 )
+			--]
+			End()
+
+			Action( "register buff" )
+			--[
+				Param( "target type", "mob" )
+				Param( "target index", 68131410 )
+				Param( "buff index", 6623 )
+			--]
+			End()
+
+			Action( "register buff" )
+			--[
+				Param( "target type", "mob" )
+				Param( "target index", 68131410 )
+				Param( "buff index", 6623 )
+			--]
+			End()
+
+			Action( "register buff" )
+			--[
+				Param( "target type", "mob" )
+				Param( "target index", 68131410 )
+				Param( "buff index", 6623 )
+			--]
+			End()
+
+			Action( "register buff" )
+			--[
+				Param( "target type", "mob" )
+				Param( "target index", 68131410 )
+				Param( "buff index", 6623 )
+			--]
+			End()
+
+			Action( "register buff" )
+			--[
+				Param( "target type", "mob" )
+				Param( "target index", 68131410 )
+				Param( "buff index", 6623 )
+			--]
+			End()
+
+			Action( "register buff" )
+			--[
+				Param( "target type", "mob" )
+				Param( "target index", 68131410 )
+				Param( "buff index", 6623 )
+			--]
+			End()
+
+			-- ENRAGE: Stack 5x Additional damage buffs!
+			Action( "register buff" )
+			--[
+				Param( "target type", "mob" )
+				Param( "target index", 68131410 )
+				Param( "buff index", 6624 )
+			--]
+			End()
+
+			Action( "register buff" )
+			--[
+				Param( "target type", "mob" )
+				Param( "target index", 68131410 )
+				Param( "buff index", 6624 )
+			--]
+			End()
+
+			Action( "register buff" )
+			--[
+				Param( "target type", "mob" )
+				Param( "target index", 68131410 )
+				Param( "buff index", 6624 )
+			--]
+			End()
+
+			Action( "register buff" )
+			--[
+				Param( "target type", "mob" )
+				Param( "target index", 68131410 )
+				Param( "buff index", 6624 )
+			--]
+			End()
+
+			Action( "register buff" )
+			--[
+				Param( "target type", "mob" )
+				Param( "target index", 68131410 )
+				Param( "buff index", 6624 )
 			--]
 			End()
 
