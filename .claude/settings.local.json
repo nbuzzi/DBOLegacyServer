@@ -1,7 +1,11 @@
 {
   "permissions": {
     "allow": [
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "Bash(git checkout:*)",
+      "Bash(cat:*)",
+      "Bash(find:*)",
+      "Bash(python3:*)"
     ],
     "deny": [],
     "ask": []

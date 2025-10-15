@@ -185,6 +185,13 @@ private:
 	// When not INVALID_GAMERULE, GetRuleType() will return this value instead of table rule.
 	eGAMERULE_TYPE		m_ruleOverride;
 
+	// Difficulty phase tracking for progressive mob scaling (0=default, 1-5=phase)
+	BYTE				m_byDifficultyPhase;
+
+public:
+	// Get/Set difficulty phase for CustomDropEvent progressive scaling
+	inline BYTE			GetDifficultyPhase() const { return m_byDifficultyPhase; }
+	inline void			SetDifficultyPhase(BYTE phase) { m_byDifficultyPhase = phase; }
 };
 
 

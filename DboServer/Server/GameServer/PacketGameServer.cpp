@@ -1064,12 +1064,13 @@ void CClientSession::RecvCharMove(CNtlPacket* pPacket)
 
 	// Floor fall detection - only for COLISEODEMON map (world IDs 900044-900047) - kill player if they fall through the floor
 	// Check Y coordinate first for short-circuit optimization (most players are at normal height)
-	if (vLoc.y < 16.0f && worldId >= 900044 && worldId <= 900047)
-	{
-		// Kill the player
-		cPlayer->Faint(cPlayer, FAINT_REASON_COMMAND);
-		return;
-	}
+	// This is not longer needed
+	//if (vLoc.y < 16.0f && worldId >= 900044 && worldId <= 900047)
+	//{
+	//	// Kill the player
+	//	cPlayer->Faint(cPlayer, FAINT_REASON_COMMAND);
+	//	return;
+	//}
 
 	if (cPlayer->SetCurLoc(vLoc, pWorld))
 	{
@@ -1294,12 +1295,13 @@ void CClientSession::RecvCharAirMoveSync(CNtlPacket* pPacket)
 
 	// Floor fall detection - only for COLISEODEMON map (world IDs 900044-900047) - kill player if they fall through the floor
 	// Check Y coordinate first for short-circuit optimization (most players are at normal height)
-	if (vLoc.y < 16.0f && worldId >= 900044 && worldId <= 900047)
-	{
-		// Kill the player
-		cPlayer->Faint(cPlayer, FAINT_REASON_COMMAND);
-		return;
-	}
+	// This is not longer needed
+	//if (vLoc.y < 16.0f && worldId >= 900044 && worldId <= 900047)
+	//{
+	//	// Kill the player
+	//	cPlayer->Faint(cPlayer, FAINT_REASON_COMMAND);
+	//	return;
+	//}
 
 	if (cPlayer->SetCurLoc(vLoc, pWorld))
 	{

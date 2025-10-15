@@ -25,6 +25,7 @@ public:
     bool IsItemUpgradeEnabled() const { return m_bEnableItemUpgrade; }
     bool IsItemExchangeEnabled() const { return m_bEnableItemExchange; }
     bool IsPartyMatchmakingEnabled() const { return m_bEnablePartyMatchmaking; }
+    bool IsMobBuffsEnabled() const { return m_bEnableMobBuffs; }
 
     // Runtime flag modification (for testing/debugging)
     void SetVirtualTransformationsEnabled(bool enabled) { m_bEnableVirtualTransformations = enabled; }
@@ -37,6 +38,7 @@ public:
     void SetItemUpgradeEnabled(bool enabled) { m_bEnableItemUpgrade = enabled; }
     void SetItemExchangeEnabled(bool enabled) { m_bEnableItemExchange = enabled; }
     void SetPartyMatchmakingEnabled(bool enabled) { m_bEnablePartyMatchmaking = enabled; }
+    void SetMobBuffsEnabled(bool enabled) { m_bEnableMobBuffs = enabled; }
 
 private:
     void Init();
@@ -53,6 +55,7 @@ private:
     bool m_bEnableItemUpgrade;
     bool m_bEnableItemExchange;
     bool m_bEnablePartyMatchmaking;
+    bool m_bEnableMobBuffs;
 
     CNtlString m_configPath;
 };

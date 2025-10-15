@@ -3,6 +3,7 @@
 #include "GameServer.h"
 #include <algorithm>
 #include "NtlRandom.h"
+#include "MobBuffsManager.h"
 #include "ObjectManager.h"
 #include "RangeCheck.h"
 #include "TableContainerManager.h"
@@ -231,7 +232,14 @@ bool CMonster::CreateDataAndSpawn(WORLDID worldId, sMOB_TBLDAT* mobTbldat, sSPAW
 		GetCharAtt()->CalculateAll();
 		g_pCustomDropEvent->ApplyTitles(this);
 		g_pCustomDropEvent->ApplyBuffs(this);
-		g_pCustomDropEvent->ApplyModifiers(this);
+		// Apply config-driven MobBuffs (per world/mob), independent of CustomDropEvent
+		g_pMobBuffsManager->ApplyBuffs(this);
+		// Apply phase-aware modifiers based on world's current difficulty phase
+		CWorld* pWorld = GetCurWorld();
+		if (pWorld)
+			g_pCustomDropEvent->ApplyModifiersWithPhase(this, pWorld->GetDifficultyPhase());
+		else
+			g_pCustomDropEvent->ApplyModifiers(this); // fallback if no world
 		Spawn(bSpawnOnServerStart);
 		return true;
 	}
@@ -354,7 +362,14 @@ bool CMonster::CreateDataAndSpawn(sMOB_DATA& sData, sMOB_TBLDAT* mobTbldat, BYTE
 		GetCharAtt()->CalculateAll();
 		g_pCustomDropEvent->ApplyTitles(this);
 		g_pCustomDropEvent->ApplyBuffs(this);
-		g_pCustomDropEvent->ApplyModifiers(this);
+		// Apply config-driven MobBuffs (per world/mob), independent of CustomDropEvent
+		g_pMobBuffsManager->ApplyBuffs(this);
+		// Apply phase-aware modifiers based on world's current difficulty phase
+		CWorld* pWorld = GetCurWorld();
+		if (pWorld)
+			g_pCustomDropEvent->ApplyModifiersWithPhase(this, pWorld->GetDifficultyPhase());
+		else
+			g_pCustomDropEvent->ApplyModifiers(this); // fallback if no world
 		Spawn(false);
 		return true;
 	}
@@ -453,8 +468,12 @@ void CMonster::Spawn(bool bSpawnOnServerStart)
 	SetZeni(tbldat->dwDrop_Zenny);
 	SetCurEP(GetCharAtt()->GetMaxEP());
 	SetRunSpeed(tbldat->fRun_Speed);
-	// Re-apply event modifiers after base speeds set
-	g_pCustomDropEvent->ApplyModifiers(this);
+	// Re-apply event modifiers after base speeds set (with phase awareness)
+	CWorld* pWorld = GetCurWorld();
+	if (pWorld)
+		g_pCustomDropEvent->ApplyModifiersWithPhase(this, pWorld->GetDifficultyPhase());
+	else
+		g_pCustomDropEvent->ApplyModifiers(this); // fallback if no world
 	// Apply configured buffs when event is active
 	g_pCustomDropEvent->ApplyBuffs(this);
 	// Apply configured title attribute effects when event is active

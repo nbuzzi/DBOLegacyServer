@@ -115,6 +115,9 @@ public:
 	// GM-only mode gate
 	inline bool		IsGmOnlyMode() const { return m_bGmOnlyMode; }
 
+	// Expose configured session capacity (MaxConnection plus safety headroom)
+	int	GetSessionCapacity() const { return m_nMaxSessionCount; }
+
 
 
 public:

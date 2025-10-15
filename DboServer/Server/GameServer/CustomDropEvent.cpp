@@ -9,6 +9,7 @@
 #include "ItemManager.h"
 #include "ItemDrop.h"
 #include "TableContainerManager.h"
+#include "TableContainer.h"
 #include "NtlAdmin.h"
 #include "ItemTable.h"
 #include "BuffManager.h"
@@ -19,7 +20,18 @@
 #include "battle.h"
 #include "calcs.h"
 #include "CPlayer.h"
+#include "World.h"
+#include "NtlLog.h"
+#include <algorithm>
 #include <string>
+
+// Windows headers define max/min macros; ensure we use std::max/std::min below.
+#ifdef max
+#undef max
+#endif
+#ifdef min
+#undef min
+#endif
 
 // Heal multiplier is configurable via settings; default initialized in Init().
 
@@ -61,6 +73,7 @@ void CCustomDropEvent::Init()
 	m_totemBuffDurationOverrideMs = 0;
 	m_mobDrops.clear();
 	m_mobMods.clear();
+	m_mobModsByPhase.clear();
 	m_mobVisuals.clear();
 	m_mobTotems.clear();
 	m_activeTotems.clear();
@@ -87,6 +100,14 @@ void CCustomDropEvent::Init()
 	m_autoStartChannels.clear();
 	m_autoStartPending = false;
 	m_alwaysOn = false; // default: not always-on
+
+	// Configure automatic phase transitions for Blood Palace boss (86004)
+	// Boss tblidx 68131410: As boss HP drops, world difficulty phase escalates
+	m_autoPhaseTransitions.clear();
+	m_autoPhaseTransitions[68131410][90] = 1;  // At 90% HP or below → Phase 1 (+30% stats)
+	m_autoPhaseTransitions[68131410][70] = 2;  // At 70% HP or below → Phase 2 (+60% stats, faster)
+	m_autoPhaseTransitions[68131410][50] = 3;  // At 50% HP or below → Phase 3 (+100% stats, very fast)
+
 	LoadConfigInternal(m_cfgPath.c_str());
 	LoadLevelsSidecar(m_cfgPath.c_str());
 }
@@ -107,6 +128,7 @@ bool CCustomDropEvent::LoadConfigInternal(const char* path)
 {
 	m_mobDrops.clear();
 	m_mobMods.clear();
+	m_mobModsByPhase.clear();
 	m_mobSpawns.clear();
 	m_mobBuffs.clear();
 	m_mobLevels.clear();
@@ -163,6 +185,7 @@ bool CCustomDropEvent::LoadConfigInternal(const char* path)
 		const char* totemKw = "totem";
 		const char* replaceKw = "replace";
 		const char* settingsKw = "settings"; // global settings for defaults
+		const char* autoPhaseKw = "autophase";
 		bool isMods = false;
 		bool isSpawn = false;
 		bool isBuffs = false;
@@ -171,6 +194,7 @@ bool CCustomDropEvent::LoadConfigInternal(const char* path)
 		bool isTotem = false;
 		bool isReplace = false;
 		bool isSettings = false;
+		bool isAutoPhase = false;
 		bool isExcept = false;
 		char* colon = strchr(p, ':');
 		if (!colon)
@@ -221,6 +245,8 @@ bool CCustomDropEvent::LoadConfigInternal(const char* path)
 					isReplace = true;
 				else if (_stricmp(tail, settingsKw) == 0)
 					isSettings = true;
+				else if (_stricmp(tail, autoPhaseKw) == 0)
+					isAutoPhase = true;
 				else if (_stricmp(tail, "except") == 0)
 				{
 					// special-case: "all except: ..." => drops exclusion
@@ -233,7 +259,6 @@ bool CCustomDropEvent::LoadConfigInternal(const char* path)
 			}
 		}
 
-		// Handle exception lists: only allowed with mobId==0 (global)
 		if (isExcept && mobId == 0)
 		{
 			// parse comma-separated IDs from RHS
@@ -272,9 +297,76 @@ bool CCustomDropEvent::LoadConfigInternal(const char* path)
 			// Do not treat this line as a drop list
 			continue;
 		}
+		else if (isAutoPhase)
+		{
+			char* list = colon + 1;
+			std::map<int, BYTE> transitions;
+			bool clearRequested = false;
+			char* tok = strtok(list, ",\n\r");
+			while (tok)
+			{
+				while (*tok == ' ' || *tok == '\t')
+					++tok;
+				if (*tok == '\0')
+				{
+					tok = strtok(nullptr, ",\n\r");
+					continue;
+				}
+				if (_stricmp(tok, "clear") == 0 || _stricmp(tok, "off") == 0 || _stricmp(tok, "none") == 0)
+				{
+					clearRequested = true;
+					transitions.clear();
+					break;
+				}
+				char* endPtr = nullptr;
+				int threshold = (int)strtol(tok, &endPtr, 10);
+				if (endPtr == tok)
+				{
+					ERR_LOG(LOG_GENERAL, "[CustomDropEvent] Invalid autophase token '%s' (ignored)", tok);
+				}
+				else
+				{
+					while (*endPtr && (*endPtr < '0' || *endPtr > '9'))
+						++endPtr;
+					if (*endPtr)
+					{
+						int phase = atoi(endPtr);
+						if (threshold < 0) threshold = 0;
+						if (threshold > 100) threshold = 100;
+						if (phase < 0) phase = 0;
+						if (phase > 5) phase = 5;
+						transitions[threshold] = (BYTE)phase;
+					}
+					else
+					{
+						ERR_LOG(LOG_GENERAL, "[CustomDropEvent] Missing phase value in autophase token '%s' (ignored)", tok);
+					}
+				}
+				tok = strtok(nullptr, ",\n\r");
+			}
+			if (clearRequested)
+			{
+				m_autoPhaseTransitions.erase(mobId);
+			}
+			else if (!transitions.empty())
+			{
+				m_autoPhaseTransitions[mobId] = transitions;
+			}
+			continue;
+		}
 
 		if (isMods)
 		{
+			// Check for optional phase specifier: "phase=N" before colon
+			BYTE phase = 0; // 0 = no phase (original behavior)
+
+			// Look backwards from colon to detect "phase=N" keyword
+			char* phaseKey = strstr(p, "phase=");
+			if (phaseKey && phaseKey < colon)
+			{
+				phase = (BYTE)atoi(phaseKey + 6); // Extract phase number after "phase="
+			}
+
 			// parse key=value pairs separated by spaces
 			Modifiers m;
 			char* s = colon + 1;
@@ -325,7 +417,18 @@ bool CCustomDropEvent::LoadConfigInternal(const char* path)
 				}
 				t = strtok(nullptr, " \t\n\r");
 			}
-			m_mobMods[mobId] = m;
+
+			// Store based on whether phase is specified
+			if (phase > 0)
+			{
+				// Phase-specific modifier - store in phase map
+				m_mobModsByPhase[mobId][phase] = m;
+			}
+			else
+			{
+				// Global/default modifier (existing behavior) - store in regular map
+				m_mobMods[mobId] = m;
+			}
 		}
 		else if (isSpawn)
 		{
@@ -1380,6 +1483,384 @@ void CCustomDropEvent::CreateStackedDrop(CMonster* pMob, CCharacter* pPlayer, un
 	}
 }
 
+void CCustomDropEvent::ApplyModifierDelta(CMonster* pMob, const Modifiers& mod, bool preserveHpRatio)
+{
+	if (!pMob || mod.IsIdentity())
+		return;
+
+	CCharacterAtt* att = pMob->GetCharAtt();
+	if (!att)
+		return;
+
+	DWORD oldMaxLp = att->GetMaxLP();
+	DWORD newMaxLp = (DWORD)((float)oldMaxLp * mod.hp);
+	if (newMaxLp < 1)
+		newMaxLp = 1;
+	att->SetMaxLP((int)newMaxLp);
+
+	int newCurLp = (int)newMaxLp;
+	if (preserveHpRatio && oldMaxLp > 0)
+	{
+		float hpRatio = (float)pMob->GetCurLP() / (float)oldMaxLp;
+		hpRatio = std::max(0.0f, std::min(hpRatio, 1.0f));
+		newCurLp = (int)((float)newMaxLp * hpRatio);
+		if (newCurLp < 1)
+			newCurLp = 1;
+	}
+	if (newCurLp > (int)newMaxLp)
+		newCurLp = (int)newMaxLp;
+	pMob->SetCurLP(newCurLp);
+
+	WORD physAtk = att->GetPhysicalOffence();
+	att->SetPhysicalOffence((WORD)((float)physAtk * mod.physAtk));
+	WORD energyAtk = att->GetEnergyOffence();
+	att->SetEnergyOffence((WORD)((float)energyAtk * mod.engAtk));
+
+	WORD physDef = att->GetPhysicalDefence();
+	att->SetPhysicalDefence((WORD)((float)physDef * mod.physDef));
+	WORD energyDef = att->GetEnergyDefence();
+	float targetEnergyDef = (float)energyDef * mod.engDef;
+	float diffEnergyDef = targetEnergyDef - (float)energyDef;
+	if (diffEnergyDef > 0.0f)
+		att->CalculateEnergyDefence(diffEnergyDef, SYSTEM_EFFECT_APPLY_TYPE_VALUE, true);
+	else if (diffEnergyDef < 0.0f)
+		att->CalculateEnergyDefence(-diffEnergyDef, SYSTEM_EFFECT_APPLY_TYPE_VALUE, false);
+
+	if (mod.atkSpd != 1.f)
+	{
+		WORD cur = att->GetAttackSpeedRate();
+		WORD target = (WORD)((float)cur * mod.atkSpd);
+		if (target > cur)
+			att->CalculateAttackSpeedRate((float)(target - cur), SYSTEM_EFFECT_APPLY_TYPE_VALUE, true);
+		else if (target < cur)
+			att->CalculateAttackSpeedRate((float)(cur - target), SYSTEM_EFFECT_APPLY_TYPE_VALUE, false);
+	}
+
+	if (mod.runSpd != 1.f)
+	{
+		float base = att->GetRunSpeed();
+		float target = base * mod.runSpd;
+		float diff = target - base;
+		if (diff > 0.0f)
+			att->CalculateRunSpeed(diff, SYSTEM_EFFECT_APPLY_TYPE_VALUE, true);
+		else if (diff < 0.0f)
+			att->CalculateRunSpeed(-diff, SYSTEM_EFFECT_APPLY_TYPE_VALUE, false);
+	}
+
+	if (mod.attackRate != 1.f)
+	{
+		float cur = (float)att->GetAttackRate();
+		float target = cur * mod.attackRate;
+		float diff = target - cur;
+		if (diff > 0.0f)
+			att->CalculateAttackRate(diff, SYSTEM_EFFECT_APPLY_TYPE_VALUE, true);
+		else if (diff < 0.0f)
+			att->CalculateAttackRate(-diff, SYSTEM_EFFECT_APPLY_TYPE_VALUE, false);
+	}
+	if (mod.dodgeRate != 1.f)
+	{
+		float cur = (float)att->GetDodgeRate();
+		float target = cur * mod.dodgeRate;
+		float diff = target - cur;
+		if (diff > 0.0f)
+			att->CalculateDodgeRate(diff, SYSTEM_EFFECT_APPLY_TYPE_VALUE, true);
+		else if (diff < 0.0f)
+			att->CalculateDodgeRate(-diff, SYSTEM_EFFECT_APPLY_TYPE_VALUE, false);
+	}
+	if (mod.blockRate != 1.f)
+	{
+		float cur = (float)att->GetBlockRate();
+		float target = cur * mod.blockRate;
+		float diff = target - cur;
+		if (diff > 0.0f)
+			att->CalculateBlockRate(diff, SYSTEM_EFFECT_APPLY_TYPE_VALUE, true);
+		else if (diff < 0.0f)
+			att->CalculateBlockRate(-diff, SYSTEM_EFFECT_APPLY_TYPE_VALUE, false);
+	}
+	if (mod.blockDmg != 1.f)
+	{
+		float cur = (float)att->GetBlockDamageRate();
+		float target = cur * mod.blockDmg;
+		float diff = target - cur;
+		if (diff > 0.0f)
+			att->CalculateBlockDamageRate(diff, SYSTEM_EFFECT_APPLY_TYPE_VALUE, true);
+		else if (diff < 0.0f)
+			att->CalculateBlockDamageRate(-diff, SYSTEM_EFFECT_APPLY_TYPE_VALUE, false);
+	}
+	if (mod.guardRate != 1.f)
+	{
+		float cur = (float)att->GetGuardRate();
+		float target = cur * mod.guardRate;
+		float diff = target - cur;
+		if (diff > 0.0f)
+			att->CalculateGuardRate(diff, SYSTEM_EFFECT_APPLY_TYPE_VALUE, true);
+		else if (diff < 0.0f)
+			att->CalculateGuardRate(-diff, SYSTEM_EFFECT_APPLY_TYPE_VALUE, false);
+	}
+
+	if (mod.physCrit != 1.f)
+	{
+		float cur = (float)att->GetPhysicalCriticalRate();
+		float target = cur * mod.physCrit;
+		float diff = target - cur;
+		if (diff > 0.0f)
+			att->CalculatePhysicalCriticalRate(diff, SYSTEM_EFFECT_APPLY_TYPE_VALUE, true);
+		else if (diff < 0.0f)
+			att->CalculatePhysicalCriticalRate(-diff, SYSTEM_EFFECT_APPLY_TYPE_VALUE, false);
+	}
+	if (mod.engCrit != 1.f)
+	{
+		float cur = (float)att->GetEnergyCriticalRate();
+		float target = cur * mod.engCrit;
+		float diff = target - cur;
+		if (diff > 0.0f)
+			att->CalculateEnergyCriticalRate(diff, SYSTEM_EFFECT_APPLY_TYPE_VALUE, true);
+		else if (diff < 0.0f)
+			att->CalculateEnergyCriticalRate(-diff, SYSTEM_EFFECT_APPLY_TYPE_VALUE, false);
+	}
+
+	if (mod.physCritDmg != 1.f)
+	{
+		float cur = att->GetPhysicalCriticalDamageRate();
+		float target = cur * mod.physCritDmg;
+		float diff = target - cur;
+		if (diff > 0.0f)
+			att->CalculatePhysicalCriticalDamageRate(diff, SYSTEM_EFFECT_APPLY_TYPE_VALUE, true);
+		else if (diff < 0.0f)
+			att->CalculatePhysicalCriticalDamageRate(-diff, SYSTEM_EFFECT_APPLY_TYPE_VALUE, false);
+	}
+	if (mod.engCritDmg != 1.f)
+	{
+		float cur = att->GetEnergyCriticalDamageRate();
+		float target = cur * mod.engCritDmg;
+		float diff = target - cur;
+		if (diff > 0.0f)
+			att->CalculateEnergyCriticalDamageRate(diff, SYSTEM_EFFECT_APPLY_TYPE_VALUE, true);
+		else if (diff < 0.0f)
+			att->CalculateEnergyCriticalDamageRate(-diff, SYSTEM_EFFECT_APPLY_TYPE_VALUE, false);
+	}
+
+	if (mod.sizeRate > 0)
+	{
+		int rate = mod.sizeRate;
+		rate = std::max(1, std::min(rate, 250));
+		pMob->UpdateSizeRate((BYTE)rate);
+	}
+
+	if (m_debuffImmuneEnabled)
+		pMob->SetEventDebuffImmune(true);
+
+	if (auto sm = pMob->GetStateManager())
+	{
+		bool cleared = false;
+		if (sm->IsCharCondition(CHARCOND_ATTACK_DISALLOW))
+		{
+			sm->RemoveConditionState(CHARCOND_ATTACK_DISALLOW, NULL, true);
+			cleared = true;
+		}
+		if (sm->IsCharCondition(CHARCOND_CANT_BE_TARGETTED))
+		{
+			sm->RemoveConditionState(CHARCOND_CANT_BE_TARGETTED, NULL, true);
+			cleared = true;
+		}
+		if (sm->IsCharCondition(CHARCOND_INVINCIBLE))
+		{
+			sm->RemoveConditionState(CHARCOND_INVINCIBLE, NULL, true);
+			cleared = true;
+		}
+		if (sm->IsCharCondition(CHARCOND_CLICK_DISABLE))
+		{
+			sm->RemoveConditionState(CHARCOND_CLICK_DISABLE, NULL, true);
+			cleared = true;
+		}
+		if (cleared && m_bVerbose)
+			ERR_LOG(LOG_GENERAL, "[CustomDropEvent] Cleared combat-blocking flags on mob %u (world %u)", (unsigned)pMob->GetTblidx(), (unsigned)pMob->GetWorldID());
+	}
+}
+
+bool CCustomDropEvent::TryGetPhaseModifiers(CMonster* pMob, BYTE phase, Modifiers& outMod) const
+{
+	if (!pMob)
+		return false;
+
+	outMod = Modifiers();
+	bool found = false;
+
+	if (m_exceptMods.find(pMob->GetTblidx()) == m_exceptMods.end())
+	{
+		auto itAll = m_mobModsByPhase.find(0);
+		if (itAll != m_mobModsByPhase.end())
+		{
+			auto itPhase = itAll->second.find(phase);
+			if (itPhase != itAll->second.end())
+			{
+				const Modifiers& g = itPhase->second;
+				outMod.hp *= g.hp; outMod.physAtk *= g.physAtk; outMod.engAtk *= g.engAtk; outMod.physDef *= g.physDef; outMod.engDef *= g.engDef;
+				outMod.atkSpd *= g.atkSpd; outMod.runSpd *= g.runSpd; outMod.physCrit *= g.physCrit; outMod.engCrit *= g.engCrit;
+				outMod.physCritDmg *= g.physCritDmg; outMod.engCritDmg *= g.engCritDmg; outMod.attackRate *= g.attackRate; outMod.dodgeRate *= g.dodgeRate;
+				outMod.blockRate *= g.blockRate; outMod.blockDmg *= g.blockDmg; outMod.guardRate *= g.guardRate;
+				if (g.sizeRate > 0) outMod.sizeRate = g.sizeRate;
+				found = true;
+			}
+		}
+	}
+
+	auto itMob = m_mobModsByPhase.find(pMob->GetTblidx());
+	if (itMob != m_mobModsByPhase.end())
+	{
+		auto itPhase = itMob->second.find(phase);
+		if (itPhase != itMob->second.end())
+		{
+			const Modifiers& s = itPhase->second;
+			outMod.hp *= s.hp; outMod.physAtk *= s.physAtk; outMod.engAtk *= s.engAtk; outMod.physDef *= s.physDef; outMod.engDef *= s.engDef;
+			outMod.atkSpd *= s.atkSpd; outMod.runSpd *= s.runSpd; outMod.physCrit *= s.physCrit; outMod.engCrit *= s.engCrit;
+			outMod.physCritDmg *= s.physCritDmg; outMod.engCritDmg *= s.engCritDmg; outMod.attackRate *= s.attackRate; outMod.dodgeRate *= s.dodgeRate;
+			outMod.blockRate *= s.blockRate; outMod.blockDmg *= s.blockDmg; outMod.guardRate *= s.guardRate;
+			if (s.sizeRate > 0) outMod.sizeRate = s.sizeRate;
+			found = true;
+		}
+	}
+
+	return found;
+}
+
+bool CCustomDropEvent::ApplyBuffList(CMonster* pMob, const std::vector<BuffEntry>& entries) const
+{
+	if (!pMob || entries.empty())
+		return false;
+
+	CBuffManager* pBuffManager = pMob->GetBuffManager();
+	if (!pBuffManager)
+		return false;
+
+	CSkillTable* pSkillTable = g_pTableContainer->GetSkillTable();
+	CSystemEffectTable* pEffectTable = g_pTableContainer->GetSystemEffectTable();
+	if (!pSkillTable || !pEffectTable)
+		return false;
+
+	bool appliedAny = false;
+
+	for (const BuffEntry& entry : entries)
+	{
+		if (entry.skillTblidx == INVALID_TBLIDX)
+			continue;
+
+		sSKILL_TBLDAT* pSkill = (sSKILL_TBLDAT*)pSkillTable->FindData(entry.skillTblidx);
+		if (!pSkill)
+		{
+			if (m_bVerbose)
+				ERR_LOG(LOG_GENERAL, "[CustomDropEvent] Missing skill %u for mob %u buff entry", (unsigned)entry.skillTblidx, (unsigned)pMob->GetTblidx());
+			continue;
+		}
+
+		eSYSTEM_EFFECT_CODE aeEffectCode[NTL_MAX_EFFECT_IN_SKILL];
+		sDBO_BUFF_PARAMETER aBuffParameter[NTL_MAX_EFFECT_IN_SKILL];
+
+		for (int i = 0; i < NTL_MAX_EFFECT_IN_SKILL; ++i)
+		{
+			aeEffectCode[i] = INVALID_SYSTEM_EFFECT_CODE;
+			aBuffParameter[i].byBuffParameterType = DBO_BUFF_PARAMETER_TYPE_DEFAULT;
+			aBuffParameter[i].buffParameter.fParameter = 0.f;
+			aBuffParameter[i].buffParameter.dwRemainValue = 0;
+			aBuffParameter[i].buffParameter.dwRemainTime = 0;
+
+			if (pSkill->skill_Effect[i] != INVALID_TBLIDX)
+			{
+				aeEffectCode[i] = pEffectTable->GetEffectCodeWithTblidx(pSkill->skill_Effect[i]);
+			}
+
+			if (aeEffectCode[i] != INVALID_SYSTEM_EFFECT_CODE)
+			{
+				float baseValue = (float)pSkill->aSkill_Effect_Value[i];
+				aBuffParameter[i].buffParameter.fParameter = baseValue;
+				aBuffParameter[i].buffParameter.dwRemainValue = (DWORD)pSkill->aSkill_Effect_Value[i];
+				DWORD effectDuration = entry.durationMs != 0 ? entry.durationMs : pSkill->dwKeepTimeInMilliSecs;
+				switch (aeEffectCode[i])
+				{
+				case ACTIVE_HEAL_OVER_TIME:
+				case ACTIVE_EP_OVER_TIME:
+					aBuffParameter[i].byBuffParameterType = DBO_BUFF_PARAMETER_TYPE_HOT;
+					aBuffParameter[i].buffParameter.dwRemainTime = effectDuration != 0 ? effectDuration : pSkill->dwKeepTimeInMilliSecs;
+					break;
+				case ACTIVE_BLEED:
+				case ACTIVE_POISON:
+				case ACTIVE_STOMACHACHE:
+				case ACTIVE_BURN:
+					aBuffParameter[i].byBuffParameterType = DBO_BUFF_PARAMETER_TYPE_DOT;
+					aBuffParameter[i].buffParameter.dwRemainTime = effectDuration != 0 ? effectDuration : pSkill->dwKeepTimeInMilliSecs;
+					break;
+				default:
+					break;
+				}
+			}
+		}
+
+		DWORD keepTime = entry.durationMs != 0 ? entry.durationMs : pSkill->dwKeepTimeInMilliSecs;
+		if (keepTime == 0)
+			keepTime = 30000;
+
+		if (pBuffManager->RegisterBuff(keepTime, aeEffectCode, aBuffParameter, pMob->GetID(), BUFF_TYPE_BLESS, pSkill))
+		{
+			appliedAny = true;
+			if (m_bVerbose)
+				ERR_LOG(LOG_GENERAL, "[CustomDropEvent] Applied buff skill %u to mob %u (keepTime=%u)", (unsigned)entry.skillTblidx, (unsigned)pMob->GetTblidx(), (unsigned)keepTime);
+		}
+	}
+
+	return appliedAny;
+}
+
+void CCustomDropEvent::ApplyPhaseBuffUpgrade(CMonster* pMob, BYTE targetPhase)
+{
+	if (!pMob)
+		return;
+
+	if (m_exceptBuffs.find(pMob->GetTblidx()) != m_exceptBuffs.end())
+	{
+		m_phaseBuffProgress[pMob->GetID()] = targetPhase;
+		return;
+	}
+
+	HOBJECT handle = pMob->GetID();
+	BYTE previousPhase = 0;
+	auto it = m_phaseBuffProgress.find(handle);
+	if (it != m_phaseBuffProgress.end())
+		previousPhase = it->second;
+
+	if (targetPhase <= previousPhase)
+		return;
+
+	std::vector<BuffEntry> staged;
+	auto appendForMob = [&](unsigned int tblidx)
+	{
+		auto itBuff = m_mobBuffsByPhase.find(tblidx);
+		if (itBuff == m_mobBuffsByPhase.end())
+			return;
+		for (BYTE phase = previousPhase + 1; phase <= targetPhase; ++phase)
+		{
+			auto itPhase = itBuff->second.find(phase);
+			if (itPhase != itBuff->second.end())
+				staged.insert(staged.end(), itPhase->second.begin(), itPhase->second.end());
+		}
+	};
+
+	appendForMob(0);
+	appendForMob(pMob->GetTblidx());
+
+	if (staged.empty())
+	{
+		m_phaseBuffProgress[handle] = targetPhase;
+		return;
+	}
+
+	if (ApplyBuffList(pMob, staged))
+	{
+		m_phaseBuffProgress[handle] = targetPhase;
+		if (m_bVerbose)
+			ERR_LOG(LOG_USER, "[CustomDropEvent] Phase buff upgrade -> mob %u phase %u", (unsigned)pMob->GetTblidx(), (unsigned)targetPhase);
+	}
+}
+
 void CCustomDropEvent::ApplyModifiers(CMonster* pMob)
 {
 	if (!m_bOn)
@@ -1411,6 +1892,122 @@ void CCustomDropEvent::ApplyModifiers(CMonster* pMob)
 	if (m.IsIdentity())
 		return;
 
+	ApplyModifierDelta(pMob, m, false);
+	m_phaseModifierProgress[pMob->GetID()] = 0;
+}
+
+void CCustomDropEvent::ApplyModifiersWithPhase(CMonster* pMob, BYTE byPhase)
+{
+	if (!m_bOn)
+		return;
+	if (!pMob)
+		return;
+
+	BYTE phaseToApply = byPhase;
+	CWorld* pWorldForPhase = pMob->GetCurWorld();
+	if (pWorldForPhase)
+	{
+		DWORD curLp = (DWORD)((pMob->GetCurLP() < 0) ? 0 : pMob->GetCurLP());
+		DWORD maxLp = (DWORD)((pMob->GetMaxLP() < 0) ? 0 : pMob->GetMaxLP());
+		BYTE expectedPhase = 0;
+		if (TryResolveAutoPhase(pMob->GetTblidx(), curLp, maxLp, expectedPhase))
+		{
+			if (expectedPhase != phaseToApply)
+			{
+				phaseToApply = expectedPhase;
+				if (pWorldForPhase->GetDifficultyPhase() != phaseToApply)
+				{
+					pWorldForPhase->SetDifficultyPhase(phaseToApply);
+				}
+			}
+		}
+	}
+
+	// Ensure phase-locked buff upgrades keep pace with modifiers.
+	ApplyPhaseBuffUpgrade(pMob, phaseToApply);
+
+	// Priority order:
+	// 1. Phase-specific modifier for this mob
+	// 2. Phase-specific global modifier (mobId=0)
+	// 3. Non-phase-specific modifier (fall back to regular ApplyModifiers)
+
+	Modifiers m; // start with identity
+	bool hasPhaseModifiers = false;
+
+	// Check for phase-specific modifiers for this specific mob
+	auto itPhase = m_mobModsByPhase.find(pMob->GetTblidx());
+	if (itPhase != m_mobModsByPhase.end())
+	{
+		auto itPhaseData = itPhase->second.find(phaseToApply);
+		if (itPhaseData != itPhase->second.end())
+		{
+			// Use phase-specific modifier for this mob
+			const Modifiers& pm = itPhaseData->second;
+			m.hp *= pm.hp;
+			m.physAtk *= pm.physAtk;
+			m.engAtk *= pm.engAtk;
+			m.physDef *= pm.physDef;
+			m.engDef *= pm.engDef;
+			m.atkSpd *= pm.atkSpd;
+			m.runSpd *= pm.runSpd;
+			m.physCrit *= pm.physCrit;
+			m.engCrit *= pm.engCrit;
+			m.physCritDmg *= pm.physCritDmg;
+			m.engCritDmg *= pm.engCritDmg;
+			m.attackRate *= pm.attackRate;
+			m.dodgeRate *= pm.dodgeRate;
+			m.blockRate *= pm.blockRate;
+			m.blockDmg *= pm.blockDmg;
+			m.guardRate *= pm.guardRate;
+			if (pm.sizeRate > 0) m.sizeRate = pm.sizeRate;
+			hasPhaseModifiers = true;
+		}
+	}
+
+	// Check for phase-specific global modifiers (mobId=0)
+	if (!hasPhaseModifiers && m_exceptMods.find(pMob->GetTblidx()) == m_exceptMods.end())
+	{
+		auto itPhaseAll = m_mobModsByPhase.find(0);
+		if (itPhaseAll != m_mobModsByPhase.end())
+		{
+			auto itPhaseData = itPhaseAll->second.find(phaseToApply);
+			if (itPhaseData != itPhaseAll->second.end())
+			{
+				// Use phase-specific global modifier
+				const Modifiers& pm = itPhaseData->second;
+				m.hp *= pm.hp;
+				m.physAtk *= pm.physAtk;
+				m.engAtk *= pm.engAtk;
+				m.physDef *= pm.physDef;
+				m.engDef *= pm.engDef;
+				m.atkSpd *= pm.atkSpd;
+				m.runSpd *= pm.runSpd;
+				m.physCrit *= pm.physCrit;
+				m.engCrit *= pm.engCrit;
+				m.physCritDmg *= pm.physCritDmg;
+				m.engCritDmg *= pm.engCritDmg;
+				m.attackRate *= pm.attackRate;
+				m.dodgeRate *= pm.dodgeRate;
+				m.blockRate *= pm.blockRate;
+				m.blockDmg *= pm.blockDmg;
+				m.guardRate *= pm.guardRate;
+				if (pm.sizeRate > 0) m.sizeRate = pm.sizeRate;
+				hasPhaseModifiers = true;
+			}
+		}
+	}
+
+	// Fall back to original non-phase-aware modifiers if no phase match
+	if (!hasPhaseModifiers)
+	{
+		ApplyModifiers(pMob);
+		return;
+	}
+
+	// Apply the phase-specific modifiers (rest of code is same as ApplyModifiers)
+	if (m.IsIdentity())
+		return;
+
 	CCharacterAtt* att = pMob->GetCharAtt();
 	if (!att)
 		return;
@@ -1431,7 +2028,6 @@ void CCustomDropEvent::ApplyModifiers(CMonster* pMob)
 	WORD physDef = att->GetPhysicalDefence();
 	WORD energyDef = att->GetEnergyDefence();
 	att->SetPhysicalDefence((WORD)((float)physDef * m.physDef));
-	// Apply energy defence via calculator (no public setter provided)
 	{
 		float target = (float)energyDef * m.engDef;
 		float diff = target - (float)energyDef;
@@ -1441,7 +2037,7 @@ void CCustomDropEvent::ApplyModifiers(CMonster* pMob)
 			att->CalculateEnergyDefence(-diff, SYSTEM_EFFECT_APPLY_TYPE_VALUE, false);
 	}
 
-	// Attack Speed Rate (lower is faster) — scale around current value
+	// Attack Speed Rate
 	if (m.atkSpd != 1.f)
 	{
 		WORD cur = att->GetAttackSpeedRate();
@@ -1537,7 +2133,7 @@ void CCustomDropEvent::ApplyModifiers(CMonster* pMob)
 			att->CalculateEnergyCriticalRate(-diff, SYSTEM_EFFECT_APPLY_TYPE_VALUE, false);
 	}
 
-	// Crit damage rates are floats
+	// Crit damage rates
 	if (m.physCritDmg != 1.f)
 	{
 		float cur = att->GetPhysicalCriticalDamageRate();
@@ -1559,23 +2155,22 @@ void CCustomDropEvent::ApplyModifiers(CMonster* pMob)
 			att->CalculateEnergyCriticalDamageRate(-diff, SYSTEM_EFFECT_APPLY_TYPE_VALUE, false);
 	}
 
-	// Size rate (must notify clients). Valid typical range: 1..20; default 10. Apply only if set.
+	// Size rate
 	if (m.sizeRate > 0)
 	{
 		int rate = m.sizeRate;
 		if (rate < 1)
 			rate = 1;
 		if (rate > 250)
-			rate = 250; // hard cap for safety
+			rate = 250;
 		pMob->UpdateSizeRate((BYTE)rate);
 	}
 
-	// Mark mob as debuff-immune to avoid recalculation via curse-type effects
+	// Mark mob as debuff-immune
 	if (m_debuffImmuneEnabled)
 		pMob->SetEventDebuffImmune(true);
 
-	// Ensure event-modified mobs are actually fightable: clear lingering script conditions that block combat
-	// Common offenders observed: ATTACK_DISALLOW, INVINCIBLE, CLICK_DISABLE, CANT_BE_TARGETTED
+	// Ensure event-modified mobs are fightable
 	{
 		auto sm = pMob->GetStateManager();
 		bool cleared = false;
@@ -1611,46 +2206,21 @@ void CCustomDropEvent::ApplyBuffs(CMonster* pMob)
 	if (!m_bOn)
 		return;
 
-	// Gather buffs for this mob and global buffs
 	std::vector<BuffEntry> buffs;
-	auto it = m_mobBuffs.find(pMob->GetTblidx());
-	if (it != m_mobBuffs.end())
-		buffs.insert(buffs.end(), it->second.begin(), it->second.end());
-	auto itAll = m_mobBuffs.find(0);
-	if (itAll != m_mobBuffs.end() && m_exceptBuffs.find(pMob->GetTblidx()) == m_exceptBuffs.end())
-		buffs.insert(buffs.end(), itAll->second.begin(), itAll->second.end());
+	auto itSpecific = m_mobBuffs.find(pMob->GetTblidx());
+	if (itSpecific != m_mobBuffs.end())
+		buffs.insert(buffs.end(), itSpecific->second.begin(), itSpecific->second.end());
+	auto itGlobal = m_mobBuffs.find(0);
+	if (itGlobal != m_mobBuffs.end() && m_exceptBuffs.find(pMob->GetTblidx()) == m_exceptBuffs.end())
+		buffs.insert(buffs.end(), itGlobal->second.begin(), itGlobal->second.end());
 
 	if (buffs.empty())
 		return;
 
-	for (const BuffEntry& be : buffs)
+	if (ApplyBuffList(pMob, buffs))
 	{
-		sSKILL_TBLDAT* pSkill = (sSKILL_TBLDAT*)g_pTableContainer->GetSkillTable()->FindData(be.skillTblidx);
-		if (!pSkill)
-			continue;
-
-		eSYSTEM_EFFECT_CODE aeEffectCode[NTL_MAX_EFFECT_IN_SKILL];
-		for (int i = 0; i < NTL_MAX_EFFECT_IN_SKILL; ++i)
-		{
-			if (pSkill->skill_Effect[i] != INVALID_TBLIDX)
-				aeEffectCode[i] = g_pTableContainer->GetSystemEffectTable()->GetEffectCodeWithTblidx(pSkill->skill_Effect[i]);
-			else
-				aeEffectCode[i] = INVALID_SYSTEM_EFFECT_CODE;
-		}
-
-		sDBO_BUFF_PARAMETER aBuffParameter[NTL_MAX_EFFECT_IN_SKILL];
-		for (int i = 0; i < NTL_MAX_EFFECT_IN_SKILL; ++i)
-		{
-			aBuffParameter[i].byBuffParameterType = DBO_BUFF_PARAMETER_TYPE_DEFAULT;
-			aBuffParameter[i].buffParameter.fParameter = 0;
-			aBuffParameter[i].buffParameter.dwRemainValue = 0;
-		}
-
-		DWORD dwDurationInMs = be.durationMs != 0 ? be.durationMs : pSkill->dwKeepTimeInMilliSecs;
-		if (dwDurationInMs == 0)
-			dwDurationInMs = 30000; // fallback safety: 30s
-
-		pMob->GetBuffManager()->RegisterBuff(dwDurationInMs, aeEffectCode, aBuffParameter, INVALID_HOBJECT, BUFF_TYPE_BLESS, pSkill);
+		// Track that base-phase buffs are in place; used so phase upgrades start from 0.
+		m_phaseBuffProgress[pMob->GetID()] = std::max<BYTE>(m_phaseBuffProgress[pMob->GetID()], (BYTE)0);
 	}
 }
 
@@ -1716,4 +2286,86 @@ void CCustomDropEvent::ApplyVisuals(CMonster* pMob)
 		// Broadcast GU_EFFECT_AFFECTED with source type SKILL and source tblidx 0 (none). Arguments left as 0.
 		pMob->SendEffectAffected(ve.effectTblidx, DBO_OBJECT_SOURCE_SKILL, 0, 0.0f, 0.0f, INVALID_HOBJECT);
 	}
+}
+
+// Automatically set world difficulty phase based on boss HP percentage
+// Called when boss takes damage - checks HP and updates world phase accordingly
+void CCustomDropEvent::CheckAndUpdateWorldPhaseFromBossHP(CMonster* pBossMob)
+{
+	if (!m_bOn || !pBossMob)
+		return;
+
+	DWORD curHP = (DWORD)((pBossMob->GetCurLP() < 0) ? 0 : pBossMob->GetCurLP());
+	DWORD maxHP = (DWORD)((pBossMob->GetMaxLP() < 0) ? 0 : pBossMob->GetMaxLP());
+	if (maxHP == 0)
+		return; // Avoid division by zero
+
+	int hpPercent = (int)((curHP * 100) / maxHP);
+
+	BYTE targetPhase = 0;
+	if (!TryResolveAutoPhase(pBossMob->GetTblidx(), curHP, maxHP, targetPhase))
+		return; // No auto-phase config for this mob
+
+	// Get world to update phase
+	CWorld* pWorld = pBossMob->GetCurWorld();
+	if (!pWorld)
+		return;
+
+	// Only update if phase actually changed
+	BYTE currentPhase = pWorld->GetDifficultyPhase();
+	if (targetPhase > currentPhase) // Only increase phase, never decrease
+	{
+		pWorld->SetDifficultyPhase(targetPhase);
+
+		// Log phase transition
+		ERR_LOG(LOG_GENERAL, "[AutoPhase] Boss %u HP at %d%% -> World %u phase set to %u",
+			pBossMob->GetTblidx(), hpPercent, pWorld->GetID(), targetPhase);
+
+		// Immediately apply new modifiers/buffs to the boss so players feel the escalation.
+		ApplyModifiersWithPhase(pBossMob, targetPhase);
+	}
+}
+
+bool CCustomDropEvent::TryResolveAutoPhase(unsigned int mobTblidx, DWORD curLP, DWORD maxLP, BYTE& outPhase) const
+{
+	if (maxLP == 0)
+		return false;
+
+	auto it = m_autoPhaseTransitions.find(mobTblidx);
+	if (it == m_autoPhaseTransitions.end())
+	{
+		// Support a global (mobId=0) fallback definition if provided
+		it = m_autoPhaseTransitions.find(0);
+		if (it == m_autoPhaseTransitions.end())
+			return false;
+	}
+
+	DWORD effectiveCurLP = curLP;
+	if (maxLP > 0)
+	{
+		// Fresh spawns report 0 LP until initialization completes; treat that as full HP so we don't force late phases.
+		if (effectiveCurLP == 0 || effectiveCurLP >= maxLP)
+			effectiveCurLP = maxLP;
+	}
+
+	// Use 64-bit math to avoid overflow when mobs have very large LP pools.
+	unsigned long long percentNumerator = (unsigned long long)effectiveCurLP * 100ULL;
+	unsigned long long percentDenominator = (unsigned long long)maxLP;
+	int hpPercent = percentDenominator ? (int)(percentNumerator / percentDenominator) : 0;
+	if (hpPercent < 0)
+		hpPercent = 0;
+	if (hpPercent > 100)
+		hpPercent = 100;
+
+	BYTE phase = 0;
+	for (const auto& entry : it->second)
+	{
+		int threshold = entry.first;
+		BYTE thresholdPhase = entry.second;
+		if (hpPercent <= threshold && thresholdPhase > phase)
+			phase = thresholdPhase;
+	}
+
+	outPhase = phase;
+	return true;
 }

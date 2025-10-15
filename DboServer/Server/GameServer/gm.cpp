@@ -47,6 +47,14 @@
 #include <ws2tcpip.h>
 #pragma comment(lib, "ws2_32.lib")
 
+// Windows headers define max/min macros; ensure we use std::max/std::min below.
+#ifdef max
+#undef max
+#endif
+#ifdef min
+#undef min
+#endif
+
 // Helper function to send commands to other GameServer channels via command socket
 static bool SendCommandToChannel(BYTE byTargetChannel, const std::string& sCmd, std::string* pResponse = nullptr)
 {
@@ -221,6 +229,7 @@ ACMD(do_reload_customdrop_cfg);
 ACMD(do_customdrop_chainspawns);
 ACMD(do_customdrop_healmul);
 ACMD(do_customdrop_buffduration);
+ACMD(do_setphase);
 ACMD(do_reload_playermods_cfg);
 ACMD(do_playermods_toggle);
 ACMD(do_vtransform);
@@ -351,6 +360,7 @@ struct command_info cmd_info[] =
 	{ L"@customdrop_chainspawns", do_customdrop_chainspawns, ADMIN_LEVEL_GAME_MASTER },
 	{ L"@customdrop_healmul", do_customdrop_healmul, ADMIN_LEVEL_GAME_MASTER },
 	{ L"@customdrop_buffduration", do_customdrop_buffduration, ADMIN_LEVEL_GAME_MASTER },
+	{ L"@setphase", do_setphase, ADMIN_LEVEL_GAME_MASTER },
 	{ L"@reload_playermods", do_reload_playermods_cfg, ADMIN_LEVEL_GAME_MASTER },
 	{ L"@playermods", do_playermods_toggle, ADMIN_LEVEL_GAME_MASTER },
 	{ L"@vtransform", do_vtransform, ADMIN_LEVEL_GAME_MASTER },
@@ -2082,6 +2092,47 @@ ACMD(do_reload_customdrop_cfg)
 		NTL_PRINT(PRINT_APP, _T("CustomDropEvent: failed to reload config from %s"), s2ws(path).c_str());
 }
 
+// Set the current world's difficulty phase for progressive mob scaling
+// Usage: @setphase <0-5>
+// Phase 0 = default (no modifiers), 1-5 = progressive difficulty tiers
+ACMD(do_setphase)
+{
+	// Get phase parameter
+	pToken->PopToPeek();
+	std::wstring strToken = pToken->PeekNextToken(NULL, &iLine);
+	if (strToken.empty())
+	{
+		NTL_PRINT(PRINT_APP, _T("Usage: @setphase <0-5>  (0=default, 1-5=difficulty phases)"));
+		return;
+	}
+
+	int phase = _wtoi(strToken.c_str());
+	if (phase < 0 || phase > 5)
+	{
+		NTL_PRINT(PRINT_APP, _T("Invalid phase. Must be 0-5. (0=default, 1=90%%HP, 2=70%%HP, 3=50%%HP, etc.)"));
+		return;
+	}
+
+	// Get player's current world
+	CWorld* pWorld = pPlayer->GetCurWorld();
+	if (!pWorld)
+	{
+		NTL_PRINT(PRINT_APP, _T("Error: Could not get current world."));
+		return;
+	}
+
+	// Set the world's difficulty phase
+	pWorld->SetDifficultyPhase((BYTE)phase);
+
+	// Log for tracking
+	ERR_LOG(LOG_GENERAL, "[DifficultyPhase] World %u (tblidx %u) phase set to %u by %s",
+		pWorld->GetID(), pWorld->GetIdx(), phase, ws2s(pPlayer->GetCharName()).c_str());
+
+	// Notify the GM
+	NTL_PRINT(PRINT_APP, _T("World %u difficulty phase set to %u. New mob spawns will use phase-%u modifiers."),
+		pWorld->GetID(), phase, phase);
+}
+
 // Reload helper NPC configuration at runtime
 ACMD(do_reload_helpernpc_cfg)
 {
@@ -2894,8 +2945,15 @@ ACMD(do_sessioninfo)
 
 	// Get current session counts from the network
 	int currentSessions = app->GetNetwork()->GetSessionList()->GetCurCount();
-	int maxSessions = app->GetNetwork()->GetSessionList()->GetMaxCount();
+	int peakSessions = app->GetNetwork()->GetSessionList()->GetMaxCount();
 	int configMaxSessions = app->m_config.nMaxConnection;
+	int totalCapacity = app->GetSessionCapacity();
+	float configUtil = configMaxSessions > 0 ? (float)currentSessions / (float)configMaxSessions * 100.0f : 0.0f;
+	int availableSlots = configMaxSessions - currentSessions;
+	if (availableSlots < 0)
+	{
+		availableSlots = 0;
+	}
 
 	// Get current player count from ObjectManager
 	size_t playerCount = g_pObjectManager->GetPlayerCount();
@@ -2912,8 +2970,9 @@ ACMD(do_sessioninfo)
 	sprintf_s(szMessage, sizeof(szMessage),
 		"[SESSION INFO - %s (Port: %d)]\n"
 		"Current Sessions: %d\n"
-		"Max Session Capacity: %d\n"
+		"Peak Sessions (since start): %d\n"
 		"Config Max Connections: %d\n"
+		"Total Session Capacity (with headroom): %d\n"
 		"Session Utilization: %.1f%%\n"
 		"Available Slots: %d\n"
 		"Player Objects: %zu\n"
@@ -2924,10 +2983,11 @@ ACMD(do_sessioninfo)
 		"%s",
 		instanceType, serverPort,
 		currentSessions,
-		maxSessions,
+		peakSessions,
 		configMaxSessions,
-		configMaxSessions > 0 ? (float)currentSessions / configMaxSessions * 100.0f : 0.0f,
-		configMaxSessions - currentSessions,
+		totalCapacity,
+		configUtil,
+		availableSlots,
 		playerCount,
 		currentSessions - (int)playerCount,
 		(serverPort == 30009) ? "BUDOKAI SERVER - Monitor tournament session cleanup!" : "Regular game channel",
@@ -2952,9 +3012,8 @@ ACMD(do_sessioninfo)
 	app->Send(pPlayer->GetClientSessionID(), &packet);
 
 	// Also log to console for server admin
-	NTL_PRINT(PRINT_APP, _T("GM %u requested session info: %d/%d sessions active (%.1f%% utilization)"),
-		pPlayer->GetCharID(), currentSessions, configMaxSessions,
-		configMaxSessions > 0 ? (float)currentSessions / configMaxSessions * 100.0f : 0.0f);
+	NTL_PRINT(PRINT_APP, _T("GM %u requested session info: %d active, peak %d, config %d (%.1f%% utilization)"),
+		pPlayer->GetCharID(), currentSessions, peakSessions, configMaxSessions, configUtil);
 }
 
 ACMD(do_sessioncleanup)
@@ -2984,11 +3043,13 @@ ACMD(do_sessioncleanup)
 		"Sessions before cleanup: %d\n"
 		"Sessions after cleanup: %d\n"
 		"Sessions removed: %d\n"
-		"Available slots now: %d",
+		"Configured slots available now: %d\n"
+		"Total capacity (with headroom): %d",
 		sessionsBefore,
 		sessionsAfter,
 		sessionsRemoved,
-		app->GetNetwork()->GetSessionList()->GetMaxCount() - sessionsAfter
+		std::max(0, app->m_config.nMaxConnection - sessionsAfter),
+		app->GetSessionCapacity()
 	);
 
 	// Send system message to the GM
@@ -3037,18 +3098,24 @@ ACMD(do_budokaiinfo)
 	else {
 		// Get session information
 		int currentSessions = app->GetNetwork()->GetSessionList()->GetCurCount();
-		int maxSessions = app->GetNetwork()->GetSessionList()->GetMaxCount();
+		int peakSessions = app->GetNetwork()->GetSessionList()->GetMaxCount();
 		int configMaxSessions = app->m_config.nMaxConnection;
+		int totalCapacity = app->GetSessionCapacity();
 		size_t playerCount = g_pObjectManager->GetPlayerCount();
 		int sessionOverhead = currentSessions - (int)playerCount;
+		int availableSlots = std::max(0, configMaxSessions - currentSessions);
+		float configUtil = configMaxSessions > 0 ? (float)currentSessions / (float)configMaxSessions * 100.0f : 0.0f;
 
 		sprintf_s(szMessage, sizeof(szMessage),
 			"[BUDOKAI TOURNAMENT SERVER]\n"
 			"Server Port: %d (Confirmed)\n"
 			"Current Sessions: %d\n"
+			"Peak Sessions (since start): %d\n"
 			"Current Players: %zu\n"
 			"Session Overhead: %d\n"
-			"Max Capacity: %d\n"
+			"Configured Max Connections: %d\n"
+			"Total Capacity (with headroom): %d\n"
+			"Session Utilization: %.1f%%\n"
 			"Available Slots: %d\n"
 			"\n[BUDOKAI STATUS]\n"
 			"%s"
@@ -3060,10 +3127,13 @@ ACMD(do_budokaiinfo)
 			"- Use @sessioncleanup if needed",
 			serverPort,
 			currentSessions,
+			peakSessions,
 			playerCount,
 			sessionOverhead,
 			configMaxSessions,
-			configMaxSessions - currentSessions,
+			totalCapacity,
+			configUtil,
+			availableSlots,
 			(g_pBudokaiManager) ? "Budokai Manager: ACTIVE" : "Budokai Manager: NULL (Issue?)",
 			(sessionOverhead > 20) ? "CRITICAL: High session overhead!" :
 			(sessionOverhead > 15) ? "WARNING: Elevated session overhead" :

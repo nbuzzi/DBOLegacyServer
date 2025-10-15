@@ -37,7 +37,11 @@ bool CBuffManagerBot::Create(CNpc *pOwnerRef)
 bool CBuffManagerBot::RegisterBuff(DWORD& rdwKeepTime, eSYSTEM_EFFECT_CODE* effectCode, sDBO_BUFF_PARAMETER * paBuffParameter, HOBJECT hCaster, eBUFF_TYPE buffType, sSKILL_TBLDAT* pSkillTbldat, BYTE* prBuffIndex)
 {
 	// Enhanced debuff immunity for event-modified monsters - protects against more buff types
-	if (g_pCustomDropEvent->m_bOn == TRUE && m_pBotRef && m_pBotRef->IsMonster())
+	// IMPORTANT: Allow WPS-registered buffs (script buffs) to bypass immunity
+	// These are intentional boss enhancements/mechanics, not player debuffs
+	bool bIsWPSBuff = (hCaster == NULL || hCaster == m_pBotRef->GetID());
+
+	if (g_pCustomDropEvent->m_bOn == TRUE && m_pBotRef && m_pBotRef->IsMonster() && !bIsWPSBuff)
 	{
 		CMonster* pMon = reinterpret_cast<CMonster*>(m_pBotRef);
 		if (pMon && pMon->IsEventDebuffImmune())

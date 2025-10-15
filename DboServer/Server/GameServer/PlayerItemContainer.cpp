@@ -442,8 +442,8 @@ std::pair<BYTE, BYTE> CPlayerItemContainer::GetEmptyInventory()
 		}
 	}
 
-	ERR_LOG(LOG_USER, "DEBUG: Player %u (class:%u) - GetEmptyInventory returned INVALID. Bags checked: %u",
-		m_pOwner->GetCharID(), m_pOwner->GetClass(), NTL_MAX_BAGSLOT_COUNT);
+	//ERR_LOG(LOG_USER, "DEBUG: Player %u (class:%u) - GetEmptyInventory returned INVALID. Bags checked: %u",
+		//m_pOwner->GetCharID(), m_pOwner->GetClass(), NTL_MAX_BAGSLOT_COUNT);
 
 	return std::make_pair(INVALID_BYTE, INVALID_BYTE);
 }

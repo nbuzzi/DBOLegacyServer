@@ -53,6 +53,7 @@ void CWorld::Init()
 
 	m_hTriggerObjectOffset = 1;
 	m_ruleOverride = INVALID_GAMERULE;
+	m_byDifficultyPhase = 0; // Initialize difficulty phase to 0 (default/no phase)
 }
 
 int CWorld::Create(WORLDID worldID, sWORLD_TBLDAT* pTbldat, CWorldZoneTable* pWorldZoneTable)

@@ -1,4 +1,4 @@
-﻿#include "stdafx.h"
+#include "stdafx.h"
 #include "GameServer.h"
 #include "MasterServerSession.h"
 #include "ChatServerSession.h"
@@ -31,6 +31,7 @@
 #include "ChannelUtility.h"
 #include "qg_opcodes.h"
 #include "tg_opcodes.h"
+#include "MobBuffsManager.h"
 #include "mg_opcodes.h"
 #include "ScriptAlgoObjectManager.h"
 #include "DynamicFieldSystemEvent.h"
@@ -280,6 +281,10 @@ int CGameServer::OnInitApp()
 	CCustomDropEvent* pCustomDrop = new CCustomDropEvent;
 	UNREFERENCED_PARAMETER(pScs);
 
+	NTL_PRINT(PRINT_APP, "Init Mob Buffs Manager");
+	CMobBuffsManager* pMobBuffsManager = new CMobBuffsManager;
+	UNREFERENCED_PARAMETER(pMobBuffsManager);
+
 	NTL_PRINT(PRINT_APP, "Player Modifiers System");
 	CPlayerModifiers* pPlayerMods = new CPlayerModifiers;
 	UNREFERENCED_PARAMETER(pPlayerMods);
@@ -367,6 +372,21 @@ int CGameServer::OnAppStart()
 		NTL_PRINT(PRINT_APP, "[VTRANSFORM] Virtual Transformations are DISABLED by feature flag - skipping config load");
 	}
 
+	// Prepare Mob Buffs Manager (config-driven mob buffs by world)
+	if (g_pFeatureFlags->IsMobBuffsEnabled())
+	{
+		NTL_PRINT(PRINT_APP, "Prepare Mob Buffs Manager");
+		CMobBuffsManager* pMobBuffsManager = new CMobBuffsManager;
+		UNREFERENCED_PARAMETER(pMobBuffsManager);
+		// Attempt to load default config; if missing, manager stays disabled
+		bool ok = g_pMobBuffsManager->LoadConfigFromIniPath(".\\config\\MobBuffs.cfg");
+		NTL_PRINT(PRINT_APP, ok ? "[MobBuffs] Config loaded" : "[MobBuffs] Config not found or invalid (manager disabled)");
+	}
+	else
+	{
+		NTL_PRINT(PRINT_APP, "[MobBuffs] Disabled by feature flag");
+	}
+
 	int rc = NTL_SUCCESS;
 
 	rc = m_clientAcceptor.Create(m_config.strClientAcceptAddr.c_str(), m_config.wClientAcceptPort, 1, m_config.wClientAcceptPort, SESSION_CLIENT, m_config.nMaxConnection, m_config.nMaxConnection, m_config.nMaxConnection, m_config.nMaxConnection);
@@ -403,12 +423,12 @@ int CGameServer::OnAppStart()
 
 	NTL_PRINT(PRINT_APP, "GAME SERVER READY ");
 
-	// Iniciar el hilo del socket de comandos
-	static std::thread commandThread;
+	
+	/*static std::thread commandThread;
 	if (!g_CommandSocketRunning) {
 		commandThread = std::thread(CommandSocketThread, this);
 		commandThread.detach();
-	}
+	}*/
 
 	NTL_PRINT(PRINT_APP, "LOCAL PAGE COMMAND HANDLER READY");
 
@@ -835,8 +855,15 @@ BOOL CGameServer::OnCommandInput(std::string& sCmd)
 	else if (sCmd == "sessioninfo") {
 		// Display comprehensive session information with multi-instance awareness
 		int currentSessions = GetNetwork()->GetSessionList()->GetCurCount();
-		int maxSessions = GetNetwork()->GetSessionList()->GetMaxCount();
+		int peakSessions = GetNetwork()->GetSessionList()->GetMaxCount();
 		int configMaxSessions = m_config.nMaxConnection;
+		int totalCapacity = GetSessionCapacity();
+		float configUtil = configMaxSessions > 0 ? (float)currentSessions / (float)configMaxSessions * 100.0f : 0.0f;
+		int availableSlots = configMaxSessions - currentSessions;
+		if (availableSlots < 0)
+		{
+			availableSlots = 0;
+		}
 		
 		// Get current player count from ObjectManager
 		size_t playerCount = g_pObjectManager->GetPlayerCount();
@@ -850,11 +877,11 @@ BOOL CGameServer::OnCommandInput(std::string& sCmd)
 		
 		printf("[SESSION INFO - %s (Port: %d)]\n", instanceType, serverPort);
 		printf("Current Sessions: %d\n", currentSessions);
-		printf("Max Session Capacity: %d\n", maxSessions);
-		printf("Config Max Connections: %d\n", configMaxSessions);
-		printf("Session Utilization: %.1f%%\n", 
-			configMaxSessions > 0 ? (float)currentSessions / configMaxSessions * 100.0f : 0.0f);
-		printf("Available Slots: %d\n", configMaxSessions - currentSessions);
+		printf("Peak Sessions (since start): %d\n", peakSessions);
+		printf("Configured Max Connections: %d\n", configMaxSessions);
+		printf("Total Session Capacity (with headroom): %d\n", totalCapacity);
+		printf("Session Utilization: %.1f%%\n", configUtil);
+		printf("Available Slots: %d\n", availableSlots);
 		printf("Current Players: %zu\n", playerCount);
 		
 		// Multi-instance specific warnings
@@ -903,7 +930,6 @@ BOOL CGameServer::OnCommandInput(std::string& sCmd)
 		
 		// Get session counts before cleanup
 		int sessionsBefore = GetNetwork()->GetSessionList()->GetCurCount();
-		int maxSessions = GetNetwork()->GetSessionList()->GetMaxCount();
 		
 		// Force session list validation/cleanup
 		DWORD currentTime = GetTickCount();
@@ -917,11 +943,19 @@ BOOL CGameServer::OnCommandInput(std::string& sCmd)
 		size_t playerCount = g_pObjectManager->GetPlayerCount();
 		
 		// Display results
+		int totalCapacity = GetSessionCapacity();
+		int configMaxSessions = m_config.nMaxConnection;
+		int availableConfigured = configMaxSessions - sessionsAfter;
+		if (availableConfigured < 0)
+		{
+			availableConfigured = 0;
+		}
 		printf("[SESSION CLEANUP COMPLETE]\n");
 		printf("Sessions before cleanup: %d\n", sessionsBefore);
 		printf("Sessions after cleanup: %d\n", sessionsAfter);
 		printf("Sessions removed: %d\n", sessionsRemoved);
-		printf("Available slots now: %d\n", maxSessions - sessionsAfter);
+		printf("Configured slots available now: %d\n", availableConfigured);
+		printf("Total capacity (with headroom): %d\n", totalCapacity);
 		printf("Current players: %zu\n", playerCount);
 		printf("Session overhead: %d\n", sessionsAfter - (int)playerCount);
 		
@@ -947,10 +981,23 @@ BOOL CGameServer::OnCommandInput(std::string& sCmd)
 		
 		// Session information
 		int currentSessions = GetNetwork()->GetSessionList()->GetCurCount();
+		int peakSessions = GetNetwork()->GetSessionList()->GetMaxCount();
 		int configMaxSessions = m_config.nMaxConnection;
+		int totalCapacity = GetSessionCapacity();
 		size_t playerCount = g_pObjectManager->GetPlayerCount();
+		int availableSlots = configMaxSessions - currentSessions;
+		if (availableSlots < 0)
+		{
+			availableSlots = 0;
+		}
+		float configUtil = configMaxSessions > 0 ? (float)currentSessions / (float)configMaxSessions * 100.0f : 0.0f;
 		
 		printf("Current Sessions: %d\n", currentSessions);
+		printf("Peak Sessions (since start): %d\n", peakSessions);
+		printf("Configured Max Connections: %d\n", configMaxSessions);
+		printf("Total Capacity (with headroom): %d\n", totalCapacity);
+		printf("Session Utilization: %.1f%%\n", configUtil);
+		printf("Available Slots: %d\n", availableSlots);
 		printf("Current Players: %zu\n", playerCount);
 		printf("Session Overhead: %d\n", currentSessions - (int)playerCount);
 		
@@ -1169,29 +1216,52 @@ void CGameServer::DoUpdateSessionLog(DWORD dwNow)
 	if (dwNow - m_dwLastTimeSessionLogged >= 300000) // 5 minutes = 300,000 ms
 	{
 		int currentSessions = GetNetwork()->GetSessionList()->GetCurCount();
-		int maxSessions = GetNetwork()->GetSessionList()->GetMaxCount();
-		float utilization = maxSessions > 0 ? (float)currentSessions / maxSessions * 100.0f : 0.0f;
-		
+		int peakSessions = GetNetwork()->GetSessionList()->GetMaxCount(); // historical peak, not capacity
+		int cfgMaxClients = m_config.nMaxConnection;
+		int totalCapacity = GetSessionCapacity(); // configured max + safety headroom
+		float configUtil = cfgMaxClients > 0 ? (float)currentSessions / (float)cfgMaxClients * 100.0f : 0.0f;
+		float capacityUtil = totalCapacity > 0 ? (float)currentSessions / (float)totalCapacity * 100.0f : 0.0f;
+
 		// Include acceptor counters for deeper diagnostics
 		int accAccepting = m_clientAcceptor.GetAcceptingCount();
 		int accAccepted = m_clientAcceptor.GetAcceptedCount();
-		// Accepted-client utilization relative to configured client capacity
-		int cfgMaxClients = m_config.nMaxConnection;
 		float clientUtil = cfgMaxClients > 0 ? (float)accAccepted / (float)cfgMaxClients * 100.0f : 0.0f;
-		NTL_PRINT(PRINT_APP, "[SESSION MONITOR] Sessions: %d/%d (%.1f%%) | Clients(accepted): %d/%d (%.1f%%) | Avail(Sessions): %d | Acceptor accepting:%d accepted:%d total:%lu",
-			currentSessions, maxSessions, utilization,
-			accAccepted, cfgMaxClients, clientUtil,
-			maxSessions - currentSessions,
-			accAccepting, accAccepted, m_clientAcceptor.GetTotalAcceptCount());
-		
+		int availableConfigured = cfgMaxClients - currentSessions;
+		if (availableConfigured < 0)
+		{
+			availableConfigured = 0;
+		}
+
+		NTL_PRINT(PRINT_APP,
+			"[SESSION MONITOR] Active:%d | Peak:%d | ConfigCap:%d | Capacity:%d | Util(Config)=%.1f%% Util(Headroom)=%.1f%% | ClientsAccepted:%d/%d (%.1f%%) | Acceptor accepting:%d accepted:%d total:%lu | ConfigAvail:%d",
+			currentSessions,
+			peakSessions,
+			cfgMaxClients,
+			totalCapacity,
+			configUtil,
+			capacityUtil,
+			accAccepted,
+			cfgMaxClients,
+			clientUtil,
+			accAccepting,
+			accAccepted,
+			m_clientAcceptor.GetTotalAcceptCount(),
+			availableConfigured);
+
 		// Warn if accepted-client utilization is getting high
 		if (clientUtil >= 80.0f)
 		{
 			NTL_PRINT(PRINT_APP, "WARNING: High client utilization detected! May start refusing connections soon.");
 		}
-		
-		// Error if we're at capacity
-		if (currentSessions >= maxSessions)
+
+		// Warn if configured limit is approaching
+		if (configUtil >= 95.0f)
+		{
+			NTL_PRINT(PRINT_APP, "WARNING: Session usage above 95%% of configured limit (%d).", cfgMaxClients);
+		}
+
+		// Error if we're at or above the configured client limit
+		if (cfgMaxClients > 0 && currentSessions >= cfgMaxClients)
 		{
 			ERR_LOG(LOG_SYSTEM, "CRITICAL: Session capacity reached! Server will refuse new connections!");
 		}

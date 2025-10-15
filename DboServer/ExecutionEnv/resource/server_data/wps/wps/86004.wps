@@ -30,12 +30,15 @@ GameStage(0)
 	-- ===================================================================
 
 	-- WAVE 1 - Spawn mob group + 30 additional support mobs with VARIETY for EXTREME difficulty
+	-- Mobgroup spawn disabled (no spawn coordinates)
+	--[[
 	Action( "add mobgroup" )
 	--[
-		Param( "group", 86500 )
+		Param( "group", XXXX )
 		Param( "no spawn wait", "true" )
 	--]
 	End()
+	--]]
 
 	-- Add 30+ extra support mobs to Wave 1 with VARIETY of mob types!
 	-- Using different mob indices for variety: 68131411, 68131412, 68131413, 18311128 (bombs), 68131414
@@ -561,12 +564,12 @@ GameStage(0)
 	--]
 	End()
 
-	-- Wait for all mobs defeated
+	-- Wait for all Wave 1 mobs defeated (group 86021 = individual spawns)
 	Action( "wait" )
 	--[
 		Condition( "check mobgroup" )
 		--[
-			Param( "group", 86500 )
+			Param( "group", 86021 )
 			Param( "count", 0 )
 		--]
 		End()
@@ -574,12 +577,15 @@ GameStage(0)
 	End()
 
 	-- WAVE 2 - Spawn mob group + 35 additional support mobs with MORE VARIETY for MAXIMUM difficulty!
+	-- Mobgroup spawn disabled (no spawn coordinates)
+	--[[
 	Action( "add mobgroup" )
 	--[
-		Param( "group", 86600 )
+		Param( "group", XXXX )
 		Param( "no spawn wait", "true" )
 	--]
 	End()
+	--]]
 
 	-- Add 35 extra support mobs to Wave 2 with MORE VARIETY!
 	Action("add mob")
@@ -1086,12 +1092,15 @@ GameStage(0)
 	-- ===================================================================
 
 	-- Spawn initial mob group
+	-- Mobgroup spawn disabled (no spawn coordinates)
+	--[[
 	Action( "add mobgroup" )
 	--[
-		Param( "group", 86003 )
+		Param( "group", XXXX )
 		Param( "no spawn wait", "true" )
 	--]
 	End()
+	--]]
 
 	-- OUTER RING - 12 mobs (distance 18 from boss)
 	Action("add mob")
@@ -1757,6 +1766,10 @@ GameStage(0)
 		-- ===============================================================
 		-- 90% HP PHASE - Eggs + Bombs + 25 Additional Support Mobs with VARIETY
 		-- ===============================================================
+		-- DIFFICULTY PHASE 1: New spawns get +30% HP/Atk (defined in CustomDropEvent.cfg)
+		-- TO ACTIVATE: Use GM command: @setphase 1
+		-- Phase-aware modifiers auto-apply to ALL new mob spawns in this world
+		-- ===============================================================
 		Condition( "child" )
 		--[
 			Action( "wait" )
@@ -1765,6 +1778,7 @@ GameStage(0)
 				--[
 					Param( "type", "mob" )
 					Param( "group", 86012 )
+					Param( "index", 68131410 )
 					Param( "lp", 90 )
 				--]
 				End()
@@ -1776,7 +1790,7 @@ GameStage(0)
 			--[
 				Param( "target type", "mob" )
 				Param( "target index", 68131410 )
-				Param( "buff index", 6620 )
+				Param( "buff index", 2462 )
 			--]
 			End()
 
@@ -1785,7 +1799,7 @@ GameStage(0)
 			--[
 				Param( "target type", "mob" )
 				Param( "target index", 68131410 )
-				Param( "buff index", 6620 )
+				Param( "buff index", 2462 )
 			--]
 			End()
 
@@ -1794,7 +1808,7 @@ GameStage(0)
 			--[
 				Param( "target type", "mob" )
 				Param( "target index", 68131410 )
-				Param( "buff index", 6622 )
+				Param( "buff index", 2669 )
 			--]
 			End()
 
@@ -1803,17 +1817,20 @@ GameStage(0)
 			--[
 				Param( "target type", "mob" )
 				Param( "target index", 68131410 )
-				Param( "buff index", 6623 )
+				Param( "buff index", 2632 )
 			--]
 			End()
 
 			-- Spawn Eggs
+			-- Mobgroup spawn disabled (no spawn coordinates)
+			--[[
 			Action( "add mobgroup" )
 			--[
-				Param( "group", 86011 )
+				Param( "group", XXXX )
 				Param( "no spawn wait", "true" )
 			--]
 			End()
+			--]]
 
 			-- Spawn 8 Bombs
 			Action("add mob")
@@ -2267,17 +2284,24 @@ GameStage(0)
 			End()
 
 			-- Spawn More Adds
+			-- Mobgroup spawn disabled (no spawn coordinates)
+			--[[
 			Action( "add mobgroup" )
 			--[
-				Param( "group", 86006 )
+				Param( "group", XXXX )
 				Param( "no spawn wait", "true" )
 			--]
 			End()
+			--]]
 		--]
 		End()
 
 		-- ===============================================================
 		-- 70% HP PHASE - Mini-boss + INVINCIBILITY + 20 More Mobs with VARIETY
+		-- ===============================================================
+		-- DIFFICULTY PHASE 2: New spawns get +60% HP/Atk, +15% attack speed (defined in CustomDropEvent.cfg)
+		-- TO ACTIVATE: Use GM command: @setphase 2
+		-- Phase-aware modifiers auto-apply to ALL new mob spawns in this world
 		-- ===============================================================
 		Condition( "child" )
 		--[
@@ -2287,6 +2311,7 @@ GameStage(0)
 				--[
 					Param( "type", "mob" )
 					Param( "group", 86012 )
+					Param( "index", 68131410 )
 					Param( "lp", 70 )
 				--]
 				End()
@@ -2294,12 +2319,15 @@ GameStage(0)
 			End()
 
 			-- Spawn Mini-boss
+			-- Mobgroup spawn disabled (no spawn coordinates)
+			--[[
 			Action( "add mobgroup" )
 			--[
-				Param( "group", 86013 )
+				Param( "group", XXXX )
 				Param( "no spawn wait", "true" )
 			--]
 			End()
+			--]]
 
 			-- Make boss INVINCIBLE (FIXED TARGET INDEX!)
 			Action( "register buff" )
@@ -2315,7 +2343,7 @@ GameStage(0)
 			--[
 				Param( "target type", "mob" )
 				Param( "target index", 68131410 )
-				Param( "buff index", 6622 )
+				Param( "buff index", 2669 )
 			--]
 			End()
 
@@ -2323,7 +2351,7 @@ GameStage(0)
 			--[
 				Param( "target type", "mob" )
 				Param( "target index", 68131410 )
-				Param( "buff index", 6622 )
+				Param( "buff index", 2669 )
 			--]
 			End()
 
@@ -2332,7 +2360,7 @@ GameStage(0)
 			--[
 				Param( "target type", "mob" )
 				Param( "target index", 68131410 )
-				Param( "buff index", 6620 )
+				Param( "buff index", 2462 )
 			--]
 			End()
 
@@ -2340,7 +2368,7 @@ GameStage(0)
 			--[
 				Param( "target type", "mob" )
 				Param( "target index", 68131410 )
-				Param( "buff index", 6620 )
+				Param( "buff index", 2462 )
 			--]
 			End()
 
@@ -2348,17 +2376,20 @@ GameStage(0)
 			--[
 				Param( "target type", "mob" )
 				Param( "target index", 68131410 )
-				Param( "buff index", 6620 )
+				Param( "buff index", 2462 )
 			--]
 			End()
 
 			-- Spawn Eggs
+			-- Mobgroup spawn disabled (no spawn coordinates)
+			--[[
 			Action( "add mobgroup" )
 			--[
-				Param( "group", 86011 )
+				Param( "group", XXXX )
 				Param( "no spawn wait", "true" )
 			--]
 			End()
+			--]]
 
 			-- Spawn 10 More Support Mobs
 			Action("add mob")
@@ -2663,17 +2694,24 @@ GameStage(0)
 			End()
 
 			-- Spawn More Adds
+			-- Mobgroup spawn disabled (no spawn coordinates)
+			--[[
 			Action( "add mobgroup" )
 			--[
-				Param( "group", 86006 )
+				Param( "group", XXXX )
 				Param( "no spawn wait", "true" )
 			--]
 			End()
+			--]]
 		--]
 		End()
 
 		-- ===============================================================
 		-- 50% HP PHASE - TWO Mini-bosses + INVINCIBILITY + 30 More Mobs with VARIETY
+		-- ===============================================================
+		-- DIFFICULTY PHASE 3: New spawns get +100% HP/Atk, +35% attack speed, +50% crits (defined in CustomDropEvent.cfg)
+		-- TO ACTIVATE: Use GM command: @setphase 3
+		-- Phase-aware modifiers auto-apply to ALL new mob spawns in this world
 		-- ===============================================================
 		Condition( "child" )
 		--[
@@ -2683,6 +2721,7 @@ GameStage(0)
 				--[
 					Param( "type", "mob" )
 					Param( "group", 86012 )
+					Param( "index", 68131410 )
 					Param( "lp", 50 )
 				--]
 				End()
@@ -2690,12 +2729,15 @@ GameStage(0)
 			End()
 
 			-- Spawn TWO Mini-bosses
+			-- Mobgroup spawn disabled (no spawn coordinates)
+			--[[
 			Action( "add mobgroup" )
 			--[
-				Param( "group", 86014 )
+				Param( "group", XXXX )
 				Param( "no spawn wait", "true" )
 			--]
 			End()
+			--]]
 
 			-- Make boss INVINCIBLE again (FIXED TARGET INDEX!)
 			Action( "register buff" )
@@ -2711,7 +2753,7 @@ GameStage(0)
 			--[
 				Param( "target type", "mob" )
 				Param( "target index", 68131410 )
-				Param( "buff index", 6621 )
+				Param( "buff index", 2668 )
 			--]
 			End()
 
@@ -2719,7 +2761,7 @@ GameStage(0)
 			--[
 				Param( "target type", "mob" )
 				Param( "target index", 68131410 )
-				Param( "buff index", 6621 )
+				Param( "buff index", 2668 )
 			--]
 			End()
 
@@ -2727,7 +2769,7 @@ GameStage(0)
 			--[
 				Param( "target type", "mob" )
 				Param( "target index", 68131410 )
-				Param( "buff index", 6621 )
+				Param( "buff index", 2668 )
 			--]
 			End()
 
@@ -2736,7 +2778,7 @@ GameStage(0)
 			--[
 				Param( "target type", "mob" )
 				Param( "target index", 68131410 )
-				Param( "buff index", 6620 )
+				Param( "buff index", 2462 )
 			--]
 			End()
 
@@ -2744,7 +2786,7 @@ GameStage(0)
 			--[
 				Param( "target type", "mob" )
 				Param( "target index", 68131410 )
-				Param( "buff index", 6620 )
+				Param( "buff index", 2462 )
 			--]
 			End()
 
@@ -2752,7 +2794,7 @@ GameStage(0)
 			--[
 				Param( "target type", "mob" )
 				Param( "target index", 68131410 )
-				Param( "buff index", 6620 )
+				Param( "buff index", 2462 )
 			--]
 			End()
 
@@ -2760,7 +2802,7 @@ GameStage(0)
 			--[
 				Param( "target type", "mob" )
 				Param( "target index", 68131410 )
-				Param( "buff index", 6620 )
+				Param( "buff index", 2462 )
 			--]
 			End()
 
@@ -2769,7 +2811,7 @@ GameStage(0)
 			--[
 				Param( "target type", "mob" )
 				Param( "target index", 68131410 )
-				Param( "buff index", 6623 )
+				Param( "buff index", 2632 )
 			--]
 			End()
 
@@ -2777,25 +2819,31 @@ GameStage(0)
 			--[
 				Param( "target type", "mob" )
 				Param( "target index", 68131410 )
-				Param( "buff index", 6623 )
+				Param( "buff index", 2632 )
 			--]
 			End()
 
 			-- Spawn Eggs
+			-- Mobgroup spawn disabled (no spawn coordinates)
+			--[[
 			Action( "add mobgroup" )
 			--[
-				Param( "group", 86011 )
+				Param( "group", XXXX )
 				Param( "no spawn wait", "true" )
 			--]
 			End()
+			--]]
 
 			-- Spawn Adds
+			-- Mobgroup spawn disabled (no spawn coordinates)
+			--[[
 			Action( "add mobgroup" )
 			--[
-				Param( "group", 86006 )
+				Param( "group", XXXX )
 				Param( "no spawn wait", "true" )
 			--]
 			End()
+			--]]
 
 			-- Spawn 15 Support Mobs at 50%
 			Action("add mob")
@@ -3242,6 +3290,7 @@ GameStage(0)
 				--[
 					Param( "type", "mob" )
 					Param( "group", 86012 )
+					Param( "index", 68131410 )
 					Param( "lp", 30 )
 				--]
 				End()
@@ -3253,7 +3302,7 @@ GameStage(0)
 			--[
 				Param( "target type", "mob" )
 				Param( "target index", 68131410 )
-				Param( "buff index", 6620 )
+				Param( "buff index", 2462 )
 			--]
 			End()
 
@@ -3261,7 +3310,7 @@ GameStage(0)
 			--[
 				Param( "target type", "mob" )
 				Param( "target index", 68131410 )
-				Param( "buff index", 6620 )
+				Param( "buff index", 2462 )
 			--]
 			End()
 
@@ -3269,7 +3318,7 @@ GameStage(0)
 			--[
 				Param( "target type", "mob" )
 				Param( "target index", 68131410 )
-				Param( "buff index", 6620 )
+				Param( "buff index", 2462 )
 			--]
 			End()
 
@@ -3277,7 +3326,7 @@ GameStage(0)
 			--[
 				Param( "target type", "mob" )
 				Param( "target index", 68131410 )
-				Param( "buff index", 6620 )
+				Param( "buff index", 2462 )
 			--]
 			End()
 
@@ -3285,7 +3334,7 @@ GameStage(0)
 			--[
 				Param( "target type", "mob" )
 				Param( "target index", 68131410 )
-				Param( "buff index", 6620 )
+				Param( "buff index", 2462 )
 			--]
 			End()
 
@@ -3294,7 +3343,7 @@ GameStage(0)
 			--[
 				Param( "target type", "mob" )
 				Param( "target index", 68131410 )
-				Param( "buff index", 6623 )
+				Param( "buff index", 2632 )
 			--]
 			End()
 
@@ -3302,7 +3351,7 @@ GameStage(0)
 			--[
 				Param( "target type", "mob" )
 				Param( "target index", 68131410 )
-				Param( "buff index", 6623 )
+				Param( "buff index", 2632 )
 			--]
 			End()
 
@@ -3310,7 +3359,7 @@ GameStage(0)
 			--[
 				Param( "target type", "mob" )
 				Param( "target index", 68131410 )
-				Param( "buff index", 6623 )
+				Param( "buff index", 2632 )
 			--]
 			End()
 
@@ -3319,7 +3368,7 @@ GameStage(0)
 			--[
 				Param( "target type", "mob" )
 				Param( "target index", 68131410 )
-				Param( "buff index", 6622 )
+				Param( "buff index", 2669 )
 			--]
 			End()
 
@@ -3327,7 +3376,7 @@ GameStage(0)
 			--[
 				Param( "target type", "mob" )
 				Param( "target index", 68131410 )
-				Param( "buff index", 6622 )
+				Param( "buff index", 2669 )
 			--]
 			End()
 
@@ -3335,25 +3384,31 @@ GameStage(0)
 			--[
 				Param( "target type", "mob" )
 				Param( "target index", 68131410 )
-				Param( "buff index", 6622 )
+				Param( "buff index", 2669 )
 			--]
 			End()
 
 			-- Spawn Eggs
+			-- Mobgroup spawn disabled (no spawn coordinates)
+			--[[
 			Action( "add mobgroup" )
 			--[
-				Param( "group", 86011 )
+				Param( "group", XXXX )
 				Param( "no spawn wait", "true" )
 			--]
 			End()
+			--]]
 
 			-- Spawn Adds
+			-- Mobgroup spawn disabled (no spawn coordinates)
+			--[[
 			Action( "add mobgroup" )
 			--[
-				Param( "group", 86006 )
+				Param( "group", XXXX )
 				Param( "no spawn wait", "true" )
 			--]
 			End()
+			--]]
 
 			-- Spawn 12 Support Mobs at 30%
 			Action("add mob")
@@ -3544,6 +3599,7 @@ GameStage(0)
 				--[
 					Param( "type", "mob" )
 					Param( "group", 86012 )
+					Param( "index", 68131410 )
 					Param( "lp", 20 )
 				--]
 				End()
@@ -3551,20 +3607,26 @@ GameStage(0)
 			End()
 
 			-- Spawn Eggs
+			-- Mobgroup spawn disabled (no spawn coordinates)
+			--[[
 			Action( "add mobgroup" )
 			--[
-				Param( "group", 86011 )
+				Param( "group", XXXX )
 				Param( "no spawn wait", "true" )
 			--]
 			End()
+			--]]
 
 			-- Spawn Adds
+			-- Mobgroup spawn disabled (no spawn coordinates)
+			--[[
 			Action( "add mobgroup" )
 			--[
-				Param( "group", 86006 )
+				Param( "group", XXXX )
 				Param( "no spawn wait", "true" )
 			--]
 			End()
+			--]]
 
 			-- Spawn 10 Support Mobs at 20%
 			Action("add mob")
@@ -3723,6 +3785,7 @@ GameStage(0)
 				--[
 					Param( "type", "mob" )
 					Param( "group", 86012 )
+					Param( "index", 68131410 )
 					Param( "lp", 10 )
 				--]
 				End()
@@ -3737,7 +3800,7 @@ GameStage(0)
 			--[
 				Param( "target type", "mob" )
 				Param( "target index", 68131410 )
-				Param( "buff index", 6620 )
+				Param( "buff index", 2462 )
 			--]
 			End()
 
@@ -3745,7 +3808,7 @@ GameStage(0)
 			--[
 				Param( "target type", "mob" )
 				Param( "target index", 68131410 )
-				Param( "buff index", 6620 )
+				Param( "buff index", 2462 )
 			--]
 			End()
 
@@ -3753,7 +3816,7 @@ GameStage(0)
 			--[
 				Param( "target type", "mob" )
 				Param( "target index", 68131410 )
-				Param( "buff index", 6620 )
+				Param( "buff index", 2462 )
 			--]
 			End()
 
@@ -3761,7 +3824,7 @@ GameStage(0)
 			--[
 				Param( "target type", "mob" )
 				Param( "target index", 68131410 )
-				Param( "buff index", 6620 )
+				Param( "buff index", 2462 )
 			--]
 			End()
 
@@ -3769,7 +3832,7 @@ GameStage(0)
 			--[
 				Param( "target type", "mob" )
 				Param( "target index", 68131410 )
-				Param( "buff index", 6620 )
+				Param( "buff index", 2462 )
 			--]
 			End()
 
@@ -3777,7 +3840,7 @@ GameStage(0)
 			--[
 				Param( "target type", "mob" )
 				Param( "target index", 68131410 )
-				Param( "buff index", 6620 )
+				Param( "buff index", 2462 )
 			--]
 			End()
 
@@ -3785,7 +3848,7 @@ GameStage(0)
 			--[
 				Param( "target type", "mob" )
 				Param( "target index", 68131410 )
-				Param( "buff index", 6620 )
+				Param( "buff index", 2462 )
 			--]
 			End()
 
@@ -3793,7 +3856,7 @@ GameStage(0)
 			--[
 				Param( "target type", "mob" )
 				Param( "target index", 68131410 )
-				Param( "buff index", 6620 )
+				Param( "buff index", 2462 )
 			--]
 			End()
 
@@ -3801,7 +3864,7 @@ GameStage(0)
 			--[
 				Param( "target type", "mob" )
 				Param( "target index", 68131410 )
-				Param( "buff index", 6620 )
+				Param( "buff index", 2462 )
 			--]
 			End()
 
@@ -3809,7 +3872,7 @@ GameStage(0)
 			--[
 				Param( "target type", "mob" )
 				Param( "target index", 68131410 )
-				Param( "buff index", 6620 )
+				Param( "buff index", 2462 )
 			--]
 			End()
 
@@ -3818,7 +3881,7 @@ GameStage(0)
 			--[
 				Param( "target type", "mob" )
 				Param( "target index", 68131410 )
-				Param( "buff index", 6621 )
+				Param( "buff index", 2668 )
 			--]
 			End()
 
@@ -3826,7 +3889,7 @@ GameStage(0)
 			--[
 				Param( "target type", "mob" )
 				Param( "target index", 68131410 )
-				Param( "buff index", 6621 )
+				Param( "buff index", 2668 )
 			--]
 			End()
 
@@ -3834,7 +3897,7 @@ GameStage(0)
 			--[
 				Param( "target type", "mob" )
 				Param( "target index", 68131410 )
-				Param( "buff index", 6621 )
+				Param( "buff index", 2668 )
 			--]
 			End()
 
@@ -3842,7 +3905,7 @@ GameStage(0)
 			--[
 				Param( "target type", "mob" )
 				Param( "target index", 68131410 )
-				Param( "buff index", 6621 )
+				Param( "buff index", 2668 )
 			--]
 			End()
 
@@ -3850,7 +3913,7 @@ GameStage(0)
 			--[
 				Param( "target type", "mob" )
 				Param( "target index", 68131410 )
-				Param( "buff index", 6621 )
+				Param( "buff index", 2668 )
 			--]
 			End()
 
@@ -3858,7 +3921,7 @@ GameStage(0)
 			--[
 				Param( "target type", "mob" )
 				Param( "target index", 68131410 )
-				Param( "buff index", 6621 )
+				Param( "buff index", 2668 )
 			--]
 			End()
 
@@ -3866,7 +3929,7 @@ GameStage(0)
 			--[
 				Param( "target type", "mob" )
 				Param( "target index", 68131410 )
-				Param( "buff index", 6621 )
+				Param( "buff index", 2668 )
 			--]
 			End()
 
@@ -3875,7 +3938,7 @@ GameStage(0)
 			--[
 				Param( "target type", "mob" )
 				Param( "target index", 68131410 )
-				Param( "buff index", 6622 )
+				Param( "buff index", 2669 )
 			--]
 			End()
 
@@ -3883,7 +3946,7 @@ GameStage(0)
 			--[
 				Param( "target type", "mob" )
 				Param( "target index", 68131410 )
-				Param( "buff index", 6622 )
+				Param( "buff index", 2669 )
 			--]
 			End()
 
@@ -3891,7 +3954,7 @@ GameStage(0)
 			--[
 				Param( "target type", "mob" )
 				Param( "target index", 68131410 )
-				Param( "buff index", 6622 )
+				Param( "buff index", 2669 )
 			--]
 			End()
 
@@ -3899,7 +3962,7 @@ GameStage(0)
 			--[
 				Param( "target type", "mob" )
 				Param( "target index", 68131410 )
-				Param( "buff index", 6622 )
+				Param( "buff index", 2669 )
 			--]
 			End()
 
@@ -3907,7 +3970,7 @@ GameStage(0)
 			--[
 				Param( "target type", "mob" )
 				Param( "target index", 68131410 )
-				Param( "buff index", 6622 )
+				Param( "buff index", 2669 )
 			--]
 			End()
 
@@ -3915,7 +3978,7 @@ GameStage(0)
 			--[
 				Param( "target type", "mob" )
 				Param( "target index", 68131410 )
-				Param( "buff index", 6622 )
+				Param( "buff index", 2669 )
 			--]
 			End()
 
@@ -3923,7 +3986,7 @@ GameStage(0)
 			--[
 				Param( "target type", "mob" )
 				Param( "target index", 68131410 )
-				Param( "buff index", 6622 )
+				Param( "buff index", 2669 )
 			--]
 			End()
 
@@ -3932,7 +3995,7 @@ GameStage(0)
 			--[
 				Param( "target type", "mob" )
 				Param( "target index", 68131410 )
-				Param( "buff index", 6623 )
+				Param( "buff index", 2632 )
 			--]
 			End()
 
@@ -3940,7 +4003,7 @@ GameStage(0)
 			--[
 				Param( "target type", "mob" )
 				Param( "target index", 68131410 )
-				Param( "buff index", 6623 )
+				Param( "buff index", 2632 )
 			--]
 			End()
 
@@ -3948,7 +4011,7 @@ GameStage(0)
 			--[
 				Param( "target type", "mob" )
 				Param( "target index", 68131410 )
-				Param( "buff index", 6623 )
+				Param( "buff index", 2632 )
 			--]
 			End()
 
@@ -3956,7 +4019,7 @@ GameStage(0)
 			--[
 				Param( "target type", "mob" )
 				Param( "target index", 68131410 )
-				Param( "buff index", 6623 )
+				Param( "buff index", 2632 )
 			--]
 			End()
 
@@ -3964,7 +4027,7 @@ GameStage(0)
 			--[
 				Param( "target type", "mob" )
 				Param( "target index", 68131410 )
-				Param( "buff index", 6623 )
+				Param( "buff index", 2632 )
 			--]
 			End()
 
@@ -3972,7 +4035,7 @@ GameStage(0)
 			--[
 				Param( "target type", "mob" )
 				Param( "target index", 68131410 )
-				Param( "buff index", 6623 )
+				Param( "buff index", 2632 )
 			--]
 			End()
 
@@ -3980,7 +4043,7 @@ GameStage(0)
 			--[
 				Param( "target type", "mob" )
 				Param( "target index", 68131410 )
-				Param( "buff index", 6623 )
+				Param( "buff index", 2632 )
 			--]
 			End()
 
@@ -3989,7 +4052,7 @@ GameStage(0)
 			--[
 				Param( "target type", "mob" )
 				Param( "target index", 68131410 )
-				Param( "buff index", 6624 )
+				Param( "buff index", 2393 )
 			--]
 			End()
 
@@ -3997,7 +4060,7 @@ GameStage(0)
 			--[
 				Param( "target type", "mob" )
 				Param( "target index", 68131410 )
-				Param( "buff index", 6624 )
+				Param( "buff index", 2393 )
 			--]
 			End()
 
@@ -4005,7 +4068,7 @@ GameStage(0)
 			--[
 				Param( "target type", "mob" )
 				Param( "target index", 68131410 )
-				Param( "buff index", 6624 )
+				Param( "buff index", 2393 )
 			--]
 			End()
 
@@ -4013,7 +4076,7 @@ GameStage(0)
 			--[
 				Param( "target type", "mob" )
 				Param( "target index", 68131410 )
-				Param( "buff index", 6624 )
+				Param( "buff index", 2393 )
 			--]
 			End()
 
@@ -4021,25 +4084,31 @@ GameStage(0)
 			--[
 				Param( "target type", "mob" )
 				Param( "target index", 68131410 )
-				Param( "buff index", 6624 )
+				Param( "buff index", 2393 )
 			--]
 			End()
 
 			-- Spawn Eggs
+			-- Mobgroup spawn disabled (no spawn coordinates)
+			--[[
 			Action( "add mobgroup" )
 			--[
-				Param( "group", 86011 )
+				Param( "group", XXXX )
 				Param( "no spawn wait", "true" )
 			--]
 			End()
+			--]]
 
 			-- Spawn Adds
+			-- Mobgroup spawn disabled (no spawn coordinates)
+			--[[
 			Action( "add mobgroup" )
 			--[
-				Param( "group", 86006 )
+				Param( "group", XXXX )
 				Param( "no spawn wait", "true" )
 			--]
 			End()
+			--]]
 
 			-- Spawn MASSIVE 20 Support Mobs at 10%
 			Action("add mob")
