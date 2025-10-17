@@ -4,7 +4,7 @@
 //
 //	Begin		:	2007-03-05
 //
-//	Copyright	:	¨Ï NTL-Inc Co., Ltd
+//	Copyright	:	ï¿½ï¿½ NTL-Inc Co., Ltd
 //
 //	Author		:	Hyun Woo, Koo   ( zeroera@ntl-inc.com )
 //
@@ -173,13 +173,8 @@ void CNtlMiniDump::Snapshot()
 	exceptionPointers.ContextRecord = &contextRecord;
 	exceptionPointers.ExceptionRecord = &exceptionRecord;
 
-
-	// Get Thread Context
-	if( FALSE == GetThreadContext( GetCurrentThread(), &contextRecord ) )
-	{
-		NTL_ASSERT( 0 );
-		return;
-	}
+	// Capture current thread context without requiring suspension
+	RtlCaptureContext(&contextRecord);
 
 	// Set Virtual Exception Record
 	exceptionRecord.ExceptionCode;

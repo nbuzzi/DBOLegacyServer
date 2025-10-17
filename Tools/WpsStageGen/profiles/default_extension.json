@@ -1,0 +1,27 @@
+{
+  "name": "Default CCBD Extension",
+  "description": "50 additional floors with bosses every 5 floors. Standard difficulty.",
+  "baseWpsFile": "../../DboServer/ExecutionEnv/resource/server_data/wps/wps/83000.wps",
+  "floorCount": 50,
+  "bossInterval": 5,
+  "startFloor": 0,
+  "waveConfig": {
+    "patternList": "(1, 35%), (2, 35%), (3, 10%), (4, 10%), (6, 10%)",
+    "autoLevel": 0,
+    "mobGroupOverride": 0,
+    "customTemplate": null
+  },
+  "bossConfig": {
+    "bossGroupBase": 9999,
+    "mechanicsTemplate": null,
+    "arenaRotation": [],
+    "rewardItems": [
+      7000002
+    ],
+    "incrementBossGroup": false
+  },
+  "variables": {
+    "variables": {},
+    "varsFilePath": null
+  }
+}

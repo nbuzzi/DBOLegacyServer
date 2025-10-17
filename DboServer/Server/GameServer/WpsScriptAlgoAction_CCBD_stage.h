@@ -38,6 +38,7 @@ public:
 	DWORD						m_dwFailTimer;
 
 	bool						m_bIsEveryoneReady;
+	bool					m_bSkipStage;
 };
 
 #endif

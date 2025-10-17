@@ -46,6 +46,7 @@
 #include "gm.h"
 #include "TriggerManager.h"
 #include "DungeonManager.h"
+#include "DungeonConfig.h"
 #include "WpsAlgoObject.h"
 #include "DynamicFieldSystemEvent.h"
 #include "DragonballHunt.h"
@@ -11797,6 +11798,21 @@ void CClientSession::RecvBattleDungeonEnterReq(CNtlPacket* pPacket)
 							}
 						}
 
+						// Check if CCBD Boss-Only Mode is enabled
+						if (g_pDungeonConfig->IsCCBDBossOnlyModeEnabled())
+						{
+							// Progressive boss floor system: 5, 10, 15, 20, 25...
+							BYTE byLastCleared = cPlayer->GetCCBDLastBossStageCleared();
+							if (byLastCleared == 0)
+							{
+								byBeginStage = 5; // First time: start at floor 5
+							}
+							else
+							{
+								// Continue to next boss floor (last + 5)
+								byBeginStage = byLastCleared + 5;
+							}
+						}						
 						CBattleDungeon* pDungeon = g_pDungeonManager->CreateBattleDungeon(cPlayer, wResultcode, byBeginStage);
 						if (pDungeon == NULL)
 							wResultcode = GAME_PARTY_DUNGEON_IS_NOT_CREATED;

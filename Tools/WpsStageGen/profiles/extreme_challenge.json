@@ -1,0 +1,43 @@
+{
+  "name": "Extreme Challenge Tower",
+  "description": "100 floors with bosses every 10 floors. Multi-phase boss mechanics with add spawns and arena rotation.",
+  "baseWpsFile": "../../DboServer/ExecutionEnv/resource/server_data/wps/wps/83000.wps",
+  "floorCount": 100,
+  "bossInterval": 10,
+  "startFloor": 0,
+  "waveConfig": {
+    "patternList": "(1, 30%), (2, 30%), (3, 20%), (4, 20%)",
+    "autoLevel": 55,
+    "mobGroupOverride": 0,
+    "customTemplate": null
+  },
+  "bossConfig": {
+    "bossGroupBase": 9000,
+    "mechanicsTemplate": "templates/boss_phases_91_71_61_41_25_20.wps",
+    "arenaRotation": [
+      "ARENA_FIRE",
+      "ARENA_ICE",
+      "ARENA_LIGHTNING"
+    ],
+    "rewardItems": [
+      7000002,
+      7000003,
+      7000004
+    ],
+    "incrementBossGroup": true
+  },
+  "variables": {
+    "variables": {
+      "INVINCIBLE_BUFF": "1900101",
+      "PHASE91_GROUP": "301",
+      "PHASE71_GROUP": "302",
+      "PHASE61_GROUP": "303",
+      "PHASE41_GROUP": "304",
+      "PHASE25_GROUP": "305",
+      "PHASE20_GROUP": "306",
+      "PROTECT_PLATFORM_GROUP": "350",
+      "PROTECT_ADDONS_GROUP": "351"
+    },
+    "varsFilePath": null
+  }
+}

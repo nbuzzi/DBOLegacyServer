@@ -15,6 +15,7 @@
 #include "DiceManager.h"
 #include "HelperNpcManager.h"
 #include "BattlePassManager.h" // Battle Pass dungeon clear hook
+#include "DungeonConfig.h" // CCBD boss-only mode
 
 
 CPartyManager::CPartyManager()
@@ -1844,10 +1845,17 @@ void CParty::DecidePartySelect()
 			}
 			else
 			{
-				CNtlVector destLoc(g_pTableContainer->GetServerConfigTable()->GetServerConfigData()->sBattleDungeonData.sEnterLoc_NormalStage.sLoc);
-				CNtlVector destDir(g_pTableContainer->GetServerConfigTable()->GetServerConfigData()->sBattleDungeonData.sEnterLoc_NormalStage.sDir);
+				if (g_pDungeonConfig && g_pDungeonConfig->IsCCBDBossOnlyModeEnabled())
+				{
+					NTL_PRINT(PRINT_APP, "[CCBD Boss Mode] Skip normal stage teleport for player %u", pPlayer->GetCharID());
+				}
+				else
+				{
+					CNtlVector destLoc(g_pTableContainer->GetServerConfigTable()->GetServerConfigData()->sBattleDungeonData.sEnterLoc_NormalStage.sLoc);
+					CNtlVector destDir(g_pTableContainer->GetServerConfigTable()->GetServerConfigData()->sBattleDungeonData.sEnterLoc_NormalStage.sDir);
 
-				pPlayer->StartTeleport(destLoc, destDir, pPlayer->GetWorldID(), TELEPORT_TYPE_DEFAULT, g_pTableContainer->GetServerConfigTable()->GetServerConfigData()->sBattleDungeonData.directPlay_StageChange, true);
+					pPlayer->StartTeleport(destLoc, destDir, pPlayer->GetWorldID(), TELEPORT_TYPE_DEFAULT, g_pTableContainer->GetServerConfigTable()->GetServerConfigData()->sBattleDungeonData.directPlay_StageChange, true);
+				}
 			}
 		}
 	}

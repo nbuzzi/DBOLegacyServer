@@ -166,6 +166,9 @@ private:
 	DWORD					m_dwCameraMoveCount; // how often camera has been moved (received from client because the server cant't track this)
 	DWORD					m_dwCameraMoveDifference;
 	bool					DiePowerTournament = false;
+
+	// CCBD Boss-Only Mode progression tracking
+	BYTE					m_byCCBDLastBossStageCleared; // Last boss floor cleared (5, 10, 15, 20...)
 private:
 
 	void				Initialize();
@@ -270,6 +273,10 @@ public:
 
 	inline void				SetWaguMachineCoin(DWORD cash) { m_dwWaguMachineCoin = cash; }
 	inline DWORD			GetWaguMachineCoin() { return m_dwWaguMachineCoin; }
+
+	// CCBD Boss-Only Mode progression
+	inline void				SetCCBDLastBossStageCleared(BYTE byStage) { m_byCCBDLastBossStageCleared = byStage; }
+	inline BYTE				GetCCBDLastBossStageCleared() const { return m_byCCBDLastBossStageCleared; }
 
 	inline void				SetAccountID(ACCOUNTID id) { uiAccountID = id; }
 	inline ACCOUNTID		GetAccountID() const { return uiAccountID; }

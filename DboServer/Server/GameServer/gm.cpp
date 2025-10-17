@@ -13,6 +13,7 @@
 #include "NtlMrPoPoMsg.h"
 #include "SubNeighborServerInfoManager.h"
 #include "NtlTokenizer.h"
+#include "NtlBitFlagManager.h"
 #include "TableContainerManager.h"
 #include "ItemTable.h"
 #include "ExpTable.h"
@@ -37,14 +38,18 @@
 #include "BudokaiManager.h"
 #include "PlayerModifiers.h"
 #include "FeatureFlags.h"
+#include "DungeonConfig.h"
 #include "VirtualTransformationManager.h"
 #include "ArenaManager.h"
 #include "DojoManager.h"
 #include "EventManager.h"
 #include "BattlePassManager.h"
 #include <algorithm>
+#include <cctype>
+#include <vector>
 #include <winsock2.h>
 #include <ws2tcpip.h>
+#include <WorldMapTable.h>
 #pragma comment(lib, "ws2_32.lib")
 
 // Windows headers define max/min macros; ensure we use std::max/std::min below.
@@ -189,6 +194,7 @@ ACMD(do_dbann);
 ACMD(do_purge);
 ACMD(do_unstuck);
 ACMD(do_warfog);
+ACMD(do_revealmap);
 ACMD(do_upgrade);
 ACMD(do_setitemrank);
 ACMD(do_mute);
@@ -216,6 +222,7 @@ ACMD(do_notify);
 ACMD(do_resetskills);
 ACMD(do_setdark);
 ACMD(do_buff);
+ACMD(do_unbuff);
 ACMD(do_start_dbhunt);
 ACMD(do_stop_dbhunt);
 ACMD(do_start_dbscramble);
@@ -256,6 +263,7 @@ ACMD(do_battlepass_addxp);
 ACMD(do_battlepass_status);
 ACMD(do_battlepass_flush);
 ACMD(do_battlepass_master);
+ACMD(do_ccbd_boss_mode);
 
 struct command_info cmd_info[] =
 {
@@ -326,6 +334,7 @@ struct command_info cmd_info[] =
 	{ L"@notice", do_notice, ADMIN_LEVEL_ADMIN },
 	{ L"@world", do_world, ADMIN_LEVEL_ADMIN },
 	{ L"@warfog", do_warfog, ADMIN_LEVEL_ADMIN },
+	{ L"@revealmap", do_revealmap, ADMIN_LEVEL_ADMIN },
 	{ L"@upgrade", do_upgrade, ADMIN_LEVEL_ADMIN },
 	{ L"@battlepass_setxp", do_battlepass_setxp, ADMIN_LEVEL_ADMIN }, // Set current level XP (absolute, dev/admin)
 	{ L"@battlepass_addxp", do_battlepass_addxp, ADMIN_LEVEL_ADMIN }, // Add raw XP (bypasses action mapping)
@@ -347,6 +356,7 @@ struct command_info cmd_info[] =
 	{ L"@resetskills", do_resetskills, ADMIN_LEVEL_ADMIN },
 	{ L"@setdark", do_setdark, ADMIN_LEVEL_GAME_MASTER},
 	{ L"@buff", do_buff, ADMIN_LEVEL_ADMIN },
+	{ L"@unbuff", do_unbuff, ADMIN_LEVEL_ADMIN },
 	{ L"@start_dbhunt",do_start_dbhunt,ADMIN_LEVEL_GAME_MASTER},
 	{ L"@stop_dbhunt",do_stop_dbhunt,ADMIN_LEVEL_GAME_MASTER},
 	{ L"@start_dbscramble",do_start_dbscramble,ADMIN_LEVEL_GAME_MASTER},
@@ -369,6 +379,7 @@ struct command_info cmd_info[] =
 	{ L"@event_reload", do_event_reload, ADMIN_LEVEL_GAME_MASTER },
 	{ L"@world_fight", do_world_fight, ADMIN_LEVEL_GAME_MASTER },
 	{ L"@pm", do_pm, ADMIN_LEVEL_GAME_MASTER },
+	{ L"@ccbd_boss_mode", do_ccbd_boss_mode, ADMIN_LEVEL_GAME_MASTER }, // Toggle CCBD Boss-Only Mode (skip regular floors)
 
 	{ L"@qwasawedsadas", NULL, ADMIN_LEVEL_ADMIN }
 };
@@ -460,7 +471,7 @@ ACMD(do_battlepass_status)
 	bool master = g_pBattlePassManager->IsMasterEnabled();
 	const CBattlePassManager::Config& cfg = g_pBattlePassManager->GetConfig();
 	wchar_t msg[256];
-	swprintf_s(msg, L"[BattlePass] Master=%s Season=%u DB=%s Flush=%us MinDelta=%u", master?L"ON":L"OFF", cfg.seasonId, cfg.useDatabase?L"ON":L"OFF", cfg.flushSeconds, cfg.minDeltaXp);
+	swprintf_s(msg, L"[BattlePass] Master=%s Season=%u DB=%s Flush=%us MinDelta=%u", master ? L"ON" : L"OFF", cfg.seasonId, cfg.useDatabase ? L"ON" : L"OFF", cfg.flushSeconds, cfg.minDeltaXp);
 	res->wMessageLengthInUnicode = (WORD)wcslen(msg);
 	wcsncpy_s(res->awchMessage, NTL_MAX_LENGTH_OF_CHAT_MESSAGE + 1, msg, _TRUNCATE);
 	packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
@@ -498,7 +509,7 @@ ACMD(do_battlepass_master)
 	if (!queryOnly)
 	{
 		std::wstring lower = sub;
-		for (auto &ch : lower) ch = (wchar_t)towlower(ch);
+		for (auto& ch : lower) ch = (wchar_t)towlower(ch);
 		if (lower == L"on" || lower == L"1" || lower == L"true") newState = true;
 		else if (lower == L"off" || lower == L"0" || lower == L"false") newState = false;
 		// apply: direct access to config (safe—admin only command)
@@ -929,7 +940,7 @@ ACMD(do_event)
 	}
 
 	std::string sub = ws2s(wsub);
-	for (auto &c : sub) c = (char)tolower(c);
+	for (auto& c : sub) c = (char)tolower(c);
 
 	if (sub == "start")
 	{
@@ -942,7 +953,7 @@ ACMD(do_event)
 		pToken->PopToPeek();
 		std::wstring warg = pToken->PeekNextToken(NULL, &iLine);
 		std::string arg = ws2s(warg);
-		for (auto &c : arg) c = (char)tolower(c);
+		for (auto& c : arg) c = (char)tolower(c);
 		bool abort = (arg == "abort");
 		if (g_pEventManager)
 			g_pEventManager->Stop(abort);
@@ -2295,6 +2306,60 @@ ACMD(do_playermods_toggle)
 	}
 }
 
+ACMD(do_ccbd_boss_mode)
+{
+	// usage: @ccbd_boss_mode on|off (no arg prints state)
+	// When enabled, CCBD will skip regular floors and only allow boss fights (every 5 floors)
+	pToken->PopToPeek();
+	std::wstring strToken = pToken->PeekNextToken(NULL, &iLine);
+	std::string arg = ws2s(strToken);
+
+	if (!arg.empty())
+	{
+		bool on = (_stricmp(arg.c_str(), "on") == 0 || _stricmp(arg.c_str(), "1") == 0 || _stricmp(arg.c_str(), "true") == 0);
+		g_pDungeonConfig->SetCCBDBossOnlyModeEnabled(on);
+
+		// Send notification to the player
+		CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+		sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+		res->wOpCode = GU_SYSTEM_DISPLAY_TEXT;
+		res->byDisplayType = SERVER_TEXT_SYSNOTICE;
+
+		wchar_t msg[256];
+		swprintf_s(msg, L"[CCBD] Boss-Only Mode: %s", on ? L"ENABLED" : L"DISABLED");
+		if (on)
+			wcscat_s(msg, L" - Players will skip regular floors and fight only bosses (5, 10, 15, etc.)");
+
+		res->wMessageLengthInUnicode = (WORD)wcslen(msg);
+		wcsncpy_s(res->awchMessage, NTL_MAX_LENGTH_OF_CHAT_MESSAGE + 1, msg, _TRUNCATE);
+		packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+		pPlayer->SendPacket(&packet);
+
+		ERR_LOG(LOG_GENERAL, "[CCBD_BOSS_MODE] Setting changed to %s by GM %s (CharID: %u)",
+			on ? "ENABLED" : "DISABLED",
+			pPlayer->GetCharName(),
+			pPlayer->GetCharID());
+	}
+	else
+	{
+		// Display current status
+		bool isEnabled = g_pDungeonConfig->IsCCBDBossOnlyModeEnabled();
+
+		CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+		sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+		res->wOpCode = GU_SYSTEM_DISPLAY_TEXT;
+		res->byDisplayType = SERVER_TEXT_SYSNOTICE;
+
+		wchar_t msg[256];
+		swprintf_s(msg, L"[CCBD] Boss-Only Mode is currently: %s", isEnabled ? L"ENABLED" : L"DISABLED");
+
+		res->wMessageLengthInUnicode = (WORD)wcslen(msg);
+		wcsncpy_s(res->awchMessage, NTL_MAX_LENGTH_OF_CHAT_MESSAGE + 1, msg, _TRUNCATE);
+		packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+		pPlayer->SendPacket(&packet);
+	}
+}
+
 ACMD(do_vtransform)
 {
 	// Check if virtual transformations are enabled
@@ -2541,6 +2606,90 @@ ACMD(do_buff)
 	else
 	{
 		applyTo(cTarget);
+	}
+}
+
+ACMD(do_unbuff)
+{
+	/*
+		@unbuff BUFF_ID [RADIUS_METERS] [TARGET_NAME]
+		- Removes the specified buff from the target or everyone in range.
+	*/
+	pToken->PopToPeek();
+	std::wstring strToken = pToken->PeekNextToken(NULL, &iLine);
+	if (strToken.empty())
+		return;
+
+	int buffindex = (int)atof(ws2s(strToken).c_str());
+	if (buffindex <= 0)
+		return;
+
+	float fRadius = 0.0f;
+	std::wstring nameToken;
+	const wchar_t* wname = L"";
+
+	pToken->PopToPeek();
+	std::wstring strToken1 = pToken->PeekNextToken(NULL, &iLine);
+	if (!strToken1.empty())
+	{
+		std::string opt = ws2s(strToken1);
+		bool isNum = !opt.empty() && (isdigit((unsigned char)opt[0]) || opt[0] == '.' || opt[0] == '-');
+		if (isNum)
+		{
+			fRadius = (float)atof(opt.c_str());
+			pToken->PopToPeek();
+			std::wstring strToken2 = pToken->PeekNextToken(NULL, &iLine);
+			if (!strToken2.empty())
+			{
+				nameToken = strToken2;
+				wname = nameToken.c_str();
+			}
+		}
+		else
+		{
+			nameToken = strToken1;
+			wname = nameToken.c_str();
+		}
+	}
+
+	sSKILL_TBLDAT* pSkillTbldat = (sSKILL_TBLDAT*)g_pTableContainer->GetSkillTable()->FindData(buffindex);
+	if (!pSkillTbldat)
+		return;
+
+	CPlayer* cTarget = nullptr;
+	if (wname && *wname)
+		cTarget = g_pObjectManager->FindByName((WCHAR*)wname);
+	if (!cTarget || !cTarget->IsInitialized())
+		cTarget = pPlayer;
+
+	auto removeFrom = [&](CPlayer* tgt)
+		{
+			if (!tgt || !tgt->IsInitialized())
+				return;
+			tgt->GetBuffManager()->RemoveBlessBuff(pSkillTbldat->tblidx);
+		};
+
+	if (fRadius > 0.0f && cTarget->GetCurWorldCell())
+	{
+		CWorldCell* pCell = cTarget->GetCurWorldCell();
+		CWorldCell::QUADPAGE page = pCell->GetCellQuadPage(cTarget->GetCurLoc());
+		for (int dir = CWorldCell::QUADDIR_SELF; dir <= CWorldCell::QUADDIR_VERTICAL; dir++)
+		{
+			CWorldCell* pSibling = pCell->GetQuadSibling(page, (CWorldCell::QUADDIR)dir);
+			if (!pSibling)
+				continue;
+			CPlayer* pPlr = (CPlayer*)pSibling->GetObjectList()->GetFirst(OBJTYPE_PC);
+			while (pPlr && pPlr->IsInitialized())
+			{
+				if (cTarget->IsInRange(pPlr, fRadius))
+					removeFrom(pPlr);
+				pPlr = (CPlayer*)pSibling->GetObjectList()->GetNext(pPlr->GetWorldCellObjectLinker());
+			}
+		}
+	}
+	else
+	{
+		removeFrom(cTarget);
 	}
 }
 
@@ -3672,9 +3821,24 @@ ACMD(do_setlevel2)
 ACMD(do_hide)
 {
 	if (pPlayer->GetStateManager()->IsCharCondition(CHARCOND_TRANSPARENT))
+	{
 		pPlayer->GetStateManager()->RemoveConditionState(CHARCOND_TRANSPARENT, NULL, true);
+		pPlayer->SendCharStateStanding(false);
+		std::vector<CPlayer*> nearbyPlayers;
+		pPlayer->GetPcInRange(200.0f, nearbyPlayers);
+		for (CPlayer* pOther : nearbyPlayers)
+		{
+			if (!pOther || pOther == pPlayer)
+				continue;
+			// Reinsert the GM so players who arrived while hidden receive a fresh spawn packet
+			pPlayer->EncodeInsertPacket(pOther);
+		}
+	}
 	else
+	{
 		pPlayer->GetStateManager()->AddConditionState(CHARCOND_TRANSPARENT, NULL, true);
+		pPlayer->SendCharStateStanding(false);
+	}
 }
 
 ACMD(do_notice)
@@ -4400,6 +4564,117 @@ ACMD(do_warfog)
 		}
 
 		pObj = pNextObj;
+	}
+}
+
+ACMD(do_revealmap)
+{
+	CGameServer* app = (CGameServer*)g_pApp;
+
+	auto sendSystemText = [](CPlayer* receiver, const wchar_t* text)
+	{
+		if (!receiver || !text || !*text)
+			return;
+
+		CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+		sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+		res->wOpCode = GU_SYSTEM_DISPLAY_TEXT;
+		res->byDisplayType = SERVER_TEXT_SYSTEM;
+		res->wMessageLengthInUnicode = (WORD)wcslen(text);
+		wcsncpy_s(res->awchMessage, NTL_MAX_LENGTH_OF_CHAT_MESSAGE + 1, text, _TRUNCATE);
+		packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+		receiver->SendPacket(&packet);
+	};
+
+	pToken->PopToPeek();
+	std::wstring strToken = pToken->PeekNextToken(NULL, &iLine);
+
+	CPlayer* pTarget = pPlayer;
+	if (!strToken.empty())
+	{
+		CPlayer* found = g_pObjectManager->FindByName(strToken.c_str());
+		if (!found || !found->IsInitialized())
+		{
+			sendSystemText(pPlayer, L"[GM] Target player not found or not initialized.");
+			return;
+		}
+		pTarget = found;
+	}
+
+	CWorldMapTable* pWorldMapTable = g_pTableContainer->GetWorldMapTable();
+	if (!pWorldMapTable)
+	{
+		sendSystemText(pPlayer, L"[GM] World map data unavailable.");
+		return;
+	}
+
+	CNtlBitFlagManager flagMgr;
+	if (flagMgr.Create(pTarget->GetWarFogFlag(), NTL_MAX_COUNT_WAR_FOG) == false)
+	{
+		sendSystemText(pPlayer, L"[GM] Failed to prepare war fog buffer.");
+		return;
+	}
+
+	unsigned newlyRevealed = 0;
+	for (CTable::TABLEIT it = pWorldMapTable->Begin(); it != pWorldMapTable->End(); ++it)
+	{
+		sWORLD_MAP_TBLDAT* pWorldEntry = reinterpret_cast<sWORLD_MAP_TBLDAT*>(it->second);
+		if (!pWorldEntry)
+			continue;
+
+		for (int slot = 0; slot < DBO_WORLD_MAP_TABLE_COUNT_WORLD_WARFOG; ++slot)
+		{
+			const WORD warFogIndex = pWorldEntry->wWarfog[slot];
+			if (warFogIndex == INVALID_WORD || warFogIndex == 0)
+				continue;
+			if (warFogIndex >= NTL_MAX_COUNT_WAR_FOG)
+				continue;
+			if (flagMgr.IsSet(warFogIndex))
+				continue;
+
+			if (!flagMgr.Set(warFogIndex))
+				continue;
+
+			CNtlPacket packetQry(sizeof(sGQ_WAR_FOG_UPDATE_REQ));
+			sGQ_WAR_FOG_UPDATE_REQ* resQry = (sGQ_WAR_FOG_UPDATE_REQ*)packetQry.GetPacketData();
+			resQry->wOpCode = GQ_WAR_FOG_UPDATE_REQ;
+			resQry->charID = pTarget->GetCharID();
+			resQry->contentsTblidx = warFogIndex;
+			memcpy(resQry->sInfo.achWarFogFlag, flagMgr.GetRawData(), sizeof(resQry->sInfo.achWarFogFlag));
+			packetQry.SetPacketLen(sizeof(sGQ_WAR_FOG_UPDATE_REQ));
+			app->SendTo(app->GetQueryServerSession(), &packetQry);
+
+			++newlyRevealed;
+		}
+	}
+
+	if (newlyRevealed == 0)
+	{
+		wchar_t msg[NTL_MAX_LENGTH_OF_CHAT_MESSAGE + 1];
+		if (pTarget == pPlayer)
+			swprintf_s(msg, L"[GM] All world maps are already revealed.");
+		else
+			swprintf_s(msg, L"[GM] %ls already has all world maps revealed.", pTarget->GetCharName());
+		sendSystemText(pPlayer, msg);
+		return;
+	}
+
+	sCHAR_WAR_FOG_FLAG updatedFlag = {};
+	memcpy(updatedFlag.achWarFogFlag, flagMgr.GetRawData(), sizeof(updatedFlag.achWarFogFlag));
+	pTarget->SendWarfogInfo(&updatedFlag);
+
+	wchar_t msg[NTL_MAX_LENGTH_OF_CHAT_MESSAGE + 1];
+	if (pTarget == pPlayer)
+		swprintf_s(msg, L"[GM] Revealed %u additional world map sections.", newlyRevealed);
+	else
+		swprintf_s(msg, L"[GM] Revealed %u world map sections for %ls.", newlyRevealed, pTarget->GetCharName());
+	sendSystemText(pPlayer, msg);
+
+	if (pTarget != pPlayer)
+	{
+		wchar_t notify[NTL_MAX_LENGTH_OF_CHAT_MESSAGE + 1];
+		swprintf_s(notify, L"[GM] All world maps revealed by %ls.", pPlayer->GetCharName());
+		sendSystemText(pTarget, notify);
 	}
 }
 
@@ -5262,7 +5537,7 @@ ACMD(do_budokai_findteam)
 		NTL_SAFE_WCSCPY(res->awchMessage, msg);
 		packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
 		pPlayer->SendPacket(&packet);
-	};
+		};
 
 	// Check if player already has a party
 	if (pPlayer->GetParty() != NULL)

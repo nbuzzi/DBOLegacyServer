@@ -4,10 +4,8 @@
 #include "ChatServerSession.h"
 #include "QueryServerSession.h"
 #include "NtlRandom.h"
-
 #include "SubNeighborServerInfoManager.h"
 #include "EventMgr.h"
-
 #include "ItemManager.h"
 #include "freebattle.h"
 #include "trade.h"
@@ -22,7 +20,6 @@
 #include "ShenronManager.h"
 #include "DojoManager.h"
 #include "Guild.h"
-
 #include "GameProcessor.h"
 #include "GameData.h"
 #include "GameMain.h"
@@ -48,26 +45,25 @@
 #include "CustomDropEvent.h"
 #include "PlayerModifiers.h"
 #include "FeatureFlags.h"
+#include "DungeonConfig.h"
 #include "VirtualTransformationManager.h"
 #include "HelperNpcManager.h"
 #include "SkillTable.h"
 #include "ArenaManager.h"
 #include "EventManager.h"
 #include "BattlePassManager.h"
-// --- INICIO SOCKET COMANDOS ---
 #include <thread>
 #include <atomic>
 #include <winsock2.h>
 #include <ws2tcpip.h>
-#pragma comment(lib, "ws2_32.lib")
 #include <iostream>
 #include <sstream>
 #include <vector>
+#pragma comment(lib, "ws2_32.lib")
 
 std::atomic<bool> g_CommandSocketRunning{ false };
 
 void CommandSocketThread(CGameServer* pServer)
-
 {
 	WSADATA wsaData;
 	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
@@ -78,21 +74,55 @@ void CommandSocketThread(CGameServer* pServer)
 	int startPort = 6666;
 	int maxAttempts = 10;
 	int usedPort = 0;
-	for (int i = 0; i < maxAttempts; ++i) {
+
+	// Prefer binding to the channel-specific port (startPort + channel).
+	std::vector<int> candidatePorts;
+	candidatePorts.reserve(maxAttempts + 1);
+	int preferredPort = startPort + pServer->GetGsChannel();
+	candidatePorts.push_back(preferredPort);
+	for (int i = 0; i < maxAttempts; ++i)
+	{
+		int candidate = startPort + i;
+		bool alreadyListed = false;
+		for (int existing : candidatePorts)
+		{
+			if (existing == candidate)
+			{
+				alreadyListed = true;
+				break;
+			}
+		}
+		if (!alreadyListed)
+			candidatePorts.push_back(candidate);
+	}
+
+	for (int port : candidatePorts)
+	{
 		listenSock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-		if (listenSock == INVALID_SOCKET) {
+		if (listenSock == INVALID_SOCKET)
+		{
 			std::cerr << "Socket creation failed" << std::endl;
 			WSACleanup();
 			return;
 		}
+
+		// Bind to localhost only for security
 		sockaddr_in serverAddr{};
 		serverAddr.sin_family = AF_INET;
-		serverAddr.sin_addr.s_addr = inet_addr("127.0.0.1");
-		serverAddr.sin_port = htons(startPort + i);
-		if (bind(listenSock, (sockaddr*)&serverAddr, sizeof(serverAddr)) == 0) {
-			usedPort = startPort + i;
+		serverAddr.sin_addr.s_addr = inet_addr("127.0.0.1"); // this socket only listens on localhost
+		serverAddr.sin_port = htons(port);
+		if (bind(listenSock, (sockaddr*)&serverAddr, sizeof(serverAddr)) == 0)
+		{
+			usedPort = port;
+			if (usedPort != preferredPort)
+			{
+				std::cout << "[GameServer] Command socket fallback port " << usedPort
+					<< " (preferred " << preferredPort << " busy)" << std::endl;
+			}
 			break;
 		}
+
+		// Bind failed, try next
 		closesocket(listenSock);
 		listenSock = INVALID_SOCKET;
 	}
@@ -107,11 +137,19 @@ void CommandSocketThread(CGameServer* pServer)
 		WSACleanup();
 		return;
 	}
+	
 	std::cout << "[GameServer] Command socket listening on 127.0.0.1:" << usedPort << std::endl;
 	g_CommandSocketRunning = true;
 	while (g_CommandSocketRunning) {
-		SOCKET clientSock = accept(listenSock, nullptr, nullptr);
+		sockaddr_in clientAddr{};
+		int addrLen = sizeof(clientAddr);
+		SOCKET clientSock = accept(listenSock, (sockaddr*)&clientAddr, &addrLen);
 		if (clientSock == INVALID_SOCKET) continue;
+		const char* ipStr = inet_ntoa(clientAddr.sin_addr);
+		NTL_PRINT(PRINT_APP, _T("[CommandSocket] Connection from %S:%u (channel %u)"),
+			ipStr ? ipStr : "127.0.0.1", ntohs(clientAddr.sin_port), (unsigned)pServer->GetGsChannel());
+		ERR_LOG(LOG_GENERAL, "[CommandSocket] Connection from %S:%u (channel %u)",
+			ipStr ? ipStr : "127.0.0.1", ntohs(clientAddr.sin_port), (unsigned)pServer->GetGsChannel());
 		char buffer[256] = { 0 };
 		int bytes = recv(clientSock, buffer, sizeof(buffer) - 1, 0);
 		if (bytes > 0) {
@@ -121,6 +159,10 @@ void CommandSocketThread(CGameServer* pServer)
 			cmd.erase(std::remove(cmd.begin(), cmd.end(), '\r'), cmd.end());
 			cmd.erase(std::remove(cmd.begin(), cmd.end(), '\n'), cmd.end());
 			BOOL result = pServer->OnCommandInput(cmd);
+			NTL_PRINT(PRINT_APP, _T("[CommandSocket] Command '%S' -> %s"),
+				cmd.c_str(), result == TRUE ? "OK" : "KO");
+			ERR_LOG(LOG_GENERAL, "[CommandSocket] Command '%S' -> %s",
+				cmd.c_str(), result == TRUE ? "OK" : "KO");
 			const char* reply = (result == TRUE) ? "OK\n" : "KO\n";
 			send(clientSock, reply, (int)strlen(reply), 0);
 		}
@@ -129,7 +171,7 @@ void CommandSocketThread(CGameServer* pServer)
 	closesocket(listenSock);
 	WSACleanup();
 }
-// --- FIN SOCKET COMANDOS ---
+// --- END ADMIN SOCKET COMMANDS ---
 
 
 CGameServer::CGameServer()
@@ -355,6 +397,19 @@ int CGameServer::OnAppStart()
 		NTL_PRINT(PRINT_APP, ok ? "[FEATURE_FLAGS] Config loaded successfully" : "[FEATURE_FLAGS] Config not found, using defaults");
 	}
 
+	NTL_PRINT(PRINT_APP, "Prepare Dungeon Configuration System");
+	CDungeonConfig* pDungeonConfig = new CDungeonConfig;
+	UNREFERENCED_PARAMETER(pDungeonConfig);
+
+	// Load Dungeon config from GameServer.ini [DUNGEONS] section
+	// Note: This uses the same GameServer.ini path that was passed to OnConfiguration()
+	{
+		const char* gameServerIni = ".\\config\\GameServer.ini";
+		NTL_PRINT(PRINT_APP, "[DUNGEON_CONFIG] Loading config from: %s [DUNGEONS]", gameServerIni);
+		bool ok = g_pDungeonConfig->LoadFromFile(gameServerIni);
+		NTL_PRINT(PRINT_APP, ok ? "[DUNGEON_CONFIG] Config loaded successfully" : "[DUNGEON_CONFIG] Config not found, using defaults");
+	}
+
 	NTL_PRINT(PRINT_APP, "Prepare Virtual Transformation System");
 	CVirtualTransformationManager* pVirtualTransformationManager = new CVirtualTransformationManager;
 	UNREFERENCED_PARAMETER(pVirtualTransformationManager);
@@ -424,11 +479,11 @@ int CGameServer::OnAppStart()
 	NTL_PRINT(PRINT_APP, "GAME SERVER READY ");
 
 	
-	/*static std::thread commandThread;
+	static std::thread commandThread;
 	if (!g_CommandSocketRunning) {
 		commandThread = std::thread(CommandSocketThread, this);
 		commandThread.detach();
-	}*/
+	}
 
 	NTL_PRINT(PRINT_APP, "LOCAL PAGE COMMAND HANDLER READY");
 

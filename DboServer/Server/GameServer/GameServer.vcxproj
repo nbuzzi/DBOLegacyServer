@@ -347,6 +347,7 @@
     <ClCompile Include="ScriptAlgoAction_Default.cpp" />
     <ClCompile Include="ScriptAlgoAction_Case.cpp" />
     <ClCompile Include="DojoManager.cpp" />
+    <ClCompile Include="DungeonConfig.cpp" />
     <ClCompile Include="EndCondition.cpp" />
     <ClCompile Include="EndCondition_HimSelf_LPCheck.cpp" />
     <ClCompile Include="EndCondition_TargetFixAttack.cpp" />
@@ -1044,6 +1045,7 @@
     <ClInclude Include="ContainerActionPatternUnit.h" />
     <ClInclude Include="CPlayer.h" />
     <ClInclude Include="DojoManager.h" />
+    <ClInclude Include="DungeonConfig.h" />
     <ClInclude Include="EndCondition.h" />
     <ClInclude Include="EndCondition_HimSelf_LPCheck.h" />
     <ClInclude Include="EndCondition_TargetFixAttack.h" />

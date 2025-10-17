@@ -5,7 +5,19 @@
       "Bash(git checkout:*)",
       "Bash(cat:*)",
       "Bash(find:*)",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "Bash(dir:*)",
+      "Bash(findstr:*)",
+      "Bash(tree:*)",
+      "Bash(for dir in CustomDropEventEditor DiscordAnnouncer MarkdownViewer ServerMonitor WpsStageGen WpsStageGen.UI)",
+      "Bash(do echo \"=== $dir ===\")",
+      "Bash(ls:*)",
+      "Bash(done)",
+      "Bash(dotnet --version:*)",
+      "Bash(dotnet new:*)",
+      "Bash(dotnet add reference:*)",
+      "Bash(dotnet sln:*)",
+      "Bash(dotnet build:*)"
     ],
     "deny": [],
     "ask": []

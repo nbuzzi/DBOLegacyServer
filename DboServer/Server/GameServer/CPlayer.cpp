@@ -794,6 +794,9 @@ void CPlayer::Initialize()
 	m_dwCameraMoveCount = 0;
 	m_dwCameraMoveDifference = 0;
 
+	// CCBD Boss-Only Mode progression tracking
+	m_byCCBDLastBossStageCleared = 0; // 0 = not yet cleared any boss floor
+
 	m_npcShopData.Init();
 
 	m_dwLastHackCheck = 0;
