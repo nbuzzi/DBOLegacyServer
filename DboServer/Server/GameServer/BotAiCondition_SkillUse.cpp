@@ -245,6 +245,21 @@ int CBotAiCondition_SkillUse::OnUpdate(DWORD dwTickDiff, float fMultiple)
 					pBot->SendCharStateFollowing(pLeader->GetID(), 2.0f, DBO_MOVE_FOLLOW_FRIENDLY, vDest, true, true);
 					if (pHelperCfg->bVerboseLogs)
 						ERR_LOG(LOG_BOTAI, "HelperNPC: resuming follow after resurrection");
+
+					// Resume assist/combat behavior: scan for party target to re-engage
+					bool preferLeader = pHelperCfg->bAssistLeaderTarget;
+					HOBJECT hVictim = ResolvePartyAssistTarget(pLeader, pBot, preferLeader);
+					if (hVictim != INVALID_HOBJECT)
+					{
+						CCharacter* pVictim = g_pObjectManager->GetChar(hVictim);
+						if (pVictim && pVictim->IsInitialized() && pBot->IsTargetAttackble(pVictim, wBotSightRange))
+						{
+							pBot->SetTargetHandle(hVictim);
+							pBot->ChangeAggro(hVictim, DBO_AGGRO_CHANGE_TYPE_INCREASE, wBotBasicAggroPoint + 1);
+							if (pHelperCfg->bVerboseLogs)
+								ERR_LOG(LOG_BOTAI, "HelperNPC: re-engaging target %u after resurrection", hVictim);
+						}
+					}
 				}
 			}
 			// Trigger immediate heal scan on next fast cadence
@@ -270,7 +285,8 @@ int CBotAiCondition_SkillUse::OnUpdate(DWORD dwTickDiff, float fMultiple)
 						CSkillCondition* pCond = pSM->FindSkillCondition(pHelperCfg->resurrectSkillTblidx);
 						if (pCond && pCond->GetCanUseSkill())
 						{
-							if (pBot->GetCharStateID() == CHARSTATE_FOLLOWING || pBot->GetMoveFlag() != NTL_MOVE_FLAG_INVALID)
+							BYTE botState = pBot->GetCharStateID();
+							if (botState == CHARSTATE_FOLLOWING || botState == CHARSTATE_CAMPING || pBot->GetMoveFlag() != NTL_MOVE_FLAG_INVALID)
 								pBot->SendCharStateStanding(true);
 							CBotAiState* pCurState = pBot->GetBotController()->GetCurrentState();
 							if (pCurState)
@@ -1046,7 +1062,8 @@ int CBotAiCondition_SkillUse::OnUpdate(DWORD dwTickDiff, float fMultiple)
 									CSkillCondition* pForcedCond = pBotSkillManager->FindSkillCondition(fsId);
 									if (pForcedCond && pForcedCond->GetCanUseSkill())
 									{
-										if (pBot->GetCharStateID() == CHARSTATE_FOLLOWING || pBot->GetMoveFlag() != NTL_MOVE_FLAG_INVALID)
+										BYTE botState = pBot->GetCharStateID();
+										if (botState == CHARSTATE_FOLLOWING || botState == CHARSTATE_CAMPING || pBot->GetMoveFlag() != NTL_MOVE_FLAG_INVALID)
 											pBot->SendCharStateStanding(true);
 										if (pCfgPrio->bVerboseLogs)
 											ERR_LOG(LOG_BOTAI, "HelperNPC: prioritized forced skill tblidx=%u", fsId);
@@ -1075,7 +1092,8 @@ int CBotAiCondition_SkillUse::OnUpdate(DWORD dwTickDiff, float fMultiple)
 								pSkillCondition = pBotSkillManager->GetSkill(dwTickDiff);
 							if (pSkillCondition && pSkillCondition->GetCanUseSkill())
 							{
-								if (pBot->GetCharStateID() == CHARSTATE_FOLLOWING || pBot->GetMoveFlag() != NTL_MOVE_FLAG_INVALID)
+								BYTE botState = pBot->GetCharStateID();
+								if (botState == CHARSTATE_FOLLOWING || botState == CHARSTATE_CAMPING || pBot->GetMoveFlag() != NTL_MOVE_FLAG_INVALID)
 									pBot->SendCharStateStanding(true);
 								if (pHelperMgr->GetConfig().bVerboseLogs)
 									ERR_LOG(LOG_BOTAI, "HelperNPC: queue skill idx=%u tblidx=%u", pSkillCondition->GetSkillConditionIdx(), pSkillCondition->GetSkillTblidx());
@@ -1198,7 +1216,8 @@ int CBotAiCondition_SkillUse::OnUpdate(DWORD dwTickDiff, float fMultiple)
 						CBotAiState* pCurState = pBot->GetBotController()->GetCurrentState();
 						if (pCurState)
 						{
-							if (pBot->GetCharStateID() == CHARSTATE_FOLLOWING || pBot->GetMoveFlag() != NTL_MOVE_FLAG_INVALID)
+							BYTE botState = pBot->GetCharStateID();
+							if (botState == CHARSTATE_FOLLOWING || botState == CHARSTATE_CAMPING || pBot->GetMoveFlag() != NTL_MOVE_FLAG_INVALID)
 								pBot->SendCharStateStanding(true);
 							CBotAiAction_SkillUse* pSkillUse = new CBotAiAction_SkillUse(pBot, pCond->GetSkillConditionIdx());
 							if (pCurState->AddSubControlQueue(pSkillUse, true))
@@ -1385,7 +1404,8 @@ int CBotAiCondition_SkillUse::OnUpdate(DWORD dwTickDiff, float fMultiple)
 									pSkillCondition = pBotSkillManager->GetSkill(dwTickDiff);
 								if (pSkillCondition && pSkillCondition->GetCanUseSkill())
 								{
-									if (pBot->GetCharStateID() == CHARSTATE_FOLLOWING || pBot->GetMoveFlag() != NTL_MOVE_FLAG_INVALID)
+									BYTE botState = pBot->GetCharStateID();
+									if (botState == CHARSTATE_FOLLOWING || botState == CHARSTATE_CAMPING || pBot->GetMoveFlag() != NTL_MOVE_FLAG_INVALID)
 										pBot->SendCharStateStanding(true);
 									if (pHelperMgr->GetConfig().bVerboseLogs)
 										ERR_LOG(LOG_BOTAI, "HelperNPC: queue skill idx=%u tblidx=%u", pSkillCondition->GetSkillConditionIdx(), pSkillCondition->GetSkillTblidx());

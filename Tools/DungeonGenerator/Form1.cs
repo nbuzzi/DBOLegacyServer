@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Text;
 using System.Text.Json;
 using WpsStageGen;
@@ -6,8 +7,27 @@ namespace DungeonGenerator;
 
 public partial class Form1 : Form
 {
+    private sealed class BaseWpsOption
+    {
+        public BaseWpsOption(string displayName, string fullPath)
+        {
+            DisplayName = displayName;
+            FullPath = fullPath;
+        }
+
+        public string DisplayName { get; }
+        public string FullPath { get; }
+
+        public override string ToString()
+        {
+            return DisplayName;
+        }
+    }
+
     private DungeonProfile? _currentProfile;
     private string _wpsDirectory = "";
+    private bool _syncingArenaSelection;
+    private bool _syncingRewardSelection;
 
     public Form1()
     {
@@ -40,18 +60,31 @@ public partial class Form1 : Form
             }
         }
 
+        PopulateReferenceControls();
+
         // Initialize with default profile
         CreateNewProfile();
     }
 
+    private void PopulateReferenceControls()
+    {
+        PopulateBaseWpsOptions();
+        PopulateArenaOptions();
+        PopulateRewardOptions();
+        SyncArenaSelectionFromText();
+        SyncRewardSelectionFromText();
+    }
+
     private void CreateNewProfile()
     {
+        var baseWpsPath = GetSelectedBaseWpsPath();
+
         _currentProfile = new DungeonProfile
         {
             Name = txtDungeonName.Text,
             Description = txtDescription.Text,
             WpsId = (int)numWpsId.Value,
-            BaseWpsFile = "83000.wps",
+            BaseWpsFile = baseWpsPath,
             FloorCount = (int)numFloorCount.Value,
             BossInterval = (int)numBossInterval.Value,
             StartFloor = (int)numStartFloor.Value,
@@ -63,12 +96,65 @@ public partial class Form1 : Form
             },
             Variables = new VariableConfig()
         };
+
+        UpdateFormFromProfile();
+    }
+
+    private void PopulateBaseWpsOptions()
+    {
+        cmbBaseWpsFile.Items.Clear();
+
+        if (!string.IsNullOrWhiteSpace(_wpsDirectory) && Directory.Exists(_wpsDirectory))
+        {
+            var files = Directory.GetFiles(_wpsDirectory, "*.wps")
+                .Select(Path.GetFileName)
+                .Where(name => !string.IsNullOrWhiteSpace(name))
+                .OrderBy(name => name)
+                .ToList();
+
+            foreach (var file in files)
+            {
+                var fullPath = Path.Combine(_wpsDirectory, file!);
+                cmbBaseWpsFile.Items.Add(new BaseWpsOption(file!, fullPath));
+            }
+        }
+
+        if (cmbBaseWpsFile.Items.Count == 0)
+        {
+            var fallback = ResolveBaseWpsPath("83000.wps");
+            cmbBaseWpsFile.Items.Add(new BaseWpsOption(Path.GetFileName(fallback) ?? fallback, fallback));
+        }
+
+        if (cmbBaseWpsFile.Items.Count > 0 && cmbBaseWpsFile.SelectedIndex < 0)
+        {
+            int defaultIndex = FindBaseWpsOptionIndex("83000.wps");
+            cmbBaseWpsFile.SelectedIndex = defaultIndex >= 0 ? defaultIndex : 0;
+        }
+    }
+
+    private void PopulateArenaOptions()
+    {
+        clbArenaOptions.Items.Clear();
+        foreach (var arena in ReferenceData.ArenaOptions)
+        {
+            clbArenaOptions.Items.Add(arena);
+        }
+    }
+
+    private void PopulateRewardOptions()
+    {
+        lstRewardPresets.Items.Clear();
+        foreach (var reward in ReferenceData.RewardItems)
+        {
+            lstRewardPresets.Items.Add(reward);
+        }
     }
 
     private void UpdateProfileFromForm()
     {
         if (_currentProfile == null) return;
 
+        _currentProfile.BaseWpsFile = GetSelectedBaseWpsPath();
         _currentProfile.Name = txtDungeonName.Text;
         _currentProfile.Description = txtDescription.Text;
         _currentProfile.WpsId = (int)numWpsId.Value;
@@ -120,6 +206,12 @@ public partial class Form1 : Form
     {
         if (_currentProfile == null) return;
 
+        if (!string.IsNullOrWhiteSpace(_currentProfile.BaseWpsFile))
+        {
+            var option = EnsureBaseWpsOptionPresent(_currentProfile.BaseWpsFile);
+            cmbBaseWpsFile.SelectedItem = option;
+        }
+
         txtDungeonName.Text = _currentProfile.Name;
         txtDescription.Text = _currentProfile.Description;
         numWpsId.Value = _currentProfile.WpsId;
@@ -163,7 +255,321 @@ public partial class Form1 : Form
             txtRewardItems.Text = "";
         }
 
+        SyncArenaSelectionFromText();
+        SyncRewardSelectionFromText();
         RefreshBossList();
+    }
+
+    private string GetSelectedBaseWpsPath()
+    {
+        if (cmbBaseWpsFile.SelectedItem is BaseWpsOption option)
+        {
+            return option.FullPath;
+        }
+
+        return ResolveBaseWpsPath(cmbBaseWpsFile.Text);
+    }
+
+    private string ResolveBaseWpsPath(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return string.IsNullOrWhiteSpace(_wpsDirectory)
+                ? "83000.wps"
+                : Path.Combine(_wpsDirectory, "83000.wps");
+        }
+
+        if (Path.IsPathRooted(value))
+        {
+            return value;
+        }
+
+        return string.IsNullOrWhiteSpace(_wpsDirectory)
+            ? value
+            : Path.Combine(_wpsDirectory, value);
+    }
+
+    private int FindBaseWpsOptionIndex(string fileNameOrPath)
+    {
+        if (string.IsNullOrWhiteSpace(fileNameOrPath))
+            return -1;
+
+        string targetName = Path.GetFileName(fileNameOrPath) ?? fileNameOrPath;
+
+        for (int i = 0; i < cmbBaseWpsFile.Items.Count; i++)
+        {
+            if (cmbBaseWpsFile.Items[i] is not BaseWpsOption option)
+                continue;
+
+            if (string.Equals(option.DisplayName, fileNameOrPath, StringComparison.OrdinalIgnoreCase))
+                return i;
+
+            if (string.Equals(option.FullPath, fileNameOrPath, StringComparison.OrdinalIgnoreCase))
+                return i;
+
+            if (string.Equals(Path.GetFileName(option.FullPath), targetName, StringComparison.OrdinalIgnoreCase))
+                return i;
+        }
+
+        return -1;
+    }
+
+    private BaseWpsOption EnsureBaseWpsOptionPresent(string fullPath)
+    {
+        string normalized = NormalizePath(fullPath);
+
+        for (int i = 0; i < cmbBaseWpsFile.Items.Count; i++)
+        {
+            if (cmbBaseWpsFile.Items[i] is BaseWpsOption option)
+            {
+                if (string.Equals(NormalizePath(option.FullPath), normalized, StringComparison.OrdinalIgnoreCase))
+                {
+                    return option;
+                }
+            }
+        }
+
+        var display = GetBaseWpsDisplayName(fullPath);
+        var newOption = new BaseWpsOption(display, fullPath);
+        cmbBaseWpsFile.Items.Add(newOption);
+        return newOption;
+    }
+
+    private static string NormalizePath(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+            return path;
+
+        try
+        {
+            return Path.GetFullPath(path);
+        }
+        catch
+        {
+            return path;
+        }
+    }
+
+    private string GetBaseWpsDisplayName(string fullPath)
+    {
+        if (string.IsNullOrWhiteSpace(fullPath))
+            return fullPath;
+
+        if (!string.IsNullOrWhiteSpace(_wpsDirectory))
+        {
+            var directory = NormalizePath(_wpsDirectory);
+            var normalized = NormalizePath(fullPath);
+            if (!string.IsNullOrWhiteSpace(directory) && normalized.StartsWith(directory, StringComparison.OrdinalIgnoreCase))
+            {
+                return Path.GetFileName(normalized) ?? fullPath;
+            }
+        }
+
+        return Path.GetFileName(fullPath) ?? fullPath;
+    }
+
+    private void SyncArenaSelectionFromText()
+    {
+        if (_syncingArenaSelection)
+            return;
+
+        try
+        {
+            _syncingArenaSelection = true;
+            var selections = txtArenaRotation.Text
+                .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                .Select(s => s.Trim())
+                .Where(s => s.Length > 0)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            for (int i = 0; i < clbArenaOptions.Items.Count; i++)
+            {
+                var item = clbArenaOptions.Items[i]?.ToString() ?? string.Empty;
+                clbArenaOptions.SetItemChecked(i, selections.Contains(item));
+            }
+        }
+        finally
+        {
+            _syncingArenaSelection = false;
+        }
+    }
+
+    private void UpdateArenaTextFromCheckedItems()
+    {
+        if (_syncingArenaSelection)
+            return;
+
+        try
+        {
+            _syncingArenaSelection = true;
+            var selected = clbArenaOptions.CheckedItems
+                .Cast<object>()
+                .Select(item => item?.ToString() ?? string.Empty)
+                .Where(text => !string.IsNullOrWhiteSpace(text))
+                .ToList();
+
+            txtArenaRotation.Text = string.Join(",", selected);
+        }
+        finally
+        {
+            _syncingArenaSelection = false;
+        }
+    }
+
+    private void TxtArenaRotation_TextChanged(object? sender, EventArgs e)
+    {
+        if (_syncingArenaSelection)
+            return;
+
+        SyncArenaSelectionFromText();
+    }
+
+    private void ClbArenaOptions_ItemCheck(object? sender, ItemCheckEventArgs e)
+    {
+        if (_syncingArenaSelection)
+            return;
+
+        BeginInvoke(new Action(UpdateArenaTextFromCheckedItems));
+    }
+
+    private void BtnArenaApply_Click(object? sender, EventArgs e)
+    {
+        UpdateArenaTextFromCheckedItems();
+    }
+
+    private void BtnArenaClear_Click(object? sender, EventArgs e)
+    {
+        if (_syncingArenaSelection)
+            return;
+
+        try
+        {
+            _syncingArenaSelection = true;
+            for (int i = 0; i < clbArenaOptions.Items.Count; i++)
+            {
+                clbArenaOptions.SetItemChecked(i, false);
+            }
+            txtArenaRotation.Text = string.Empty;
+        }
+        finally
+        {
+            _syncingArenaSelection = false;
+        }
+    }
+
+    private List<int> ParseRewardItemsFromText()
+    {
+        return txtRewardItems.Text
+            .Split(',', StringSplitOptions.RemoveEmptyEntries)
+            .Select(s => int.TryParse(s.Trim(), out var id) ? id : 0)
+            .Where(id => id > 0)
+            .ToList();
+    }
+
+    private void SyncRewardSelectionFromText()
+    {
+        if (_syncingRewardSelection)
+            return;
+
+        try
+        {
+            _syncingRewardSelection = true;
+            var selectedIds = ParseRewardItemsFromText().ToHashSet();
+
+            for (int i = 0; i < lstRewardPresets.Items.Count; i++)
+            {
+                if (lstRewardPresets.Items[i] is ReferenceData.RewardItemOption option)
+                {
+                    lstRewardPresets.SetSelected(i, selectedIds.Contains(option.ItemId));
+                }
+            }
+        }
+        finally
+        {
+            _syncingRewardSelection = false;
+        }
+    }
+
+    private void TxtRewardItems_TextChanged(object? sender, EventArgs e)
+    {
+        if (_syncingRewardSelection)
+            return;
+
+        SyncRewardSelectionFromText();
+    }
+
+    private void AddRewardItems(IEnumerable<int> itemIds)
+    {
+        var current = ParseRewardItemsFromText();
+        foreach (var id in itemIds)
+        {
+            if (!current.Contains(id))
+            {
+                current.Add(id);
+            }
+        }
+
+        _syncingRewardSelection = true;
+        try
+        {
+            txtRewardItems.Text = string.Join(",", current);
+        }
+        finally
+        {
+            _syncingRewardSelection = false;
+        }
+
+        SyncRewardSelectionFromText();
+    }
+
+    private void BtnAddRewardPreset_Click(object? sender, EventArgs e)
+    {
+        var selected = lstRewardPresets.SelectedItems
+            .Cast<ReferenceData.RewardItemOption>()
+            .Select(option => option.ItemId)
+            .ToList();
+
+        if (selected.Count == 0)
+            return;
+
+        AddRewardItems(selected);
+    }
+
+    private void BtnClearRewardPreset_Click(object? sender, EventArgs e)
+    {
+        txtRewardItems.Text = string.Empty;
+    }
+
+    private void LstRewardPresets_DoubleClick(object? sender, EventArgs e)
+    {
+        BtnAddRewardPreset_Click(sender, e);
+    }
+
+    private void CmbBaseWpsFile_SelectedIndexChanged(object? sender, EventArgs e)
+    {
+        if (_currentProfile == null)
+            return;
+
+        _currentProfile.BaseWpsFile = GetSelectedBaseWpsPath();
+    }
+
+    private void BtnBrowseBaseWps_Click(object? sender, EventArgs e)
+    {
+        using var dialog = new OpenFileDialog
+        {
+            Filter = "WPS Files (*.wps)|*.wps|All Files (*.*)|*.*",
+            InitialDirectory = Directory.Exists(_wpsDirectory) ? _wpsDirectory : AppDomain.CurrentDomain.BaseDirectory
+        };
+
+        if (dialog.ShowDialog() == DialogResult.OK)
+        {
+            var option = EnsureBaseWpsOptionPresent(dialog.FileName);
+            cmbBaseWpsFile.SelectedItem = option;
+            if (_currentProfile != null)
+            {
+                _currentProfile.BaseWpsFile = option.FullPath;
+            }
+        }
     }
 
     private void RefreshBossList()

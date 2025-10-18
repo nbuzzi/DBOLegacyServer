@@ -3,9 +3,12 @@ namespace RdfTableEditor.Model.Schema;
 public enum ScalarType
 {
     U8,
+    S8,
     Bool, // 1 byte
     U16,
+    S16,
     U32,
+    S32,
     Float,
     Double,
     WStringFixed, // UTF-16LE fixed-length (wcharCount)

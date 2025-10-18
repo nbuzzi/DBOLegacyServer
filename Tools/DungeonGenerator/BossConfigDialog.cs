@@ -1,17 +1,19 @@
+using System.Linq;
 using WpsStageGen;
 
 namespace DungeonGenerator;
 
 public class BossConfigDialog : Form
 {
-    private ComboBox cmbFloor;
-    private NumericUpDown numBossGroup;
-    private ComboBox cmbMechanics;
-    private TextBox txtArena;
-    private NumericUpDown numReward;
-    private TextBox txtDescription;
-    private Button btnOk;
-    private Button btnCancel;
+    private ComboBox cmbFloor = null!;
+    private NumericUpDown numBossGroup = null!;
+    private ComboBox cmbMechanics = null!;
+    private ComboBox cmbArena = null!;
+    private NumericUpDown numReward = null!;
+    private ComboBox cmbRewardPreset = null!;
+    private TextBox txtDescription = null!;
+    private Button btnOk = null!;
+    private Button btnCancel = null!;
 
     public IndividualBossConfig? BossConfig { get; private set; }
     private readonly DungeonProfile _profile;
@@ -91,12 +93,15 @@ public class BossConfigDialog : Form
 
         // Arena
         var lblArena = new Label { Text = "Arena World ID:", Location = new Point(20, y), AutoSize = true };
-        txtArena = new TextBox
+        cmbArena = new ComboBox
         {
             Location = new Point(150, y - 3),
             Width = 300,
-            PlaceholderText = "ARENA_FIRE, ARENA_ICE, etc. (optional)"
+            DropDownStyle = ComboBoxStyle.DropDown,
+            AutoCompleteMode = AutoCompleteMode.SuggestAppend,
+            AutoCompleteSource = AutoCompleteSource.ListItems
         };
+        cmbArena.Items.AddRange(ReferenceData.ArenaOptions.ToArray());
         y += 35;
 
         // Reward
@@ -109,6 +114,20 @@ public class BossConfigDialog : Form
             Minimum = 0,
             Value = 0
         };
+        numReward.ValueChanged += NumReward_ValueChanged;
+
+        cmbRewardPreset = new ComboBox
+        {
+            Location = new Point(310, y - 3),
+            Width = 140,
+            DropDownStyle = ComboBoxStyle.DropDownList,
+            FormattingEnabled = true
+        };
+        foreach (var reward in ReferenceData.RewardItems)
+        {
+            cmbRewardPreset.Items.Add(reward);
+        }
+        cmbRewardPreset.SelectedIndexChanged += CmbRewardPreset_SelectedIndexChanged;
         y += 35;
 
         // Description
@@ -143,8 +162,8 @@ public class BossConfigDialog : Form
             lblFloor, cmbFloor,
             lblBossGroup, numBossGroup,
             lblMechanics, cmbMechanics,
-            lblArena, txtArena,
-            lblReward, numReward,
+            lblArena, cmbArena,
+            lblReward, numReward, cmbRewardPreset,
             lblDesc, txtDescription,
             btnOk, btnCancel
         });
@@ -173,14 +192,46 @@ public class BossConfigDialog : Form
             cmbMechanics.SelectedIndex = 2;
         }
 
-        txtArena.Text = config.Arena ?? "";
+        cmbArena.Text = config.Arena ?? string.Empty;
 
         if (config.RewardItem.HasValue && config.RewardItem.Value > 0)
         {
             numReward.Value = config.RewardItem.Value;
         }
+        else
+        {
+            numReward.Value = 0;
+            cmbRewardPreset.SelectedIndex = -1;
+        }
 
         txtDescription.Text = config.Description ?? "";
+    }
+
+    private void CmbRewardPreset_SelectedIndexChanged(object? sender, EventArgs e)
+    {
+        if (cmbRewardPreset.SelectedItem is ReferenceData.RewardItemOption option)
+        {
+            if (numReward.Value != option.ItemId)
+            {
+                numReward.Value = option.ItemId;
+            }
+        }
+    }
+
+    private void NumReward_ValueChanged(object? sender, EventArgs e)
+    {
+        var index = ReferenceData.FindRewardItemIndex((int)numReward.Value);
+        if (index >= 0)
+        {
+            if (cmbRewardPreset.SelectedIndex != index)
+            {
+                cmbRewardPreset.SelectedIndex = index;
+            }
+        }
+        else if (cmbRewardPreset.SelectedIndex != -1)
+        {
+            cmbRewardPreset.SelectedIndex = -1;
+        }
     }
 
     private void BtnOk_Click(object? sender, EventArgs e)
@@ -198,7 +249,7 @@ public class BossConfigDialog : Form
             Floor = (int)cmbFloor.SelectedItem,
             BossGroup = (int)numBossGroup.Value,
             MechanicsTemplate = cmbMechanics.SelectedIndex > 0 ? cmbMechanics.Text : null,
-            Arena = string.IsNullOrWhiteSpace(txtArena.Text) ? null : txtArena.Text,
+            Arena = string.IsNullOrWhiteSpace(cmbArena.Text) ? null : cmbArena.Text,
             RewardItem = numReward.Value > 0 ? (int)numReward.Value : null,
             Description = txtDescription.Text,
             Variables = new Dictionary<string, string>()

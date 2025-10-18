@@ -9,6 +9,7 @@ CWpsNodeAction_CCBD_stage::CWpsNodeAction_CCBD_stage(const char* lpszName)
 {
 	m_byStage = INVALID_BYTE;
 	m_bDirectPlay = true;
+	m_byBossArenaSlot = INVALID_BYTE;
 }
 
 CWpsNodeAction_CCBD_stage::~CWpsNodeAction_CCBD_stage()
@@ -23,6 +24,12 @@ bool CWpsNodeAction_CCBD_stage::AddParam(CControlScriptNodeParam_Number* pNode)
 	if (_stricmp(name, "stage") == 0)
 	{
 		m_byStage = (BYTE)pNode->GetValue();
+		return CControlScriptNode::AddParam(pNode);
+	}
+
+	if (_stricmp(name, "boss arena slot") == 0)
+	{
+		m_byBossArenaSlot = (BYTE)pNode->GetValue();
 		return CControlScriptNode::AddParam(pNode);
 	}
 

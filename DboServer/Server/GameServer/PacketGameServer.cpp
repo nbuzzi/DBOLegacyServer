@@ -11801,18 +11801,32 @@ void CClientSession::RecvBattleDungeonEnterReq(CNtlPacket* pPacket)
 						// Check if CCBD Boss-Only Mode is enabled
 						if (g_pDungeonConfig->IsCCBDBossOnlyModeEnabled())
 						{
-							// Progressive boss floor system: 5, 10, 15, 20, 25...
-							BYTE byLastCleared = cPlayer->GetCCBDLastBossStageCleared();
-							if (byLastCleared == 0)
+							// If a ticket was used, round the ticket floor value to the nearest boss floor
+							// Boss floors are every 5 floors: 5, 10, 15, 20, 25, etc.
+							// Examples: 131 -> 135, 91 -> 95, 136 -> 140, 3 -> 5
+							if (pItem && byBeginStage > 0)
 							{
-								byBeginStage = 5; // First time: start at floor 5
+								// Round up to the next multiple of 5
+								// Formula: ((value - 1) / 5 + 1) * 5
+								byBeginStage = ((byBeginStage - 1) / 5 + 1) * 5;
+								ERR_LOG(LOG_GENERAL, "[CCBD_BOSS_MODE] Ticket floor rounded to boss floor: %u", byBeginStage);
 							}
 							else
 							{
-								// Continue to next boss floor (last + 5)
-								byBeginStage = byLastCleared + 5;
+								// No ticket used, use progressive system based on last cleared floor
+								BYTE byLastCleared = cPlayer->GetCCBDLastBossStageCleared();
+								if (byLastCleared == 0)
+								{
+									byBeginStage = 5; // First time: start at floor 5
+								}
+								else
+								{
+									// Continue to next boss floor (last + 5)
+									byBeginStage = byLastCleared + 5;
+								}
+								ERR_LOG(LOG_GENERAL, "[CCBD_BOSS_MODE] Progressive boss floor: %u", byBeginStage);
 							}
-						}						
+						}
 						CBattleDungeon* pDungeon = g_pDungeonManager->CreateBattleDungeon(cPlayer, wResultcode, byBeginStage);
 						if (pDungeon == NULL)
 							wResultcode = GAME_PARTY_DUNGEON_IS_NOT_CREATED;

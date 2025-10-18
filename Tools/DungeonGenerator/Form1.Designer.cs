@@ -45,9 +45,12 @@ partial class Form1
         Label lblBossInterval;
         Label lblStartFloor;
         Label lblBossGroupBase;
-        Label lblMechanicsTemplate;
-        Label lblArenaRotation;
-        Label lblRewardItems;
+    Label lblMechanicsTemplate;
+    Label lblArenaRotation;
+    Label lblRewardItems;
+    Label lblBaseWps;
+    Label lblArenaQuickPick;
+    Label lblRewardPresets;
 
         tabControl = new TabControl();
         tabBasic = new TabPage();
@@ -69,19 +72,30 @@ partial class Form1
         lblMechanicsTemplate = new Label();
         lblArenaRotation = new Label();
         lblRewardItems = new Label();
+    lblBaseWps = new Label();
+    lblArenaQuickPick = new Label();
+    lblRewardPresets = new Label();
 
         txtDungeonName = new TextBox();
         numWpsId = new NumericUpDown();
         btnFindNextId = new Button();
-        txtDescription = new TextBox();
+    txtDescription = new TextBox();
+    cmbBaseWpsFile = new ComboBox();
+    btnBrowseBaseWps = new Button();
         numFloorCount = new NumericUpDown();
         numBossInterval = new NumericUpDown();
         numStartFloor = new NumericUpDown();
         numBossGroupBase = new NumericUpDown();
         cmbMechanicsTemplate = new ComboBox();
         chkIncrementBossGroup = new CheckBox();
-        txtArenaRotation = new TextBox();
-        txtRewardItems = new TextBox();
+    txtArenaRotation = new TextBox();
+    txtRewardItems = new TextBox();
+    clbArenaOptions = new CheckedListBox();
+    btnArenaApply = new Button();
+    btnArenaClear = new Button();
+    lstRewardPresets = new ListBox();
+    btnAddRewardPreset = new Button();
+    btnClearRewardPreset = new Button();
         lstIndividualBosses = new ListBox();
         btnAddBoss = new Button();
         btnEditBoss = new Button();
@@ -141,7 +155,10 @@ partial class Form1
         //
         // grpBasicInfo
         //
-        grpBasicInfo.Controls.Add(lblName);
+    grpBasicInfo.Controls.Add(lblBaseWps);
+    grpBasicInfo.Controls.Add(cmbBaseWpsFile);
+    grpBasicInfo.Controls.Add(btnBrowseBaseWps);
+    grpBasicInfo.Controls.Add(lblName);
         grpBasicInfo.Controls.Add(txtDungeonName);
         grpBasicInfo.Controls.Add(lblWpsId);
         grpBasicInfo.Controls.Add(numWpsId);
@@ -150,7 +167,7 @@ partial class Form1
         grpBasicInfo.Controls.Add(txtDescription);
         grpBasicInfo.Location = new Point(13, 13);
         grpBasicInfo.Name = "grpBasicInfo";
-        grpBasicInfo.Size = new Size(966, 140);
+    grpBasicInfo.Size = new Size(966, 180);
         grpBasicInfo.TabIndex = 0;
         grpBasicInfo.TabStop = false;
         grpBasicInfo.Text = "Basic Information";
@@ -227,6 +244,38 @@ partial class Form1
         txtDescription.TabIndex = 6;
         txtDescription.Text = "A custom CCBD-like dungeon";
 
+    //
+    // lblBaseWps
+    //
+    lblBaseWps.AutoSize = true;
+    lblBaseWps.Location = new Point(15, 131);
+    lblBaseWps.Name = "lblBaseWps";
+    lblBaseWps.Size = new Size(88, 15);
+    lblBaseWps.TabIndex = 7;
+    lblBaseWps.Text = "Base WPS File:";
+
+    //
+    // cmbBaseWpsFile
+    //
+    cmbBaseWpsFile.DropDownStyle = ComboBoxStyle.DropDownList;
+    cmbBaseWpsFile.FormattingEnabled = true;
+    cmbBaseWpsFile.Location = new Point(130, 128);
+    cmbBaseWpsFile.Name = "cmbBaseWpsFile";
+    cmbBaseWpsFile.Size = new Size(300, 23);
+    cmbBaseWpsFile.TabIndex = 8;
+    cmbBaseWpsFile.SelectedIndexChanged += CmbBaseWpsFile_SelectedIndexChanged;
+
+    //
+    // btnBrowseBaseWps
+    //
+    btnBrowseBaseWps.Location = new Point(436, 127);
+    btnBrowseBaseWps.Name = "btnBrowseBaseWps";
+    btnBrowseBaseWps.Size = new Size(94, 25);
+    btnBrowseBaseWps.TabIndex = 9;
+    btnBrowseBaseWps.Text = "Browse...";
+    btnBrowseBaseWps.UseVisualStyleBackColor = true;
+    btnBrowseBaseWps.Click += BtnBrowseBaseWps_Click;
+
         //
         // grpFloorSettings
         //
@@ -236,7 +285,7 @@ partial class Form1
         grpFloorSettings.Controls.Add(numBossInterval);
         grpFloorSettings.Controls.Add(lblStartFloor);
         grpFloorSettings.Controls.Add(numStartFloor);
-        grpFloorSettings.Location = new Point(13, 159);
+    grpFloorSettings.Location = new Point(13, 199);
         grpFloorSettings.Name = "grpFloorSettings";
         grpFloorSettings.Size = new Size(966, 80);
         grpFloorSettings.TabIndex = 1;
@@ -315,7 +364,7 @@ partial class Form1
         grpBossDefaults.Controls.Add(lblMechanicsTemplate);
         grpBossDefaults.Controls.Add(cmbMechanicsTemplate);
         grpBossDefaults.Controls.Add(chkIncrementBossGroup);
-        grpBossDefaults.Location = new Point(13, 245);
+    grpBossDefaults.Location = new Point(13, 285);
         grpBossDefaults.Name = "grpBossDefaults";
         grpBossDefaults.Size = new Size(966, 100);
         grpBossDefaults.TabIndex = 2;
@@ -382,13 +431,21 @@ partial class Form1
         //
         // grpArenaReward
         //
-        grpArenaReward.Controls.Add(lblArenaRotation);
-        grpArenaReward.Controls.Add(txtArenaRotation);
-        grpArenaReward.Controls.Add(lblRewardItems);
-        grpArenaReward.Controls.Add(txtRewardItems);
-        grpArenaReward.Location = new Point(13, 351);
+    grpArenaReward.Controls.Add(lblArenaQuickPick);
+    grpArenaReward.Controls.Add(clbArenaOptions);
+    grpArenaReward.Controls.Add(btnArenaApply);
+    grpArenaReward.Controls.Add(btnArenaClear);
+    grpArenaReward.Controls.Add(lblRewardPresets);
+    grpArenaReward.Controls.Add(lstRewardPresets);
+    grpArenaReward.Controls.Add(btnAddRewardPreset);
+    grpArenaReward.Controls.Add(btnClearRewardPreset);
+    grpArenaReward.Controls.Add(lblArenaRotation);
+    grpArenaReward.Controls.Add(txtArenaRotation);
+    grpArenaReward.Controls.Add(lblRewardItems);
+    grpArenaReward.Controls.Add(txtRewardItems);
+    grpArenaReward.Location = new Point(13, 391);
         grpArenaReward.Name = "grpArenaReward";
-        grpArenaReward.Size = new Size(966, 100);
+    grpArenaReward.Size = new Size(966, 230);
         grpArenaReward.TabIndex = 3;
         grpArenaReward.TabStop = false;
         grpArenaReward.Text = "Arena && Rewards";
@@ -411,6 +468,7 @@ partial class Form1
         txtArenaRotation.PlaceholderText = "ARENA_FIRE,ARENA_ICE,ARENA_LIGHTNING (leave empty for defaults)";
         txtArenaRotation.Size = new Size(820, 23);
         txtArenaRotation.TabIndex = 1;
+    txtArenaRotation.TextChanged += TxtArenaRotation_TextChanged;
 
         //
         // lblRewardItems
@@ -431,6 +489,94 @@ partial class Form1
         txtRewardItems.Size = new Size(820, 23);
         txtRewardItems.TabIndex = 3;
         txtRewardItems.Text = "7000002";
+    txtRewardItems.TextChanged += TxtRewardItems_TextChanged;
+
+    //
+    // lblArenaQuickPick
+    //
+    lblArenaQuickPick.AutoSize = true;
+    lblArenaQuickPick.Location = new Point(15, 105);
+    lblArenaQuickPick.Name = "lblArenaQuickPick";
+    lblArenaQuickPick.Size = new Size(95, 15);
+    lblArenaQuickPick.TabIndex = 4;
+    lblArenaQuickPick.Text = "Arena quick pick:";
+
+    //
+    // clbArenaOptions
+    //
+    clbArenaOptions.CheckOnClick = true;
+    clbArenaOptions.FormattingEnabled = true;
+    clbArenaOptions.Location = new Point(130, 100);
+    clbArenaOptions.Name = "clbArenaOptions";
+    clbArenaOptions.Size = new Size(300, 112);
+    clbArenaOptions.TabIndex = 5;
+    clbArenaOptions.ItemCheck += ClbArenaOptions_ItemCheck;
+
+    //
+    // btnArenaApply
+    //
+    btnArenaApply.Location = new Point(440, 100);
+    btnArenaApply.Name = "btnArenaApply";
+    btnArenaApply.Size = new Size(120, 25);
+    btnArenaApply.TabIndex = 6;
+    btnArenaApply.Text = "Use Selection";
+    btnArenaApply.UseVisualStyleBackColor = true;
+    btnArenaApply.Click += BtnArenaApply_Click;
+
+    //
+    // btnArenaClear
+    //
+    btnArenaClear.Location = new Point(440, 131);
+    btnArenaClear.Name = "btnArenaClear";
+    btnArenaClear.Size = new Size(120, 25);
+    btnArenaClear.TabIndex = 7;
+    btnArenaClear.Text = "Clear Selection";
+    btnArenaClear.UseVisualStyleBackColor = true;
+    btnArenaClear.Click += BtnArenaClear_Click;
+
+    //
+    // lblRewardPresets
+    //
+    lblRewardPresets.AutoSize = true;
+    lblRewardPresets.Location = new Point(580, 105);
+    lblRewardPresets.Name = "lblRewardPresets";
+    lblRewardPresets.Size = new Size(90, 15);
+    lblRewardPresets.TabIndex = 8;
+    lblRewardPresets.Text = "Reward presets:";
+
+    //
+    // lstRewardPresets
+    //
+    lstRewardPresets.FormattingEnabled = true;
+    lstRewardPresets.ItemHeight = 15;
+    lstRewardPresets.Location = new Point(580, 123);
+    lstRewardPresets.Name = "lstRewardPresets";
+    lstRewardPresets.SelectionMode = SelectionMode.MultiExtended;
+    lstRewardPresets.Size = new Size(270, 64);
+    lstRewardPresets.TabIndex = 9;
+    lstRewardPresets.DoubleClick += LstRewardPresets_DoubleClick;
+
+    //
+    // btnAddRewardPreset
+    //
+    btnAddRewardPreset.Location = new Point(580, 200);
+    btnAddRewardPreset.Name = "btnAddRewardPreset";
+    btnAddRewardPreset.Size = new Size(120, 25);
+    btnAddRewardPreset.TabIndex = 10;
+    btnAddRewardPreset.Text = "Add Selected";
+    btnAddRewardPreset.UseVisualStyleBackColor = true;
+    btnAddRewardPreset.Click += BtnAddRewardPreset_Click;
+
+    //
+    // btnClearRewardPreset
+    //
+    btnClearRewardPreset.Location = new Point(710, 200);
+    btnClearRewardPreset.Name = "btnClearRewardPreset";
+    btnClearRewardPreset.Size = new Size(120, 25);
+    btnClearRewardPreset.TabIndex = 11;
+    btnClearRewardPreset.Text = "Clear";
+    btnClearRewardPreset.UseVisualStyleBackColor = true;
+    btnClearRewardPreset.Click += BtnClearRewardPreset_Click;
 
         //
         // tabBosses
@@ -656,6 +802,8 @@ partial class Form1
     private NumericUpDown numWpsId;
     private Button btnFindNextId;
     private TextBox txtDescription;
+    private ComboBox cmbBaseWpsFile;
+    private Button btnBrowseBaseWps;
     private NumericUpDown numFloorCount;
     private NumericUpDown numBossInterval;
     private NumericUpDown numStartFloor;
@@ -664,6 +812,12 @@ partial class Form1
     private CheckBox chkIncrementBossGroup;
     private TextBox txtArenaRotation;
     private TextBox txtRewardItems;
+    private CheckedListBox clbArenaOptions;
+    private Button btnArenaApply;
+    private Button btnArenaClear;
+    private ListBox lstRewardPresets;
+    private Button btnAddRewardPreset;
+    private Button btnClearRewardPreset;
     private ListBox lstIndividualBosses;
     private Button btnAddBoss;
     private Button btnEditBoss;

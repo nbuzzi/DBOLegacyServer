@@ -2,6 +2,7 @@
 #define __SCRIPT_ALGO_DBOG_ACTION_CCBD_STAGE_H__
 
 #include "ScriptAlgoAction.h"
+#include "NtlSharedType.h"
 
 
 class CWpsScriptAlgoAction_CCBD_stage : public CScriptAlgoAction
@@ -38,7 +39,8 @@ public:
 	DWORD						m_dwFailTimer;
 
 	bool						m_bIsEveryoneReady;
-	bool					m_bSkipStage;
+	bool				m_bSkipStage;
+	BYTE					m_byBossArenaSlot;
 };
 
 #endif

@@ -5036,7 +5036,16 @@ bool CBudokaiManager::LoadConfigFromIniPath(const char* iniPath)
 
 	if (file.Read("BUDOKAI", "MajorMatchMaxScore", val)) SetMajorMatchMaxScore((BYTE)val);
 	if (file.Read("BUDOKAI", "FinalMatchMaxScore", val)) SetFinalMatchMaxScore((BYTE)val);
-	if (file.Read("BUDOKAI", "TeamMaxMembers", val)) SetTeamMaxMembers((BYTE)val);
+	if (file.Read("BUDOKAI", "TeamMaxMembers", val))
+	{
+		printf("[BUDOKAI] Read TeamMaxMembers from INI: %d\n", val);
+		SetTeamMaxMembers((BYTE)val);
+		printf("[BUDOKAI] TeamMaxMembers set to: %d\n", (int)GetTeamMaxMembers());
+	}
+	else
+	{
+		printf("[BUDOKAI] WARNING: TeamMaxMembers not found in INI! Using default: %d\n", (int)GetTeamMaxMembers());
+	}
 
 	// Schedule configuration
 	// Adult Solo: Up to 9 slots
@@ -7495,10 +7504,18 @@ WORD CBudokaiManager::CheckBudokaiOpen(CPlayer * pPlayer)
 					return GAME_BUDOKAI_YOU_ARE_NOT_A_TEAM_LEADER;
 				// Check exact party size match: must equal configured team size
 				BYTE byRequiredMembers = GetTeamMaxMembers();
-				if(pParty->GetPartyMemberCount() < byRequiredMembers)
+				BYTE byActualMembers = pParty->GetPartyMemberCount();
+				printf("[BUDOKAI] Junior Party Join Check - Required: %d, Actual: %d\n", (int)byRequiredMembers, (int)byActualMembers);
+				if(byActualMembers < byRequiredMembers)
+				{
+					printf("[BUDOKAI] Rejecting: Party has too FEW members (%d < %d)\n", (int)byActualMembers, (int)byRequiredMembers);
 					return GAME_BUDOKAI_NEED_MORE_MEMBER;
-				if(pParty->GetPartyMemberCount() > byRequiredMembers)
+				}
+				if(byActualMembers > byRequiredMembers)
+				{
+					printf("[BUDOKAI] Rejecting: Party has too MANY members (%d > %d)\n", (int)byActualMembers, (int)byRequiredMembers);
 					return GAME_BUDOKAI_NEED_MORE_MEMBER; // Using same error for consistency
+				}
 
 				for (BYTE i = 0; i < pParty->GetPartyMemberCount(); i++)
 				{
@@ -7535,10 +7552,18 @@ WORD CBudokaiManager::CheckBudokaiOpen(CPlayer * pPlayer)
 					return GAME_BUDOKAI_YOU_ARE_NOT_A_TEAM_LEADER;
 				// Check exact party size match: must equal configured team size
 				BYTE byRequiredMembers = GetTeamMaxMembers();
-				if (pParty->GetPartyMemberCount() < byRequiredMembers)
+				BYTE byActualMembers = pParty->GetPartyMemberCount();
+				printf("[BUDOKAI] Adult Party Join Check - Required: %d, Actual: %d\n", (int)byRequiredMembers, (int)byActualMembers);
+				if (byActualMembers < byRequiredMembers)
+				{
+					printf("[BUDOKAI] Rejecting: Party has too FEW members (%d < %d)\n", (int)byActualMembers, (int)byRequiredMembers);
 					return GAME_BUDOKAI_NEED_MORE_MEMBER;
-				if (pParty->GetPartyMemberCount() > byRequiredMembers)
+				}
+				if (byActualMembers > byRequiredMembers)
+				{
+					printf("[BUDOKAI] Rejecting: Party has too MANY members (%d > %d)\n", (int)byActualMembers, (int)byRequiredMembers);
 					return GAME_BUDOKAI_NEED_MORE_MEMBER; // Using same error for consistency
+				}
 
 				for (BYTE i = 0; i < pParty->GetPartyMemberCount(); i++)
 				{

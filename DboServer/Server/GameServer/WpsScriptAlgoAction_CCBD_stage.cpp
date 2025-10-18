@@ -17,6 +17,7 @@ CWpsScriptAlgoAction_CCBD_stage::CWpsScriptAlgoAction_CCBD_stage(CWpsAlgoObject*
 	m_dwFailTimer = CCBD_FAIL_TIMER_IN_MS;
 	m_bIsEveryoneReady = false;
 	m_bSkipStage = false;
+	m_byBossArenaSlot = INVALID_BYTE;
 }
 
 
@@ -32,6 +33,7 @@ bool CWpsScriptAlgoAction_CCBD_stage::AttachControlScriptNode(CControlScriptNode
 	{
 		m_byStage = pAction->m_byStage;
 		m_bDirectPlay = pAction->m_bDirectPlay;
+		m_byBossArenaSlot = pAction->m_byBossArenaSlot;
 
 		return true;
 	}
@@ -46,6 +48,9 @@ void CWpsScriptAlgoAction_CCBD_stage::OnEnter()
 
 	m_bSkipStage = false;
 	m_bIsEveryoneReady = false;
+	// Keep the arena slot value provided by the control node; reset only if invalid
+	if (m_byBossArenaSlot >= ENTER_BOSS_STATE_LOC_COUNT)
+		m_byBossArenaSlot = INVALID_BYTE;
 
 	// CCBD Boss-Only Mode: Skip non-boss floors and snap to the targeted boss floor
 	if (g_pDungeonConfig && g_pDungeonConfig->IsCCBDBossOnlyModeEnabled())
@@ -254,8 +259,12 @@ void CWpsScriptAlgoAction_CCBD_stage::TeleportToBoss()
 
 	BYTE byBossStageCount = (m_byStage / 5) - 1;
 
-	// Cycle through available boss arenas if stage exceeds configured arenas
-	BYTE byArenaIndex = byBossStageCount % ENTER_BOSS_STATE_LOC_COUNT;
+	// Use override when provided; otherwise keep legacy cycling behaviour
+	BYTE byArenaIndex;
+	if (m_byBossArenaSlot != INVALID_BYTE)
+		byArenaIndex = m_byBossArenaSlot % ENTER_BOSS_STATE_LOC_COUNT;
+	else
+		byArenaIndex = byBossStageCount % ENTER_BOSS_STATE_LOC_COUNT;
 
 	WORLDID destWorld = GetOwner()->GetWorld()->GetID();
 	CNtlVector destLoc(g_pTableContainer->GetServerConfigTable()->GetServerConfigData()->sBattleDungeonData.aEnterLoc_BossStage[byArenaIndex].sLoc);

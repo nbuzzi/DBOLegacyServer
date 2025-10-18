@@ -18,6 +18,9 @@ class Program
         bool trace = args.Length > 1 && string.Equals(args[1], "--trace", StringComparison.OrdinalIgnoreCase);
         int traceRow = -1; // optional: --trace-row=N
         bool traceUntilFail = false; // optional: --trace-until-fail
+    bool dump = false; // optional: --dump
+    int headCount = 0; // optional: --head=20
+        string? containsFilter = null; // optional: --contains=BattleDungeon
         for (int i = 1; i < args.Length; i++)
         {
             if (args[i].StartsWith("--trace-row="))
@@ -28,6 +31,20 @@ class Program
             else if (string.Equals(args[i], "--trace-until-fail", StringComparison.OrdinalIgnoreCase))
             {
                 traceUntilFail = true;
+            }
+            else if (string.Equals(args[i], "--dump", StringComparison.OrdinalIgnoreCase))
+            {
+                dump = true;
+            }
+            else if (args[i].StartsWith("--head=", StringComparison.OrdinalIgnoreCase))
+            {
+                var val = args[i].Substring("--head=".Length);
+                if (int.TryParse(val, out var n) && n > 0)
+                    headCount = n;
+            }
+            else if (args[i].StartsWith("--contains=", StringComparison.OrdinalIgnoreCase))
+            {
+                containsFilter = args[i].Substring("--contains=".Length);
             }
         }
         if (!File.Exists(path))
@@ -192,6 +209,31 @@ class Program
 
             Console.WriteLine($"Schema: {schema.Name}");
             Console.WriteLine($"Rows loaded: {doc?.Rows.Count ?? 0} (decrypted={(usedDecrypt ? "yes" : "no")})");
+            if (doc != null && string.Equals(schema.Name, "Item", StringComparison.OrdinalIgnoreCase))
+            {
+                Console.WriteLine($"ItemName variant: var={doc.ItemNameTextIsVar} chars={doc.ItemNameTextChars}");
+            }
+
+            if (headCount > 0 && doc != null && doc.Rows.Count > 0)
+            {
+                int take = Math.Min(headCount, doc.Rows.Count);
+                Console.WriteLine($"Head {take} rows:");
+                for (int i = 0; i < take; i++)
+                {
+                    var row = doc.Rows[i];
+                    row.TryGetScalar<uint>("Tblidx", out var tblidx);
+                    row.TryGetScalar<uint>("Name", out var nameIdx);
+                    row.TryGetScalar<string>("NameText", out var nameText);
+                    row.TryGetScalar<string>("Model", out var model);
+                    row.TryGetScalar<byte>("Item_Type", out var itemType);
+                    row.TryGetScalar<byte>("Equip_Type", out var equipType);
+                    row.TryGetScalar<byte>("Rank", out var rank);
+                    string nameDisplay = string.IsNullOrEmpty(nameText) ? "" : nameText.Replace('\n', ' ');
+                    if (nameDisplay.Length > 60)
+                        nameDisplay = nameDisplay.Substring(0, 57) + "...";
+                    Console.WriteLine($"  [{i,4}] Tblidx={tblidx} NameIdx={nameIdx} ItemType={itemType} EquipType={equipType} Rank={rank} Model='{model}' NameText='{nameDisplay}'");
+                }
+            }
 
             if (string.Equals(schema.Name, "TextAll", StringComparison.OrdinalIgnoreCase))
             {
@@ -282,6 +324,50 @@ class Program
             else
             {
                 Console.WriteLine("Record-size estimate skipped for TextAll container.");
+            }
+            if (dump && doc.Rows.Count > 0)
+            {
+                Console.WriteLine();
+                foreach (var row in doc.Rows)
+                {
+                    row.TryGetScalar<uint>("Tblidx", out var tblidx);
+                    row.TryGetScalar<string>("Name", out var name);
+                    var values = new string[10];
+                    for (int v = 0; v < values.Length; v++)
+                    {
+                        row.TryGetScalar<string>($"Value{v}", out var val);
+                        values[v] = val ?? string.Empty;
+                    }
+
+                    if (!string.IsNullOrEmpty(containsFilter))
+                    {
+                        bool matches = false;
+                        if (!string.IsNullOrEmpty(name) && name.IndexOf(containsFilter, StringComparison.OrdinalIgnoreCase) >= 0)
+                            matches = true;
+                        else
+                        {
+                            foreach (var val in values)
+                            {
+                                if (!string.IsNullOrEmpty(val) && val.IndexOf(containsFilter, StringComparison.OrdinalIgnoreCase) >= 0)
+                                {
+                                    matches = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if (!matches)
+                            continue;
+                    }
+
+                    Console.WriteLine($"[{tblidx,3}] {name}");
+                    for (int v = 0; v < values.Length; v++)
+                    {
+                        if (!string.IsNullOrEmpty(values[v]))
+                        {
+                            Console.WriteLine($"    ({v}) {values[v]}");
+                        }
+                    }
+                }
             }
             return 0;
         }

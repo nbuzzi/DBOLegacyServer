@@ -21,7 +21,7 @@ namespace RdfTableEditor.Model
     public class RdfRow
     {
     // Common key
-    public int Id { get; set; }
+    public long Id { get; set; }
 
     // CharTitle fields
     public int TitleNameIndex { get; set; }
@@ -94,22 +94,22 @@ namespace RdfTableEditor.Model
         switch (name)
         {
             case "Tblidx":
-                // Tblidx is unsigned in data; allow values > Int32.MaxValue without throwing
+                // Tblidx is stored as an unsigned 32-bit value in RDF assets; preserve the full range.
                 if (value is uint u)
                 {
-                    Id = unchecked((int)u);
+                    Id = u;
                 }
                 else if (value is ulong ul)
                 {
-                    Id = unchecked((int)ul);
+                    Id = unchecked((long)ul);
                 }
                 else if (value is long l)
                 {
-                    Id = unchecked((int)l);
+                    Id = l;
                 }
                 else
                 {
-                    try { Id = Convert.ToInt32(value ?? 0); }
+                    try { Id = Convert.ToInt64(value ?? 0); }
                     catch { Id = 0; }
                 }
                 break;
