@@ -6,6 +6,15 @@ DBO Legacy extends the original OpenDBO project with a comprehensive suite of to
 
 ---
 
+## 📬 Contact
+
+Have questions, suggestions, or need help? Feel free to reach out!
+
+- **Discord:** Add me via User ID `700896227449110628` or search for my username nNico
+- **GitHub Issues:** Open an issue on this repository
+
+---
+
 ## ✨ Features & Enhancements
 
 ### Server Systems
@@ -29,6 +38,7 @@ DBO Legacy extends the original OpenDBO project with a comprehensive suite of to
 | **Kraken Hard** | Kraken dungeon with increased difficulty and better rewards | - |
 | **Custom WPS Scripts** | Modified world path scripts for enhanced dungeon mechanics and boss encounters | - |
 | **Player Mods** | Server-side player stat modifications (buffs, multipliers) - automatically disabled during Budokai for fair PvP | - |
+| **Real-Time Translation** | Automatic chat translation system allowing players to communicate across different languages in real-time | - |
 
 ### PvP & Arena Systems
 
