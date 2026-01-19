@@ -18,10 +18,28 @@ DBO Legacy extends the original OpenDBO project with a comprehensive suite of to
 | **Virtual Transformations** | Custom transformations with model swapping (race swaps, custom forms like SSB/UI) | [VirtualTransform Guide](DboServer/Documentation/VirtualTransformation_Implementation.md) |
 | **Mob Appearance Overrides** | Swap mob models at runtime via config without client changes | [MobAppearance Guide](Documentation/MobAppearanceOverrides.md) |
 | **Feature Flags** | Enable/disable server features (Budokai, TMQ, Dojo, etc.) via config | [FeatureFlags Guide](DboServer/Documentation/FeatureFlags_Guide.md) |
-| **CCBD Enhancements** | Boss-only mode, dynamic difficulty scaling, configurable dungeons | [CCBD Guide](DboServer/Documentation/CCBD_v4_Complete_Guide.md) |
+| **CCBD Enhancements** | Extended to 150 floors with new mechanics (bombs, traps), boss-only floor mode, dynamic difficulty scaling | [CCBD Guide](DboServer/Documentation/CCBD_v4_Complete_Guide.md) |
 | **Budokai System** | Full tournament system with matchmaking | [Player Guide](DboServer/Documentation/Budokai_Player_Guide.md) |
 | **Dojo System** | Guild dojo battles with GM command support for manual execution | - |
 | **Rejoin System** | Automatic dungeon rejoin for disconnected players (TMQ, TLQ, UD, BD, CC, Budokai) | - |
+| **Helper NPC System** | Automated NPC companions to assist players in dungeons | - |
+| **Broly Dungeon** | New endgame dungeon featuring Broly boss encounters | - |
+| **Blood Palace** | Challenging wave-based survival dungeon | - |
+| **Kraken Normal** | Kraken dungeon with standard difficulty | - |
+| **Kraken Hard** | Kraken dungeon with increased difficulty and better rewards | - |
+| **Custom WPS Scripts** | Modified world path scripts for enhanced dungeon mechanics and boss encounters | - |
+| **Player Mods** | Server-side player stat modifications (buffs, multipliers) - automatically disabled during Budokai for fair PvP | - |
+
+### PvP & Arena Systems
+
+| Feature | Description |
+|---------|-------------|
+| **Budokai 1v1** | Classic individual tournament battles |
+| **Budokai 2v2 / 3v3 / 4v4 / 5v5** | Team-based tournament modes with flexible party sizes |
+| **Random Arena** | Automatic matchmaking fights every 10 minutes (configurable interval) with random map selection |
+| **Party vs Party** | Organized team battles between parties |
+| **Guild vs Guild** | Large-scale guild warfare battles |
+| **Individual Ranked** | Solo competitive matchmaking |
 
 ### Developer Tools
 
