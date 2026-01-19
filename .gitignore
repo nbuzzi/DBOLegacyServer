@@ -153,3 +153,4 @@ Tools/**/*.pdb
 # Documentation - track all markdown files in Documentation folder
 !DboServer/Documentation/
 !DboServer/Documentation/**/*.md
+push.bat
