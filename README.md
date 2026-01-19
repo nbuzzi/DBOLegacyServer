@@ -20,6 +20,8 @@ DBO Legacy extends the original OpenDBO project with a comprehensive suite of to
 | **Feature Flags** | Enable/disable server features (Budokai, TMQ, Dojo, etc.) via config | [FeatureFlags Guide](DboServer/Documentation/FeatureFlags_Guide.md) |
 | **CCBD Enhancements** | Boss-only mode, dynamic difficulty scaling, configurable dungeons | [CCBD Guide](DboServer/Documentation/CCBD_v4_Complete_Guide.md) |
 | **Budokai System** | Full tournament system with matchmaking | [Player Guide](DboServer/Documentation/Budokai_Player_Guide.md) |
+| **Dojo System** | Guild dojo battles with GM command support for manual execution | - |
+| **Rejoin System** | Automatic dungeon rejoin for disconnected players (TMQ, TLQ, UD, BD, CC, Budokai) | - |
 
 ### Developer Tools
 
@@ -67,14 +69,95 @@ DBO-Legacy/
 
 ---
 
-## 🤖 AI Assistant / Automation Guidelines (Summary)
+## 🎮 GM Commands Reference
 
-For full rules see `.github/copilot-instructions.md`.
-- Do not edit: `ExecutionEnv/`, `Database/migrations/`, `resource/`, `x64/`.
-- Keep diffs minimal; no mass reformatting.
-- New features should prefer a config key with a documented default.
-- Preserve logging (`ERR_LOG`, `NTL_PRINT`, `EVENT_VLOG`). Add diagnostics on failures.
-- EventManager is editable; mark any large refactors with a short rationale comment.
+### Player Commands (Everyone)
+| Command | Description |
+|---------|-------------|
+| `@unstuck` | Teleport back to your Popo Stone if stuck |
+| `@online` | Shows amount of online players |
+| `@exp on/off` | Toggle experience gain (useful for kid Budokai farming) |
+| `@resetexp` | Reset your experience to 0 |
+| `@addmasteritem` | Get master quest item if lost (after accepting from Korin) |
+| `@addskill2` | Unlock master class passive skill if bugged |
+| `@addhtb` | Unlock main HTB and master HTB after skill reset |
+
+### Game Master Commands
+| Command | Description |
+|---------|-------------|
+| `@pm <name> <msg>` | Send private message to player |
+| `@mute <name>` | Mute a player |
+| `@unmute <name>` | Unmute a player |
+| `@setdark <0/1>` | Toggle dark mode |
+| `@start_dbhunt [hours]` | Start Dragonball Hunt event |
+| `@stop_dbhunt` | Stop Dragonball Hunt event |
+| `@start_dbscramble` | Start Dragonball Scramble event |
+| `@stop_dbscramble` | Stop Dragonball Scramble event |
+| `@start_stonedrop [hours]` | Start double stone drop event |
+| `@stop_stonedrop` | Stop stone drop event |
+| `@start_customdrop [hours]` | Start custom drop event |
+| `@stop_customdrop` | Stop custom drop event |
+| `@reload_customdrop [path]` | Reload CustomDropEvent.cfg |
+| `@reload_helpernpc [path]` | Reload helper NPC configuration |
+| `@helpernpc_metrics` | Show helper NPC metrics |
+| `@helpernpc_resetmetrics` | Reset helper NPC metrics |
+| `@helpernpc_refresh` | Refresh helper NPCs |
+| `@customdrop_chainspawns` | Toggle chain spawns |
+| `@customdrop_healmul <val>` | Set heal multiplier |
+| `@customdrop_buffduration <val>` | Set buff duration |
+
+### Admin Commands
+| Command | Description |
+|---------|-------------|
+| `@hide` | Toggle GM invisibility |
+| `@teleport <x> <y> <z>` | Teleport to coordinates |
+| `@world <id>` | Teleport to world |
+| `@appear <name>` | Teleport to player |
+| `@call <name>` | Summon player to you |
+| `@all` | Teleport all players to you |
+| `@setspeed <val>` | Set movement speed |
+| `@setlevel <level>` | Set player level |
+| `@level <level> [name]` | Set level (alt) |
+| `@setclass <id>` | Set player class |
+| `@addmob <id> [count]` | Spawn mob(s) |
+| `@addmobgroup <id>` | Spawn mob group |
+| `@addnpc <id>` | Spawn NPC |
+| `@additem <id> [count]` | Give item |
+| `@addskill <id>` | Give skill |
+| `@heal` | Full heal |
+| `@setzenny <amount>` | Set zenny |
+| `@delallitems` | Delete all items |
+| `@shutdown` | Shutdown server |
+| `@dc <name>` | Disconnect player |
+| `@kill <name>` | Kill player |
+| `@god` | Toggle god mode |
+| `@invincible` | Toggle invincibility |
+| `@bann <name>` | Ban player |
+| `@dbann <name>` | Database ban |
+| `@purge` | Purge nearby mobs |
+| `@notice <msg>` | Server-wide notice |
+| `@cc <msg>` | Channel notification |
+| `@warfog` | Toggle war fog |
+| `@upgrade <slot> <level>` | Upgrade item |
+| `@setitemrank <rank>` | Set item rank |
+| `@go <loc>` | Go to preset location |
+| `@addtitle <id>` | Add title |
+| `@deltitle <id>` | Remove title |
+| `@setitemduration <dur>` | Set item duration |
+| `@bind` | Bind to current location |
+| `@startevent <type>` | Start event (0=Honey, 1=Fairy) |
+| `@stopevent <type>` | Stop event |
+| `@deleteguild <name>` | Delete guild |
+| `@cancelah` | Cancel auction house |
+| `@addmudosa <amount>` | Add Mudosa points |
+| `@startgm` | Start GM mode |
+| `@createloot` | Create loot |
+| `@PvpEvent` | Start PvP event |
+| `@big <size> [name]` | Change player size |
+| `@fly` | Toggle flight |
+| `@resetskills` | Reset skills |
+| `@buff <id>` | Apply buff |
+| `@setadult` | Toggle adult mode |
 
 ---
 
