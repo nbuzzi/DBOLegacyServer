@@ -1,7 +1,74 @@
-# OpenDBO
-DBO Client, Server and Tools software.
+# DBO Legacy
+
+**A feature-rich Dragon Ball Online private server fork** by **Nico Buzzi**, based on [OpenDBO](https://github.com/OpenDBO/OpenDBO-Core).
+
+DBO Legacy extends the original OpenDBO project with a comprehensive suite of tools, server-side features, and quality-of-life improvements designed for modern private server operators.
+
+---
+
+## ✨ Features & Enhancements
+
+### Server Systems
+
+| Feature | Description | Documentation |
+|---------|-------------|---------------|
+| **Event Manager** | Round-based PvE event system with world rotation, minion spawning, boss fights, and auto-restart | [EventManager Guide](DboServer/Documentation/EventManager_README.md) • [Español](DboServer/Documentation/EventManager_README_ES.md) |
+| **Custom Drop Event** | Config-driven drops, spawns, stat modifiers, buffs, titles, visuals, and totems for mobs | [Custom Event Drop](DboServer/Documentation/Custom%20Event%20Drop.md) |
+| **Battle Pass System** | Server-side progression with XP for kills, dungeons, PvP, Budokai; per-level rewards | [BattlePass Guide](Documentation/BattlePass_README.md) |
+| **Virtual Transformations** | Custom transformations with model swapping (race swaps, custom forms like SSB/UI) | [VirtualTransform Guide](DboServer/Documentation/VirtualTransformation_Implementation.md) |
+| **Mob Appearance Overrides** | Swap mob models at runtime via config without client changes | [MobAppearance Guide](Documentation/MobAppearanceOverrides.md) |
+| **Feature Flags** | Enable/disable server features (Budokai, TMQ, Dojo, etc.) via config | [FeatureFlags Guide](DboServer/Documentation/FeatureFlags_Guide.md) |
+| **CCBD Enhancements** | Boss-only mode, dynamic difficulty scaling, configurable dungeons | [CCBD Guide](DboServer/Documentation/CCBD_v4_Complete_Guide.md) |
+| **Budokai System** | Full tournament system with matchmaking | [Player Guide](DboServer/Documentation/Budokai_Player_Guide.md) |
+
+### Developer Tools
+
+| Tool | Description | Documentation |
+|------|-------------|---------------|
+| **Server Monitor** | Real-time monitoring dashboard for all server processes | [Server Monitor](DboServer/Documentation/Server%20Monitor.md) |
+| **WPS Stage Gen** | World path staging generator for dungeons/events (GUI + CLI) | [WPS Stage Gen](DboServer/Documentation/WPS%20Stage%20Gen.md) • [CLI](DboServer/Documentation/WPS%20Stage%20GEN%20CLI.md) |
+| **RDF Table Editor** | Visual editor for game data tables (RDF format) | [Table Editor](DboServer/Documentation/RDF%20Table%20Editor.md) |
+| **Custom Drop Event Editor** | GUI editor for CustomDropEvent.cfg | [Tools/CustomDropEventEditor](Tools/CustomDropEventEditor) |
+| **Discord Announcer** | Discord webhook integration for server announcements | [Tools/DiscordAnnouncer](Tools/DiscordAnnouncer) |
+| **Dungeon Generator** | Automated dungeon configuration generator | [Tools/DungeonGenerator](Tools/DungeonGenerator) |
+| **EDF Crypt** | Convert RDF to encrypted EDF format | [Tools/edf_crypt](Tools/edf_crypt%20(convert%20rdf%20to%20edf)) |
+
+### Configuration-Driven Design
+
+All major features use external config files (no recompilation needed):
+- `Events.cfg` - Event Manager settings
+- `CustomDropEvent.cfg` - Drop/spawn/buff rules
+- `BattlePass.cfg` - Battle Pass configuration
+- `VirtualTransforms.cfg` - Custom transformation definitions
+- `MobAppearanceOverrides.cfg` - Model swap mappings
+- `FeatureFlags.cfg` - Feature toggles
+- `GameServer.ini [DUNGEONS]` - Dungeon settings
+
+---
+
+## 📁 Project Structure
+
+```
+DBO-Legacy/
+├── DboServer/           # C++ server source (Auth, Char, Chat, Game, Master, Query)
+│   ├── ExecutionEnv/    # Runtime binaries and configs
+│   ├── Documentation/   # Feature documentation
+│   └── Database/        # SQL schemas
+├── DboShared/           # Shared libraries
+├── NtlLib/              # Network/utility libraries
+├── Tools/               # .NET utilities and editors
+│   ├── ServerMonitor/
+│   ├── WpsStageGen/
+│   ├── WpsStageGen.UI/
+│   ├── TableEditor/
+│   └── ...
+└── Documentation/       # Additional guides
+```
+
+---
 
 ## 🤖 AI Assistant / Automation Guidelines (Summary)
+
 For full rules see `.github/copilot-instructions.md`.
 - Do not edit: `ExecutionEnv/`, `Database/migrations/`, `resource/`, `x64/`.
 - Keep diffs minimal; no mass reformatting.
@@ -11,7 +78,7 @@ For full rules see `.github/copilot-instructions.md`.
 
 ---
 
-## Setting everything up
+## 🚀 Setting Everything Up
 All required third party tools can be obtained from [our 3rd party repository](https://github.com/OpenDBO/OpenDBO-3rdParty/releases).
 <details>
  <summary>Compiling the Client</summary>
@@ -259,17 +326,39 @@ all totem: 16454201@45000@@: 300500@20000, 300510@20000, 300200@15000
 - `visuals:` require SystemEffect tblidx values, not skill ids. For long-lived visuals via buffs, list the skill ids under `buffs:` with a long `@durationMs`.
 - Safety caps exist internally to avoid spam (e.g., stacked drops). Keep values reasonable.
 
-## Documentation
+## 📚 Documentation
 
-Comprehensive documentation for server features and tools is available in the [Documentation](DboServer/Documentation) folder:
+Comprehensive documentation for server features and tools is available in the [DboServer/Documentation](DboServer/Documentation) folder:
 
+### Server Features
 - **[Event Manager](DboServer/Documentation/EventManager_README.md)** - Round-based event system with world rotation, minion spawning, and auto-restart
   - [Versión en Español](DboServer/Documentation/EventManager_README_ES.md)
 - **[Custom Event Drop](DboServer/Documentation/Custom%20Event%20Drop.md)** - Config-driven drops, spawns, modifiers, buffs, titles, and visuals
+- **[Virtual Transformations](DboServer/Documentation/VirtualTransformation_Implementation.md)** - Custom transformation system with model swapping
+- **[Feature Flags](DboServer/Documentation/FeatureFlags_Guide.md)** - Runtime feature toggle system
+- **[CCBD v4 Guide](DboServer/Documentation/CCBD_v4_Complete_Guide.md)** - Dynamic dungeon configuration system
+- **[Budokai Player Guide](DboServer/Documentation/Budokai_Player_Guide.md)** - Tournament system guide
+
+### Tools
 - **[Server Monitor](DboServer/Documentation/Server%20Monitor.md)** - Real-time server monitoring and management tool
 - **[RDF Table Editor](DboServer/Documentation/RDF%20Table%20Editor.md)** - Table editing tool for game data
 - **[WPS Stage Gen](DboServer/Documentation/WPS%20Stage%20Gen.md)** - World path staging generation tool
   - [CLI Version](DboServer/Documentation/WPS%20Stage%20GEN%20CLI.md)
+  - [UI Guide](DboServer/Documentation/WPS_Stage_Gen_UI_v4.md)
+  - [Templates Guide](DboServer/Documentation/WPS_Templates_Guide.md)
 
-## Acknowledgements
-All and any copyrighted material belongs to their respective owners, this is just a non-profit fan project aiming for game preservation. Thanks to DBOG for providing the base for this source code.
+### Additional Guides
+- **[Battle Pass System](Documentation/BattlePass_README.md)** - Server-side progression system
+- **[Mob Appearance Overrides](Documentation/MobAppearanceOverrides.md)** - Runtime mob model swapping
+
+---
+
+## 🙏 Acknowledgements
+
+This project is based on [OpenDBO](https://github.com/OpenDBO/OpenDBO-Core). All and any copyrighted material belongs to their respective owners. This is a non-profit fan project aiming for game preservation. Thanks to DBOG for providing the base for this source code.
+
+---
+
+## 📄 License
+
+See [LICENSE](LICENSE) for details.
