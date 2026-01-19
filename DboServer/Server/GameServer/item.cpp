@@ -1382,10 +1382,24 @@ void CItem::Cast()
 						{
 							pTarget->SetLpEpEventID(res->dwLpEpEventId);
 
+							// Mirror female excitation behavior: apply buff and grant RP based on CommonConfig
+							sCOMMONCONFIG_VALUE_DATA* commonConfig = g_pTableContainer->GetCommonConfigTable()->FindCommonConfig((TBLIDX)m_pUseItemTbldat->aSystem_Effect_Value[e]);
+
 							buffInfo.aBuffParameter[e].byBuffParameterType = DBO_BUFF_PARAMETER_TYPE_DOT;
 							buffInfo.aBuffParameter[e].buffParameter.fParameter = (float)m_pUseItemTbldat->aSystem_Effect_Value[e];
 							buffInfo.aBuffParameter[e].buffParameter.commonConfigTblidx = (TBLIDX)m_pUseItemTbldat->aSystem_Effect_Value[e];
 							buffInfo.aBuffParameter[e].buffParameter.dwRemainTime = m_pUseItemTbldat->dwKeepTimeInMilliSecs;
+
+							if (pTarget->GetBuffManager()->RegisterSubBuff(&buffInfo, effectCode, m_pOwner->GetID(), m_pUseItemTbldat->byBuff_Group, res->wResultCode, m_pUseItemTbldat->abySystem_Effect_Type))
+							{
+								if (commonConfig)
+									pTarget->UpdateCurRP((WORD)commonConfig->adwValue[1], true, false);
+								else
+									ERR_LOG(LOG_GENERAL, "Male excitation: CommonConfig not found for tblidx %u", m_pUseItemTbldat->aSystem_Effect_Value[e]);
+							}
+							//pPlayer->UpdateCurRP(pPlayer->GetCharAtt()->GetMaxRP(), false, false);
+
+							bAddBuff = false;
 						}
 					}
 					else res->wResultCode = GAME_ITEM_CANNOT_USE_INVALID_TARGET;
@@ -1401,7 +1415,7 @@ void CItem::Cast()
 				{
 					if (pTarget->IsPC())
 					{
-						if (pTarget->GetGender() != GENDER_MALE) //only nemkian and female
+						//if (pTarget->GetGender() != GENDER_MALE) //only nemkian and female
 						{
 							pTarget->SetLpEpEventID(res->dwLpEpEventId);
 
@@ -1413,7 +1427,12 @@ void CItem::Cast()
 							buffInfo.aBuffParameter[e].buffParameter.dwRemainTime = m_pUseItemTbldat->dwKeepTimeInMilliSecs;
 
 							if (pTarget->GetBuffManager()->RegisterSubBuff(&buffInfo, effectCode, m_pOwner->GetID(), m_pUseItemTbldat->byBuff_Group, res->wResultCode, m_pUseItemTbldat->abySystem_Effect_Type))
-								pTarget->UpdateCurRP((WORD)commonConfig->adwValue[1], true, false);
+							{
+								if (commonConfig)
+									pTarget->UpdateCurRP((WORD)commonConfig->adwValue[1], true, false);
+								else
+									ERR_LOG(LOG_GENERAL, "Female excitation: CommonConfig not found for tblidx %u", m_pUseItemTbldat->aSystem_Effect_Value[e]);
+							}
 
 							bAddBuff = false;
 						}

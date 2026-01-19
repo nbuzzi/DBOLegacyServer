@@ -5,6 +5,7 @@
 #include "NtlSharedType.h"
 #include <NtlBattle.h>
 #include "CPlayer.h"
+#include "GameServer.h"
 #include <cwctype>
 #include <wchar.h>
 
@@ -32,6 +33,14 @@ void CPlayerModifiers::Init()
     m_byCharId.clear();
     m_byCharName.clear();
     m_cfgPath = ".\\config\\PlayerModifiers.cfg";
+
+    // Initialize auto-schedule state
+    m_autoScheduleCfg = AutoScheduleConfig();
+    m_autoScheduleState = AutoScheduleState::IDLE;
+    m_autoScheduleActive = false;
+    m_autoScheduleRemainingMs = 0;
+    m_alwaysOn = false;  // Default: not always-on
+
     LoadConfigInternal(m_cfgPath.c_str());
 }
 
@@ -152,6 +161,81 @@ bool CPlayerModifiers::LoadConfigInternal(const char* path)
                 else if (_stricmp(key, "blockRate") == 0) temp.blockRate = val;
                 else if (_stricmp(key, "blockDmg") == 0) temp.blockDmg = val;
                 else if (_stricmp(key, "guardRate") == 0) temp.guardRate = val;
+                // Auto-schedule configuration
+                else if (_stricmp(key, "AutoScheduleEnabled") == 0)
+                {
+                    if (scope == Scope_Global)
+                        m_autoScheduleCfg.enabled = (val != 0.f);
+                }
+                else if (_stricmp(key, "AutoScheduleDaysPerWeek") == 0)
+                {
+                    if (scope == Scope_Global)
+                    {
+                        unsigned int days = (unsigned int)val;
+                        if (days >= 1 && days <= 7)
+                            m_autoScheduleCfg.daysPerWeek = days;
+                    }
+                }
+                else if (_stricmp(key, "AutoScheduleDurationHours") == 0)
+                {
+                    if (scope == Scope_Global)
+                        m_autoScheduleCfg.durationHours = (unsigned int)val;
+                }
+                else if (_stricmp(key, "AutoScheduleIntervalHours") == 0)
+                {
+                    if (scope == Scope_Global)
+                        m_autoScheduleCfg.intervalHours = (unsigned int)val;
+                }
+                else if (_stricmp(key, "AutoScheduleInitialDelayMinutes") == 0)
+                {
+                    if (scope == Scope_Global)
+                        m_autoScheduleCfg.initialDelayMinutes = (unsigned int)val;
+                }
+                // Channel filtering
+                else if (_stricmp(key, "ChannelFilterEnabled") == 0)
+                {
+                    if (scope == Scope_Global)
+                        m_autoScheduleCfg.channelFilterEnabled = (val != 0.f);
+                }
+                else if (_stricmp(key, "AllowedChannels") == 0 || _stricmp(key, "Channels") == 0)
+                {
+                    // Parse comma-separated list of channel numbers
+                    if (scope == Scope_Global)
+                    {
+                        char buf[256];
+                        strncpy_s(buf, sizeof(buf), eq + 1, _TRUNCATE);
+                        char* tok = strtok(buf, ",; ");
+                        while (tok)
+                        {
+                            int ch = atoi(tok);
+                            if (ch >= 0 && ch <= 255)
+                                m_autoScheduleCfg.allowedChannels.insert((BYTE)ch);
+                            tok = strtok(nullptr, ",; ");
+                        }
+                    }
+                }
+                else if (_stricmp(key, "ChannelNameContains") == 0)
+                {
+                    if (scope == Scope_Global && eq + 1)
+                    {
+                        // Trim and copy channel name filter
+                        const char* v = eq + 1;
+                        while (*v == ' ' || *v == '\t') ++v;
+                        char buf[64];
+                        strncpy_s(buf, sizeof(buf), v, _TRUNCATE);
+                        // Trim trailing whitespace/newline
+                        char* end = buf + strlen(buf) - 1;
+                        while (end >= buf && (*end == ' ' || *end == '\t' || *end == '\n' || *end == '\r'))
+                            *end-- = '\0';
+                        m_autoScheduleCfg.channelNameContains = buf;
+                    }
+                }
+                // Always-on mode
+                else if (_stricmp(key, "AlwaysOn") == 0)
+                {
+                    if (scope == Scope_Global)
+                        m_alwaysOn = (val != 0.f);
+                }
             }
             t = strtok(nullptr, " \t\n\r");
         }
@@ -347,4 +431,147 @@ void CPlayerModifiers::ApplyTo(CCharacterAttPC* att)
         if (diff > 0.0f) att->CalculateEnergyCriticalDamageRate(diff, SYSTEM_EFFECT_APPLY_TYPE_VALUE, true);
         else if (diff < 0.0f) att->CalculateEnergyCriticalDamageRate(-diff, SYSTEM_EFFECT_APPLY_TYPE_VALUE, false);
     }
+}
+
+void CPlayerModifiers::AutoScheduleTick(unsigned long dwTickDiff)
+{
+    // Always-on mode: keep enabled and skip scheduling
+    if (m_alwaysOn)
+    {
+        if (!m_enabled)
+        {
+            SetEnabled(true);
+            if (g_pObjectManager)
+            {
+                g_pObjectManager->RecalculateAllPlayers();
+                NTL_PRINT(PRINT_APP, _T("[PlayerModifiers] Always-on mode enabled"));
+            }
+        }
+        return;
+    }
+
+    if (!m_autoScheduleCfg.enabled)
+        return;
+
+    switch (m_autoScheduleState)
+    {
+    case AutoScheduleState::IDLE:
+        // Initialize auto-schedule system on first tick
+        m_autoScheduleState = AutoScheduleState::WAIT_NEXT;
+        m_autoScheduleRemainingMs = m_autoScheduleCfg.initialDelayMinutes * 60 * 1000UL;
+        break;
+
+    case AutoScheduleState::WAIT_NEXT:
+        if (m_autoScheduleRemainingMs > dwTickDiff)
+        {
+            m_autoScheduleRemainingMs -= dwTickDiff;
+        }
+        else
+        {
+            m_autoScheduleRemainingMs = 0;
+            StartAutoScheduleSession();
+        }
+        break;
+
+    case AutoScheduleState::ACTIVE:
+        if (m_autoScheduleRemainingMs > dwTickDiff)
+        {
+            m_autoScheduleRemainingMs -= dwTickDiff;
+        }
+        else
+        {
+            m_autoScheduleRemainingMs = 0;
+            EndAutoScheduleSession();
+        }
+        break;
+    }
+}
+
+void CPlayerModifiers::StartAutoScheduleSession()
+{
+    // Check if current channel is allowed
+    if (!IsChannelAllowed())
+    {
+        NTL_PRINT(PRINT_APP, _T("[PlayerModifiers Auto-Schedule] Skipped session - channel not allowed"));
+        m_autoScheduleState = AutoScheduleState::WAIT_NEXT;
+        m_autoScheduleRemainingMs = m_autoScheduleCfg.intervalHours * 3600 * 1000UL;
+        return;
+    }
+
+    m_autoScheduleState = AutoScheduleState::ACTIVE;
+    m_autoScheduleActive = true;
+    m_autoScheduleRemainingMs = m_autoScheduleCfg.durationHours * 3600 * 1000UL;
+
+    // Enable player modifiers
+    SetEnabled(true);
+
+    // Recalculate all players
+    if (g_pObjectManager)
+    {
+        size_t n = g_pObjectManager->RecalculateAllPlayers();
+        NTL_PRINT(PRINT_APP, _T("[PlayerModifiers Auto-Schedule] Started session (duration: %u hours, %zu players recalculated)"),
+            m_autoScheduleCfg.durationHours, n);
+    }
+}
+
+void CPlayerModifiers::EndAutoScheduleSession()
+{
+    m_autoScheduleState = AutoScheduleState::WAIT_NEXT;
+    m_autoScheduleActive = false;
+    m_autoScheduleRemainingMs = m_autoScheduleCfg.intervalHours * 3600 * 1000UL;
+
+    // Disable player modifiers
+    SetEnabled(false);
+
+    // Recalculate all players back to normal
+    if (g_pObjectManager)
+    {
+        size_t n = g_pObjectManager->RecalculateAllPlayers();
+        NTL_PRINT(PRINT_APP, _T("[PlayerModifiers Auto-Schedule] Ended session (next session in %u hours, %zu players recalculated)"),
+            m_autoScheduleCfg.intervalHours, n);
+    }
+}
+
+bool CPlayerModifiers::IsChannelAllowed() const
+{
+    // If channel filtering is disabled, all channels are allowed
+    if (!m_autoScheduleCfg.channelFilterEnabled)
+        return true;
+
+    CGameServer* app = (CGameServer*)g_pApp;
+    if (!app)
+        return false;
+
+    // Check channel number filter (if allowedChannels is not empty)
+    if (!m_autoScheduleCfg.allowedChannels.empty())
+    {
+        BYTE currentChannel = app->m_config.byChannel;
+        if (m_autoScheduleCfg.allowedChannels.find(currentChannel) != m_autoScheduleCfg.allowedChannels.end())
+            return true;
+    }
+
+    // Check channel name filter (if channelNameContains is set)
+    const char* channelFilter = m_autoScheduleCfg.channelNameContains.c_str();
+    if (channelFilter && *channelFilter)
+    {
+        // Get server name which typically includes channel name
+        const char* serverName = app->m_config.ServerName.c_str();
+        if (serverName && *serverName)
+        {
+            // Case-insensitive substring search
+            std::string nameUpper(serverName);
+            std::string filterUpper(channelFilter);
+
+            // Convert to uppercase for case-insensitive comparison
+            for (auto& c : nameUpper) c = (char)toupper(c);
+            for (auto& c : filterUpper) c = (char)toupper(c);
+
+            if (nameUpper.find(filterUpper) != std::string::npos)
+                return true;
+        }
+    }
+
+    // If we have filters but none matched, channel is not allowed
+    const char* channelFilterCheck = m_autoScheduleCfg.channelNameContains.c_str();
+    return m_autoScheduleCfg.allowedChannels.empty() && (!channelFilterCheck || !*channelFilterCheck);
 }

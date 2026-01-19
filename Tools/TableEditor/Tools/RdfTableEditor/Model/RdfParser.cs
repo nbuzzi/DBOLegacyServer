@@ -54,7 +54,7 @@ namespace RdfTableEditor.Model
                 if (line.Length == 0 || line.StartsWith("#"))
                     continue;
                 var parts = line.Split(',');
-                if (parts.Length >= 1 && int.TryParse(parts[0], out int id))
+                if (parts.Length >= 1 && long.TryParse(parts[0], out long id))
                 {
                     doc.Rows.Add(new RdfRow { Id = id, Name = parts.ElementAtOrDefault(1), Value = parts.ElementAtOrDefault(2) });
                 }
@@ -122,7 +122,7 @@ namespace RdfTableEditor.Model
             if (remaining < size)
                 return false;
 
-            row.Id = br.ReadInt32();
+            row.Id = br.ReadUInt32();
             row.TitleNameIndex = br.ReadInt32();
             row.ContentsType = br.ReadByte();
             row.RepresentationType = br.ReadByte();
@@ -175,7 +175,7 @@ namespace RdfTableEditor.Model
             const int DBO_MAX_LENGTH_TITLE_EFFECT_NAME = 0x200;
             const int DBO_MAX_LENGTH_TITLE_SOUND_NAME = 0x200;
 
-            bw.Write(r.Id);
+            bw.Write(unchecked((uint)r.Id));
             bw.Write(r.TitleNameIndex);
             bw.Write(r.ContentsType);
             bw.Write(r.RepresentationType);

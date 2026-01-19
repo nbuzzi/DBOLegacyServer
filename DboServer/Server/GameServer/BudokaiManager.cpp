@@ -12,6 +12,7 @@
 #include "GameMain.h"
 #include "DiceManager.h"
 #include "NtlIniFile.h"
+#include "BattlePassManager.h" // Battle Pass integration (participation & win XP)
 
 
 struct sprelim_sorting
@@ -212,8 +213,17 @@ void CBudokaiManager::TickProcess(DWORD dwTickDiff)
 	// -- ADULT SOLO BUDOKAI
 	if (m_bAdultBudokaiBegan == false)
 	{
-		if ((timeStruct.tm_wday == 6 && timeStruct.tm_hour == 18)//check if its saturday 17 o clock
-			|| (timeStruct.tm_wday == 4 && timeStruct.tm_hour == 23)) //check if its thursday 0 o clock
+		bool bShouldStart = false;
+		for (BYTE i = 0; i < 9; i++)
+		{
+			if (m_byAdultSoloWday[i] != 255 && timeStruct.tm_wday == m_byAdultSoloWday[i] && timeStruct.tm_hour == m_byAdultSoloHour[i])
+			{
+				bShouldStart = true;
+				break;
+			}
+		}
+
+		if (bShouldStart)
 		{
 			//start adult solo budokai
 			m_bAdultBudokaiBegan = true;
@@ -235,11 +245,11 @@ void CBudokaiManager::TickProcess(DWORD dwTickDiff)
 	// -- JUNIOR SOLO BUDOKAI
 	if (m_bJuniorBudokaiBegan == false)
 	{
-		if (timeStruct.tm_wday == 2 && timeStruct.tm_hour == 14) //check if its tuesday 14 o clock
+		if (timeStruct.tm_wday == m_byJuniorSoloWday && timeStruct.tm_hour == m_byJuniorSoloHour)
 		{
 			//start junior solo budokai
 			m_bJuniorBudokaiBegan = true;
-			
+
 			CreateBudokai(BUDOKAI_TYPE_JUNIOR, BUDOKAI_MATCH_TYPE_INDIVIDIAUL, (BUDOKAITIME)curTime, m_pTableInfo);
 		}
 	}
@@ -256,7 +266,17 @@ void CBudokaiManager::TickProcess(DWORD dwTickDiff)
 	// -- ADULT PARTY BUDOKAI
 	if (m_bPartyAdultBudokaiBegan == false)
 	{
-		if (timeStruct.tm_wday == 0 && timeStruct.tm_hour == 13) //check if its sunday 13 o clock
+		bool bShouldStart = false;
+		for (BYTE i = 0; i < 3; i++)
+		{
+			if (m_byAdultPartyWday[i] != 255 && timeStruct.tm_wday == m_byAdultPartyWday[i] && timeStruct.tm_hour == m_byAdultPartyHour[i])
+			{
+				bShouldStart = true;
+				break;
+			}
+		}
+
+		if (bShouldStart)
 		{
 			//start adult party budokai
 			m_bPartyAdultBudokaiBegan = true;
@@ -276,7 +296,7 @@ void CBudokaiManager::TickProcess(DWORD dwTickDiff)
 	// -- JUNIOR PARTY BUDOKAI
 	if (m_bPartyJuniorBudokaiBegan == false)
 	{
-		if (timeStruct.tm_wday == 5 && timeStruct.tm_hour == 17) //check if its friday 17 o clock
+		if (timeStruct.tm_wday == m_byJuniorPartyWday && timeStruct.tm_hour == m_byJuniorPartyHour)
 		{
 			//start junior party budokai
 			m_bPartyJuniorBudokaiBegan = true;
@@ -2581,6 +2601,8 @@ void CBudokaiManager::MinorMatchEnd(sPRELIM_HEAD* prelim, BYTE byMatchIndex)
 					packet.SetPacketLen(sizeof(sGQ_BUDOKAI_TOURNAMENT_INDIVIDUAL_ADD_ENTRY_LIST_REQ));
 					app->SendTo(app->GetQueryServerSession(), &packet);
 
+					// Mark as expected channel change (not a crash/disconnect)
+					pPlayer->SetExpectingBudokaiChannelChange(true, app->GetCurTickCount());
 					pPlayer->TeleportAnotherServer(prelim->m_pWorld->GetTbldat()->outWorldLoc, pPlayer->GetCurDir(), prelim->m_pWorld->GetTbldat()->outWorldTblidx, prelim->m_pWorld->GetTbldat()->outWorldTblidx, TELEPORT_TYPE_BUDOKAI, pPlayer->GetPrevChannelID(), 0, false);
 				}
 			}
@@ -2636,6 +2658,8 @@ void CBudokaiManager::MinorMatchEnd(sPRELIM_HEAD* prelim, BYTE byMatchIndex)
 				CPlayer* pPlayer = g_pObjectManager->GetPC(partyInfo->charHandle[byMemberCount]);
 				if (pPlayer && partyInfo->charId[byMemberCount] == pPlayer->GetCharID() && pPlayer->GetMatchIndex() == byMatchIndex)
 				{
+					// Mark as expected channel change (not a crash/disconnect)
+					pPlayer->SetExpectingBudokaiChannelChange(true, app->GetCurTickCount());
 					pPlayer->TeleportAnotherServer(prelim->m_pWorld->GetTbldat()->outWorldLoc, pPlayer->GetCurDir(), prelim->m_pWorld->GetTbldat()->outWorldTblidx, prelim->m_pWorld->GetTbldat()->outWorldTblidx, TELEPORT_TYPE_BUDOKAI, pPlayer->GetPrevChannelID(), 0, false);
 				}
 			}
@@ -3365,6 +3389,35 @@ bool CBudokaiManager::ProcessMajorMatch(sTOURNAMENT_MATCH * match, BYTE byMatchI
 
 void CBudokaiManager::UpdateMajorMatchScore(sTOURNAMENT_MATCH * match, BYTE byMatchIndex, BYTE byMatchResult, TEAMTYPE wMatchWinner, BYTE byWins/* = 1*/)
 {
+	// FEATURE: BattlePass Budokai participation XP (award once per match when first stage concludes)
+	if (g_pBattlePassManager && g_pBattlePassManager->IsEnabled() && g_pBattlePassManager->IsMasterEnabled()) {
+		if (match->byStage == 0) // before increment later
+		{
+			if (m_matchType == BUDOKAI_MATCH_TYPE_INDIVIDIAUL)
+			{
+				for (std::map<HOBJECT, sPLAYER_INFO>::iterator itP = match->m_mapIndividual.begin(); itP != match->m_mapIndividual.end(); ++itP)
+				{
+					CPlayer* pPl = g_pObjectManager->GetPC(itP->first);
+					if (pPl && pPl->GetMatchIndex() == byMatchIndex)
+						g_pBattlePassManager->OnBudokaiParticipation(pPl, false);
+				}
+			}
+			else // team
+			{
+				for (std::map<JOINID, sPARTY_INFO>::iterator itTeam = match->m_mapTeam.begin(); itTeam != match->m_mapTeam.end(); ++itTeam)
+				{
+					sPARTY_INFO & party = itTeam->second;
+					for (BYTE m = 0; m < party.byMemberCount; ++m)
+					{
+						CPlayer* pPl = g_pObjectManager->GetPC(party.charHandle[m]);
+						if (pPl && pPl->GetMatchIndex() == byMatchIndex)
+							g_pBattlePassManager->OnBudokaiParticipation(pPl, false);
+					}
+				}
+			}
+		}
+	}
+
 	if (wMatchWinner == MATCH_TEAM_TYPE_TEAM1)
 	{
 		match->data.byScore1 += byWins;
@@ -3400,6 +3453,37 @@ void CBudokaiManager::UpdateMajorMatchScore(sTOURNAMENT_MATCH * match, BYTE byMa
 	{
 		ERR_LOG(LOG_GENERAL, "BUDOKAI: Update Tournament Major Match. Index %u. Winner-Team = %u. Score1 = %u, Score2 = %u, byMatchResult = %u ",
 			byMatchIndex, wMatchWinner, match->data.byScore1, match->data.byScore2, byMatchResult);
+
+		// FEATURE: BattlePass Budokai win XP (award once when match finishes)
+		if (g_pBattlePassManager && g_pBattlePassManager->IsEnabled() && g_pBattlePassManager->IsMasterEnabled())
+		{
+			if (m_matchType == BUDOKAI_MATCH_TYPE_INDIVIDIAUL)
+			{
+				for (std::map<HOBJECT, sPLAYER_INFO>::iterator itP = match->m_mapIndividual.begin(); itP != match->m_mapIndividual.end(); ++itP)
+				{
+					CPlayer* pPl = g_pObjectManager->GetPC(itP->first);
+					if (pPl && pPl->GetMatchIndex() == byMatchIndex)
+					{
+						bool win = (pPl->GetBudokaiTeamType() == wMatchWinner);
+						if (win)
+							g_pBattlePassManager->OnBudokaiParticipation(pPl, true);
+					}
+				}
+			}
+			else // team match
+			{
+				for (std::map<JOINID, sPARTY_INFO>::iterator itTeam = match->m_mapTeam.begin(); itTeam != match->m_mapTeam.end(); ++itTeam)
+				{
+					sPARTY_INFO & party = itTeam->second;
+					for (BYTE m = 0; m < party.byMemberCount; ++m)
+					{
+						CPlayer* pPl = g_pObjectManager->GetPC(party.charHandle[m]);
+						if (pPl && pPl->GetMatchIndex() == byMatchIndex && pPl->GetBudokaiTeamType() == wMatchWinner)
+							g_pBattlePassManager->OnBudokaiParticipation(pPl, true);
+					}
+				}
+			}
+		}
 
 		match->bFinishMatch = true;
 	}
@@ -3794,6 +3878,8 @@ void CBudokaiManager::MajorMatchEnd(sTOURNAMENT_MATCH * match, BYTE byMatchIndex
 					packet.SetPacketLen(sizeof(sGQ_BUDOKAI_TOURNAMENT_INDIVIDUAL_ADD_ENTRY_LIST_REQ));
 					app->SendTo(app->GetQueryServerSession(), &packet);
 
+					// Mark as expected channel change (not a crash/disconnect)
+					pPlayer->SetExpectingBudokaiChannelChange(true, app->GetCurTickCount());
 					pPlayer->TeleportAnotherServer(match->m_pWorld->GetTbldat()->outWorldLoc, pPlayer->GetCurDir(), match->m_pWorld->GetTbldat()->outWorldTblidx, match->m_pWorld->GetTbldat()->outWorldTblidx, TELEPORT_TYPE_BUDOKAI, pPlayer->GetPrevChannelID(), 0, false);
 				}
 			}
@@ -3855,6 +3941,8 @@ void CBudokaiManager::MajorMatchEnd(sTOURNAMENT_MATCH * match, BYTE byMatchIndex
 				CPlayer* pPlayer = g_pObjectManager->GetPC(partyInfo->charHandle[byMemberCount]);
 				if (pPlayer && partyInfo->charId[byMemberCount] == pPlayer->GetCharID() && pPlayer->GetMatchIndex() == byMatchIndex)
 				{
+					// Mark as expected channel change (not a crash/disconnect)
+					pPlayer->SetExpectingBudokaiChannelChange(true, app->GetCurTickCount());
 					pPlayer->TeleportAnotherServer(match->m_pWorld->GetTbldat()->outWorldLoc, pPlayer->GetCurDir(), match->m_pWorld->GetTbldat()->outWorldTblidx, match->m_pWorld->GetTbldat()->outWorldTblidx, TELEPORT_TYPE_BUDOKAI, pPlayer->GetPrevChannelID(), 0, false);
 				}
 			}
@@ -4792,6 +4880,35 @@ bool CBudokaiManager::ProcessFinalMatch(sTOURNAMENT_MATCH * match, BYTE byMatchI
 
 void CBudokaiManager::UpdateFinalMatchScore(sTOURNAMENT_MATCH * match, BYTE byMatchIndex, BYTE byMatchResult, TEAMTYPE wMatchWinner, BYTE byWins/* = 1*/)
 {
+	// FEATURE: BattlePass Budokai participation XP (final match, award once at first stage like major)
+	if(g_pBattlePassManager && g_pBattlePassManager->IsEnabled() && g_pBattlePassManager->IsMasterEnabled()) {
+		if (match->byStage == 0)
+		{
+			if (m_matchType == BUDOKAI_MATCH_TYPE_INDIVIDIAUL)
+			{
+				for (std::map<HOBJECT, sPLAYER_INFO>::iterator itP = match->m_mapIndividual.begin(); itP != match->m_mapIndividual.end(); ++itP)
+				{
+					CPlayer* pPl = g_pObjectManager->GetPC(itP->first);
+					if (pPl && pPl->GetMatchIndex() == byMatchIndex)
+						g_pBattlePassManager->OnBudokaiParticipation(pPl, false);
+				}
+			}
+			else
+			{
+				for (std::map<JOINID, sPARTY_INFO>::iterator itTeam = match->m_mapTeam.begin(); itTeam != match->m_mapTeam.end(); ++itTeam)
+				{
+					sPARTY_INFO & party = itTeam->second;
+					for (BYTE m = 0; m < party.byMemberCount; ++m)
+					{
+						CPlayer* pPl = g_pObjectManager->GetPC(party.charHandle[m]);
+						if (pPl && pPl->GetMatchIndex() == byMatchIndex)
+							g_pBattlePassManager->OnBudokaiParticipation(pPl, false);
+					}
+				}
+			}
+		}
+	}
+
 	if (wMatchWinner == MATCH_TEAM_TYPE_TEAM1)
 	{
 		match->data.byScore1 += byWins;
@@ -4829,6 +4946,36 @@ void CBudokaiManager::UpdateFinalMatchScore(sTOURNAMENT_MATCH * match, BYTE byMa
 		ERR_LOG(LOG_GENERAL, "BUDOKAI: Update Tournament Final Match. Index %u. Winner-Team = %u. Score1 = %u, Score2 = %u, byMatchResult = %u ",
 			byMatchIndex, wMatchWinner, match->data.byScore1, match->data.byScore2, byMatchResult);
 
+		// FEATURE: BattlePass Budokai win XP for final match
+		if (g_pBattlePassManager && g_pBattlePassManager->IsEnabled() && g_pBattlePassManager->IsMasterEnabled())
+		{
+			if (m_matchType == BUDOKAI_MATCH_TYPE_INDIVIDIAUL)
+			{
+				for (std::map<HOBJECT, sPLAYER_INFO>::iterator itP = match->m_mapIndividual.begin(); itP != match->m_mapIndividual.end(); ++itP)
+				{
+					CPlayer* pPl = g_pObjectManager->GetPC(itP->first);
+					if (pPl && pPl->GetMatchIndex() == byMatchIndex)
+					{
+						if (pPl->GetBudokaiTeamType() == wMatchWinner)
+							g_pBattlePassManager->OnBudokaiParticipation(pPl, true);
+					}
+				}
+			}
+			else
+			{
+				for (std::map<JOINID, sPARTY_INFO>::iterator itTeam = match->m_mapTeam.begin(); itTeam != match->m_mapTeam.end(); ++itTeam)
+				{
+					sPARTY_INFO & party = itTeam->second;
+					for (BYTE m = 0; m < party.byMemberCount; ++m)
+					{
+						CPlayer* pPl = g_pObjectManager->GetPC(party.charHandle[m]);
+						if (pPl && pPl->GetMatchIndex() == byMatchIndex && pPl->GetBudokaiTeamType() == wMatchWinner)
+							g_pBattlePassManager->OnBudokaiParticipation(pPl, true);
+					}
+				}
+			}
+		}
+
 		match->bFinishMatch = true;
 	}
 
@@ -4850,9 +4997,29 @@ void CBudokaiManager::UpdateFinalMatchScore(sTOURNAMENT_MATCH * match, BYTE byMa
 
 bool CBudokaiManager::LoadConfigFromIniPath(const char* iniPath)
 {
-	CNtlIniFile file;
-	if (file.Create(iniPath) != NTL_SUCCESS)
+	// Debug: Get current working directory
+	char currentDir[MAX_PATH];
+	GetCurrentDirectoryA(MAX_PATH, currentDir);
+	printf("[BUDOKAI] Current working directory: %s\n", currentDir);
+	printf("[BUDOKAI] Attempting to load: %s\n", iniPath);
+
+	// Check if file exists
+	DWORD fileAttr = GetFileAttributesA(iniPath);
+	if (fileAttr == INVALID_FILE_ATTRIBUTES)
+	{
+		printf("[BUDOKAI] File does not exist or cannot be accessed!\n");
 		return false;
+	}
+
+	CNtlIniFile file;
+	int createResult = file.Create(iniPath);
+	if (createResult != NTL_SUCCESS)
+	{
+		printf("[BUDOKAI] Failed to load config from %s (CNtlIniFile::Create returned %d)\n", iniPath, createResult);
+		return false;
+	}
+
+	printf("[BUDOKAI] CNtlIniFile::Create succeeded!\n");
 
 	int val = 0;
 	unsigned int u = 0;
@@ -4869,6 +5036,53 @@ bool CBudokaiManager::LoadConfigFromIniPath(const char* iniPath)
 
 	if (file.Read("BUDOKAI", "MajorMatchMaxScore", val)) SetMajorMatchMaxScore((BYTE)val);
 	if (file.Read("BUDOKAI", "FinalMatchMaxScore", val)) SetFinalMatchMaxScore((BYTE)val);
+	if (file.Read("BUDOKAI", "TeamMaxMembers", val))
+	{
+		printf("[BUDOKAI] Read TeamMaxMembers from INI: %d\n", val);
+		SetTeamMaxMembers((BYTE)val);
+		printf("[BUDOKAI] TeamMaxMembers set to: %d\n", (int)GetTeamMaxMembers());
+	}
+	else
+	{
+		printf("[BUDOKAI] WARNING: TeamMaxMembers not found in INI! Using default: %d\n", (int)GetTeamMaxMembers());
+	}
+
+	// Schedule configuration
+	// Adult Solo: Up to 9 slots
+	if (file.Read("BUDOKAI", "AdultSoloWday1", val)) m_byAdultSoloWday[0] = (BYTE)val;
+	if (file.Read("BUDOKAI", "AdultSoloHour1", val)) m_byAdultSoloHour[0] = (BYTE)val;
+	if (file.Read("BUDOKAI", "AdultSoloWday2", val)) m_byAdultSoloWday[1] = (BYTE)val;
+	if (file.Read("BUDOKAI", "AdultSoloHour2", val)) m_byAdultSoloHour[1] = (BYTE)val;
+	if (file.Read("BUDOKAI", "AdultSoloWday3", val)) m_byAdultSoloWday[2] = (BYTE)val;
+	if (file.Read("BUDOKAI", "AdultSoloHour3", val)) m_byAdultSoloHour[2] = (BYTE)val;
+	if (file.Read("BUDOKAI", "AdultSoloWday4", val)) m_byAdultSoloWday[3] = (BYTE)val;
+	if (file.Read("BUDOKAI", "AdultSoloHour4", val)) m_byAdultSoloHour[3] = (BYTE)val;
+	if (file.Read("BUDOKAI", "AdultSoloWday5", val)) m_byAdultSoloWday[4] = (BYTE)val;
+	if (file.Read("BUDOKAI", "AdultSoloHour5", val)) m_byAdultSoloHour[4] = (BYTE)val;
+	if (file.Read("BUDOKAI", "AdultSoloWday6", val)) m_byAdultSoloWday[5] = (BYTE)val;
+	if (file.Read("BUDOKAI", "AdultSoloHour6", val)) m_byAdultSoloHour[5] = (BYTE)val;
+	if (file.Read("BUDOKAI", "AdultSoloWday7", val)) m_byAdultSoloWday[6] = (BYTE)val;
+	if (file.Read("BUDOKAI", "AdultSoloHour7", val)) m_byAdultSoloHour[6] = (BYTE)val;
+	if (file.Read("BUDOKAI", "AdultSoloWday8", val)) m_byAdultSoloWday[7] = (BYTE)val;
+	if (file.Read("BUDOKAI", "AdultSoloHour8", val)) m_byAdultSoloHour[7] = (BYTE)val;
+	if (file.Read("BUDOKAI", "AdultSoloWday9", val)) m_byAdultSoloWday[8] = (BYTE)val;
+	if (file.Read("BUDOKAI", "AdultSoloHour9", val)) m_byAdultSoloHour[8] = (BYTE)val;
+
+	// Junior Solo: Single slot
+	if (file.Read("BUDOKAI", "JuniorSoloWday", val)) m_byJuniorSoloWday = (BYTE)val;
+	if (file.Read("BUDOKAI", "JuniorSoloHour", val)) m_byJuniorSoloHour = (BYTE)val;
+
+	// Adult Party: Up to 3 slots
+	if (file.Read("BUDOKAI", "AdultPartyWday1", val)) m_byAdultPartyWday[0] = (BYTE)val;
+	if (file.Read("BUDOKAI", "AdultPartyHour1", val)) m_byAdultPartyHour[0] = (BYTE)val;
+	if (file.Read("BUDOKAI", "AdultPartyWday2", val)) m_byAdultPartyWday[1] = (BYTE)val;
+	if (file.Read("BUDOKAI", "AdultPartyHour2", val)) m_byAdultPartyHour[1] = (BYTE)val;
+	if (file.Read("BUDOKAI", "AdultPartyWday3", val)) m_byAdultPartyWday[2] = (BYTE)val;
+	if (file.Read("BUDOKAI", "AdultPartyHour3", val)) m_byAdultPartyHour[2] = (BYTE)val;
+
+	// Junior Party: Single slot
+	if (file.Read("BUDOKAI", "JuniorPartyWday", val)) m_byJuniorPartyWday = (BYTE)val;
+	if (file.Read("BUDOKAI", "JuniorPartyHour", val)) m_byJuniorPartyHour = (BYTE)val;
 
 	return true;
 }
@@ -4893,6 +5107,31 @@ DWORD CBudokaiManager::GetBudokaiEndTime() const { return m_pTableInfo ? m_pTabl
 
 void CBudokaiManager::SetMajorMatchMaxScore(BYTE v) { m_byMajorMatchMaxScore = v ? v : m_byMajorMatchMaxScore; }
 void CBudokaiManager::SetFinalMatchMaxScore(BYTE v) { m_byFinalMatchMaxScore = v ? v : m_byFinalMatchMaxScore; }
+void CBudokaiManager::SetTeamMaxMembers(BYTE v) { m_byTeamMaxMembers = v ? v : m_byTeamMaxMembers; }
+
+void CBudokaiManager::SetAdultSoloSchedule(BYTE wday, BYTE hour)
+{
+	m_byAdultSoloWday[0] = wday;
+	m_byAdultSoloHour[0] = hour;
+}
+
+void CBudokaiManager::SetJuniorSoloSchedule(BYTE wday, BYTE hour)
+{
+	m_byJuniorSoloWday = wday;
+	m_byJuniorSoloHour = hour;
+}
+
+void CBudokaiManager::SetAdultPartySchedule(BYTE wday, BYTE hour)
+{
+	m_byAdultPartyWday[0] = wday;
+	m_byAdultPartyHour[0] = hour;
+}
+
+void CBudokaiManager::SetJuniorPartySchedule(BYTE wday, BYTE hour)
+{
+	m_byJuniorPartyWday = wday;
+	m_byJuniorPartyHour = hour;
+}
 
 void CBudokaiManager::FinalMatchMatchFinish(sTOURNAMENT_MATCH * match, BYTE byMatchIndex)
 {
@@ -5368,6 +5607,8 @@ void CBudokaiManager::FinalMatchEnd(sTOURNAMENT_MATCH * match, BYTE byMatchIndex
 					packet.SetPacketLen(sizeof(sGQ_BUDOKAI_TOURNAMENT_INDIVIDUAL_ADD_ENTRY_LIST_REQ));
 					app->SendTo(app->GetQueryServerSession(), &packet);
 
+					// Mark as expected channel change (not a crash/disconnect)
+					pPlayer->SetExpectingBudokaiChannelChange(true, app->GetCurTickCount());
 					pPlayer->TeleportAnotherServer(match->m_pWorld->GetTbldat()->outWorldLoc, pPlayer->GetCurDir(), match->m_pWorld->GetTbldat()->outWorldTblidx, match->m_pWorld->GetTbldat()->outWorldTblidx, TELEPORT_TYPE_BUDOKAI, pPlayer->GetPrevChannelID(), 0, false);
 				}
 			}
@@ -5438,6 +5679,8 @@ void CBudokaiManager::FinalMatchEnd(sTOURNAMENT_MATCH * match, BYTE byMatchIndex
 				CPlayer* pPlayer = g_pObjectManager->GetPC(partyInfo->charHandle[byMemberCount]);
 				if (pPlayer && partyInfo->charId[byMemberCount] == pPlayer->GetCharID() && pPlayer->GetMatchIndex() == byMatchIndex)
 				{
+					// Mark as expected channel change (not a crash/disconnect)
+					pPlayer->SetExpectingBudokaiChannelChange(true, app->GetCurTickCount());
 					pPlayer->TeleportAnotherServer(match->m_pWorld->GetTbldat()->outWorldLoc, pPlayer->GetCurDir(), match->m_pWorld->GetTbldat()->outWorldTblidx, match->m_pWorld->GetTbldat()->outWorldTblidx, TELEPORT_TYPE_BUDOKAI, pPlayer->GetPrevChannelID(), 0, false);
 				}
 			}
@@ -7259,8 +7502,20 @@ WORD CBudokaiManager::CheckBudokaiOpen(CPlayer * pPlayer)
 					return GAME_PARTY_YOU_ARE_NOT_IN_PARTY;
 				if(pParty->GetPartyLeaderID() != pPlayer->GetID())
 					return GAME_BUDOKAI_YOU_ARE_NOT_A_TEAM_LEADER;
-				if(pParty->GetPartyMemberCount() < NTL_MAX_MEMBER_IN_PARTY)
+				// Check exact party size match: must equal configured team size
+				BYTE byRequiredMembers = GetTeamMaxMembers();
+				BYTE byActualMembers = pParty->GetPartyMemberCount();
+				printf("[BUDOKAI] Junior Party Join Check - Required: %d, Actual: %d\n", (int)byRequiredMembers, (int)byActualMembers);
+				if(byActualMembers < byRequiredMembers)
+				{
+					printf("[BUDOKAI] Rejecting: Party has too FEW members (%d < %d)\n", (int)byActualMembers, (int)byRequiredMembers);
 					return GAME_BUDOKAI_NEED_MORE_MEMBER;
+				}
+				if(byActualMembers > byRequiredMembers)
+				{
+					printf("[BUDOKAI] Rejecting: Party has too MANY members (%d > %d)\n", (int)byActualMembers, (int)byRequiredMembers);
+					return GAME_BUDOKAI_NEED_MORE_MEMBER; // Using same error for consistency
+				}
 
 				for (BYTE i = 0; i < pParty->GetPartyMemberCount(); i++)
 				{
@@ -7295,8 +7550,20 @@ WORD CBudokaiManager::CheckBudokaiOpen(CPlayer * pPlayer)
 					return GAME_PARTY_YOU_ARE_NOT_IN_PARTY;
 				if (pParty->GetPartyLeaderID() != pPlayer->GetID())
 					return GAME_BUDOKAI_YOU_ARE_NOT_A_TEAM_LEADER;
-				if (pParty->GetPartyMemberCount() < NTL_MAX_MEMBER_IN_PARTY)
+				// Check exact party size match: must equal configured team size
+				BYTE byRequiredMembers = GetTeamMaxMembers();
+				BYTE byActualMembers = pParty->GetPartyMemberCount();
+				printf("[BUDOKAI] Adult Party Join Check - Required: %d, Actual: %d\n", (int)byRequiredMembers, (int)byActualMembers);
+				if (byActualMembers < byRequiredMembers)
+				{
+					printf("[BUDOKAI] Rejecting: Party has too FEW members (%d < %d)\n", (int)byActualMembers, (int)byRequiredMembers);
 					return GAME_BUDOKAI_NEED_MORE_MEMBER;
+				}
+				if (byActualMembers > byRequiredMembers)
+				{
+					printf("[BUDOKAI] Rejecting: Party has too MANY members (%d > %d)\n", (int)byActualMembers, (int)byRequiredMembers);
+					return GAME_BUDOKAI_NEED_MORE_MEMBER; // Using same error for consistency
+				}
 
 				for (BYTE i = 0; i < pParty->GetPartyMemberCount(); i++)
 				{
@@ -7488,6 +7755,170 @@ TEAMTYPE CBudokaiManager::DecideTeamType(BYTE nextMatchDepth, BYTE byPrelimIndex
 	}
 
 	return teamType;
+}
+
+// ========================================
+// Random Party Matchmaking System for Team Budokai
+// ========================================
+
+void CBudokaiManager::JoinMatchmakingQueue(CPlayer* pPlayer)
+{
+	if (!pPlayer || !pPlayer->IsInitialized())
+	{
+		ERR_LOG(LOG_GENERAL, "[MATCHMAKING] Invalid player trying to join queue");
+		return;
+	}
+
+	CGameServer* app = (CGameServer*)g_pApp;
+
+	// Helper to send system message
+	auto SendMessage = [&](const WCHAR* msg) {
+		CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+		sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+		res->wOpCode = GU_SYSTEM_DISPLAY_TEXT;
+		res->byDisplayType = SERVER_TEXT_SYSTEM;
+		NTL_SAFE_WCSCPY(res->awchMessage, msg);
+		packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+		pPlayer->SendPacket(&packet);
+	};
+
+	// Check if player is already in queue
+	for (auto it = m_vecMatchmakingQueue.begin(); it != m_vecMatchmakingQueue.end(); ++it)
+	{
+		if (it->charId == pPlayer->GetCharID())
+		{
+			ERR_LOG(LOG_GENERAL, "[MATCHMAKING] Player %u already in queue", (unsigned)pPlayer->GetCharID());
+			SendMessage(L"[Budokai Matchmaking] You are already in the matchmaking queue!");
+			return;
+		}
+	}
+
+	// Check if player already has a party
+	if (pPlayer->GetParty() != NULL)
+	{
+		ERR_LOG(LOG_GENERAL, "[MATCHMAKING] Player %u already has a party", (unsigned)pPlayer->GetCharID());
+		SendMessage(L"[Budokai Matchmaking] You are already in a party! Leave your party first.");
+		return;
+	}
+
+	// Add player to queue
+	m_vecMatchmakingQueue.push_back(sMATCHMAKING_PLAYER(pPlayer->GetCharID(), pPlayer->GetID(), app->GetCurTickCount()));
+
+	ERR_LOG(LOG_GENERAL, "[MATCHMAKING] Player %u joined queue. Queue size: %u", (unsigned)pPlayer->GetCharID(), (unsigned)m_vecMatchmakingQueue.size());
+
+	// Try to process matchmaking immediately
+	ProcessMatchmakingQueue();
+}
+
+void CBudokaiManager::LeaveMatchmakingQueue(CHARACTERID charId)
+{
+	// Helper to send system message
+	auto SendMessage = [&](CPlayer* pPlayer, const WCHAR* msg) {
+		CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+		sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+		res->wOpCode = GU_SYSTEM_DISPLAY_TEXT;
+		res->byDisplayType = SERVER_TEXT_SYSTEM;
+		NTL_SAFE_WCSCPY(res->awchMessage, msg);
+		packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+		pPlayer->SendPacket(&packet);
+	};
+
+	// Find and remove player from queue
+	for (auto it = m_vecMatchmakingQueue.begin(); it != m_vecMatchmakingQueue.end(); ++it)
+	{
+		if (it->charId == charId)
+		{
+			m_vecMatchmakingQueue.erase(it);
+			ERR_LOG(LOG_GENERAL, "[MATCHMAKING] Player %u left queue. Queue size: %u", (unsigned)charId, (unsigned)m_vecMatchmakingQueue.size());
+
+			// Notify player
+			CPlayer* pPlayer = g_pObjectManager->FindByChar(charId);
+			if (pPlayer && pPlayer->IsInitialized())
+			{
+				SendMessage(pPlayer, L"[Budokai Matchmaking] You have left the matchmaking queue.");
+			}
+			return;
+		}
+	}
+}
+
+void CBudokaiManager::ProcessMatchmakingQueue()
+{
+	// Need exactly 5 players to form a team
+	if (m_vecMatchmakingQueue.size() < NTL_MAX_MEMBER_IN_PARTY)
+		return;
+
+	CGameServer* app = (CGameServer*)g_pApp;
+
+	// Collect 5 players from queue
+	std::vector<CPlayer*> teamPlayers;
+	std::vector<CHARACTERID> toRemove;
+
+	for (BYTE i = 0; i < NTL_MAX_MEMBER_IN_PARTY && i < m_vecMatchmakingQueue.size(); ++i)
+	{
+		CPlayer* pPlayer = g_pObjectManager->FindByChar(m_vecMatchmakingQueue[i].charId);
+		if (pPlayer && pPlayer->IsInitialized() && pPlayer->GetParty() == NULL)
+		{
+			teamPlayers.push_back(pPlayer);
+			toRemove.push_back(m_vecMatchmakingQueue[i].charId);
+		}
+	}
+
+	// If we don't have exactly 5 valid players, clean up invalid ones and return
+	if (teamPlayers.size() < NTL_MAX_MEMBER_IN_PARTY)
+	{
+		// Remove disconnected players from queue
+		for (auto charId : toRemove)
+		{
+			LeaveMatchmakingQueue(charId);
+		}
+		return;
+	}
+
+	// Create party with auto-generated name
+	WCHAR wszTeamName[NTL_MAX_SIZE_PARTY_NAME + 1];
+	swprintf_s(wszTeamName, NTL_MAX_SIZE_PARTY_NAME + 1, L"BudokaiTeam_%u", app->GetCurTickCount());
+
+	CPlayer* pLeader = teamPlayers[0];
+	CHARACTERID leaderCharId = pLeader->GetCharID();
+
+	ERR_LOG(LOG_GENERAL, "[MATCHMAKING] Creating party '%ls' with leader %u", wszTeamName, (unsigned)leaderCharId);
+
+	// Create the party using existing BudokaiCreateParty function
+	for (auto pPlayer : teamPlayers)
+	{
+		g_pPartyManager->BudokaiCreateParty(pPlayer, wszTeamName, leaderCharId);
+
+		// Notify player that team was formed
+		CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+		sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+		res->wOpCode = GU_SYSTEM_DISPLAY_TEXT;
+		res->byDisplayType = SERVER_TEXT_SYSTEM;
+		NTL_SAFE_WCSCPY(res->awchMessage, L"[Budokai Matchmaking] Team formed! You are now in a Budokai team party. The party leader can register for Team Budokai.");
+		packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+		pPlayer->SendPacket(&packet);
+	}
+
+	// Remove players from queue
+	for (auto charId : toRemove)
+	{
+		for (auto it = m_vecMatchmakingQueue.begin(); it != m_vecMatchmakingQueue.end(); ++it)
+		{
+			if (it->charId == charId)
+			{
+				m_vecMatchmakingQueue.erase(it);
+				break;
+			}
+		}
+	}
+
+	ERR_LOG(LOG_GENERAL, "[MATCHMAKING] Team formed successfully. Remaining queue size: %u", (unsigned)m_vecMatchmakingQueue.size());
+
+	// Process queue again if more players are waiting
+	if (m_vecMatchmakingQueue.size() >= NTL_MAX_MEMBER_IN_PARTY)
+	{
+		ProcessMatchmakingQueue();
+	}
 }
 
 

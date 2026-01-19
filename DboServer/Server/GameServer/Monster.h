@@ -103,6 +103,9 @@ private:
 	// CustomDropEvent: if true, block BUFF_TYPE_CURSE registration on this monster
 	bool                m_bEventDebuffImmune = false;
 
+	// Appearance override tblidx (INVALID_TBLIDX = use actual mob tblidx)
+	TBLIDX				m_overrideAppearanceTblidx;
+
 };
 
 

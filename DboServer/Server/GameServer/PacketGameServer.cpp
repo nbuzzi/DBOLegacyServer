@@ -1,4 +1,4 @@
-﻿#include "stdafx.h"
+#include "stdafx.h"
 #include "NtlPacketGU.h"
 #include "NtlPacketUG.h"
 #include "NtlPacketGM.h"
@@ -46,6 +46,7 @@
 #include "gm.h"
 #include "TriggerManager.h"
 #include "DungeonManager.h"
+#include "DungeonConfig.h"
 #include "WpsAlgoObject.h"
 #include "DynamicFieldSystemEvent.h"
 #include "DragonballHunt.h"
@@ -64,12 +65,10 @@
 #include "BusSystem.h"
 #include "scsManager.h"
 #include "WPShopContainer.h"
-// Arena runtime (custom PvP flow)
 #include "ArenaManager.h"
-
-// Local helpers: detect Broly worlds by name instead of numeric IDs
 #include <string>
 #include <algorithm>
+
 static bool IsBrolyWorld(CWorld* pWorld)
 {
 	if (!pWorld) return false;
@@ -79,6 +78,7 @@ static bool IsBrolyWorld(CWorld* pWorld)
 	std::transform(s.begin(), s.end(), s.begin(), ::tolower);
 	return s.find("broly") != std::string::npos;
 }
+
 static bool IsBrolyWorldId(WORLDID worldId)
 {
 	CGameServer* app = (CGameServer*)g_pApp;
@@ -1060,9 +1060,19 @@ void CClientSession::RecvCharMove(CNtlPacket* pPacket)
 	NtlLocationDecompress(&req->vCurLoc, &vLoc.x, &vLoc.y, &vLoc.z);
 
 	// to do: speed hack check
-
 	auto pWorld = cPlayer->GetCurWorld();
 	auto worldId = cPlayer->GetWorldID();
+
+	// Floor fall detection - only for COLISEODEMON map (world IDs 900044-900047) - kill player if they fall through the floor
+	// Check Y coordinate first for short-circuit optimization (most players are at normal height)
+	// This is not longer needed
+	//if (vLoc.y < 16.0f && worldId >= 900044 && worldId <= 900047)
+	//{
+	//	// Kill the player
+	//	cPlayer->Faint(cPlayer, FAINT_REASON_COMMAND);
+	//	return;
+	//}
+
 	if (cPlayer->SetCurLoc(vLoc, pWorld))
 	{
 		CNtlVector vDir;
@@ -1283,6 +1293,17 @@ void CClientSession::RecvCharAirMoveSync(CNtlPacket* pPacket)
 
 	auto pWorld = cPlayer->GetCurWorld();
 	auto worldId = cPlayer->GetWorldID();
+
+	// Floor fall detection - only for COLISEODEMON map (world IDs 900044-900047) - kill player if they fall through the floor
+	// Check Y coordinate first for short-circuit optimization (most players are at normal height)
+	// This is not longer needed
+	//if (vLoc.y < 16.0f && worldId >= 900044 && worldId <= 900047)
+	//{
+	//	// Kill the player
+	//	cPlayer->Faint(cPlayer, FAINT_REASON_COMMAND);
+	//	return;
+	//}
+
 	if (cPlayer->SetCurLoc(vLoc, pWorld))
 	{
 		CNtlVector sDir;
@@ -4470,7 +4491,8 @@ void CClientSession::RecvPartyLeaveReq(CNtlPacket* pPacket)
 
 	WORD resultcode = GAME_SUCCESS;
 
-	if (cPlayer->GetParty())
+	CParty* pParty = cPlayer->GetParty();
+	if (pParty)
 	{
 		if (cPlayer->HasEventType(EVENT_TELEPORT_PROPOSAL))
 			resultcode = GAME_PARTY_LEAVING_IS_NOT_ALLOWED;
@@ -4479,7 +4501,16 @@ void CClientSession::RecvPartyLeaveReq(CNtlPacket* pPacket)
 		else if (cPlayer->GetTMQ() || cPlayer->GetCCBD())
 			resultcode = GAME_FAIL;
 		else
-			cPlayer->GetParty()->LeaveParty(cPlayer);
+		{
+			// Check if this is the last member before leaving
+			BYTE byMemberCount = pParty->GetPartyMemberCount();
+			pParty->LeaveParty(cPlayer);
+
+			// If this was the last member, disband the party AFTER LeaveParty returns
+			// This prevents deleting 'this' from within a member function
+			if (byMemberCount == 1)
+				g_pPartyManager->DisbandParty(pParty);
+		}
 	}
 	else
 		resultcode = GAME_COMMON_YOU_ARE_NOT_IN_A_PARTY;
@@ -11767,6 +11798,35 @@ void CClientSession::RecvBattleDungeonEnterReq(CNtlPacket* pPacket)
 							}
 						}
 
+						// Check if CCBD Boss-Only Mode is enabled
+						if (g_pDungeonConfig->IsCCBDBossOnlyModeEnabled())
+						{
+							// If a ticket was used, round the ticket floor value to the nearest boss floor
+							// Boss floors are every 5 floors: 5, 10, 15, 20, 25, etc.
+							// Examples: 131 -> 135, 91 -> 95, 136 -> 140, 3 -> 5
+							if (pItem && byBeginStage > 0)
+							{
+								// Round up to the next multiple of 5
+								// Formula: ((value - 1) / 5 + 1) * 5
+								byBeginStage = ((byBeginStage - 1) / 5 + 1) * 5;
+								ERR_LOG(LOG_GENERAL, "[CCBD_BOSS_MODE] Ticket floor rounded to boss floor: %u", byBeginStage);
+							}
+							else
+							{
+								// No ticket used, use progressive system based on last cleared floor
+								BYTE byLastCleared = cPlayer->GetCCBDLastBossStageCleared();
+								if (byLastCleared == 0)
+								{
+									byBeginStage = 5; // First time: start at floor 5
+								}
+								else
+								{
+									// Continue to next boss floor (last + 5)
+									byBeginStage = byLastCleared + 5;
+								}
+								ERR_LOG(LOG_GENERAL, "[CCBD_BOSS_MODE] Progressive boss floor: %u", byBeginStage);
+							}
+						}
 						CBattleDungeon* pDungeon = g_pDungeonManager->CreateBattleDungeon(cPlayer, wResultcode, byBeginStage);
 						if (pDungeon == NULL)
 							wResultcode = GAME_PARTY_DUNGEON_IS_NOT_CREATED;
@@ -12081,7 +12141,9 @@ void CClientSession::RecvSellAuctionHouseReq(CNtlPacket* pPacket)
 								res->dwFee = dwSellFee;
 								res->dwPrice = req->dwPrice;
 								res->itemId = pItem->GetItemID();
-								res->dwTime = 86400;
+                            	// Auction listing duration (seconds)
+                            	// Previously 1 day (86400). Increased to 90 days as requested.
+                           	 	res->dwTime = 90 * 86400; // 7,776,000 seconds
 								packet.SetPacketLen(sizeof(sGT_TENKAICHIDAISIJYOU_SELL_REQ));
 								app->SendTo(app->GetChatServerSession(), &packet);
 								if (pItem->GetCount() - req->byCount <= 0)
@@ -14670,7 +14732,17 @@ void CClientSession::RecvBudokaiMudosaTeleportReq(CNtlPacket* pPacket)
 
 void CClientSession::RecvBudokaiPartyMakerReq(CNtlPacket* pPacket)
 {
+	if (!cPlayer || !cPlayer->IsInitialized())
+		return;
+
 	sUG_BUDOKAI_PARTY_MAKER_REQ* req = (sUG_BUDOKAI_PARTY_MAKER_REQ*)pPacket->GetPacketData();
+
+	CGameServer* app = (CGameServer*)g_pApp;
+
+	// Join the matchmaking queue for random team formation
+	g_pBudokaiManager->JoinMatchmakingQueue(cPlayer);
+
+	ERR_LOG(LOG_USER, "[MATCHMAKING] Player %u requested party maker", (unsigned)cPlayer->GetCharID());
 }
 
 //-------------------------------------------------
@@ -17663,8 +17735,8 @@ void CClientSession::RecvItemUseReq(CNtlPacket* pPacket)
 					// CHECK CLASS
 					else if (Dbo_CheckClass(cPlayer->GetClass(), pItemTbldat->dwNeed_Class_Bit_Flag) == false)
 						resultcode = GAME_ITEM_CLASS_FAIL;
-					// CHECK GENDER
-					else if (BIT_FLAG_TEST(pItemTbldat->dwNeed_Gender_Bit_Flag, MAKE_BIT_FLAG(cPlayer->GetGender())) == false)
+					// CHECK GENDER (Fixed: parameter order was reversed)
+					else if (BIT_FLAG_TEST(MAKE_BIT_FLAG(cPlayer->GetGender()), pItemTbldat->dwNeed_Gender_Bit_Flag) == false)
 						resultcode = GAME_ITEM_GENDER_DOESNT_MATCH;
 					// CHECK RACE
 					else if (pItemTbldat->byRace_Special != cPlayer->GetRace() && pItemTbldat->byRace_Special != INVALID_BYTE)

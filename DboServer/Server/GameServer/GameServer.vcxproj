@@ -75,6 +75,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="ArenaManager.cpp" />
+    <ClCompile Include="MobAppearanceOverrideManager.cpp" />
+    <ClCompile Include="MobBuffsManager.cpp" />
+    <ClCompile Include="EventManager.cpp" />
     <ClCompile Include="ActionPattern.cpp" />
     <ClCompile Include="ActionPatternIdle1.cpp" />
     <ClCompile Include="ActionPatternIdle2.cpp" />
@@ -345,6 +348,7 @@
     <ClCompile Include="ScriptAlgoAction_Default.cpp" />
     <ClCompile Include="ScriptAlgoAction_Case.cpp" />
     <ClCompile Include="DojoManager.cpp" />
+    <ClCompile Include="DungeonConfig.cpp" />
     <ClCompile Include="EndCondition.cpp" />
     <ClCompile Include="EndCondition_HimSelf_LPCheck.cpp" />
     <ClCompile Include="EndCondition_TargetFixAttack.cpp" />
@@ -568,6 +572,8 @@
     <ClCompile Include="SvrScrFormulaToken.cpp" />
     <ClCompile Include="SvrScrVariableContainer.cpp" />
     <ClCompile Include="SvrScrVariableMap.cpp" />
+  <ClCompile Include="FeatureFlags.cpp" />
+  <ClCompile Include="VirtualTransformationManager.cpp" />
     <ClCompile Include="TargetListManager.cpp" />
     <ClCompile Include="TimeLeapDungeon.cpp" />
     <ClCompile Include="TimeQuest.cpp" />
@@ -579,6 +585,7 @@
     <ClCompile Include="MasterServerPacket.cpp" />
     <ClCompile Include="MasterServerSession.cpp" />
     <ClCompile Include="Monster.cpp" />
+  <ClCompile Include="BattlePassManager.cpp" />
     <ClCompile Include="SubNeighborServerInfoManager.cpp" />
     <ClCompile Include="Npc.cpp" />
     <ClCompile Include="PacketGameServer.cpp" />
@@ -749,7 +756,11 @@
     <ClCompile Include="WpsScriptAlgoCondition_CCBD_pattern.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="MobAppearanceOverrideManager.h" />
+    <ClInclude Include="MobBuffsManager.h" />
     <ClInclude Include="ArenaManager.h" />
+    <ClInclude Include="EventManager.h" />
+    <ClInclude Include="BattlePassManager.h" />
     <ClInclude Include="ActionPattern.h" />
     <ClInclude Include="ActionPatternIdle1.h" />
     <ClInclude Include="ActionPatternIdle2.h" />
@@ -1036,6 +1047,7 @@
     <ClInclude Include="ContainerActionPatternUnit.h" />
     <ClInclude Include="CPlayer.h" />
     <ClInclude Include="DojoManager.h" />
+    <ClInclude Include="DungeonConfig.h" />
     <ClInclude Include="EndCondition.h" />
     <ClInclude Include="EndCondition_HimSelf_LPCheck.h" />
     <ClInclude Include="EndCondition_TargetFixAttack.h" />
@@ -1254,6 +1266,8 @@
     <ClInclude Include="SvrScrFormulaToken.h" />
     <ClInclude Include="SvrScrVariableContainer.h" />
     <ClInclude Include="SvrScrVariableMap.h" />
+  <ClInclude Include="FeatureFlags.h" />
+  <ClInclude Include="VirtualTransformationManager.h" />
     <ClInclude Include="TargetListManager.h" />
     <ClInclude Include="TimeLeapDungeon.h" />
     <ClInclude Include="TimeQuest.h" />

@@ -20,7 +20,8 @@
 
 #include "RangeCheck.h"
 #include "HelperNpcManager.h"
-
+#include "EventManager.h"
+#include "BattlePassManager.h"
 
 
 CCharacter::CCharacter(eOBJTYPE eObjType)
@@ -873,8 +874,8 @@ float CCharacter::GetAttackFollowRange()
 //-------------------------------------------------------------------//
 bool CCharacter::IsTargetAttackble(CCharacter* pTarget, WORD wRange)
 {
-	// Registered helpers (NPC/Monster) linked to a PC and allied should never attack PCs.
-	// Legacy non-helper NPCs/mobs must continue to evaluate original attackability rules.
+	// Registered helpers (NPC/Monster) linked to a PC and allied should never attack any PCs (allies or party members).
+	// Helpers should only attack mobs/monsters. Legacy non-helper NPCs/mobs must continue to evaluate original attackability rules.
 	if (pTarget && pTarget->IsInitialized())
 	{
 		if ((IsNPC() || IsMonster()) && pTarget->IsPC())
@@ -882,9 +883,30 @@ bool CCharacter::IsTargetAttackble(CCharacter* pTarget, WORD wRange)
 			CNpc* pSelfNpc = static_cast<CNpc*>(this);
 			if (pSelfNpc->GetLinkPc() != INVALID_HOBJECT && pSelfNpc->GetPcRelation() == RELATION_TYPE_ALLIENCE)
 			{
-				// Only block if this NPC is a registered helper managed by HelperNpcManager
+				// Block if this NPC is a registered helper managed by HelperNpcManager - helpers should ONLY attack mobs, never PCs
 				if (GetHelperNpcManager()->IsRegisteredHelper(pSelfNpc))
-					return false;
+				{
+					return false; // Helpers cannot attack any PC (allies, party members, or anyone)
+				}
+
+				// Also block if this is an ALLIENCE NPC (even if not registered as helper) and target is in the same party as the linked PC
+				// This prevents script-spawned helper NPCs from attacking party members
+				CPlayer* pTargetPlayer = static_cast<CPlayer*>(pTarget);
+				CPlayer* pLinkedPlayer = (CPlayer*)g_pObjectManager->GetPC(pSelfNpc->GetLinkPc());
+				if (pLinkedPlayer && pLinkedPlayer->IsInitialized())
+				{
+					// Check if both players are in the same party
+					if (pLinkedPlayer->GetParty() && pTargetPlayer->GetParty() &&
+						pLinkedPlayer->GetParty() == pTargetPlayer->GetParty())
+					{
+						return false; // Cannot attack party members
+					}
+					// Also block if targeting the linked PC directly
+					if (pTargetPlayer == pLinkedPlayer)
+					{
+						return false;
+					}
+				}
 			}
 		}
 
@@ -1874,7 +1896,22 @@ void	CCharacter::SendCharStateFaint(BYTE byReason)
 	packet.SetPacketLen(sizeof(sGU_UPDATE_CHAR_STATE));
 
 	if (GetStateManager()->CopyFrom(&res->sCharState))	//if change state success then broadcast
+	{
 		Broadcast(&packet);
+
+		// Notify event manager if this is a player death during event
+		CPlayer* pPlayer = dynamic_cast<CPlayer*>(this);
+		if (pPlayer && g_pEventManager && g_pEventManager->IsEnabled())
+		{
+			g_pEventManager->OnPlayerDeath(pPlayer);
+		}
+
+		// Battle Pass death hook (safe if disabled / no season)
+		if (g_pBattlePassManager && g_pBattlePassManager->IsEnabled() && g_pBattlePassManager->IsMasterEnabled() && pPlayer)
+		{
+			g_pBattlePassManager->OnPlayerDeath(pPlayer);
+		}
+	}
 }
 
 //--------------------------------------------------------------------------------------//

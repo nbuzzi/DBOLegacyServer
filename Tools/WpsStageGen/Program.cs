@@ -1,10 +1,27 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 
-// WPS Stage Generator
-// - Scans a .wps file for CCBD stages
-// - Adds new stages with customizable intervals, boss stages, optional boss arena cycle, and rewards
-// - Ensures only the final boss stage has CCBD reward "last stage" flag
+namespace WpsStageGen;
+
+internal record BossStageOverride(
+    int Stage,
+    int? BossGroup,
+    string? BossTemplatePath,
+    int? RewardItem,
+    int? ArenaSlot,
+    IReadOnlyDictionary<string, string> Variables
+);
+
+internal record ProfileOverrides(
+    bool IncrementBossGroup,
+    IReadOnlyList<int> RewardCycle,
+    IReadOnlyDictionary<int, BossStageOverride> BossStages
+);
 
 internal record GenOptions(
     string InputPath,
@@ -13,179 +30,329 @@ internal record GenOptions(
     int BossEvery,
     int StartStageOverride,
     int BossGroup,
-    int RewardItem,
+    int DefaultRewardItem,
     string PatternList,
-    string[] BossWorldsCycle,
     string? BossTemplatePath,
     string? RegularTemplatePath,
-    IReadOnlyDictionary<string,string> CustomVars
+    IReadOnlyDictionary<string, string> CustomVars,
+    ProfileOverrides? ProfileOverrides,
+    string[] BossWorldAliases
 );
 
-internal class Program
+internal record GenerationSummary(string OutputPath, int StartStage, int EndStage, int AddedBossCount);
+
+internal static class StageGenerator
 {
     private static readonly Regex StageHeader = new(
         "Action\\(\\s*\\\"CCBD stage\\\"\\s*\\)\\s*--\\[\\s*Param\\(\\s*\\\"stage\\\"\\s*,\\s*(\\d+)\\s*\\)",
         RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline);
 
-    // In 83000.wps the terminal flag lives under the CCBD reward block as: Param( "last stage", "true" )
     private static readonly Regex RewardLastStageTrue = new(
         "Param\\(\\s*\\\"last stage\\\"\\s*,\\s*\\\"true\\\"\\s*\\)",
         RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-    private static readonly Regex AddMobGroup = new(
-        "Action\\(\\s*\\\"add mobgroup\\\"\\s*\\)\\s*--\\[\\s*Param\\(\\s*\\\"group\\\"\\s*,\\s*(\\d+)\\s*\\)",
-        RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline);
+    private static readonly Dictionary<string, int> ArenaAliasLookup = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["ARENA_A"] = 0,
+        ["ARENA_FIRE"] = 0,
+        ["ARENA_RED"] = 0,
+        ["ARENA_B"] = 1,
+        ["ARENA_ICE"] = 1,
+        ["ARENA_BLUE"] = 1,
+        ["ARENA_C"] = 2,
+        ["ARENA_LIGHTNING"] = 2,
+        ["ARENA_YELLOW"] = 2,
+        ["ARENA_D"] = 3,
+        ["ARENA_FOREST"] = 3,
+        ["ARENA_GREEN"] = 3
+    };
 
-    static int Main(string[] args)
+    public static GenerationSummary Generate(GenOptions opts)
+    {
+        if (opts.AddCount <= 0)
+            throw new ArgumentOutOfRangeException(nameof(opts.AddCount), "Add count must be at least 1.");
+        if (opts.BossEvery <= 0)
+            throw new ArgumentOutOfRangeException(nameof(opts.BossEvery), "bossEvery must be >= 1.");
+        if (!File.Exists(opts.InputPath))
+            throw new FileNotFoundException($"Input WPS file not found: {opts.InputPath}");
+
+        string original = File.ReadAllText(opts.InputPath, Encoding.UTF8);
+        var existingStages = StageHeader.Matches(original)
+            .Select(m => int.Parse(m.Groups[1].Value))
+            .OrderBy(x => x)
+            .ToList();
+
+        if (existingStages.Count == 0)
+            throw new InvalidOperationException("No CCBD stages found in the source WPS file.");
+
+        int maxExistingStage = existingStages.Max();
+        int startStage = opts.StartStageOverride > 0 ? opts.StartStageOverride : maxExistingStage + 1;
+        int finalStage = startStage + opts.AddCount - 1;
+
+        var normalized = RewardLastStageTrue.Replace(original, _ => "Param( \"last stage\", \"false\" )");
+        var builder = new StringBuilder(normalized);
+        if (!normalized.EndsWith('\n'))
+            builder.AppendLine();
+
+        int? lastBossStage = null;
+        for (int preview = startStage; preview <= finalStage; preview++)
+        {
+            if (preview % opts.BossEvery == 0)
+                lastBossStage = preview;
+        }
+
+        int appendedBossCount = 0;
+        string inputDir = Path.GetDirectoryName(Path.GetFullPath(opts.InputPath)) ?? ".";
+
+        for (int offset = 0; offset < opts.AddCount; offset++)
+        {
+            int stage = startStage + offset;
+            bool isBossStage = stage % opts.BossEvery == 0;
+
+            BossStageOverride? bossOverride = null;
+            if (opts.ProfileOverrides?.BossStages != null &&
+                opts.ProfileOverrides.BossStages.TryGetValue(stage, out var overrideData))
+            {
+                bossOverride = overrideData;
+                isBossStage = isBossStage || bossOverride.BossTemplatePath != null || bossOverride.BossGroup.HasValue;
+            }
+
+            int? arenaSlotOverride = bossOverride?.ArenaSlot;
+            string? arenaAlias = null;
+            int nthBoss = 0;
+
+            if (isBossStage)
+            {
+                appendedBossCount++;
+                nthBoss = appendedBossCount;
+
+                if (arenaSlotOverride is null && opts.BossWorldAliases.Length > 0)
+                {
+                    arenaAlias = opts.BossWorldAliases[(nthBoss - 1) % opts.BossWorldAliases.Length];
+                    arenaSlotOverride = TryParseArenaSlot(arenaAlias ?? string.Empty);
+                }
+            }
+
+            bool markAsLastStage = lastBossStage.HasValue && stage == lastBossStage.Value;
+
+            var replacements = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["STAGE"] = stage.ToString(),
+                ["IS_BOSS"] = isBossStage ? "true" : "false",
+                ["MARK_LAST_STAGE"] = markAsLastStage ? "true" : "false",
+                ["BOSS_EVERY"] = opts.BossEvery.ToString(),
+                ["START_STAGE"] = startStage.ToString(),
+                ["END_STAGE"] = finalStage.ToString(),
+                ["ARENA_SLOT"] = arenaSlotOverride?.ToString() ?? string.Empty,
+                ["ARENA_ALIAS"] = arenaAlias ?? string.Empty
+            };
+
+            foreach (var kv in opts.CustomVars)
+                replacements[kv.Key] = kv.Value;
+
+            string? resolvedBossTemplate = bossOverride?.BossTemplatePath ?? opts.BossTemplatePath;
+            if (!string.IsNullOrWhiteSpace(resolvedBossTemplate))
+                resolvedBossTemplate = ResolveTemplatePath(resolvedBossTemplate!, inputDir);
+
+            string? resolvedRegularTemplate = opts.RegularTemplatePath;
+            if (!string.IsNullOrWhiteSpace(resolvedRegularTemplate))
+                resolvedRegularTemplate = ResolveTemplatePath(resolvedRegularTemplate!, inputDir);
+
+            int mobGroup = opts.BossGroup;
+            int rewardItem = opts.DefaultRewardItem;
+
+            if (isBossStage)
+            {
+                if (opts.ProfileOverrides?.IncrementBossGroup == true && nthBoss > 0)
+                    mobGroup += (nthBoss - 1);
+
+                if (opts.ProfileOverrides?.RewardCycle is { Count: > 0 } cycle && nthBoss > 0)
+                    rewardItem = cycle[(nthBoss - 1) % cycle.Count];
+
+                if (bossOverride?.BossGroup is { } groupOverride && groupOverride > 0)
+                    mobGroup = groupOverride;
+
+                if (bossOverride?.RewardItem is { } rewardOverride && rewardOverride > 0)
+                    rewardItem = rewardOverride;
+
+                replacements["BOSS_GROUP"] = mobGroup.ToString();
+                replacements["REWARD_ITEM"] = rewardItem.ToString();
+
+                if (bossOverride?.Variables != null)
+                {
+                    foreach (var kv in bossOverride.Variables)
+                        replacements[kv.Key] = kv.Value;
+                }
+            }
+            else
+            {
+                replacements["BOSS_GROUP"] = mobGroup.ToString();
+                replacements["REWARD_ITEM"] = rewardItem.ToString();
+            }
+
+            builder.AppendLine();
+            builder.AppendLine("-----------------------------------");
+            builder.AppendLine($"-- Stage {stage}");
+            builder.AppendLine("-----------------------------------");
+            builder.AppendLine("Action( \"CCBD stage\" )");
+            builder.AppendLine("--[");
+            builder.AppendLine($"    Param( \"stage\", {stage} )");
+
+            if (arenaSlotOverride is not null)
+                builder.AppendLine($"    Param( \"boss arena slot\", {arenaSlotOverride.Value} )");
+
+            if (!isBossStage)
+            {
+                builder.AppendLine();
+                builder.AppendLine("    Action( \"CCBD exec pattern\" )");
+                builder.AppendLine("    --[");
+                builder.AppendLine($"        Param( \"pattern list\", \"{opts.PatternList}\" )");
+                builder.AppendLine("    --]");
+                builder.AppendLine("    End()");
+
+                if (!string.IsNullOrWhiteSpace(resolvedRegularTemplate) && File.Exists(resolvedRegularTemplate))
+                    InjectTemplate(builder, resolvedRegularTemplate!, 4, replacements);
+            }
+            else
+            {
+                builder.AppendLine("    Param( \"direct play\", \"false\" )");
+                if (!string.IsNullOrWhiteSpace(arenaAlias))
+                    builder.AppendLine($"    -- Boss arena alias: {arenaAlias}");
+
+                builder.AppendLine();
+                builder.AppendLine("    Action( \"add mobgroup\" )");
+                builder.AppendLine("    --[");
+                builder.AppendLine($"        Param( \"group\", {mobGroup} )");
+                builder.AppendLine("        Param( \"no spawn wait\", \"true\" )");
+                builder.AppendLine("    --]");
+                builder.AppendLine("    End()");
+
+                if (!string.IsNullOrWhiteSpace(resolvedBossTemplate) && File.Exists(resolvedBossTemplate))
+                    InjectTemplate(builder, resolvedBossTemplate!, 4, replacements);
+
+                builder.AppendLine("    Action( \"CCBD stage clear\" )");
+                builder.AppendLine("    --[");
+                builder.AppendLine("        -- Tell the client that the stage has ended.");
+                builder.AppendLine("    --]");
+                builder.AppendLine("    End()");
+
+                builder.AppendLine("    Action( \"wait\" )");
+                builder.AppendLine("    --[");
+                builder.AppendLine("        Condition( \"check time\" )");
+                builder.AppendLine("        --[");
+                builder.AppendLine("            Param( \"time\", 10 )");
+                builder.AppendLine("        --]");
+                builder.AppendLine("        End()");
+                builder.AppendLine("    --]");
+                builder.AppendLine("    End()");
+
+                builder.AppendLine("    Action( \"CCBD reward\" )");
+                builder.AppendLine("    --[");
+                builder.AppendLine($"        Param( \"item tblidx\", {rewardItem} )");
+                if (markAsLastStage)
+                    builder.AppendLine("        Param( \"last stage\", \"true\" )");
+                builder.AppendLine("    --]");
+                builder.AppendLine("    End()");
+            }
+
+            builder.AppendLine("--]");
+            builder.AppendLine("End()");
+            builder.AppendLine("\t--- end Action( \"CCBD stage\" )");
+        }
+
+        string outputPath = string.IsNullOrWhiteSpace(opts.OutputPath) ? opts.InputPath : opts.OutputPath;
+        Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(outputPath)) ?? ".");
+        File.WriteAllText(outputPath, builder.ToString(), Encoding.UTF8);
+
+        return new GenerationSummary(outputPath, startStage, finalStage, appendedBossCount);
+    }
+
+    private static string ReplacePlaceholders(string text, IReadOnlyDictionary<string, string> replacements)
+    {
+        string result = text;
+        foreach (var kv in replacements)
+            result = result.Replace($"{{{{{kv.Key}}}}}", kv.Value);
+        return result;
+    }
+
+    private static void InjectTemplate(StringBuilder builder, string templatePath, int indentSpaces, IReadOnlyDictionary<string, string> replacements)
     {
         try
         {
-            var opts = ParseArgs(args);
-            if (opts is null)
+            var raw = File.ReadAllText(templatePath, Encoding.UTF8);
+            string indent = new(' ', indentSpaces);
+            foreach (var line in raw.Replace("\r\n", "\n").Split('\n'))
+            {
+                var substituted = ReplacePlaceholders(line, replacements);
+                if (string.IsNullOrWhiteSpace(substituted))
+                    builder.AppendLine();
+                else
+                    builder.AppendLine(indent + substituted);
+            }
+
+            if (!raw.EndsWith("\n"))
+                builder.AppendLine();
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Warning: Failed to inject template '{templatePath}': {ex.Message}");
+        }
+    }
+
+    private static string? ResolveTemplatePath(string path, string inputDirectory)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+            return null;
+
+        if (File.Exists(path))
+            return Path.GetFullPath(path);
+
+        string candidate = Path.Combine(inputDirectory, path);
+        if (File.Exists(candidate))
+            return Path.GetFullPath(candidate);
+
+        candidate = Path.Combine(AppContext.BaseDirectory, path);
+        if (File.Exists(candidate))
+            return Path.GetFullPath(candidate);
+
+        return path;
+    }
+
+    internal static int? TryParseArenaSlot(string alias)
+    {
+        if (string.IsNullOrWhiteSpace(alias))
+            return null;
+
+        if (int.TryParse(alias, out var direct))
+            return direct;
+
+        var digitsOnly = new string(alias.Where(char.IsDigit).ToArray());
+        if (!string.IsNullOrWhiteSpace(digitsOnly) && int.TryParse(digitsOnly, out var fromDigits))
+            return fromDigits;
+
+        if (ArenaAliasLookup.TryGetValue(alias.Trim(), out var mapped))
+            return mapped;
+
+        return null;
+    }
+}
+
+internal class Program
+{
+    public static int Main(string[] args)
+    {
+        try
+        {
+            var options = ParseArgs(args);
+            if (options is null)
             {
                 PrintUsage();
                 return 2;
             }
 
-            var text = File.ReadAllText(opts.InputPath, Encoding.UTF8);
-
-            var stages = StageHeader.Matches(text)
-                .Select(m => int.Parse(m.Groups[1].Value))
-                .OrderBy(x => x)
-                .ToList();
-
-            if (stages.Count == 0)
-            {
-                Console.Error.WriteLine("No CCBD stages found in file.");
-                return 1;
-            }
-
-            int maxStage = stages.Max();
-            int startStage = opts.StartStageOverride > 0 ? opts.StartStageOverride : maxStage + 1;
-
-            // Ensure any existing CCBD reward last stage flag is set to false, we'll set true on the new terminal boss stage
-            text = RewardLastStageTrue.Replace(text, m => "Param( \"last stage\", \"false\" )");
-
-            var sb = new StringBuilder(text);
-            if (!text.EndsWith("\n")) sb.AppendLine();
-
-            // Determine the last boss stage within the appended range (used to mark 'last stage')
-            int finalStage = startStage + opts.AddCount - 1;
-            int lastBossStageInRange = finalStage - ((finalStage % opts.BossEvery + opts.BossEvery) % opts.BossEvery);
-            if (lastBossStageInRange < startStage)
-            {
-                // If no boss stage falls within the appended range, fall back to the nearest lower boss stage (may be previous content)
-                lastBossStageInRange = finalStage - (finalStage % opts.BossEvery);
-            }
-
-            for (int i = 0; i < opts.AddCount; i++)
-            {
-                int stage = startStage + i;
-                bool isBoss = (stage % opts.BossEvery) == 0;
-                int mobGroup = opts.BossGroup;
-                bool markAsLastStage = isBoss && stage == lastBossStageInRange;
-                string? bossWorld = null;
-                if (isBoss && opts.BossWorldsCycle.Length > 0)
-                {
-                    // Determine the first boss stage within the appended range
-                    int firstBoss = startStage + ((opts.BossEvery - (startStage % opts.BossEvery)) % opts.BossEvery);
-                    int nthBossAppended = ((stage - firstBoss) / opts.BossEvery) + 1; // 1-based within appended
-                    if (nthBossAppended < 1) nthBossAppended = 1; // safety
-                    bossWorld = opts.BossWorldsCycle[(nthBossAppended - 1) % opts.BossWorldsCycle.Length];
-                }
-                var replacements = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-                {
-                    ["STAGE"] = stage.ToString(),
-                    ["IS_BOSS"] = isBoss ? "true" : "false",
-                    ["BOSS_GROUP"] = mobGroup.ToString(),
-                    ["REWARD_ITEM"] = opts.RewardItem.ToString(),
-                    ["ARENA_WORLD"] = bossWorld ?? string.Empty,
-                    ["MARK_LAST_STAGE"] = markAsLastStage ? "true" : "false",
-                    ["BOSS_EVERY"] = opts.BossEvery.ToString(),
-                    ["START_STAGE"] = startStage.ToString(),
-                    ["END_STAGE"] = finalStage.ToString()
-                };
-                // Merge custom vars (explicit overrides win)
-                foreach (var kv in opts.CustomVars)
-                    replacements[kv.Key] = kv.Value;
-
-                sb.AppendLine();
-                sb.AppendLine("-----------------------------------");
-                sb.AppendLine($"-- Stage {stage}");
-                sb.AppendLine("-----------------------------------");
-                sb.AppendLine("Action( \"CCBD stage\" )");
-                sb.AppendLine("--[");
-                sb.AppendLine($"    Param( \"stage\", {stage} )");
-                if (!isBoss)
-                {
-                    // Regular floor: use exec pattern referencing existing pattern indexes
-                    sb.AppendLine("\n    Action( \"CCBD exec pattern\" )");
-                    sb.AppendLine("    --[");
-                    sb.AppendLine(ReplacePlaceholders($"        Param( \"pattern list\", \"{opts.PatternList}\" )", replacements));
-                    sb.AppendLine("    --]");
-                    sb.AppendLine("    End()");
-                    // Optional regular template injection
-                    if (!string.IsNullOrWhiteSpace(opts.RegularTemplatePath) && File.Exists(opts.RegularTemplatePath))
-                    {
-                        InjectTemplate(sb, opts.RegularTemplatePath!, 4, replacements);
-                    }
-                }
-                else
-                {
-                    // Boss floor: mark direct play, spawn boss group, then stage clear + reward
-                    sb.AppendLine("    Param( \"direct play\", \"false\" )");
-                    if (!string.IsNullOrWhiteSpace(bossWorld))
-                    {
-                        sb.AppendLine(ReplacePlaceholders($"    -- Boss arena: {bossWorld}", replacements));
-                    }
-
-                    sb.AppendLine("\n    Action( \"add mobgroup\" )");
-                    sb.AppendLine("    --[");
-                    sb.AppendLine(ReplacePlaceholders($"        Param( \"group\", {mobGroup} )", replacements));
-                    sb.AppendLine("        Param( \"no spawn wait\", \"true\" )");
-                    sb.AppendLine("    --]");
-                    sb.AppendLine("    End()\n");
-
-                    // Optional: inject a custom boss mechanics template (raw WPS snippet)
-                    if (!string.IsNullOrWhiteSpace(opts.BossTemplatePath) && File.Exists(opts.BossTemplatePath))
-                    {
-                        InjectTemplate(sb, opts.BossTemplatePath!, 4, replacements);
-                    }
-
-                    sb.AppendLine("    Action( \"CCBD stage clear\" )");
-                    sb.AppendLine("    --[");
-                    sb.AppendLine("        -- Tell the client that the stage has ended.");
-                    sb.AppendLine("    --]");
-                    sb.AppendLine("    End()\n");
-
-                    sb.AppendLine("    Action( \"wait\" )");
-                    sb.AppendLine("    --[");
-                    sb.AppendLine("        Condition( \"check time\" )");
-                    sb.AppendLine("        --[");
-                    sb.AppendLine("            Param( \"time\", 10 )");
-                    sb.AppendLine("        --]");
-                    sb.AppendLine("        End()");
-                    sb.AppendLine("    --]");
-                    sb.AppendLine("    End()\n");
-
-                    sb.AppendLine("    Action( \"CCBD reward\" )");
-                    sb.AppendLine("    --[");
-                    sb.AppendLine(ReplacePlaceholders($"        Param( \"item tblidx\", {opts.RewardItem} )", replacements));
-                    if (markAsLastStage) sb.AppendLine(ReplacePlaceholders("        Param( \"last stage\", \"true\" )", replacements));
-                    sb.AppendLine("    --]");
-                    sb.AppendLine("    End()");
-                }
-                sb.AppendLine("--]");
-                sb.AppendLine("End()");
-                sb.AppendLine("\t--- end Action( \"CCBD stage\" )");
-            }
-
-            var outPath = string.IsNullOrWhiteSpace(opts.OutputPath) ? opts.InputPath : opts.OutputPath!;
-            File.WriteAllText(outPath, sb.ToString(), Encoding.UTF8);
-
-            Console.WriteLine($"Wrote changes to: {outPath}");
-            Console.WriteLine($"Added {opts.AddCount} stages starting at {startStage}. Final stage: {startStage + opts.AddCount - 1}. Boss every {opts.BossEvery}. Reward item {opts.RewardItem}.");
-            Console.WriteLine("Note: Previous CCBD reward 'last stage' flags were cleared; the last appended boss stage was marked as last stage.");
+            var summary = StageGenerator.Generate(options);
+            Console.WriteLine($"Wrote changes to: {summary.OutputPath}");
+            Console.WriteLine($"Added {options.AddCount} stages starting at {summary.StartStage}. Final stage: {summary.EndStage}. Boss every {options.BossEvery}.");
             return 0;
         }
         catch (Exception ex)
@@ -195,137 +362,259 @@ internal class Program
         }
     }
 
-    static GenOptions? ParseArgs(string[] args)
+    private static GenOptions? ParseArgs(string[] args)
     {
-        // Defaults suitable for CCBD extension
         string? input = null;
-    int add = 5;            // how many stages to add
-        int bossEvery = 5;      // every N stage is a boss
-        int startStage = 0;     // 0 = infer (max+1)
-        int bossGroup = 9999;   // boss group id to spawn
-    int rewardItem = 7000002;// default CCBD reward item
-        string patternList = "(1, 35%), (2, 35%), (3, 10%), (4, 10%), (6, 10%)"; // default pattern mix
+        string? output = null;
+        int addCount = 5;
+        int bossEvery = 5;
+        int startStage = 0;
+        int bossGroup = 9999;
+        int rewardItem = 7000002;
+        string patternList = "(1, 35%), (2, 35%), (3, 10%), (4, 10%), (6, 10%)";
+        string? bossTemplate = null;
+        string? regularTemplate = null;
         string[] bossWorlds = Array.Empty<string>();
-    string? outPath = null;
-    string? bossTemplate = null;
-    string? regularTemplate = null;
-    var customVars = new Dictionary<string,string>(StringComparer.OrdinalIgnoreCase);
-    string? varsFile = null;
+        var customVars = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        string? varsFile = null;
+        string? profilePath = null;
 
-        foreach (var a in args)
+        foreach (var arg in args)
         {
-            var kv = a.Split('=', 2);
-            if (kv.Length != 2) continue;
-            string k = kv[0].Trim().ToLowerInvariant();
-            string v = kv[1].Trim();
-            switch (k)
+            var split = arg.Split('=', 2);
+            if (split.Length != 2)
+                continue;
+
+            string key = split[0].Trim();
+            string value = split[1].Trim();
+
+            switch (key.ToLowerInvariant())
             {
-                case "in": input = v; break;
-                case "out": outPath = v; break;
-                case "add": add = int.Parse(v); break;
-                case "bossevery": bossEvery = int.Parse(v); break;
-                case "start": startStage = int.Parse(v); break;
-                case "bossgroup": bossGroup = int.Parse(v); break;
-                case "rewarditem": rewardItem = int.Parse(v); break;
-                case "pattern": patternList = v.Trim('"'); break;
-                case "bossworlds": bossWorlds = v.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries); break;
-                case "bosstemplate": bossTemplate = v; break;
-                case "regulartemplate": regularTemplate = v; break;
-                // Dynamic variables: var.NAME=VALUE
+                case "in":
+                    input = value.Trim('"');
+                    break;
+                case "out":
+                    output = value.Trim('"');
+                    break;
+                case "add":
+                    addCount = int.Parse(value);
+                    break;
+                case "bossevery":
+                    bossEvery = int.Parse(value);
+                    break;
+                case "start":
+                    startStage = int.Parse(value);
+                    break;
+                case "bossgroup":
+                    bossGroup = int.Parse(value);
+                    break;
+                case "rewarditem":
+                    rewardItem = int.Parse(value);
+                    break;
+                case "pattern":
+                    patternList = value.Trim('"');
+                    break;
+                case "bossworlds":
+                    bossWorlds = value.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                    break;
+                case "bosstemplate":
+                    bossTemplate = value.Trim('"');
+                    break;
+                case "regulartemplate":
+                    regularTemplate = value.Trim('"');
+                    break;
+                case "varsfile":
+                    varsFile = value.Trim('"');
+                    break;
+                case "profile":
+                    profilePath = value.Trim('"');
+                    break;
                 default:
-                    if (k.StartsWith("var.", StringComparison.OrdinalIgnoreCase))
+                    if (key.StartsWith("var.", StringComparison.OrdinalIgnoreCase))
                     {
-                        var name = k.Substring(4);
-                        if (!string.IsNullOrWhiteSpace(name)) customVars[name] = v.Trim('"');
-                    }
-                    else if (k == "varsfile")
-                    {
-                        varsFile = v;
+                        string varName = key.Substring(4);
+                        if (!string.IsNullOrWhiteSpace(varName))
+                            customVars[varName] = value.Trim('"');
                     }
                     break;
             }
         }
 
+        if (profilePath != null)
+            return ParseProfile(profilePath, input, output, customVars, varsFile);
+
         if (string.IsNullOrWhiteSpace(input) || !File.Exists(input))
             return null;
 
-        // Merge vars from file if provided (simple KEY=VALUE per line or JSON object)
-        if (!string.IsNullOrWhiteSpace(varsFile) && File.Exists(varsFile))
+        MergeVarsFromFile(customVars, varsFile);
+
+        return new GenOptions(
+            Path.GetFullPath(input),
+            output,
+            addCount,
+            bossEvery,
+            startStage,
+            bossGroup,
+            rewardItem,
+            patternList,
+            bossTemplate,
+            regularTemplate,
+            customVars,
+            null,
+            bossWorlds
+        );
+    }
+
+    private static GenOptions? ParseProfile(string profilePath, string? cliInput, string? cliOutput, IDictionary<string, string> cliVars, string? cliVarsFile)
+    {
+        if (!File.Exists(profilePath))
         {
-            try
-            {
-                if (varsFile.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
-                {
-                    var json = File.ReadAllText(varsFile);
-                    var dict = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(json);
-                    if (dict != null)
-                    {
-                        foreach (var kv in dict) customVars[kv.Key] = kv.Value;
-                    }
-                }
-                else
-                {
-                    foreach (var raw in File.ReadAllLines(varsFile))
-                    {
-                        var line = raw.Trim();
-                        if (line.Length == 0 || line.StartsWith("#") || !line.Contains('=')) continue;
-                        var sp = line.Split('=', 2);
-                        var key = sp[0].Trim(); var val = sp[1].Trim();
-                        if (key.Length > 0) customVars[key] = val.Trim('"');
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.Error.WriteLine($"Warning: Failed to read varsFile '{varsFile}': {ex.Message}");
-            }
+            Console.Error.WriteLine($"Profile JSON not found: {profilePath}");
+            return null;
         }
 
-        return new GenOptions(input!, outPath, add, bossEvery, startStage, bossGroup, rewardItem, patternList, bossWorlds, bossTemplate, regularTemplate, customVars);
-    }
-
-    static void PrintUsage()
-    {
-        Console.WriteLine("WpsStageGen - CCBD WPS Stage generator");
-    Console.WriteLine("Usage: WpsStageGen in=PATH [out=PATH] [add=5] [bossEvery=5] [start=0] [bossGroup=9999] [rewardItem=7000002] [pattern=\"(1,35%),...\"] [bossWorlds=ARENA1,ARENA2,...] [bossTemplate=FILE] [regularTemplate=FILE] [varsFile=FILE] [var.NAME=VALUE ...]");
-        Console.WriteLine();
-        Console.WriteLine("Behavior:");
-        Console.WriteLine("- Finds max existing stage, clears any CCBD reward 'last stage' flag, appends N stages");
-        Console.WriteLine("- Regular floors: adds CCBD exec pattern with provided pattern list");
-        Console.WriteLine("- Boss floors: sets direct play, spawns boss mobgroup, optional injected template, then stage clear + wait + CCBD reward");
-        Console.WriteLine("- The last appended boss floor gets CCBD reward Param( 'last stage', 'true' )");
-        Console.WriteLine("- If bossWorlds provided, cycles them and annotates each boss with a comment '-- Boss arena: WORLD'");
-        Console.WriteLine("- Templates support placeholders: {{STAGE}}, {{ARENA_WORLD}}, {{BOSS_GROUP}}, {{REWARD_ITEM}}, {{START_STAGE}}, {{END_STAGE}}, etc.");
-    Console.WriteLine("- You can also provide custom placeholders with var.NAME=VALUE or a varsFile; any {{NAME}} in templates will be replaced.");
-    }
-
-    static void InjectTemplate(StringBuilder sb, string path, int indentSpaces, IReadOnlyDictionary<string, string> replacements)
-    {
+        DungeonProfile profile;
         try
         {
-            var inject = File.ReadAllText(path, Encoding.UTF8);
-            string indent = new string(' ', indentSpaces);
-            foreach (var raw in inject.Replace("\r\n", "\n").Split('\n'))
-            {
-                var line = ReplacePlaceholders(raw, replacements);
-                if (string.IsNullOrWhiteSpace(line)) sb.AppendLine();
-                else sb.AppendLine(indent + line);
-            }
-            if (!inject.EndsWith("\n")) sb.AppendLine();
+            profile = DungeonProfile.LoadFromFile(profilePath);
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine($"Warning: Failed to inject template '{path}': {ex.Message}");
+            Console.Error.WriteLine($"Failed to load profile JSON: {ex.Message}");
+            return null;
+        }
+
+        string profileDir = Path.GetDirectoryName(Path.GetFullPath(profilePath)) ?? ".";
+
+        string? ResolvePath(string? candidate)
+        {
+            if (string.IsNullOrWhiteSpace(candidate))
+                return candidate;
+
+            if (Path.IsPathRooted(candidate))
+                return candidate;
+
+            return Path.Combine(profileDir, candidate);
+        }
+
+        string baseWps = !string.IsNullOrWhiteSpace(cliInput) ? cliInput : profile.BaseWpsFile;
+        if (string.IsNullOrWhiteSpace(baseWps))
+        {
+            Console.Error.WriteLine("Profile missing baseWpsFile; supply via profile or in=PATH.");
+            return null;
+        }
+
+        baseWps = Path.GetFullPath(ResolvePath(baseWps)!);
+        if (!File.Exists(baseWps))
+        {
+            Console.Error.WriteLine($"Base WPS file not found: {baseWps}");
+            return null;
+        }
+
+        var mergedVars = new Dictionary<string, string>(profile.Variables.Variables, StringComparer.OrdinalIgnoreCase);
+        foreach (var kv in cliVars)
+            mergedVars[kv.Key] = kv.Value;
+
+        MergeVarsFromFile(mergedVars, ResolvePath(profile.Variables.VarsFilePath));
+        MergeVarsFromFile(mergedVars, cliVarsFile);
+
+        var bossOverrides = profile.BossConfig.IndividualBosses
+            .Where(entry => entry is { Floor: > 0 })
+            .GroupBy(entry => entry.Floor)
+            .ToDictionary(
+                group => group.Key,
+                group =>
+                {
+                    var source = group.Last();
+                    return new BossStageOverride(
+                        source.Floor,
+                        source.BossGroup > 0 ? source.BossGroup : null,
+                        ResolvePath(source.MechanicsTemplate),
+                        source.RewardItem,
+                        StageGenerator.TryParseArenaSlot(source.Arena ?? string.Empty),
+                        new Dictionary<string, string>(source.Variables ?? new Dictionary<string, string>(), StringComparer.OrdinalIgnoreCase)
+                    );
+                },
+                comparer: EqualityComparer<int>.Default);
+
+        var rewardCycle = profile.BossConfig.RewardItems.Count > 0
+            ? profile.BossConfig.RewardItems
+            : new List<int> { 7000002 };
+
+        var overrides = new ProfileOverrides(
+            profile.BossConfig.IncrementBossGroup,
+            rewardCycle,
+            bossOverrides
+        );
+
+        int defaultReward = rewardCycle.Count > 0 ? rewardCycle[0] : 7000002;
+
+        return new GenOptions(
+            baseWps,
+            cliOutput,
+            profile.FloorCount,
+            profile.BossInterval,
+            profile.StartFloor,
+            profile.BossConfig.BossGroupBase,
+            defaultReward,
+            profile.WaveConfig.PatternList,
+            ResolvePath(profile.BossConfig.MechanicsTemplate),
+            ResolvePath(profile.WaveConfig.CustomTemplate),
+            mergedVars,
+            overrides,
+            profile.BossConfig.ArenaRotation.ToArray()
+        );
+    }
+
+    private static void MergeVarsFromFile(IDictionary<string, string> target, string? varsFile)
+    {
+        if (string.IsNullOrWhiteSpace(varsFile))
+            return;
+
+        try
+        {
+            if (varsFile.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
+            {
+                var json = File.ReadAllText(varsFile);
+                var dict = JsonSerializer.Deserialize<Dictionary<string, string>>(json);
+                if (dict != null)
+                {
+                    foreach (var kv in dict)
+                        target[kv.Key] = kv.Value;
+                }
+            }
+            else
+            {
+                foreach (var raw in File.ReadAllLines(varsFile))
+                {
+                    var line = raw.Trim();
+                    if (line.Length == 0 || line.StartsWith('#') || !line.Contains('='))
+                        continue;
+
+                    var parts = line.Split('=', 2);
+                    var key = parts[0].Trim();
+                    var value = parts[1].Trim();
+                    if (key.Length > 0)
+                        target[key] = value.Trim('"');
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Warning: Failed to read vars file '{varsFile}': {ex.Message}");
         }
     }
 
-    static string ReplacePlaceholders(string text, IReadOnlyDictionary<string, string> replacements)
+    private static void PrintUsage()
     {
-        string result = text;
-        foreach (var kv in replacements)
-        {
-            result = result.Replace("{{" + kv.Key + "}}", kv.Value);
-        }
-        return result;
+        Console.WriteLine("WpsStageGen - CCBD WPS Stage generator");
+        Console.WriteLine("Usage: WpsStageGen in=PATH [out=PATH] [add=5] [bossEvery=5] [start=0] [bossGroup=9999] [rewardItem=7000002] [pattern=\"(1,35%),...\"] [bossWorlds=ARENA1,ARENA2,...] [bossTemplate=FILE] [regularTemplate=FILE] [varsFile=FILE] [var.NAME=VALUE ...] [profile=PROFILE.json]");
+        Console.WriteLine();
+        Console.WriteLine("Behavior:");
+        Console.WriteLine("- Finds max existing stage, clears reward 'last stage' flags, appends N stages");
+        Console.WriteLine("- Regular floors add CCBD exec pattern with provided pattern list and optional template");
+        Console.WriteLine("- Boss floors spawn mob groups, optional mechanics template, and reward block");
+        Console.WriteLine("- Last generated boss floor gains Param( 'last stage', 'true' ) in reward block");
+        Console.WriteLine("- profile= enables JSON-driven configuration with per-boss overrides and arena slots.");
     }
 }

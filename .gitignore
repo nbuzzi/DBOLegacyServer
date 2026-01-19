@@ -149,3 +149,8 @@ Tools/**/*.pdb
 **/ExecutionEnv/DBO Server Monitor.runtimeconfig.json
 **/Tools/publish/**
 **/ExecutionEnv/config/google-drive.json
+
+# Documentation - track all markdown files in Documentation folder
+!DboServer/Documentation/
+!DboServer/Documentation/**/*.md
+push.bat

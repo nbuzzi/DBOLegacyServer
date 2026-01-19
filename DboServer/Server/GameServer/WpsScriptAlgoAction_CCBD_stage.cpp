@@ -6,6 +6,7 @@
 #include "TableContainerManager.h"
 #include "ServerConfigTable.h"
 #include "NtlCCBD.h"
+#include "DungeonConfig.h"
 
 
 CWpsScriptAlgoAction_CCBD_stage::CWpsScriptAlgoAction_CCBD_stage(CWpsAlgoObject* pObject) :
@@ -15,6 +16,8 @@ CWpsScriptAlgoAction_CCBD_stage::CWpsScriptAlgoAction_CCBD_stage(CWpsAlgoObject*
 	m_bDirectPlay = true;
 	m_dwFailTimer = CCBD_FAIL_TIMER_IN_MS;
 	m_bIsEveryoneReady = false;
+	m_bSkipStage = false;
+	m_byBossArenaSlot = INVALID_BYTE;
 }
 
 
@@ -30,6 +33,7 @@ bool CWpsScriptAlgoAction_CCBD_stage::AttachControlScriptNode(CControlScriptNode
 	{
 		m_byStage = pAction->m_byStage;
 		m_bDirectPlay = pAction->m_bDirectPlay;
+		m_byBossArenaSlot = pAction->m_byBossArenaSlot;
 
 		return true;
 	}
@@ -42,7 +46,63 @@ void CWpsScriptAlgoAction_CCBD_stage::OnEnter()
 {
 //	NTL_PRINT(PRINT_APP, "enter stage %u \n", m_byStage);
 
-	GetOwner()->SetCCBDStage(m_byStage);
+	m_bSkipStage = false;
+	m_bIsEveryoneReady = false;
+	// Keep the arena slot value provided by the control node; reset only if invalid
+	if (m_byBossArenaSlot >= ENTER_BOSS_STATE_LOC_COUNT)
+		m_byBossArenaSlot = INVALID_BYTE;
+
+	// CCBD Boss-Only Mode: Skip non-boss floors and snap to the targeted boss floor
+	if (g_pDungeonConfig && g_pDungeonConfig->IsCCBDBossOnlyModeEnabled())
+	{
+		BYTE byTargetStage = GetOwner()->GetCCBDStage();
+		if (byTargetStage == 0 || byTargetStage == INVALID_BYTE)
+			byTargetStage = m_byStage;
+
+		if (m_byStage < byTargetStage)
+		{
+			NTL_PRINT(PRINT_APP, "[CCBD_BOSS_MODE] Skipping stage %u (target %u)", m_byStage, byTargetStage);
+			m_bSkipStage = true;
+			return;
+		}
+
+		// Align controller stage if script advanced further than target
+		if (m_byStage > byTargetStage)
+		{
+			byTargetStage = m_byStage;
+			GetOwner()->SetCCBDStage(byTargetStage);
+		}
+
+		// Ensure we land on a boss floor (multiples of 5)
+		BYTE byBossStage = ((byTargetStage - 1) / 5 + 1) * 5;
+		if (byBossStage != byTargetStage)
+		{
+			byTargetStage = byBossStage;
+			GetOwner()->SetCCBDStage(byTargetStage);
+		}
+		else
+		{
+			// Persist the resolved stage even if no adjustment was needed
+			GetOwner()->SetCCBDStage(byTargetStage);
+		}
+
+		if (m_byStage != byTargetStage)
+		{
+			NTL_PRINT(PRINT_APP, "[CCBD_BOSS_MODE] Adjusting stage node %u to boss floor %u", m_byStage, byTargetStage);
+			m_byStage = byTargetStage;
+		}
+
+		ERR_LOG(LOG_GENERAL, "[CCBD_BOSS_MODE] Entering boss floor %u", m_byStage);
+		m_bDirectPlay = false;
+	}
+	else
+	{
+		// Normal CCBD mode (with all stages)
+		GetOwner()->SetCCBDStage(m_byStage);
+	}
+
+	if (m_bSkipStage)
+		return;
 
 	if (m_bDirectPlay == false) //if boss stage
 	{
@@ -62,8 +122,17 @@ void CWpsScriptAlgoAction_CCBD_stage::OnExit()
 {
 //	NTL_PRINT(PRINT_APP, "exit stage %u \n", m_byStage);
 
+	if (m_bSkipStage)
+	{
+		m_bSkipStage = false;
+		return;
+	}
+
+	// In boss-only mode, all stages are treated as boss stages
+	bool bIsBossStage = (g_pDungeonConfig && g_pDungeonConfig->IsCCBDBossOnlyModeEnabled()) ? true : (m_bDirectPlay == false);
+
 	//leave boss room
-	if (m_bDirectPlay == false)
+	if (bIsBossStage)
 	{
 		CPlayer* pPlayer = GetOwner()->GetPlayersFirst();
 		while (pPlayer)
@@ -88,7 +157,17 @@ void CWpsScriptAlgoAction_CCBD_stage::OnExit()
 
 int CWpsScriptAlgoAction_CCBD_stage::OnUpdate(DWORD dwTickDiff, float fMultiple)
 {
-	if (m_bIsEveryoneReady == false && IsCCBDBossStage(m_byStage)) //wait until everyone arrive in boss stage
+	if (m_bSkipStage)
+	{
+		// Skip scripted filler stages when boss-only mode pre-advances the controller
+		m_status = COMPLETED;
+		return m_status;
+	}
+
+	// In boss-only mode, all stages are boss stages
+	bool bIsBossStage = (g_pDungeonConfig && g_pDungeonConfig->IsCCBDBossOnlyModeEnabled()) ? true : IsCCBDBossStage(m_byStage);
+
+	if (m_bIsEveryoneReady == false && bIsBossStage) //wait until everyone arrive in boss stage
 	{
 		if (IsEveryoneReady())
 		{
@@ -180,9 +259,16 @@ void CWpsScriptAlgoAction_CCBD_stage::TeleportToBoss()
 
 	BYTE byBossStageCount = (m_byStage / 5) - 1;
 
+	// Use override when provided; otherwise keep legacy cycling behaviour
+	BYTE byArenaIndex;
+	if (m_byBossArenaSlot != INVALID_BYTE)
+		byArenaIndex = m_byBossArenaSlot % ENTER_BOSS_STATE_LOC_COUNT;
+	else
+		byArenaIndex = byBossStageCount % ENTER_BOSS_STATE_LOC_COUNT;
+
 	WORLDID destWorld = GetOwner()->GetWorld()->GetID();
-	CNtlVector destLoc(g_pTableContainer->GetServerConfigTable()->GetServerConfigData()->sBattleDungeonData.aEnterLoc_BossStage[byBossStageCount].sLoc);
-	CNtlVector destDir(g_pTableContainer->GetServerConfigTable()->GetServerConfigData()->sBattleDungeonData.aEnterLoc_BossStage[byBossStageCount].sDir);
+	CNtlVector destLoc(g_pTableContainer->GetServerConfigTable()->GetServerConfigData()->sBattleDungeonData.aEnterLoc_BossStage[byArenaIndex].sLoc);
+	CNtlVector destDir(g_pTableContainer->GetServerConfigTable()->GetServerConfigData()->sBattleDungeonData.aEnterLoc_BossStage[byArenaIndex].sDir);
 
 	CPlayer* pPlayer = GetOwner()->GetPlayersFirst();
 	while (pPlayer)
@@ -230,6 +316,7 @@ bool CWpsScriptAlgoAction_CCBD_stage::CheckPlayersState()
 
 	DWORD dwPlayerFaintCount = 0;
 	DWORD dwPlayerCount = 0;
+	DWORD dwPlayerDisconnectedCount = 0;
 
 	CPlayer* pPlayer = GetOwner()->GetPlayersFirst();
 	while (pPlayer)
@@ -245,13 +332,18 @@ bool CWpsScriptAlgoAction_CCBD_stage::CheckPlayersState()
 		}
 		else
 		{
+			// Player disconnected or in transition - count them separately
+			// Don't fail the dungeon immediately if players are just reconnecting
+			++dwPlayerDisconnectedCount;
 			ERR_LOG(LOG_GENERAL, "User is registered for ccbd but has different world id (%u != %u) !!!", pPlayer->GetWorldID(), GetOwner()->GetWorld()->GetID());
 		}
 
 		pPlayer = GetOwner()->GetPlayersNext();
 	}
 
-	if (dwPlayerFaintCount >= dwPlayerCount)
+	// Only fail if all CONNECTED players are fainting AND there's at least one connected player
+	// Don't fail if players are just disconnected/reconnecting
+	if (dwPlayerCount > 0 && dwPlayerFaintCount >= dwPlayerCount)
 	{
 		CNtlPacket packet(sizeof(sGU_BATTLE_DUNGEON_FAIL_NFY));
 		sGU_BATTLE_DUNGEON_FAIL_NFY* res = (sGU_BATTLE_DUNGEON_FAIL_NFY *)packet.GetPacketData();

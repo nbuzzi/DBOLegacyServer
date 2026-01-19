@@ -78,6 +78,15 @@ namespace CustomDropEventEditor
         private Button btnImportMobs, btnImportItems;
         private Label _lblStatus;
         private ListBox lstDrops, lstSpawns;
+
+        // PHASE system controls
+        private ComboBox cboPhase;
+        private Label lblPhase;
+        private CheckBox chkRestoreHP;
+        private ListBox lstPhases;
+        private Label lblPhases;
+        private Button btnApplyPhase;
+        private Button btnDeletePhase;
         
         private TextBox txtDropItemId, txtSpawnMobId;
         private NumericUpDown numDropRate, numDropCount, numSpawnRate, numSpawnCount, numLevel;
@@ -94,26 +103,26 @@ namespace CustomDropEventEditor
 
         public MainForm()
         {
-            Text = "Custom Drop Event Editor";
-            Width = 1350;
-            Height = 1000;
+            Text = "🎮 Custom Drop Event Editor - Modern UI with PHASE System";
+            Width = 1450;
+            Height = 1050;
             AutoScaleMode = AutoScaleMode.Dpi;
-            Font = new Font("Segoe UI", 10F, FontStyle.Regular, GraphicsUnit.Point);
-            BackColor = Color.FromArgb(32, 33, 36);
-            ForeColor = Color.Gainsboro;
-            MinimumSize = new Size(1200, 850);
+            Font = new Font("Segoe UI", 9.5F, FontStyle.Regular, GraphicsUnit.Point);
+            BackColor = Color.FromArgb(18, 18, 18); // Darker modern background
+            ForeColor = Color.FromArgb(240, 240, 240); // Brighter text
+            MinimumSize = new Size(1450, 1000);
             StartPosition = FormStartPosition.CenterScreen;
+            Padding = new Padding(10);
 
-            // (Removed separators per request)
+            // Modern toolbar with better spacing
+            txtPath = new TextBox { Left = 10, Top = 10, Width = 720, Height = 30, Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right, Font = new Font("Consolas", 10F) };
+            btnHelp = new Button { Left = 740, Top = 8, Width = 70, Height = 32, Text = "❓ Help", FlatStyle = FlatStyle.Flat };
+            btnBrowse = new Button { Left = 820, Top = 8, Width = 100, Height = 32, Text = "📁 Browse", FlatStyle = FlatStyle.Flat };
+            btnLoad = new Button { Left = 930, Top = 8, Width = 90, Height = 32, Text = "📂 Load", FlatStyle = FlatStyle.Flat };
+            btnSave = new Button { Left = 1030, Top = 8, Width = 90, Height = 32, Text = "💾 Save", FlatStyle = FlatStyle.Flat };
 
-            txtPath = new TextBox { Left = 10, Top = 10, Width = 720, Height = 28, Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right };
-            btnHelp = new Button { Left = 740, Top = 8, Width = 70, Height = 28, Text = "Help" };
-            btnBrowse = new Button { Left = 820, Top = 8, Width = 80, Height = 28, Text = "Browse" };
-            btnLoad = new Button { Left = 910, Top = 8, Width = 80, Height = 28, Text = "Load" };
-            btnSave = new Button { Left = 1000, Top = 8, Width = 80, Height = 28, Text = "Save" };
-
-            btnImportMobs = new Button { Left = 820, Top = 40, Width = 130, Height = 28, Text = "Import Mobs...", Anchor = AnchorStyles.Top | AnchorStyles.Right };
-            btnImportItems = new Button { Left = 960, Top = 40, Width = 120, Height = 28, Text = "Import Items...", Anchor = AnchorStyles.Top | AnchorStyles.Right };
+            btnImportMobs = new Button { Left = 1140, Top = 8, Width = 140, Height = 32, Text = "📥 Import Mobs", FlatStyle = FlatStyle.Flat, Anchor = AnchorStyles.Top | AnchorStyles.Right };
+            btnImportItems = new Button { Left = 1290, Top = 8, Width = 140, Height = 32, Text = "📥 Import Items", FlatStyle = FlatStyle.Flat, Anchor = AnchorStyles.Top | AnchorStyles.Right };
 
             lblMobFilter = new Label { Left = 10, Top = 70, AutoSize = true, Text = "Filter" };
             txtMobFilter = new TextBox { Left = 60, Top = 68, Width = 180, Height = 24 };
@@ -166,15 +175,39 @@ namespace CustomDropEventEditor
             lblVisuals = new Label { Left = 1120, Top = 736, AutoSize = true, Text = "Visuals (effectTblidx[@intervalMs], ...)" };
             txtVisuals = new TextBox { Left = 1120, Top = 756, Width = 200, Height = 28, Anchor = AnchorStyles.Top | AnchorStyles.Right };
 
-            lblMods = new Label { Left = 320, Top = 800, AutoSize = true, Text = "Modifiers (hp= engAtk= physAtk= ... sizeRate=)" };
-            txtMods = new TextBox { Left = 320, Top = 820, Width = 760, Height = 90, Multiline = true, ScrollBars = ScrollBars.Vertical, AcceptsReturn = true, Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom };
+            // ⚡ MODIFIERS & PHASE SYSTEM SECTION - Modern styling
+            lblMods = new Label { Left = 320, Top = 790, AutoSize = true, Text = "⚡ Stat Modifiers (Format: hp=1.0 physAtk=1.0 ...)", Font = new Font("Segoe UI", 10F, FontStyle.Bold), ForeColor = Color.FromArgb(100, 181, 246) };
+
+            // Phase controls in a modern horizontal row with better spacing
+            lblPhase = new Label { Left = 320, Top = 820, AutoSize = true, Text = "🔢 Phase:", Font = new Font("Segoe UI", 10F, FontStyle.Bold), ForeColor = Color.FromArgb(255, 167, 38) };
+            cboPhase = new ComboBox { Left = 390, Top = 818, Width = 160, Height = 30, DropDownStyle = ComboBoxStyle.DropDownList, Font = new Font("Segoe UI", 10F, FontStyle.Bold), FlatStyle = FlatStyle.Flat };
+            cboPhase.Items.AddRange(new object[] { "⚪ None (Base)", "1️⃣ Phase 1", "2️⃣ Phase 2", "3️⃣ Phase 3", "4️⃣ Phase 4", "5️⃣ Phase 5" });
+            cboPhase.SelectedIndex = 0;
+
+            chkRestoreHP = new CheckBox { Left = 560, Top = 820, AutoSize = true, Text = "  🔄 Restore HP", Checked = false, Font = new Font("Segoe UI", 9F, FontStyle.Bold), ForeColor = Color.FromArgb(255, 167, 38) };
+
+            // Action buttons for phase management
+            btnApplyPhase = new Button { Left = 700, Top = 818, Width = 140, Height = 32, Text = "💾 Apply Phase", FlatStyle = FlatStyle.Flat, Font = new Font("Segoe UI", 9F, FontStyle.Bold), BackColor = Color.FromArgb(102, 187, 106), ForeColor = Color.White, Cursor = Cursors.Hand };
+            btnApplyPhase.FlatAppearance.BorderColor = Color.FromArgb(76, 175, 80);
+            btnApplyPhase.FlatAppearance.BorderSize = 2;
+
+            btnDeletePhase = new Button { Left = 850, Top = 818, Width = 140, Height = 32, Text = "🗑️ Delete Phase", FlatStyle = FlatStyle.Flat, Font = new Font("Segoe UI", 9F, FontStyle.Bold), BackColor = Color.FromArgb(239, 83, 80), ForeColor = Color.White, Cursor = Cursors.Hand };
+            btnDeletePhase.FlatAppearance.BorderColor = Color.FromArgb(229, 57, 53);
+            btnDeletePhase.FlatAppearance.BorderSize = 2;
+
+            // Modifier textbox - larger with modern font
+            txtMods = new TextBox { Left = 320, Top = 860, Width = 750, Height = 105, Multiline = true, ScrollBars = ScrollBars.Vertical, AcceptsReturn = true, Font = new Font("Consolas", 9.5F), Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom };
+
+            // Phase list panel - right side with modern header
+            lblPhases = new Label { Left = 1085, Top = 790, AutoSize = true, Text = "📋 Configured Phases", Font = new Font("Segoe UI", 10F, FontStyle.Bold), ForeColor = Color.FromArgb(255, 167, 38) };
+            lstPhases = new ListBox { Left = 1085, Top = 820, Width = 330, Height = 145, IntegralHeight = false, Font = new Font("Consolas", 9F), Anchor = AnchorStyles.Top | AnchorStyles.Right | AnchorStyles.Bottom };
 
             lblAddMob = new Label { Left = 10, Top = 40, AutoSize = true, Text = "Add Mob ID:" };
             txtNewMobId = new TextBox { Left = 100, Top = 38, Width = 140, Height = 28 };
             btnAddMob = new Button { Left = 250, Top = 38, Width = 60, Height = 28, Text = "Add" };
             btnUseAvailable = new Button { Left = 240, Top = 410, Width = 80, Height = 24, Text = "Use ▶" };
             btnPickVisual = new Button { Left = 1120, Top = 756, Width = 100, Height = 28, Text = "Visuals…", Anchor = AnchorStyles.Top | AnchorStyles.Right };
-            Controls.AddRange(new Control[] { txtPath, btnHelp, btnBrowse, btnLoad, btnSave, btnImportMobs, btnImportItems, lblMobFilter, txtMobFilter, btnClearFilter, lblCfgMobs, lstCfgMobs, lblAvailMobs, lstAvailMobs, btnUseAvailable, lblGlobalSpawns, txtGlobalSpawns, lblGlobalBuffs, txtGlobalBuffs, lblGlobalTitles, txtGlobalTitles, lblGlobalVisuals, txtGlobalVisuals, lblDrops, txtDrops, lstDrops, lblDropItem, txtDropItemId, lblDropRate, numDropRate, lblDropCount, numDropCount, btnAddDrop, btnRemoveDrop, lblSpawns, txtSpawns, lstSpawns, lblSpawnMob, txtSpawnMobId, lblSpawnRate, numSpawnRate, lblSpawnCount, numSpawnCount, lblLevel, numLevel, btnAddSpawn, btnRemoveSpawn, lblBuffs, txtBuffs, lblTitles, txtTitles, lblVisuals, txtVisuals, lblMods, txtMods, lblAddMob, txtNewMobId, btnAddMob, btnUseAvailable, btnPickVisual });
+            Controls.AddRange(new Control[] { txtPath, btnHelp, btnBrowse, btnLoad, btnSave, btnImportMobs, btnImportItems, lblMobFilter, txtMobFilter, btnClearFilter, lblCfgMobs, lstCfgMobs, lblAvailMobs, lstAvailMobs, btnUseAvailable, lblGlobalSpawns, txtGlobalSpawns, lblGlobalBuffs, txtGlobalBuffs, lblGlobalTitles, txtGlobalTitles, lblGlobalVisuals, txtGlobalVisuals, lblDrops, txtDrops, lstDrops, lblDropItem, txtDropItemId, lblDropRate, numDropRate, lblDropCount, numDropCount, btnAddDrop, btnRemoveDrop, lblSpawns, txtSpawns, lstSpawns, lblSpawnMob, txtSpawnMobId, lblSpawnRate, numSpawnRate, lblSpawnCount, numSpawnCount, lblLevel, numLevel, btnAddSpawn, btnRemoveSpawn, lblBuffs, txtBuffs, lblTitles, txtTitles, lblVisuals, txtVisuals, lblMods, lblPhase, cboPhase, chkRestoreHP, btnApplyPhase, btnDeletePhase, lblPhases, lstPhases, txtMods, lblAddMob, txtNewMobId, btnAddMob, btnUseAvailable, btnPickVisual });
 
 
 
@@ -205,6 +238,11 @@ namespace CustomDropEventEditor
             txtBuffs.Leave += (s, e) => SaveMobFromEditors();
             txtTitles.Leave += (s, e) => SaveMobFromEditors();
             txtVisuals.Leave += (s, e) => SaveMobFromEditors();
+            cboPhase.SelectedIndexChanged += (s, e) => OnPhaseChanged();
+            chkRestoreHP.CheckedChanged += (s, e) => { /* Phase changes require manual save */ };
+            lstPhases.DoubleClick += (s, e) => OnPhaseListDoubleClick();
+            btnApplyPhase.Click += (s, e) => ApplyCurrentPhase();
+            btnDeletePhase.Click += (s, e) => DeleteCurrentPhase();
 
             btnAddDrop.Click += (s, e) => AddDropFromInputs();
             btnRemoveDrop.Click += (s, e) => RemoveSelectedDrop();
@@ -263,6 +301,8 @@ namespace CustomDropEventEditor
             lblGlobalTitles.Font = bold;
             lblGlobalVisuals.Font = bold;
             ApplyLabelTheme(lblMods);
+            ApplyLabelTheme(lblPhase);
+            ApplyLabelTheme(lblPhases);
             ApplyLabelTheme(lblBuffs);
             ApplyLabelTheme(lblTitles);
             ApplyLabelTheme(lblVisuals);
@@ -272,6 +312,10 @@ namespace CustomDropEventEditor
             ApplyLabelTheme(lblSpawnRate);
             ApplyLabelTheme(lblSpawnCount);
             ApplyLabelTheme(lblLevel);
+            cboPhase.BackColor = Color.FromArgb(40, 41, 45);
+            cboPhase.ForeColor = Color.Gainsboro;
+            chkRestoreHP.BackColor = Color.FromArgb(32, 33, 36);
+            ApplyListTheme(lstPhases);
             ApplyNumericTheme(numDropRate);
             ApplyNumericTheme(numDropCount);
             ApplyNumericTheme(numSpawnRate);
@@ -619,6 +663,7 @@ namespace CustomDropEventEditor
             foreach (var k in _model.Drops.Keys) configured.Add(k);
             foreach (var k in _model.Spawns.Keys) if (k != 0) configured.Add(k);
             foreach (var k in _model.Mods.Keys) if (k != 0) configured.Add(k);
+            foreach (var k in _model.ModsByPhase.Keys) if (k != 0) configured.Add(k);
             foreach (var k in _model.Buffs.Keys) if (k != 0) configured.Add(k);
             foreach (var k in _model.Titles.Keys) if (k != 0) configured.Add(k);
             if (_model.Visuals != null)
@@ -886,10 +931,8 @@ namespace CustomDropEventEditor
             else
                 txtTitles.Text = string.Empty;
 
-            if (_model.Mods.TryGetValue(id, out var mods))
-                txtMods.Text = mods.ToString();
-            else
-                txtMods.Text = new Modifiers().ToString(); // show defaults for convenience
+            // Load modifiers based on selected phase
+            LoadModifiersForCurrentPhase(id);
 
             if (_model.Visuals != null && _model.Visuals.TryGetValue(id, out var visuals))
                 txtVisuals.Text = string.Join(
@@ -897,6 +940,9 @@ namespace CustomDropEventEditor
                     visuals.Select(v => v.IntervalMs > 0 ? $"{v.EffectTblidx}@{v.IntervalMs}" : $"{v.EffectTblidx}"));
             else
                 txtVisuals.Text = string.Empty;
+
+            // Refresh phase list
+            RefreshPhaseList(id);
         }
 
         private void SaveMobFromEditors()
@@ -1063,8 +1109,39 @@ namespace CustomDropEventEditor
                 else _model.Spawns.Remove(id);
             }
 
+            // Save modifiers based on selected phase
             var mText = txtMods.Text.Trim();
-            if (!string.IsNullOrEmpty(mText)) _model.Mods[id] = Modifiers.Parse(mText); else _model.Mods.Remove(id);
+            var phase = GetSelectedPhase();
+
+            if (!string.IsNullOrEmpty(mText))
+            {
+                var mods = Modifiers.Parse(mText);
+                mods.RestoreHP = chkRestoreHP.Checked;
+
+                if (phase == 0)
+                {
+                    // Save as regular (non-phase) modifier
+                    _model.Mods[id] = mods;
+                }
+                else
+                {
+                    // Save as phase-specific modifier
+                    if (!_model.ModsByPhase.TryGetValue(id, out var phaseDict))
+                    {
+                        phaseDict = new Dictionary<byte, Modifiers>();
+                        _model.ModsByPhase[id] = phaseDict;
+                    }
+                    phaseDict[phase] = mods;
+                }
+            }
+            else
+            {
+                // Remove modifiers if empty
+                if (phase == 0)
+                    _model.Mods.Remove(id);
+                else if (_model.ModsByPhase.TryGetValue(id, out var phaseDict))
+                    phaseDict.Remove(phase);
+            }
 
             // Buffs
             var bText = txtBuffs.Text.Trim();
@@ -1136,6 +1213,217 @@ namespace CustomDropEventEditor
 
             // keep text fields in sync for convenience
             LoadMobIntoEditors();
+        }
+
+        private byte GetSelectedPhase()
+        {
+            // Phase dropdown: "⚪ None (Base)" = 0, "1️⃣ Phase 1" = 1, "2️⃣ Phase 2" = 2, etc.
+            // SelectedIndex directly maps to phase number (0-5)
+            return (byte)cboPhase.SelectedIndex;
+        }
+
+        private void LoadModifiersForCurrentPhase(uint mobId)
+        {
+            var phase = GetSelectedPhase();
+
+            if (phase == 0)
+            {
+                // Load regular (non-phase) modifiers
+                if (_model.Mods.TryGetValue(mobId, out var mods))
+                {
+                    txtMods.Text = mods.ToString();
+                    chkRestoreHP.Checked = mods.RestoreHP;
+                }
+                else
+                {
+                    txtMods.Text = new Modifiers().ToString(); // show defaults for convenience
+                    chkRestoreHP.Checked = false;
+                }
+            }
+            else
+            {
+                // Load phase-specific modifiers
+                if (_model.ModsByPhase.TryGetValue(mobId, out var phaseDict) &&
+                    phaseDict.TryGetValue(phase, out var mods))
+                {
+                    txtMods.Text = mods.ToString();
+                    chkRestoreHP.Checked = mods.RestoreHP;
+                }
+                else
+                {
+                    txtMods.Text = new Modifiers().ToString(); // show defaults for convenience
+                    chkRestoreHP.Checked = false;
+                }
+            }
+        }
+
+        private void RefreshPhaseList(uint mobId)
+        {
+            lstPhases.Items.Clear();
+
+            // Show regular modifiers
+            if (_model.Mods.TryGetValue(mobId, out var baseMods))
+            {
+                var summary = GetModifiersSummary(baseMods);
+                var restoreIcon = baseMods.RestoreHP ? " 🔄" : "";
+                lstPhases.Items.Add($"Base: {summary}{restoreIcon}");
+            }
+
+            // Show phase-specific modifiers
+            if (_model.ModsByPhase.TryGetValue(mobId, out var phaseDict))
+            {
+                foreach (var (phase, mods) in phaseDict.OrderBy(p => p.Key))
+                {
+                    var summary = GetModifiersSummary(mods);
+                    var restoreIcon = mods.RestoreHP ? " 🔄" : "";
+                    lstPhases.Items.Add($"Phase {phase}: {summary}{restoreIcon}");
+                }
+            }
+        }
+
+        private string GetModifiersSummary(Modifiers m)
+        {
+            var parts = new List<string>();
+            if (m.Hp != 1f) parts.Add($"HP×{m.Hp:F1}");
+            if (m.PhysAtk != 1f) parts.Add($"PhysAtk×{m.PhysAtk:F1}");
+            if (m.EngAtk != 1f) parts.Add($"EngAtk×{m.EngAtk:F1}");
+            if (m.PhysDef != 1f) parts.Add($"PhysDef×{m.PhysDef:F1}");
+            if (m.EngDef != 1f) parts.Add($"EngDef×{m.EngDef:F1}");
+            if (m.AtkSpd != 1f) parts.Add($"AtkSpd×{m.AtkSpd:F2}");
+            if (m.RunSpd != 1f) parts.Add($"RunSpd×{m.RunSpd:F2}");
+            if (parts.Count == 0) return "Default";
+            if (parts.Count > 3) return string.Join(", ", parts.Take(3)) + "...";
+            return string.Join(", ", parts);
+        }
+
+        private void OnPhaseChanged()
+        {
+            if (lstCfgMobs.SelectedItem is not ListViewItemWrapper w) return;
+            var mobId = w.Id;
+
+            // Load modifiers for the newly selected phase
+            LoadModifiersForCurrentPhase(mobId);
+        }
+
+        private void OnPhaseListDoubleClick()
+        {
+            if (lstPhases.SelectedItem is not string item) return;
+
+            if (item.StartsWith("Base:"))
+            {
+                cboPhase.SelectedIndex = 0;
+            }
+            else if (item.StartsWith("Phase "))
+            {
+                // Extract phase number
+                var phaseStr = item.Substring(6, item.IndexOf(':') - 6).Trim();
+                if (byte.TryParse(phaseStr, out var phase) && phase >= 1 && phase <= 5)
+                {
+                    cboPhase.SelectedIndex = phase;
+                }
+            }
+        }
+
+        private void ApplyCurrentPhase()
+        {
+            if (lstCfgMobs.SelectedItem is not ListViewItemWrapper w)
+            {
+                MessageBox.Show("Please select a mob first.", "No Mob Selected", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            var mobId = w.Id;
+            var phase = GetSelectedPhase();
+            var mText = txtMods.Text.Trim();
+
+            // Parse and save modifiers for the current phase
+            if (!string.IsNullOrEmpty(mText))
+            {
+                try
+                {
+                    var mods = Modifiers.Parse(mText);
+                    mods.RestoreHP = chkRestoreHP.Checked;
+
+                    if (phase == 0)
+                    {
+                        // Save as regular (non-phase) modifier
+                        _model.Mods[mobId] = mods;
+                    }
+                    else
+                    {
+                        // Save as phase-specific modifier
+                        if (!_model.ModsByPhase.TryGetValue(mobId, out var phaseDict))
+                        {
+                            phaseDict = new Dictionary<byte, Modifiers>();
+                            _model.ModsByPhase[mobId] = phaseDict;
+                        }
+                        phaseDict[phase] = mods;
+                    }
+
+                    // Refresh the phase list to show the updated phase
+                    RefreshPhaseList(mobId);
+                    MessageBox.Show($"Phase {(phase == 0 ? "Base" : phase.ToString())} applied successfully!", "Phase Saved", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Error parsing modifiers: {ex.Message}", "Parse Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+            else
+            {
+                // Remove modifiers if empty
+                if (phase == 0)
+                {
+                    _model.Mods.Remove(mobId);
+                }
+                else if (_model.ModsByPhase.TryGetValue(mobId, out var phaseDict))
+                {
+                    phaseDict.Remove(phase);
+                    if (phaseDict.Count == 0)
+                        _model.ModsByPhase.Remove(mobId);
+                }
+
+                RefreshPhaseList(mobId);
+                MessageBox.Show($"Phase {(phase == 0 ? "Base" : phase.ToString())} modifiers removed.", "Phase Cleared", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+        }
+
+        private void DeleteCurrentPhase()
+        {
+            if (lstCfgMobs.SelectedItem is not ListViewItemWrapper w)
+            {
+                MessageBox.Show("Please select a mob first.", "No Mob Selected", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            var mobId = w.Id;
+            var phase = GetSelectedPhase();
+
+            if (phase == 0)
+            {
+                var result = MessageBox.Show("Are you sure you want to delete the Base modifiers?", "Confirm Delete", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                if (result != DialogResult.Yes) return;
+
+                _model.Mods.Remove(mobId);
+            }
+            else
+            {
+                var result = MessageBox.Show($"Are you sure you want to delete Phase {phase}?", "Confirm Delete", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                if (result != DialogResult.Yes) return;
+
+                if (_model.ModsByPhase.TryGetValue(mobId, out var phaseDict))
+                {
+                    phaseDict.Remove(phase);
+                    if (phaseDict.Count == 0)
+                        _model.ModsByPhase.Remove(mobId);
+                }
+            }
+
+            // Clear the UI and refresh
+            txtMods.Text = new Modifiers().ToString();
+            chkRestoreHP.Checked = false;
+            RefreshPhaseList(mobId);
+            MessageBox.Show($"Phase {(phase == 0 ? "Base" : phase.ToString())} deleted successfully!", "Phase Deleted", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
         private void FillDropInputsFromSelection()
@@ -1292,42 +1580,63 @@ namespace CustomDropEventEditor
             }
         }
 
+        // Modern theme colors
+        private static readonly Color ModernSurfaceVariant = Color.FromArgb(45, 45, 45);
+        private static readonly Color ModernTextPrimary = Color.FromArgb(255, 255, 255);
+        private static readonly Color ModernTextSecondary = Color.FromArgb(189, 189, 189);
+        private static readonly Color ModernPrimary = Color.FromArgb(100, 181, 246);
+        private static readonly Color ModernSuccess = Color.FromArgb(102, 187, 106);
+        private static readonly Color ModernError = Color.FromArgb(239, 83, 80);
+        private static readonly Color ModernBorder = Color.FromArgb(60, 60, 60);
+
         private void ApplyFieldTheme(TextBox tb)
         {
             tb.BorderStyle = BorderStyle.FixedSingle;
-            tb.BackColor = Color.FromArgb(40, 41, 45);
-            tb.ForeColor = Color.Gainsboro;
+            tb.BackColor = ModernSurfaceVariant;
+            tb.ForeColor = ModernTextPrimary;
         }
 
         private void ApplyNumericTheme(NumericUpDown nd)
         {
             nd.BorderStyle = BorderStyle.FixedSingle;
-            nd.BackColor = Color.FromArgb(40, 41, 45);
-            nd.ForeColor = Color.Gainsboro;
+            nd.BackColor = ModernSurfaceVariant;
+            nd.ForeColor = ModernTextPrimary;
         }
 
         private void ApplyListTheme(ListBox lb)
         {
             lb.BorderStyle = BorderStyle.FixedSingle;
-            lb.BackColor = Color.FromArgb(40, 41, 45);
-            lb.ForeColor = Color.Gainsboro;
+            lb.BackColor = ModernSurfaceVariant;
+            lb.ForeColor = ModernTextPrimary;
         }
 
         private void StyleButton(Button btn, bool primary = false)
         {
             btn.FlatStyle = FlatStyle.Flat;
-            btn.FlatAppearance.BorderColor = primary ? Color.FromArgb(0, 120, 215) : Color.FromArgb(70, 72, 78);
+            btn.FlatAppearance.BorderColor = primary ? ModernPrimary : ModernBorder;
             btn.FlatAppearance.BorderSize = 1;
-            btn.ForeColor = Color.WhiteSmoke;
-            btn.BackColor = primary ? Color.FromArgb(0, 120, 215) : Color.FromArgb(60, 62, 66);
+            btn.ForeColor = ModernTextPrimary;
+            btn.BackColor = primary ? ModernPrimary : Color.FromArgb(60, 62, 66);
             btn.Cursor = Cursors.Hand;
-            btn.MouseEnter += (s, e) => btn.BackColor = primary ? Color.FromArgb(0, 105, 190) : Color.FromArgb(75, 77, 83);
-            btn.MouseLeave += (s, e) => btn.BackColor = primary ? Color.FromArgb(0, 120, 215) : Color.FromArgb(60, 62, 66);
+            btn.Font = new Font("Segoe UI", 9F, FontStyle.Regular);
+
+            // Hover effects
+            btn.MouseEnter += (s, e) => {
+                var originalColor = btn.BackColor;
+                btn.BackColor = Color.FromArgb(
+                    Math.Min(255, originalColor.R + 20),
+                    Math.Min(255, originalColor.G + 20),
+                    Math.Min(255, originalColor.B + 20)
+                );
+            };
+            btn.MouseLeave += (s, e) => {
+                btn.BackColor = primary ? ModernPrimary : Color.FromArgb(60, 62, 66);
+            };
         }
 
         private void ApplyLabelTheme(Label lbl)
         {
-            lbl.ForeColor = Color.Gainsboro;
+            lbl.ForeColor = ModernTextPrimary;
         }
 
         private static List<VisualEntry> ParseVisualsText(string text)

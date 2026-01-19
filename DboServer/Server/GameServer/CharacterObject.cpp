@@ -330,6 +330,13 @@ bool CCharacterObject::SetCurLP(int curLp)
 		}
 
 		m_curLP = curLp;
+
+		// Check for automatic phase transitions if this is a boss mob
+		if (g_pCustomDropEvent && g_pCustomDropEvent->m_bOn && IsMonster())
+		{
+			g_pCustomDropEvent->CheckAndUpdateWorldPhaseFromBossHP((CMonster*)this);
+		}
+
 		return true;
 	}
 

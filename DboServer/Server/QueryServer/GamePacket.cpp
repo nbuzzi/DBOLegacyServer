@@ -10,6 +10,7 @@
 #include "Guild.h"
 #include "DynamicFieldSystem.h"
 #include "BudokaiManager.h"
+#include "NtlStringHandler.h"
 
 
 void CGameServerSession::OnAccountCheck(QueryResultVector& results, CHARACTERID charId, ACCOUNTID accountId)

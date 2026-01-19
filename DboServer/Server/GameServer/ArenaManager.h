@@ -213,6 +213,8 @@ public:
 	// Helpers for PvP/Arena context detection
 	bool IsArenaWorldTblidx(unsigned int worldTblidx) const;
 	bool IsArenaWorldId(unsigned int worldId) const { return m_currentWorldId && worldId == m_currentWorldId; }
+	// Check if arena PvP rules should apply (requires: arena enabled, IN_ROUND state, arena channel, and participant)
+	bool ShouldAllowArenaPvP(CPlayer* pPlayer) const;
 
 	// Enrollment
 	bool AddParticipant(CPlayer* pPlayer);

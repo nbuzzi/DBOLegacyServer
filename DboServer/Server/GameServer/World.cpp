@@ -53,6 +53,7 @@ void CWorld::Init()
 
 	m_hTriggerObjectOffset = 1;
 	m_ruleOverride = INVALID_GAMERULE;
+	m_byDifficultyPhase = 0; // Initialize difficulty phase to 0 (default/no phase)
 }
 
 int CWorld::Create(WORLDID worldID, sWORLD_TBLDAT* pTbldat, CWorldZoneTable* pWorldZoneTable)
@@ -313,6 +314,10 @@ void CWorld::OnPreCreate()
 void CWorld::OnCreate() //only used when creating dungeon world
 {
 	CGameServer* app = (CGameServer*)g_pApp;
+
+	// Reset difficulty phase to 0 when creating a new dungeon world
+	// This ensures bosses with autophase configuration start at base phase
+	SetDifficultyPhase(0);
 
 	//dont spawn anything on dojo channel
 	if (app->IsDojoChannel() && GetTbldat()->byWorldRuleType != GAMERULE_MINORMATCH && GetTbldat()->byWorldRuleType != GAMERULE_MINORMATCH && GetTbldat()->byWorldRuleType != GAMERULE_MINORMATCH)
@@ -1234,5 +1239,55 @@ bool CWorld::BroadcastPacket(CNtlPacket* pPacket, CSpawnObject* pExcept)
 	}
 
 	return bIsPacketSent;
+}
+
+CMonster* CWorld::Add_Monster(TBLIDX mobTblidx, const CNtlVector& spawnPos, const CNtlVector& spawnDir, BYTE bySpawnFuncFlag)
+{
+	// Get mob table data
+	sMOB_TBLDAT* pMobTbldat = (sMOB_TBLDAT*)g_pTableContainer->GetMobTable()->FindData(mobTblidx);
+	if (!pMobTbldat)
+	{
+		ERR_LOG(LOG_GENERAL, "[CWorld::Add_Monster] Invalid mob tblidx: %u", mobTblidx);
+		return nullptr;
+	}
+
+	// Create monster character
+	CMonster* pMob = (CMonster*)g_pObjectManager->CreateCharacter(OBJTYPE_MOB);
+	if (!pMob)
+	{
+		ERR_LOG(LOG_GENERAL, "[CWorld::Add_Monster] Failed to create monster character");
+		return nullptr;
+	}
+
+	// Setup spawn data
+	sSPAWN_TBLDAT spawn;
+	ZeroMemory(&spawn, sizeof(sSPAWN_TBLDAT));
+	spawn.vSpawn_Loc = spawnPos;
+	spawn.vSpawn_Dir = spawnDir;
+	spawn.dwParty_Index = INVALID_DWORD;
+	spawn.byMove_Range = 10;
+	spawn.bySpawn_Move_Type = SPAWN_MOVE_WANDER;
+	spawn.bySpawn_Loc_Range = 5;
+	spawn.byWander_Range = 10;
+	spawn.path_Table_Index = INVALID_TBLIDX;
+	spawn.playScript = INVALID_TBLIDX;
+	spawn.playScriptScene = INVALID_TBLIDX;
+	spawn.aiScript = INVALID_TBLIDX;
+	spawn.aiScriptScene = INVALID_TBLIDX;
+	spawn.actionPatternTblidx = 1;
+
+	// Spawn the monster
+	BYTE funcFlags = (bySpawnFuncFlag != 0xFF) ? bySpawnFuncFlag : (SPAWN_FUNC_FLAG_RESPAWN | SPAWN_FUNC_FLAG_NO_SPAWN_WAIT);
+	if (pMob->CreateDataAndSpawn(m_worldID, pMobTbldat, &spawn, false, funcFlags))
+	{
+		pMob->SetStandAlone(false); // Mark as standalone false so that we can kill them
+		return pMob;
+	}
+	else
+	{
+		ERR_LOG(LOG_GENERAL, "[CWorld::Add_Monster] Failed to spawn monster tblidx: %u", mobTblidx);
+		g_pObjectManager->DestroyCharacter(pMob);
+		return nullptr;
+	}
 }
 

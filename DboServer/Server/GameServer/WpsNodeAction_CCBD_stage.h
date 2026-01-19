@@ -26,6 +26,7 @@ public:
 
 	BYTE						m_byStage;
 	bool						m_bDirectPlay;
+	BYTE					m_byBossArenaSlot;
 
 };
 

@@ -5,7 +5,7 @@
 
 
 #define SERVERCONFIG_MAX_TBLDAT_VALUE_COUNT	10
-const DWORD ENTER_BOSS_STATE_LOC_COUNT = 30;
+const DWORD ENTER_BOSS_STATE_LOC_COUNT = 51; // Support up to stage 255 (255/5 = 51 boss stages)
 const DWORD ITEM_UPGRADE_SPECIAL_SOURCE_COUNT = 4;
 const DWORD MASCOT_LUMINOSITY_DROP_COUNT = 5;
 
@@ -49,6 +49,33 @@ struct sSERVERCONFIG_DWC
 	DWORD	dwFailStateWaitTime;
 };
 
+struct sSERVERCONFIG_FEATURE_FLAGS
+{
+	bool	bEnableVirtualTransformations;
+	bool	bEnableBudokai;
+	bool	bEnableDojo;
+	bool	bEnableRankBattle;
+	bool	bEnableDWC;
+	bool	bEnableTMQ;
+	bool	bEnableQuickSlot;
+	bool	bEnableItemUpgrade;
+	bool	bEnableItemExchange;
+	bool	bEnablePartyMatchmaking;
+
+	sSERVERCONFIG_FEATURE_FLAGS()
+		: bEnableVirtualTransformations(true)
+		, bEnableBudokai(true)
+		, bEnableDojo(true)
+		, bEnableRankBattle(true)
+		, bEnableDWC(true)
+		, bEnableTMQ(true)
+		, bEnableQuickSlot(true)
+		, bEnableItemUpgrade(true)
+		, bEnableItemExchange(true)
+		, bEnablePartyMatchmaking(true)
+	{}
+};
+
 struct sSERVERCONFIG_DATA
 {
 	BYTE	byDragonballScrambleCoolTime;
@@ -59,6 +86,7 @@ struct sSERVERCONFIG_DATA
 	BYTE	byItemUpgradeSpecialSource[ITEM_UPGRADE_SPECIAL_SOURCE_COUNT];
 	sSERVERCONFIG_BATTLEDUNGEON	sBattleDungeonData;
 	sSERVERCONFIG_DWC	sDWCData;
+	sSERVERCONFIG_FEATURE_FLAGS sFeatureFlags;
 };
 
 struct sMASCOT_LUMINOSITY_DROP_DATA

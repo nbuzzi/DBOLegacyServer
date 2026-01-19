@@ -1331,7 +1331,7 @@ const sHELPER_NPC_CONFIG* CHelperNpcManager::GetConfigForHelper(CNpc* pNpc) cons
 
 void CHelperNpcManager::TickWatchdog(DWORD dwNow)
 {
-	const DWORD WATCHDOG_INTERVAL_MS = 2000; // light check
+	const DWORD WATCHDOG_INTERVAL_MS = 1000; // light check
 	if (m_dwLastWatchdogTick != 0 && (dwNow - m_dwLastWatchdogTick) < WATCHDOG_INTERVAL_MS)
 		return;
 	m_dwLastWatchdogTick = dwNow;
@@ -1467,8 +1467,18 @@ void CHelperNpcManager::EnsureHelperForLeaderNow(CPlayer* pLeader)
 				HOBJECT hVictim = pLeader->GetTargetHandle();
 				if (hVictim != INVALID_HOBJECT)
 				{
-					if (pHelper->GetTargetHandle() != hVictim) pHelper->SetTargetHandle(hVictim);
-					VLog(cfg.bVerboseLogs, "HelperNPC: EnsureHelperForLeaderNow - reassert assist target %u for leader %u", hVictim, SAFE_ID(pLeader));
+					// Validate that the target is attackable by the helper before setting it (prevents attacking party members)
+					CCharacter* pVictim = g_pObjectManager->GetChar(hVictim);
+					if (pVictim && pVictim->IsInitialized() && pHelper->IsTargetAttackble(pVictim, pHelper->GetTbldat()->wSight_Range))
+					{
+						if (pHelper->GetTargetHandle() != hVictim) pHelper->SetTargetHandle(hVictim);
+						VLog(cfg.bVerboseLogs, "HelperNPC: EnsureHelperForLeaderNow - reassert assist target %u for leader %u", hVictim, SAFE_ID(pLeader));
+					}
+					else
+					{
+						// Target is not attackable (e.g., party member), skip setting target
+						VLog(cfg.bVerboseLogs, "HelperNPC: EnsureHelperForLeaderNow - skipped unattackable target %u (party member?) for leader %u", hVictim, SAFE_ID(pLeader));
+					}
 				}
 			}
 			return;

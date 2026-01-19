@@ -193,9 +193,29 @@ CArenaManager::~CArenaManager() {}
 
 bool CArenaManager::LoadConfigFromIniPath(const char* iniPath)
 {
-	CNtlIniFile file;
-	if (file.Create(iniPath) != NTL_SUCCESS)
+	// Debug: Get current working directory
+	char currentDir[MAX_PATH];
+	GetCurrentDirectoryA(MAX_PATH, currentDir);
+	printf("[ARENA] Current working directory: %s\n", currentDir);
+	printf("[ARENA] Attempting to load: %s\n", iniPath);
+
+	// Check if file exists
+	DWORD fileAttr = GetFileAttributesA(iniPath);
+	if (fileAttr == INVALID_FILE_ATTRIBUTES)
+	{
+		printf("[ARENA] File does not exist or cannot be accessed!\n");
 		return false;
+	}
+
+	CNtlIniFile file;
+	int createResult = file.Create(iniPath);
+	if (createResult != NTL_SUCCESS)
+	{
+		printf("[ARENA] Failed to load config from %s (CNtlIniFile::Create returned %d)\n", iniPath, createResult);
+		return false;
+	}
+
+	printf("[ARENA] CNtlIniFile::Create succeeded!\n");
 
 	// [Arena]
 	int enabled = 0;
@@ -924,6 +944,11 @@ static void ArenaBroadcastBudokaiPlayerStateToWorld(CWorld* pWorld, const std::u
 
 void CArenaManager::TickProcess(unsigned long dwTickDiff)
 {
+	// Performance optimization: Skip arena logic on non-arena channels
+	CGameServer* app = (CGameServer*)g_pApp;
+	if (m_cfg.onlyOnArenaChannel && !app->IsArenaChannel())
+		return;
+
 	// Do nothing unless the Arena feature is enabled and actively started
 	if (!m_cfg.enabled || m_state == State::IDLE)
 		return;
@@ -2128,6 +2153,11 @@ void CArenaManager::TickProcess(unsigned long dwTickDiff)
 // Drive automation even when the arena state is IDLE (called from game loop)
 void CArenaManager::AutomationTick(unsigned long dwTickDiff)
 {
+	// Performance optimization: Skip automation on non-arena channels
+	CGameServer* app = (CGameServer*)g_pApp;
+	if (m_cfg.autoChannelName.c_str() && m_cfg.autoChannelName.c_str()[0] != '\0' && !app->IsArenaChannel())
+		return;
+
 	if (!m_cfg.autoEnabled)
 		return;
 
@@ -2146,8 +2176,6 @@ void CArenaManager::AutomationTick(unsigned long dwTickDiff)
 		m_autoEnsureRemainMs = (m_autoEnsureRemainMs > dwTickDiff) ? (m_autoEnsureRemainMs - dwTickDiff) : 0;
 	}
 
-	// Optional channel-name filter: only run on matching channels
-	CGameServer* app = (CGameServer*)g_pApp;
 	if (m_cfg.autoChannelName.c_str() && m_cfg.autoChannelName.c_str()[0] != '\0')
 	{
 		std::string want = m_cfg.autoChannelName.c_str();
@@ -2407,33 +2435,102 @@ unsigned int CArenaManager::GetOrCreateCurrentWorldId()
 	return m_currentWorldId ? m_currentWorldId : EnsureCurrentWorldId();
 }
 
+bool CArenaManager::ShouldAllowArenaPvP(CPlayer* pPlayer) const
+{
+	if (!pPlayer)
+		return false;
+
+	// Arena must be enabled
+	if (!m_cfg.enabled)
+		return false;
+
+	// Arena must be in active round (not IDLE, ENROLLMENT, etc.)
+	if (m_state != State::IN_ROUND)
+		return false;
+
+	// Player must be a participant (not spectator or random player)
+	if (!IsParticipant(const_cast<CPlayer*>(pPlayer)))
+		return false;
+
+	// Channel check: Arena PvP only allowed on arena channel (if onlyOnArenaChannel is true)
+	if (m_cfg.onlyOnArenaChannel)
+	{
+		CGameServer* app = (CGameServer*)g_pApp;
+		if (!app || !app->IsArenaChannel())
+			return false;
+	}
+
+	return true;
+}
+
 bool CArenaManager::IsArenaWorldTblidx(unsigned int worldTblidx) const
 {
+	// Simple cache to avoid repeated table lookups for the same world ID
+	// Uses thread_local for thread safety without locks (GameServer is typically single-threaded per instance)
+	static thread_local std::unordered_map<unsigned int, bool> s_arenaCache;
+	static thread_local size_t s_cacheHits = 0;
+	static thread_local size_t s_cacheMisses = 0;
+
+	// Check cache first
+	auto it = s_arenaCache.find(worldTblidx);
+	if (it != s_arenaCache.end())
+	{
+		++s_cacheHits;
+		return it->second;
+	}
+
+	++s_cacheMisses;
+
 	// Primary: name-based Arena detection (TORNEOPODER etc.)
+	// This is the most reliable method and works with dynamic arena instances
 	if (IsArenaWorldByTblidxName((TBLIDX)worldTblidx))
+	{
+		s_arenaCache[worldTblidx] = true;
 		return true;
+	}
 
 	// Configured Arena rotation list (main Arena worlds)
 	for (unsigned int v : m_cfg.worldTblidxList)
-		if (v == worldTblidx) return true;
+	{
+		if (v == worldTblidx)
+		{
+			s_arenaCache[worldTblidx] = true;
+			return true;
+		}
+	}
 
 	// AutoArena world(s)
 	if (m_cfg.autoWorldTblidx && m_cfg.autoWorldTblidx == worldTblidx)
+	{
+		s_arenaCache[worldTblidx] = true;
 		return true;
-	for (unsigned int v : m_cfg.autoWorldTblidxList)
-		if (v == worldTblidx) return true;
+	}
 
-	// Instance expansion heuristic: if worldTblidx matches any configured base within small range
-	// Example: base 10000 implies instances 10000..10100 are considered arena. Keep small to avoid false positives.
-	auto within = [&](unsigned int base, unsigned int id) -> bool {
-		const unsigned int kSpan = 200; // +/- range
-		return id >= base && id <= base + kSpan;
-		};
-	for (unsigned int base : m_cfg.autoWorldTblidxList)
-		if (within(base, worldTblidx)) return true;
-	for (unsigned int base : m_cfg.worldTblidxList)
-		if (within(base, worldTblidx)) return true;
-	if (m_cfg.autoWorldTblidx && within(m_cfg.autoWorldTblidx, worldTblidx)) return true;
+	for (unsigned int v : m_cfg.autoWorldTblidxList)
+	{
+		if (v == worldTblidx)
+		{
+			s_arenaCache[worldTblidx] = true;
+			return true;
+		}
+	}
+
+	// ID-based range detection disabled to prevent false positives with dungeons
+	// All arena detection should now be name-based (TORNEOPODER) or explicit config
+	// If you need multiple arena instances, they will auto-detect via name matching
+
+	// Cache negative result
+	s_arenaCache[worldTblidx] = false;
+
+	// Limit cache size to prevent memory growth
+	if (s_arenaCache.size() > 1000)
+	{
+		s_arenaCache.clear();
+		// Optional: log cache stats
+		// printf("Arena cache cleared. Hits: %zu, Misses: %zu\n", s_cacheHits, s_cacheMisses);
+		s_cacheHits = 0;
+		s_cacheMisses = 0;
+	}
 
 	return false;
 }
@@ -4398,9 +4495,25 @@ unsigned int CArenaManager::EnsureCurrentWorldId()
 			}
 		}
 
-		NTL_PRINT(PRINT_APP, _T("[ARENA] Attempting to create dynamic world: tblidx=%u name='%s'"),
-			m_currentWorldTblidx, pWorldTbldat->wszName);
-		ARENA_VLOG(m_cfg, LOG_GENERAL, "[ARENA] CreateWorld CC mode: tblidx=%u", (unsigned)m_currentWorldTblidx);
+		// Check if a world instance with this tblidx already exists
+		CWorld* pExistingByTblidx = app->GetGameMain()->GetWorldManager()->FindWorld((TBLIDX)m_currentWorldTblidx);
+		if (pExistingByTblidx)
+		{
+			if (IsArenaWorld(pExistingByTblidx) && ShouldOverrideRuleForWorld(m_currentWorldTblidx))
+			{
+				pExistingByTblidx->SetRuleOverride(GAMERULE_RANKBATTLE);
+				m_worldsWithOverride.insert((unsigned int)pExistingByTblidx->GetID());
+			}
+			m_currentWorldId = (unsigned int)pExistingByTblidx->GetID();
+			NTL_PRINT(PRINT_APP, _T("[ARENA] CC Mode: Found existing world instance ID %u for tblidx %u"),
+				m_currentWorldId, m_currentWorldTblidx);
+			ARENA_VLOG(m_cfg, LOG_GENERAL, "[ARENA] Reused existing world: id=%u tblidx=%u", (unsigned)m_currentWorldId, (unsigned)m_currentWorldTblidx);
+			return m_currentWorldId;
+		}
+
+		NTL_PRINT(PRINT_APP, _T("[ARENA] Attempting to create dynamic world: tblidx=%u name='%s' mapName='%s' dynamic=%d"),
+			m_currentWorldTblidx, pWorldTbldat->wszName, pWorldTbldat->szName, (int)pWorldTbldat->bDynamic);
+		ARENA_VLOG(m_cfg, LOG_GENERAL, "[ARENA] CreateWorld CC mode: tblidx=%u dynamic=%d", (unsigned)m_currentWorldTblidx, (int)pWorldTbldat->bDynamic);
 
 		CWorld* pWorld = app->GetGameMain()->GetWorldManager()->CreateWorld(pWorldTbldat);
 		if (pWorld)
@@ -4437,24 +4550,35 @@ unsigned int CArenaManager::EnsureCurrentWorldId()
 				if (fallbackTblidx == m_currentWorldTblidx) continue; // Skip the one that already failed
 
 				sWORLD_TBLDAT* pFallbackTbldat = (sWORLD_TBLDAT*)g_pTableContainer->GetWorldTable()->FindData((TBLIDX)fallbackTblidx);
-				if (pFallbackTbldat)
+				if (!pFallbackTbldat) continue; // Skip if table data not found
+
+				// First check if the fallback world already exists
+				CWorld* pFallbackWorld = app->GetGameMain()->GetWorldManager()->FindWorld((TBLIDX)fallbackTblidx);
+
+				// If it doesn't exist, try to create it
+				if (!pFallbackWorld)
 				{
-					CWorld* pFallbackWorld = app->GetGameMain()->GetWorldManager()->CreateWorld(pFallbackTbldat);
-					if (pFallbackWorld)
+					pFallbackWorld = app->GetGameMain()->GetWorldManager()->CreateWorld(pFallbackTbldat);
+					if (!pFallbackWorld)
 					{
-						if (IsArenaWorld(pFallbackWorld) && ShouldOverrideRuleForWorld(fallbackTblidx))
-						{
-							pFallbackWorld->SetRuleOverride(GAMERULE_RANKBATTLE);
-							m_worldsWithOverride.insert((unsigned int)pFallbackWorld->GetID());
-						}
-						m_currentWorldId = (unsigned int)pFallbackWorld->GetID();
-						m_currentWorldTblidx = fallbackTblidx; // Update the current tblidx to the working one
-						NTL_PRINT(PRINT_APP, _T("[ARENA] Using fallback world: tblidx=%u name='%s' worldId=%u"),
-							fallbackTblidx, pFallbackTbldat->wszName, m_currentWorldId);
-						ARENA_VLOG(m_cfg, LOG_GENERAL, "[ARENA] Fallback world selected: tblidx=%u worldId=%u", (unsigned)fallbackTblidx, (unsigned)m_currentWorldId);
-						break;
+						// Creation failed, skip to next fallback world
+						NTL_PRINT(PRINT_APP, _T("[ARENA] Failed to create fallback world tblidx=%u, trying next..."), fallbackTblidx);
+						continue;
 					}
 				}
+
+				// At this point we have a valid world (either found or created)
+				if (IsArenaWorld(pFallbackWorld) && ShouldOverrideRuleForWorld(fallbackTblidx))
+				{
+					pFallbackWorld->SetRuleOverride(GAMERULE_RANKBATTLE);
+					m_worldsWithOverride.insert((unsigned int)pFallbackWorld->GetID());
+				}
+				m_currentWorldId = (unsigned int)pFallbackWorld->GetID();
+				m_currentWorldTblidx = fallbackTblidx; // Update the current tblidx to the working one
+				NTL_PRINT(PRINT_APP, _T("[ARENA] Using fallback world: tblidx=%u name='%s' worldId=%u"),
+					fallbackTblidx, pFallbackTbldat->wszName, m_currentWorldId);
+				ARENA_VLOG(m_cfg, LOG_GENERAL, "[ARENA] Fallback world selected: tblidx=%u worldId=%u", (unsigned)fallbackTblidx, (unsigned)m_currentWorldId);
+				break;
 			}
 		}
 		return m_currentWorldId;
@@ -4530,23 +4654,34 @@ unsigned int CArenaManager::EnsureCurrentWorldId()
 			if (fallbackTblidx == m_currentWorldTblidx) continue; // Skip the one that already failed
 
 			sWORLD_TBLDAT* pFallbackTbldat = (sWORLD_TBLDAT*)g_pTableContainer->GetWorldTable()->FindData((TBLIDX)fallbackTblidx);
-			if (pFallbackTbldat)
+			if (!pFallbackTbldat) continue; // Skip if table data not found
+
+			// First check if the fallback world already exists
+			CWorld* pFallbackWorld = app->GetGameMain()->GetWorldManager()->FindWorld((TBLIDX)fallbackTblidx);
+
+			// If it doesn't exist, try to create it
+			if (!pFallbackWorld)
 			{
-				CWorld* pFallbackWorld = app->GetGameMain()->GetWorldManager()->CreateWorld(pFallbackTbldat);
-				if (pFallbackWorld)
+				pFallbackWorld = app->GetGameMain()->GetWorldManager()->CreateWorld(pFallbackTbldat);
+				if (!pFallbackWorld)
 				{
-					if (IsArenaWorld(pFallbackWorld) && ShouldOverrideRuleForWorld(fallbackTblidx))
-					{
-						pFallbackWorld->SetRuleOverride(GAMERULE_RANKBATTLE);
-						m_worldsWithOverride.insert((unsigned int)pFallbackWorld->GetID());
-					}
-					m_currentWorldId = (unsigned int)pFallbackWorld->GetID();
-					m_currentWorldTblidx = fallbackTblidx; // Update the current tblidx to the working one
-					NTL_PRINT(PRINT_APP, _T("[ARENA] Normal Mode: Using fallback world: tblidx=%u name='%s' worldId=%u"),
-						fallbackTblidx, pFallbackTbldat->wszName, m_currentWorldId);
-					break;
+					// Creation failed, skip to next fallback world
+					NTL_PRINT(PRINT_APP, _T("[ARENA] Failed to create fallback world tblidx=%u, trying next..."), fallbackTblidx);
+					continue;
 				}
 			}
+
+			// At this point we have a valid world (either found or created)
+			if (IsArenaWorld(pFallbackWorld) && ShouldOverrideRuleForWorld(fallbackTblidx))
+			{
+				pFallbackWorld->SetRuleOverride(GAMERULE_RANKBATTLE);
+				m_worldsWithOverride.insert((unsigned int)pFallbackWorld->GetID());
+			}
+			m_currentWorldId = (unsigned int)pFallbackWorld->GetID();
+			m_currentWorldTblidx = fallbackTblidx; // Update the current tblidx to the working one
+			NTL_PRINT(PRINT_APP, _T("[ARENA] Normal Mode: Using fallback world: tblidx=%u name='%s' worldId=%u"),
+				fallbackTblidx, pFallbackTbldat->wszName, m_currentWorldId);
+			break;
 		}
 	}
 	return m_currentWorldId;
@@ -5369,7 +5504,7 @@ void CArenaManager::SpawnArenaMobs()
 
 		if (CMonster* pMob = (CMonster*)g_pObjectManager->CreateCharacter(OBJTYPE_MOB))
 		{
-			if (pMob->CreateDataAndSpawn((WORLDID)worldId, pMobTbldat, &spawn, false, 0))
+			if (pMob->CreateDataAndSpawn((WORLDID)worldId, pMobTbldat, &spawn, false, SPAWN_FUNC_FLAG_RESPAWN | SPAWN_FUNC_FLAG_NO_SPAWN_WAIT))
 			{
 				pMob->SetStandAlone(true); // mark as standalone so purge doesn't kill them
 				m_spawnedMobs.push_back(pMob->GetID());
@@ -5431,7 +5566,7 @@ bool CArenaManager::SpawnMob(unsigned int mobTblidx, const CNtlVector* pAt, cons
 
 	if (CMonster* pMob = (CMonster*)g_pObjectManager->CreateCharacter(OBJTYPE_MOB))
 	{
-		if (pMob->CreateDataAndSpawn((WORLDID)worldId, pMobTbldat, &spawn, false, 0))
+		if (pMob->CreateDataAndSpawn((WORLDID)worldId, pMobTbldat, &spawn, false, SPAWN_FUNC_FLAG_RESPAWN | SPAWN_FUNC_FLAG_NO_SPAWN_WAIT))
 		{
 			pMob->SetStandAlone(true);
 			m_spawnedMobs.push_back(pMob->GetID());

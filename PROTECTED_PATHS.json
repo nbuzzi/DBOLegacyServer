@@ -1,0 +1,17 @@
+{
+  "noEdit": [
+    "DboServer/ExecutionEnv/",
+    "Database/migrations/",
+    "resource/",
+    "x64/"
+  ],
+  "noRefactorSymbols": [
+    "ERR_LOG",
+    "NTL_PRINT",
+    "EVENT_VLOG"
+  ],
+  "allowGeneratedSuffixes": [
+    ".gen.cpp",
+    ".autogen.h"
+  ]
+}

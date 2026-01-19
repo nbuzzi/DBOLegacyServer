@@ -69,6 +69,20 @@ bool CRejoinManager::ResolveRejoinTarget(const sREJOIN_TICKET& t, sREJOIN_TARGET
 	CPlayer* pPlayerTarget = nullptr;
 	CGameServer* app = (CGameServer*)g_pApp;
 
+	// Budokai rejoin does NOT need party validation - it uses joinId instead
+	if (t.dungeonType == REJOIN_BUDOKAI)
+	{
+		ERR_LOG(LOG_GENERAL, "[REJOIN] Budokai rejoin attempt: char=%u joinId=%u channel=%u", (unsigned)cPlayer->GetCharID(), (unsigned)cPlayer->GetJoinID(), (unsigned)app->GetGsChannel());
+		if (g_pBudokaiManager->TryRejoinPlayer(cPlayer))
+		{
+			ERR_LOG(LOG_GENERAL, "[REJOIN] Budokai rejoin initiated: char=%u", (unsigned)cPlayer->GetCharID());
+			return true;
+		}
+		ERR_LOG(LOG_GENERAL, "[REJOIN] Budokai rejoin failed to initiate: char=%u", (unsigned)cPlayer->GetCharID());
+		return false; // Budokai rejoin handled (success or failure)
+	}
+
+	// For dungeon rejoin types (TMQ, TLQ, UD, CC), proceed with party validation
 	if (cPlayer->GetParty() == NULL) {
 		auto pParty = g_pPartyManager->GetParty(t.partyId);
 		if (pParty)
@@ -160,14 +174,10 @@ bool CRejoinManager::ResolveRejoinTarget(const sREJOIN_TICKET& t, sREJOIN_TARGET
 		}
 		break;
 	case REJOIN_BUDOKAI:
-		/*ERR_LOG(LOG_GENERAL, "[REJOIN] Budokai rejoin attempt: char=%u joinId=%u channel=%u", (unsigned)cPlayer->GetCharID(), (unsigned)cPlayer->GetJoinID(), (unsigned)app->GetGsChannel());
-		if (g_pBudokaiManager->TryRejoinPlayer(cPlayer))
-		{
-			ERR_LOG(LOG_GENERAL, "[REJOIN] Budokai rejoin initiated: char=%u", (unsigned)cPlayer->GetCharID());
-			return true;
-		}
-		ERR_LOG(LOG_GENERAL, "[REJOIN] Budokai rejoin failed to initiate: char=%u", (unsigned)cPlayer->GetCharID());*/
-		break; // could not handle Budokai rejoin here
+		// NOTE: Budokai rejoin is handled at the top of this function (line 73)
+		// This case should never be reached, but kept for safety
+		ERR_LOG(LOG_GENERAL, "[REJOIN] Budokai rejoin case reached in switch (should not happen): char=%u", (unsigned)cPlayer->GetCharID());
+		break;
 	default: break;
 	}
 	ERR_LOG(LOG_GENERAL, "[REJOIN] Resolve failed: char=%u type=%u", (unsigned)cPlayer->GetCharID(), (unsigned)t.dungeonType);

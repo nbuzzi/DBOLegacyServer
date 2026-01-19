@@ -1,0 +1,110 @@
+{
+  "name": "Mixed Mechanics Gauntlet",
+  "description": "50 floors demonstrating mixed boss mechanics. Each boss has unique mechanics: simple spawn, enrage, multi-phase, etc.",
+  "wpsId": 83001,
+  "baseWpsFile": "../../DboServer/ExecutionEnv/resource/server_data/wps/wps/83000.wps",
+  "floorCount": 50,
+  "bossInterval": 5,
+  "startFloor": 0,
+  "waveConfig": {
+    "patternList": "(1, 35%), (2, 35%), (3, 15%), (4, 15%)",
+    "autoLevel": 50,
+    "mobGroupOverride": 0,
+    "customTemplate": null
+  },
+  "bossConfig": {
+    "bossGroupBase": 9100,
+    "mechanicsTemplate": null,
+    "arenaRotation": [],
+    "rewardItems": [
+      7000002,
+      7000003,
+      7000004
+    ],
+    "incrementBossGroup": true,
+    "individualBosses": [
+      {
+        "floor": 5,
+        "bossGroup": 9100,
+        "mechanicsTemplate": null,
+        "arena": null,
+        "rewardItem": 7000002,
+        "variables": {},
+        "description": "Warm-up boss - simple spawn, no mechanics"
+      },
+      {
+        "floor": 10,
+        "bossGroup": 9101,
+        "mechanicsTemplate": "templates/boss_simple_enrage.wps",
+        "arena": "ARENA_FIRE",
+        "rewardItem": 7000002,
+        "variables": {
+          "ENRAGE_BUFF": "1900555",
+          "ENRAGE_HP_THRESHOLD": "30"
+        },
+        "description": "Fire boss - enrages at 30% HP with damage buff"
+      },
+      {
+        "floor": 15,
+        "bossGroup": 9102,
+        "mechanicsTemplate": "templates/boss_phases_91_71_61_41_25_20.wps",
+        "arena": "ARENA_ICE",
+        "rewardItem": 7000003,
+        "variables": {
+          "INVINCIBLE_BUFF": "1900101",
+          "PHASE91_GROUP": "311",
+          "PHASE71_GROUP": "312",
+          "PHASE61_GROUP": "313",
+          "PHASE41_GROUP": "314",
+          "PHASE25_GROUP": "315",
+          "PHASE20_GROUP": "316",
+          "PROTECT_PLATFORM_GROUP": "350",
+          "PROTECT_ADDONS_GROUP": "351"
+        },
+        "description": "Ice boss - full 6-phase mechanics with adds and platform protection"
+      },
+      {
+        "floor": 20,
+        "bossGroup": 9103,
+        "mechanicsTemplate": null,
+        "arena": "ARENA_LIGHTNING",
+        "rewardItem": 7000003,
+        "variables": {},
+        "description": "Lightning boss - back to simple mechanics but higher stats"
+      },
+      {
+        "floor": 25,
+        "bossGroup": 9104,
+        "mechanicsTemplate": "templates/boss_simple_enrage.wps",
+        "arena": "ARENA_EARTH",
+        "rewardItem": 7000003,
+        "variables": {
+          "ENRAGE_BUFF": "1900556",
+          "ENRAGE_HP_THRESHOLD": "25"
+        },
+        "description": "Earth boss - enrages at 25% HP (harder than floor 10)"
+      },
+      {
+        "floor": 30,
+        "bossGroup": 9105,
+        "mechanicsTemplate": "templates/boss_phases_91_71_61_41_25_20.wps",
+        "arena": "ARENA_FIRE",
+        "rewardItem": 7000004,
+        "variables": {
+          "INVINCIBLE_BUFF": "1900101",
+          "PHASE91_GROUP": "321",
+          "PHASE71_GROUP": "322",
+          "PHASE61_GROUP": "323",
+          "PHASE41_GROUP": "324",
+          "PHASE25_GROUP": "325",
+          "PHASE20_GROUP": "326"
+        },
+        "description": "Mid-boss - fire arena with advanced multi-phase mechanics"
+      }
+    ]
+  },
+  "variables": {
+    "variables": {},
+    "varsFilePath": null
+  }
+}

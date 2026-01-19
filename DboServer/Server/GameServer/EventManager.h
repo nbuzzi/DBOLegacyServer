@@ -1,0 +1,426 @@
+#pragma once
+
+#include "NtlSingleton.h"
+#include "NtlString.h"
+#include "NtlObject.h"
+#include "NtlVector.h"
+#include <vector>
+#include <string>
+#include <utility>
+#include <unordered_set>
+#include <unordered_map>
+
+class CNtlIniFile;
+class CPlayer;
+class CWorld; // forward declaration for world pointers used in helpers
+
+class CEventManager : public CNtlSingleton<CEventManager>
+{
+public:
+	enum class State : unsigned char
+	{
+		IDLE = 0,
+		ENROLLMENT,      // Players joining via @participate
+		PRE_ROUND,       // Players teleported, waiting for arrival
+		IN_ROUND,        // Round is active, mobs spawned
+		INTERMISSION,    // Between rounds
+		COMPLETE         // Event finished
+	};
+
+	struct MinionGroup
+	{
+		std::vector<unsigned int> minionTblidxList; // Mob IDs to spawn as minions
+		float spawnRadius;                           // Radius around boss to spawn
+		unsigned int count;                          // How many minions (0 = spawn all types x1)
+
+		MinionGroup() : spawnRadius(15.0f), count(0) {}
+	};
+
+	struct EventRound
+	{
+		std::vector<unsigned int> mobTblidxList;  // Mobs to spawn this round (bosses)
+		std::vector<std::pair<unsigned int, unsigned int>> fixedRewards; // itemTblidx, count
+		unsigned int durationSeconds;             // Round timer duration
+		bool useCustomDropMobs;                   // Apply CustomDropEvent modifications
+		bool useLootRange;                        // Use range-based loot instead of fixed
+		unsigned int lootRangeItemId;             // Item to create if useLootRange=true
+		unsigned int lootRangeCount;              // Number of items to create in range
+		unsigned int worldTblidx;                 // World for this round (0 = use default)
+		unsigned int portalTblidx;                // Portal to teleport to (0 = use world/rotation)
+		float spawnPosX, spawnPosY, spawnPosZ;    // Round-specific spawn position (optional)
+		std::vector<MinionGroup> minionGroups;    // Minion groups to spawn per boss
+
+		EventRound()
+			: durationSeconds(180), useCustomDropMobs(true), useLootRange(false),
+			  lootRangeItemId(0), lootRangeCount(10), worldTblidx(0), portalTblidx(0),
+			  spawnPosX(0), spawnPosY(0), spawnPosZ(0) {}
+	};
+
+	struct ActionReward
+	{
+		enum class Type : unsigned char
+		{
+			PLAYTIME = 0
+		};
+
+		enum class GrantMode : unsigned char
+		{
+			ONCE = 0,
+			REPEATABLE
+		};
+
+		CNtlString id;                // Identifier configured in INI
+		CNtlString label;             // Human-friendly label for messaging
+		Type type;                    // Which action this reward tracks
+		GrantMode mode;               // Grant behavior (once or repeatable)
+		unsigned int eventTblidx;     // Event reward entry to register in DB
+		unsigned int thresholdSeconds;// Seconds required to satisfy condition
+		unsigned int cooldownSeconds; // Cooldown between repeated grants (0 = threshold-based)
+		unsigned int minLevel;        // Minimum player level (0 = no requirement)
+		bool countWhileAfk;           // Allow AFK time to contribute toward threshold
+
+		ActionReward()
+			: type(Type::PLAYTIME), mode(GrantMode::ONCE), eventTblidx(0),
+			  thresholdSeconds(0), cooldownSeconds(0), minLevel(0), countWhileAfk(false) {}
+	};
+
+	struct Config
+	{
+		bool enabled;
+		// Only run on channels containing this name (case-insensitive)
+		CNtlString channelNameContains;
+		// World to use for events
+		unsigned int eventWorldTblidx;
+		float spawnPosX, spawnPosY, spawnPosZ;
+		// Rounds configuration
+		std::vector<EventRound> rounds;
+		// Tick/usage limits
+		unsigned int maxTickCount;                // Max ticks per event instance
+		unsigned int tickIntervalMs;              // Tick interval
+		// Enrollment
+		unsigned int enrollmentSeconds;           // How long enrollment is open
+		bool requireParticipateCommand;           // Must use @participate to join (default true)
+		// Teleport settings
+		unsigned int startDelaySeconds;           // Delay before starting after teleport
+		unsigned int intermissionSeconds;         // Delay between rounds (was hard-coded 5s)
+		float teleportPosX, teleportPosY, teleportPosZ;
+		// Post-event teleport
+		bool postEventTeleport;
+		unsigned int postEventWorldTblidx;
+		float postEventPosX, postEventPosY, postEventPosZ;
+		unsigned int postEventTeleportDelayMs;
+		// Mudosa rewards
+		unsigned int mudosaPerRound;              // Mudosa points per round completion
+		unsigned int mudosaEventComplete;         // Bonus for completing all rounds
+		// Auto-event scheduler
+		bool autoEnabled;
+		unsigned int autoIntervalSeconds;         // How often to auto-start
+		unsigned int autoInitialDelaySeconds;     // Initial delay on server start
+		bool autoRestartOnComplete;               // Automatically restart event after completion
+		unsigned int autoRestartDelaySeconds;     // Delay before restarting (after post-event teleport)
+		// World rotation
+		bool worldRotationEnabled;                // Enable world rotation per round
+		std::vector<unsigned int> worldTblidxList; // List of worlds to rotate through
+		bool randomizeWorlds;                     // Pick random world each round
+		// Mob spawn configuration
+		float mobSpawnRadius;                     // Radius around spawn point for mobs
+		bool randomMobPositions;                  // Randomize mob positions within radius
+		bool enableWaveSpawning;                  // Enable continuous wave spawning
+		unsigned int waveIntervalSeconds;         // Seconds between mob waves
+		unsigned int mobsPerWave;                 // Number of mobs to spawn per wave
+		// Spectators
+		bool spectatorsEnabled;
+		// Verbose logging
+		bool verboseLogs;
+		// Engagement features
+		bool enableLeaderboard;                   // Show damage leaderboard and MVP
+		unsigned int mvpBonusMudosa;              // Bonus mudosa for top 3 players
+		bool enableKillAnnouncements;             // Announce when players kill bosses
+		bool enableComboBonus;                    // Combo kill bonuses
+		unsigned int comboTimeoutSeconds;         // Time to maintain combo
+		float comboMultiplier;                    // Damage multiplier per combo level
+		bool enableDynamicDifficulty;             // Scale mobs based on participant count
+		float difficultyPerPlayer;                // Multiplier per player (e.g., 0.5 = +50% per player)
+		bool enableTimeAttack;                    // Time-based bonus rewards
+		unsigned int timeAttackGoldSeconds;       // Gold tier time
+		unsigned int timeAttackSilverSeconds;     // Silver tier time
+		unsigned int timeAttackBronzeSeconds;     // Bronze tier time
+		unsigned int timeAttackBonusMudosa;       // Bonus mudosa for time tiers
+		bool enablePartyBonus;                    // Bonus rewards for party members
+		float partyBonusMultiplier;               // Reward multiplier for party (e.g., 1.2 = +20%)
+		bool enableTeamCompetition;               // Enable Red vs Blue team competition
+		unsigned int teamCompetitionBonusMudosa;  // Bonus mudosa for winning team
+		// Mob pool (external list) integration
+		bool mobPoolEnabled;                      // Enable reading external mob pool file
+		CNtlString mobPoolFile;                   // Path to mob pool file (e.g. .\\config\\Mobs.txt)
+		unsigned int randomMobsPerRound;          // Default number of random mobs when using RANDOM token
+		// Auto-resurrection system
+		bool autoResurrectEnabled;                // Enable auto-resurrection when players die
+		unsigned int maxDeathsBeforeElimination;  // Max deaths before player is eliminated (default 30)
+		unsigned int autoResurrectDelayMs;        // Delay before auto-resurrecting (default 3000ms = 3s)
+		// Event Helpers
+		bool eventHelpersEnabled;                 // Enable NPC helpers during event
+		unsigned int helpersPerPlayer;            // Number of helpers per player (0=disabled, 1=one per player)
+		unsigned int helperMobId;                 // Mob ID to use for helpers
+		float helperFollowDistance;               // Distance helpers maintain from player
+		bool helperEnableHealing;                 // Enable healing capability
+		bool helperEnableBuffing;                 // Enable buffing capability
+		bool helperEnableAttacking;               // Enable attacking capability
+		bool actionRewardsEnabled;                // Enable tracking of free action rewards
+		bool actionRewardsRequireEventChannel;    // Restrict tracking to configured channels
+		bool actionRewardsAnnounce;               // Notify players when rewards unlock
+		std::vector<ActionReward> actionRewards;  // Configured action reward definitions
+
+		Config()
+			: enabled(false), channelNameContains("EVENTS"),
+			  eventWorldTblidx(1), spawnPosX(0), spawnPosY(0), spawnPosZ(0),
+			  maxTickCount(0), tickIntervalMs(1000),
+			  enrollmentSeconds(300), requireParticipateCommand(true),
+			  startDelaySeconds(30), intermissionSeconds(30),
+			  teleportPosX(0), teleportPosY(0), teleportPosZ(0),
+			  postEventTeleport(true), postEventWorldTblidx(1),
+			  postEventPosX(4975.609863f), postEventPosY(-48.869999f), postEventPosZ(4012.609863f),
+			  postEventTeleportDelayMs(3000),
+			  mudosaPerRound(1000), mudosaEventComplete(5000),
+			  autoEnabled(true), autoIntervalSeconds(1800), autoInitialDelaySeconds(0),
+			  autoRestartOnComplete(false), autoRestartDelaySeconds(300),
+			  worldRotationEnabled(false), randomizeWorlds(false),
+			  mobSpawnRadius(50.0f), randomMobPositions(true),
+			  enableWaveSpawning(true), waveIntervalSeconds(10), mobsPerWave(5),
+			  spectatorsEnabled(false), verboseLogs(false),
+			  enableLeaderboard(true), mvpBonusMudosa(2000),
+			  enableKillAnnouncements(true), enableComboBonus(true),
+			  comboTimeoutSeconds(10), comboMultiplier(1.5f),
+			  enableDynamicDifficulty(true), difficultyPerPlayer(0.3f),
+			  enableTimeAttack(true), timeAttackGoldSeconds(120),
+			  timeAttackSilverSeconds(180), timeAttackBronzeSeconds(240),
+			  timeAttackBonusMudosa(1000), enablePartyBonus(true),
+			  partyBonusMultiplier(1.2f), enableTeamCompetition(false),
+			  teamCompetitionBonusMudosa(3000),
+			  mobPoolEnabled(false), mobPoolFile(".\\config\\Mobs.txt"), randomMobsPerRound(1),
+			autoResurrectEnabled(true), maxDeathsBeforeElimination(30), autoResurrectDelayMs(3000),
+			eventHelpersEnabled(true), helpersPerPlayer(1), helperMobId(3416101),
+			helperFollowDistance(3.0f), helperEnableHealing(true), helperEnableBuffing(true),
+			helperEnableAttacking(true), actionRewardsEnabled(true),
+			actionRewardsRequireEventChannel(false), actionRewardsAnnounce(true) {}
+	};
+
+public:
+	CEventManager();
+	~CEventManager();
+
+	bool LoadConfigFromIniPath(const char* iniPath);
+	void TickProcess(unsigned long dwTickDiff);
+	void AutomationTick(unsigned long dwTickDiff);
+
+	// Event control
+	void Start();
+	void Stop(bool abort = false);
+	void StatusTo(CPlayer* pWho);
+
+	// Runtime utilities
+	bool ReloadConfigFromDefault();                // Reload .\\config\\Events.cfg
+	void ResetAutomation(bool startIfZeroDelay);   // Reset auto state; optionally start immediately when delay=0
+	void BeginNow();                                // Force close enrollment and begin pre-round immediately
+
+	// Participant management
+	bool AddParticipant(CPlayer* pPlayer);
+	bool AddSpectator(CPlayer* pPlayer);
+	bool RemoveParticipant(CPlayer* pPlayer);
+	bool IsParticipant(CPlayer* pPlayer) const;
+	bool IsParticipantId(unsigned int charId) const;
+
+	// Round management
+	void StartNextRound();
+	void CompleteCurrentRound();
+	void SpawnRoundMobs(const EventRound& round);
+	void SpawnMinionsAroundBoss(const CNtlVector& bossPos, const MinionGroup& minionGroup, unsigned int worldId);
+	void AwardRoundRewards(const EventRound& round);
+	void CreateLootInRange(unsigned int itemId, unsigned int count, const CNtlVector& center, float radius);
+
+	// State queries
+	State GetState() const { return m_state; }
+	unsigned int GetMobsPerWave() const { return m_cfg.mobsPerWave; }
+	void SetMobsPerWave(unsigned int amount) { m_cfg.mobsPerWave = amount; }
+	const Config& GetConfig() const { return m_cfg; }
+	bool IsEnabled() const { return m_cfg.enabled; }
+	unsigned int GetCurrentRound() const { return m_currentRound; }
+	unsigned int GetTotalRounds() const { return (unsigned int)m_cfg.rounds.size(); }
+	void SetCurrentRound(unsigned int round) { m_currentRound = round; }
+
+	// Player callbacks
+	void OnPlayerEnterWorld(CPlayer* pPlayer);
+	// Called when player has fully loaded into the world (login complete)
+	void OnPlayerEnterWorldComplete(CPlayer* pPlayer);
+	void OnMobKilled(unsigned int mobHandle);
+	// Track player damage contribution to prevent AFK reward farming
+	void OnPlayerDamageEventMob(unsigned int charId, unsigned int damage);
+	// Track player kills for engagement features (leaderboard, combos, announcements)
+	void OnPlayerKilledMob(CPlayer* pKiller, const char* mobName);
+	// Called when a player dies during the event
+	void OnPlayerDeath(CPlayer* pPlayer);
+	// Activity tracking hooks for free rewards
+	void OnPlayerTick(CPlayer* pPlayer, unsigned long dwTickDiff);
+	void OnPlayerDisconnected(CPlayer* pPlayer);
+
+	// Mob cleanup (can be called by GM command)
+	void DespawnAllEventMobs();
+
+private:
+	// Forward declare team enum so it can be used in method prototypes
+	enum class Team : unsigned char { NONE = 0, RED = 1, BLUE = 2 };
+	// ChatServer-wide notice (like Arena): broadcasts to channel via ChatServer
+	void SendNotice(const wchar_t* msg, unsigned char byType = 2);
+	void BroadcastSystem(const wchar_t* msg, unsigned char byType = 2);
+	void SendSystemTo(CPlayer* pPlayer, const wchar_t* msg, unsigned char byType = 3);
+	void TeleportParticipants();
+	void TeleportParticipantsToWorld(unsigned int worldTblidx, float x, float y, float z);
+	void TeleportParticipantsToPortal(unsigned int portalTblidx);
+	// Arena-like teleport helpers (single-recipient)
+	bool TeleportOneToWorldTblidx(CPlayer* pPlayer, unsigned int worldTblidx, float posX, float posY, float posZ);
+	bool TeleportOneToWorldTblidxDir(CPlayer* pPlayer, unsigned int worldTblidx, float posX, float posY, float posZ, float dirX, float dirY, float dirZ);
+	void PostEventTeleportAll();
+	void StartRoundTimer(unsigned int seconds);
+	void StopRoundTimer();
+	void CheckRoundCompletion();
+	bool IsChannelValid();
+	void ParseRoundsCsv(const CNtlString& csv);
+	void ParseWorldListCsv(const CNtlString& csv);
+	void LoadMobPool();                                // Load external mob list (Mobs.txt style) if enabled
+	std::vector<unsigned int> GetRandomMobs(unsigned int count);
+	void BroadcastDungeonStateToWorld(unsigned int worldId, unsigned char byStage, unsigned int titleTblidx = 0);
+	void BroadcastRoundTimerStartToWorld(unsigned int worldId, unsigned int seconds);
+	void BroadcastRoundTimerEndToWorld(unsigned int worldId);
+	void BroadcastCountdownToWorld(unsigned int worldId, bool bStart);
+	void SendCountdownTo(CPlayer* pPlayer, bool bStart);
+	void SendRoundTimerStartTo(CPlayer* pPlayer, unsigned int seconds);
+	void SendRoundTimerEndTo(CPlayer* pPlayer);
+	unsigned int GetWorldForRound(unsigned int roundIndex);
+	void GetSpawnPosForRound(unsigned int roundIndex, float& outX, float& outY, float& outZ);
+	// Internal helpers to avoid duplicated logic
+	CWorld* GetOrCreateWorld(unsigned int worldTblidx); // Handles static vs dynamic and maintains m_eventWorldId
+	bool ComputeDestForWorld(unsigned int worldTblidx, float overrideX, float overrideY, float overrideZ, CNtlVector& outDest);
+	// Engagement features
+	void ShowLeaderboard();
+	void AwardMVPBonuses();
+	void ProcessKillCombo(unsigned int charId);
+	void CheckTimeAttackBonus();
+	unsigned int GetDynamicMobCount(unsigned int baseCount);
+	float GetPartyBonusMultiplier(CPlayer* pPlayer);
+	// Team competition
+	void AssignTeams();
+	void ShowTeamScores();
+	void AwardTeamBonuses();
+	const wchar_t* GetTeamName(Team team);
+	const wchar_t* GetTeamColor(Team team);
+	// Automation scheduling helper when event ends or is cancelled
+	void ScheduleAutoAfterTermination(bool cancelledNoParticipants);
+	// Action reward helpers
+	void ParseActionRewards(CNtlIniFile& file);
+	bool ParseActionRewardEntry(CNtlIniFile& file, unsigned int index, ActionReward& outReward);
+	bool ShouldTrackPlayerForRewards(CPlayer* pPlayer) const;
+	void EnsureActionStateCapacity(unsigned int charId);
+	void ResetAllActionStates();
+	bool TryGrantActionReward(CPlayer* pPlayer, size_t rewardIndex);
+	void NotifyActionRewardGranted(CPlayer* pPlayer, const ActionReward& rewardDef) const;
+	void RecordActionRewardGrant(CPlayer* pPlayer, const ActionReward& rewardDef) const;
+	static std::wstring ToWide(const CNtlString& value);
+	static ActionReward::Type ResolveActionType(const CNtlString& value);
+	static ActionReward::GrantMode ResolveGrantMode(const CNtlString& value);
+
+	// Automation
+	enum class AutoState : unsigned char { OFF = 0, WAIT_NEXT, ENROLLMENT_OPEN, WAIT_RESTART };
+	AutoState m_autoState = AutoState::OFF;
+	unsigned long m_autoRemainMs = 0;
+	unsigned int m_worldRotationIndex = 0;  // Current index in world rotation list
+
+private:
+	Config m_cfg;
+	State m_state;
+	unsigned int m_currentRound;
+	unsigned int m_eventWorldId;              // WORLDID of active event instance
+	unsigned long m_tickCount;                // Current tick count
+	unsigned long m_enrollmentRemainMs;       // Enrollment timer
+	unsigned long m_startDelayRemainMs;       // Pre-round delay timer
+	unsigned long m_roundRemainMs;            // Round timer
+	bool m_roundTimerActive;
+
+	std::unordered_set<unsigned int> m_participants;  // CHARACTERID
+	std::unordered_set<unsigned int> m_spectators;    // CHARACTERID
+	std::vector<HOBJECT> m_spawnedMobs;               // Handles of spawned event mobs
+	std::unordered_set<HOBJECT> m_killedMobs;         // Track killed mobs this round
+
+	// Track participant contribution this round (charId -> total damage dealt)
+	std::unordered_map<unsigned int, unsigned int> m_roundContribution;
+
+	// Engagement features tracking
+	std::unordered_map<unsigned int, unsigned int> m_playerKillCount;   // Kills this round
+	std::unordered_map<unsigned int, unsigned int> m_playerComboCount;  // Current combo
+	std::unordered_map<unsigned int, unsigned long> m_lastKillTime;     // Last kill timestamp (ms)
+	unsigned long m_roundStartTime;                                      // Round start time for time attack
+
+	// Team competition (Red vs Blue)
+	std::unordered_map<unsigned int, Team> m_playerTeam;                 // charId -> team
+	unsigned int m_teamRedDamage;                                        // Total Red team damage
+	unsigned int m_teamBlueDamage;                                       // Total Blue team damage
+	unsigned int m_teamRedKills;                                         // Total Red team kills
+	unsigned int m_teamBlueKills;                                        // Total Blue team kills
+
+	// External mob pool
+	std::vector<unsigned int> m_mobPool;                                // Loaded from Mobs.txt if enabled
+
+	// Saved locations for teleport back
+	struct PrevLoc { unsigned int worldId; CNtlVector loc; CNtlVector dir; };
+	std::unordered_map<unsigned int, PrevLoc> m_prevLoc;
+
+	// Post-event teleport delay
+	unsigned long m_postEventTeleportRemainMs;
+
+	// Participants awaiting deferred teleport (e.g., not initialized at teleport time)
+	std::unordered_set<unsigned int> m_pendingTeleports; // CHARACTERID set
+	// Players that have fully completed initial world load (OnPlayerEnterWorldComplete fired)
+	std::unordered_set<unsigned int> m_readyPlayers; // CHARACTERID set
+
+	// Enrollment announcement helper to avoid spamming every tick
+	unsigned int m_nextEnrollmentAnnounceSec = 0;
+
+	// Pre-round/intermission countdown helpers
+	bool m_countdownActive = false;
+	unsigned int m_nextPreRoundAnnounceSec = 0;
+
+	// Round timer announcement helper to avoid spamming every tick
+	unsigned int m_nextRoundAnnounceSec = 0;
+
+	// Wave spawning tracking
+	unsigned long m_waveRemainMs = 0;        // Time until next wave
+	unsigned int m_waveCount = 0;            // Current wave number
+
+	// Auto-resurrection tracking
+	std::unordered_map<unsigned int, unsigned int> m_playerDeathCount; // charId -> death count
+	std::unordered_map<unsigned int, unsigned long> m_playerDeathTime; // charId -> death timestamp (for delay)
+	std::unordered_set<unsigned int> m_eliminatedPlayers;               // charIds eliminated from rewards
+
+	// Event helpers tracking
+	std::vector<HOBJECT> m_eventHelpers;                               // Helper mob handles
+	std::unordered_map<unsigned int, HOBJECT> m_playerHelpers;         // charId -> helper handle
+
+	struct ActionRewardState
+	{
+		unsigned long accumulatedMs;
+		unsigned long lastGrantMs;
+		unsigned int grantsCompleted;
+
+		ActionRewardState()
+			: accumulatedMs(0), lastGrantMs(0), grantsCompleted(0) {}
+	};
+
+	std::unordered_map<unsigned int, std::vector<ActionRewardState>> m_actionRewardStates; // charId -> reward states
+
+	// Helper management functions
+	void SpawnEventHelpers();
+	void DespawnEventHelpers();
+	void DespawnPlayerHelper(unsigned int charId);
+};
+
+#define GetEventManager() CEventManager::GetInstance()
+#define g_pEventManager GetEventManager()

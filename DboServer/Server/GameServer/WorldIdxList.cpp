@@ -5,6 +5,9 @@
 
 CWorldIdxList::CWorldIdxList()
 {
+	m_iterator = m_worldMap.end();
+	m_iteratorBeg = m_worldMap.end();
+	m_iteratorEnd = m_worldMap.end();
 }
 
 CWorldIdxList::~CWorldIdxList()
@@ -24,14 +27,32 @@ bool CWorldIdxList::AddWorld(CWorld *pWorld)
 
 void CWorldIdxList::RemoveWorld(CWorld *pWorld)
 {
-	WORLDMAP::iterator lower = m_worldMap.lower_bound(pWorld->GetIdx());
-	WORLDMAP::iterator upper = m_worldMap.upper_bound(pWorld->GetIdx());
+	if (!pWorld)
+		return;
 
-	while(lower != upper)
+	TBLIDX key = pWorld->GetIdx();
+	auto lower = m_worldMap.lower_bound(key);
+	auto upper = m_worldMap.upper_bound(key);
+	if (lower == upper)
+		return;
+
+	if (m_iterator != m_worldMap.end())
 	{
-		m_worldMap.erase(lower);
-		++lower;
+		if (!(m_iterator->first < key) && !(key < m_iterator->first))
+			m_iterator = m_worldMap.end();
 	}
+	if (m_iteratorBeg != m_worldMap.end())
+	{
+		if (!(m_iteratorBeg->first < key) && !(key < m_iteratorBeg->first))
+			m_iteratorBeg = m_worldMap.end();
+	}
+	if (m_iteratorEnd != m_worldMap.end())
+	{
+		if (!(m_iteratorEnd->first < key) && !(key < m_iteratorEnd->first))
+			m_iteratorEnd = m_worldMap.end();
+	}
+
+	m_worldMap.erase(lower, upper);
 }
 
 

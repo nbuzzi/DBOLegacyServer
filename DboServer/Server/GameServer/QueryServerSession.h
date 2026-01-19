@@ -52,7 +52,6 @@ public:
 	void						RecvMailItemReceiveRes(CNtlPacket* pPacket);
 
 	void						RecvPortalLoadRes(CNtlPacket* pPacket);
-
 	void						RecvGuildBankLoadRes(CNtlPacket* pPacket);
 	void						RecvGuildBankMoveRes(CNtlPacket* pPacket);
 	void						RecvGuildBankMoveStackRes(CNtlPacket* pPacket);
@@ -166,6 +165,7 @@ public:
 
 	void						RecvEventRewardLoadInfo(CNtlPacket* pPacket);
 	void						RecvEventRewardLoadRes(CNtlPacket* pPacket);
+	void						RecvEventRewardAddRes(CNtlPacket* pPacket);
 	void						RecvEventRewardSelectRes(CNtlPacket* pPacket);
 
 	void						RecvMascotSealSetRes(CNtlPacket* pPacket);

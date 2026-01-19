@@ -34,6 +34,9 @@
 #include "HelperNpcManager.h"
 #include "ArenaWorld.h"
 #include "CustomDropEvent.h"
+#include "EventManager.h"
+#include "BattlePassManager.h" // Battle Pass dungeon stage/clear hook
+#include <unordered_map>
 
 // Helper: name-based arena detection for the player's current world (no table lookup)
 static inline bool IsInArenaWorldByName(const CPlayer* plr)
@@ -135,6 +138,12 @@ void CPlayer::Send_GtUserLeaveGame(eCHARLEAVING_TYPE eCharLeavingType, bool bIsK
 		res->eCharLeavingType = eCharLeavingType;
 		packet.SetPacketLen(sizeof(sGT_USER_LEAVE_GAME));
 		app->SendTo(app->GetChatServerSession(), &packet);
+
+		// Battle Pass: flush this player's progress if DB batching active
+		if (g_pBattlePassManager && g_pBattlePassManager->IsEnabled())
+		{
+			g_pBattlePassManager->FlushPlayer(GetCharID());
+		}
 	}
 }
 
@@ -483,18 +492,29 @@ void CPlayer::LeaveGame()
 
 		if (app->IsDojoChannel() && GetMatchIndex() != INVALID_BYTE)
 		{
-			// Issue a Budokai rejoin ticket so the player can return
-			// sRejoinTicket.dungeonType = eREJOIN_DUNGEON_TYPE::REJOIN_BUDOKAI;
-			// sRejoinTicket.worldId = GetWorldID();
-			// Budokai tickets are short-lived per policy: 1 minute
-			// sRejoinTicket.expireAtMs = GetTickCount() + 60 * 1000;
-			// g_Rejoin.Put(sRejoinTicket);
+			// Only create rejoin ticket if this is an UNEXPECTED disconnect (crash), not a legitimate channel change
+			if (!m_bExpectingBudokaiChannelChange)
+			{
+				// Issue a Budokai rejoin ticket so the player can return after crash
+				sRejoinTicket.dungeonType = eREJOIN_DUNGEON_TYPE::REJOIN_BUDOKAI;
+				sRejoinTicket.worldId = GetWorldID();
+				// Budokai tickets are short-lived per policy: 2 minutes
+				sRejoinTicket.expireAtMs = GetTickCount() + 120 * 1000;
+				g_Rejoin.Put(sRejoinTicket);
 
-			// ERR_LOG(LOG_GENERAL, "[REJOIN] Ticket created: char=%u type=BUDOKAI joinId=%u matchIdx=%u worldId=%u expiresInMs=%u", (unsigned)GetCharID(), (unsigned)GetJoinID(), (unsigned)GetMatchIndex(), (unsigned)GetWorldID(), (unsigned)(60 * 1000));
+				ERR_LOG(LOG_GENERAL, "[REJOIN] Budokai ticket created: char=%u type=BUDOKAI joinId=%u matchIdx=%u worldId=%u expiresInMs=%u", (unsigned)GetCharID(), (unsigned)GetJoinID(), (unsigned)GetMatchIndex(), (unsigned)GetWorldID(), (unsigned)(120 * 1000));
+			}
+			else
+			{
+				ERR_LOG(LOG_GENERAL, "[REJOIN] Budokai expected channel change - no rejoin ticket created: char=%u", (unsigned)GetCharID());
+			}
 
 			SetBudokaiPcState(MATCH_MEMBER_STATE_GIVEUP);
 			g_pBudokaiManager->PlayerDisconnect(GetCharID(), GetID(), GetJoinID(), GetMatchIndex(), GetBudokaiTeamType());
 		}
+
+		// Remove from matchmaking queue on disconnect
+		g_pBudokaiManager->LeaveMatchmakingQueue(GetCharID());
 	}
 
 	if (m_pkShop)
@@ -530,6 +550,9 @@ void CPlayer::LeaveGame()
 
 	if (CSummonPet* pPet = GetSummonPet())
 		pPet->Despawn();
+
+	if (g_pEventManager)
+		g_pEventManager->OnPlayerDisconnected(this);
 
 	app->GetGameMain()->GetWorldManager()->LeaveObject(this);
 
@@ -640,6 +663,10 @@ void CPlayer::Initialize()
 	uiAccountID = INVALID_ACCOUNTID;
 	m_byPrevChannelID = INVALID_SERVERCHANNELID;
 	m_bIsTutorial = false;
+
+	// Initialize budokai rejoin flags
+	m_bExpectingBudokaiChannelChange = false;
+	m_dwBudokaiTeleportTimestamp = 0;
 
 	m_currentHtbSkill = INVALID_BYTE;
 	m_byHtbUseBalls = 0;
@@ -770,6 +797,9 @@ void CPlayer::Initialize()
 	m_dwCameraMoveCount = 0;
 	m_dwCameraMoveDifference = 0;
 
+	// CCBD Boss-Only Mode progression tracking
+	m_byCCBDLastBossStageCleared = 0; // 0 = not yet cleared any boss floor
+
 	m_npcShopData.Init();
 
 	m_dwLastHackCheck = 0;
@@ -829,6 +859,9 @@ void CPlayer::TickProcess(DWORD dwTickDiff, float fMultiple)
 
 	//QUESTS UPDATE
 	GetQuests()->Update(dwTickDiff);
+
+	if (g_pEventManager)
+		g_pEventManager->OnPlayerTick(this, dwTickDiff);
 
 
 	if (GetAirState() == AIR_STATE_ON)
@@ -1203,6 +1236,13 @@ void CPlayer::RecvLoadPcDataRes(sPC_DATA* pPcData, sDBO_SERVER_CHANGE_INFO* pser
 	}
 
 	SetPrevChannelID(pserverChangeInfo->prevServerChannelId);
+
+	// Clear expected channel change flag on successful login (legitimate teleport completed)
+	if (m_bExpectingBudokaiChannelChange)
+	{
+		m_bExpectingBudokaiChannelChange = false;
+		m_dwBudokaiTeleportTimestamp = 0;
+	}
 
 	/*Did we teleport to another channel?*/
 	if (pserverChangeInfo->destWorldId != INVALID_WORLDID)
@@ -2015,6 +2055,47 @@ void CPlayer::OnEnterWorldComplete()
 	if (g_pArenaManager->IsEnabled() && g_pArenaManager->IsParticipant(this))
 	{
 		g_pArenaManager->OnPlayerEnterWorld(this);
+	}
+
+	// Event enrollment/login messaging parity with Arena: when a player enters the world
+	// and the EventManager is in ENROLLMENT, notify them that enrollment is open.
+	if (g_pEventManager && g_pEventManager->IsEnabled())
+	{
+		g_pEventManager->OnPlayerEnterWorldComplete(this);
+	}
+
+	// Battle Pass welcome message (subscription recognition)
+	// NOTE: This uses existing BattlePassManager config + a placeholder subscription layer.
+	// In future, integrate actual subscription type from DB or account flags.
+	if (g_pBattlePassManager && g_pBattlePassManager->IsEnabled() && g_pBattlePassManager->IsMasterEnabled())
+	{
+		const CBattlePassManager::Config& cfg = g_pBattlePassManager->GetConfig();
+		if (cfg.welcomeMessageEnabled)
+		{
+			static std::unordered_map<unsigned int, unsigned long> s_lastWelcome; // rate limiting map
+			unsigned long nowUnix = (unsigned long)time(nullptr);
+			unsigned long lastSent = 0;
+			auto it = s_lastWelcome.find(GetCharID());
+			if (it != s_lastWelcome.end()) lastSent = it->second;
+			if (lastSent == 0 || nowUnix - lastSent >= cfg.welcomeMessageCooldownSec)
+			{
+				const wchar_t* passTier = g_pBattlePassManager->GetPlayerPassTier(this);
+				wchar_t msg[256];
+				g_pBattlePassManager->FormatWelcomeMessage(this, passTier, msg, _countof(msg));
+				if (msg[0] != L'\0')
+				{
+					CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+					sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+					res->wOpCode = GU_SYSTEM_DISPLAY_TEXT;
+					res->byDisplayType = SERVER_TEXT_SYSNOTICE;
+					res->wMessageLengthInUnicode = (WORD)wcslen(msg);
+					wcsncpy_s(res->awchMessage, NTL_MAX_LENGTH_OF_CHAT_MESSAGE + 1, msg, _TRUNCATE);
+					packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+					SendPacket(&packet);
+				}
+				s_lastWelcome[GetCharID()] = nowUnix;
+			}
+		}
 	}
 }
 

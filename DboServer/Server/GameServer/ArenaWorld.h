@@ -18,11 +18,14 @@ namespace ArenaWorld
 {
     // Base world tblidx for Arena
     static const unsigned int ARENA_WORLD_BASE = 900043u;
-    // Number of arena worlds in the contiguous range (supports 900043..900142 by default)
-    static const unsigned int ARENA_WORLD_COUNT = 100u;
+    // Number of arena worlds in the contiguous range (only 900043 for default arena)
+    // NOTE: Reduced from 100 to 1 to avoid conflicting with dungeon IDs 900044-900050+
+    static const unsigned int ARENA_WORLD_COUNT = 1u;
 
     inline bool IsWorldTblidx(unsigned int worldTblidx)
     {
+        // Primary detection: Check if world name contains "TORNEOPODER" (preferred method)
+        // Fallback: Range check for backward compatibility with default arena world
         return worldTblidx >= ARENA_WORLD_BASE && worldTblidx < (ARENA_WORLD_BASE + ARENA_WORLD_COUNT);
     }
 

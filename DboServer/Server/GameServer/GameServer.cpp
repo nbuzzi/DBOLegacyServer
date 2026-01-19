@@ -1,13 +1,11 @@
-﻿#include "stdafx.h"
+#include "stdafx.h"
 #include "GameServer.h"
 #include "MasterServerSession.h"
 #include "ChatServerSession.h"
 #include "QueryServerSession.h"
 #include "NtlRandom.h"
-
 #include "SubNeighborServerInfoManager.h"
 #include "EventMgr.h"
-
 #include "ItemManager.h"
 #include "freebattle.h"
 #include "trade.h"
@@ -22,14 +20,16 @@
 #include "ShenronManager.h"
 #include "DojoManager.h"
 #include "Guild.h"
-
 #include "GameProcessor.h"
 #include "GameData.h"
 #include "GameMain.h"
 #include "ActionPatternSystem.h"
 #include "ug_opcodes.h"
+#include "ChannelUtility.h"
 #include "qg_opcodes.h"
 #include "tg_opcodes.h"
+#include "MobBuffsManager.h"
+#include "MobAppearanceOverrideManager.h"
 #include "mg_opcodes.h"
 #include "ScriptAlgoObjectManager.h"
 #include "DynamicFieldSystemEvent.h"
@@ -45,23 +45,26 @@
 #include "Fairy Event.h"
 #include "CustomDropEvent.h"
 #include "PlayerModifiers.h"
+#include "FeatureFlags.h"
+#include "DungeonConfig.h"
+#include "VirtualTransformationManager.h"
 #include "HelperNpcManager.h"
 #include "SkillTable.h"
 #include "ArenaManager.h"
-// --- INICIO SOCKET COMANDOS ---
+#include "EventManager.h"
+#include "BattlePassManager.h"
 #include <thread>
 #include <atomic>
 #include <winsock2.h>
 #include <ws2tcpip.h>
-#pragma comment(lib, "ws2_32.lib")
 #include <iostream>
 #include <sstream>
 #include <vector>
+#pragma comment(lib, "ws2_32.lib")
 
 std::atomic<bool> g_CommandSocketRunning{ false };
 
 void CommandSocketThread(CGameServer* pServer)
-
 {
 	WSADATA wsaData;
 	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
@@ -72,21 +75,55 @@ void CommandSocketThread(CGameServer* pServer)
 	int startPort = 6666;
 	int maxAttempts = 10;
 	int usedPort = 0;
-	for (int i = 0; i < maxAttempts; ++i) {
+
+	// Prefer binding to the channel-specific port (startPort + channel).
+	std::vector<int> candidatePorts;
+	candidatePorts.reserve(maxAttempts + 1);
+	int preferredPort = startPort + pServer->GetGsChannel();
+	candidatePorts.push_back(preferredPort);
+	for (int i = 0; i < maxAttempts; ++i)
+	{
+		int candidate = startPort + i;
+		bool alreadyListed = false;
+		for (int existing : candidatePorts)
+		{
+			if (existing == candidate)
+			{
+				alreadyListed = true;
+				break;
+			}
+		}
+		if (!alreadyListed)
+			candidatePorts.push_back(candidate);
+	}
+
+	for (int port : candidatePorts)
+	{
 		listenSock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-		if (listenSock == INVALID_SOCKET) {
+		if (listenSock == INVALID_SOCKET)
+		{
 			std::cerr << "Socket creation failed" << std::endl;
 			WSACleanup();
 			return;
 		}
+
+		// Bind to localhost only for security
 		sockaddr_in serverAddr{};
 		serverAddr.sin_family = AF_INET;
-		serverAddr.sin_addr.s_addr = inet_addr("127.0.0.1");
-		serverAddr.sin_port = htons(startPort + i);
-		if (bind(listenSock, (sockaddr*)&serverAddr, sizeof(serverAddr)) == 0) {
-			usedPort = startPort + i;
+		serverAddr.sin_addr.s_addr = inet_addr("127.0.0.1"); // this socket only listens on localhost
+		serverAddr.sin_port = htons(port);
+		if (bind(listenSock, (sockaddr*)&serverAddr, sizeof(serverAddr)) == 0)
+		{
+			usedPort = port;
+			if (usedPort != preferredPort)
+			{
+				std::cout << "[GameServer] Command socket fallback port " << usedPort
+					<< " (preferred " << preferredPort << " busy)" << std::endl;
+			}
 			break;
 		}
+
+		// Bind failed, try next
 		closesocket(listenSock);
 		listenSock = INVALID_SOCKET;
 	}
@@ -101,11 +138,19 @@ void CommandSocketThread(CGameServer* pServer)
 		WSACleanup();
 		return;
 	}
+	
 	std::cout << "[GameServer] Command socket listening on 127.0.0.1:" << usedPort << std::endl;
 	g_CommandSocketRunning = true;
 	while (g_CommandSocketRunning) {
-		SOCKET clientSock = accept(listenSock, nullptr, nullptr);
+		sockaddr_in clientAddr{};
+		int addrLen = sizeof(clientAddr);
+		SOCKET clientSock = accept(listenSock, (sockaddr*)&clientAddr, &addrLen);
 		if (clientSock == INVALID_SOCKET) continue;
+		const char* ipStr = inet_ntoa(clientAddr.sin_addr);
+		NTL_PRINT(PRINT_APP, _T("[CommandSocket] Connection from %S:%u (channel %u)"),
+			ipStr ? ipStr : "127.0.0.1", ntohs(clientAddr.sin_port), (unsigned)pServer->GetGsChannel());
+		ERR_LOG(LOG_GENERAL, "[CommandSocket] Connection from %S:%u (channel %u)",
+			ipStr ? ipStr : "127.0.0.1", ntohs(clientAddr.sin_port), (unsigned)pServer->GetGsChannel());
 		char buffer[256] = { 0 };
 		int bytes = recv(clientSock, buffer, sizeof(buffer) - 1, 0);
 		if (bytes > 0) {
@@ -115,6 +160,10 @@ void CommandSocketThread(CGameServer* pServer)
 			cmd.erase(std::remove(cmd.begin(), cmd.end(), '\r'), cmd.end());
 			cmd.erase(std::remove(cmd.begin(), cmd.end(), '\n'), cmd.end());
 			BOOL result = pServer->OnCommandInput(cmd);
+			NTL_PRINT(PRINT_APP, _T("[CommandSocket] Command '%S' -> %s"),
+				cmd.c_str(), result == TRUE ? "OK" : "KO");
+			ERR_LOG(LOG_GENERAL, "[CommandSocket] Command '%S' -> %s",
+				cmd.c_str(), result == TRUE ? "OK" : "KO");
 			const char* reply = (result == TRUE) ? "OK\n" : "KO\n";
 			send(clientSock, reply, (int)strlen(reply), 0);
 		}
@@ -123,7 +172,7 @@ void CommandSocketThread(CGameServer* pServer)
 	closesocket(listenSock);
 	WSACleanup();
 }
-// --- FIN SOCKET COMANDOS ---
+// --- END ADMIN SOCKET COMMANDS ---
 
 
 CGameServer::CGameServer()
@@ -275,6 +324,10 @@ int CGameServer::OnInitApp()
 	CCustomDropEvent* pCustomDrop = new CCustomDropEvent;
 	UNREFERENCED_PARAMETER(pScs);
 
+	NTL_PRINT(PRINT_APP, "Init Mob Buffs Manager");
+	CMobBuffsManager* pMobBuffsManager = new CMobBuffsManager;
+	UNREFERENCED_PARAMETER(pMobBuffsManager);
+
 	NTL_PRINT(PRINT_APP, "Player Modifiers System");
 	CPlayerModifiers* pPlayerMods = new CPlayerModifiers;
 	UNREFERENCED_PARAMETER(pPlayerMods);
@@ -313,6 +366,91 @@ int CGameServer::OnAppStart()
 		NTL_PRINT(PRINT_APP, ok ? "[ARENA] Config loaded" : "[ARENA] Config not found or invalid");
 	}
 
+	NTL_PRINT(PRINT_APP, "Prepare Event System");
+	CEventManager* pEventManager = new CEventManager;
+	UNREFERENCED_PARAMETER(pEventManager);
+	NTL_PRINT(PRINT_APP, "Prepare Battle Pass System");
+	CBattlePassManager* pBattlePassMgr = new CBattlePassManager;
+	UNREFERENCED_PARAMETER(pBattlePassMgr);
+	{
+		const char* bpIni = ".\\config\\BattlePass.cfg";
+		g_pBattlePassManager->LoadConfigFromIniPath(bpIni);
+		// Load progress snapshot (non-fatal if missing)
+		g_pBattlePassManager->LoadProgressFromFile(".\\config\\BattlePassProgress.dat");
+	}
+
+	// Load Event config now that the manager singleton exists
+	{
+		const char* eventIni = ".\\config\\Events.cfg";
+		bool ok = g_pEventManager->LoadConfigFromIniPath(eventIni);
+		NTL_PRINT(PRINT_APP, ok ? "[EVENT] Config loaded" : "[EVENT] Config not found or invalid");
+	}
+
+	NTL_PRINT(PRINT_APP, "Prepare Feature Flags System");
+	CFeatureFlags* pFeatureFlags = new CFeatureFlags;
+	UNREFERENCED_PARAMETER(pFeatureFlags);
+
+	// Load Feature Flags config
+	{
+		const char* featureFlagsIni = ".\\config\\FeatureFlags.cfg";
+		NTL_PRINT(PRINT_APP, "[FEATURE_FLAGS] Loading config from: %s", featureFlagsIni);
+		bool ok = g_pFeatureFlags->LoadFromFile(featureFlagsIni);
+		NTL_PRINT(PRINT_APP, ok ? "[FEATURE_FLAGS] Config loaded successfully" : "[FEATURE_FLAGS] Config not found, using defaults");
+	}
+
+	NTL_PRINT(PRINT_APP, "Prepare Dungeon Configuration System");
+	CDungeonConfig* pDungeonConfig = new CDungeonConfig;
+	UNREFERENCED_PARAMETER(pDungeonConfig);
+
+	// Load Dungeon config from GameServer.ini [DUNGEONS] section
+	// Note: This uses the same GameServer.ini path that was passed to OnConfiguration()
+	{
+		const char* gameServerIni = ".\\config\\GameServer.ini";
+		NTL_PRINT(PRINT_APP, "[DUNGEON_CONFIG] Loading config from: %s [DUNGEONS]", gameServerIni);
+		bool ok = g_pDungeonConfig->LoadFromFile(gameServerIni);
+		NTL_PRINT(PRINT_APP, ok ? "[DUNGEON_CONFIG] Config loaded successfully" : "[DUNGEON_CONFIG] Config not found, using defaults");
+	}
+
+	NTL_PRINT(PRINT_APP, "Prepare Virtual Transformation System");
+	CVirtualTransformationManager* pVirtualTransformationManager = new CVirtualTransformationManager;
+	UNREFERENCED_PARAMETER(pVirtualTransformationManager);
+
+	// Load Virtual Transformation config only if feature is enabled
+	if (g_pFeatureFlags->IsVirtualTransformationsEnabled())
+	{
+		const char* vtransformIni = ".\\config\\VirtualTransforms.cfg";
+		NTL_PRINT(PRINT_APP, "[VTRANSFORM] Loading config from: %s", vtransformIni);
+		bool ok = g_pVirtualTransformManager->LoadConfigFromIniPath(vtransformIni);
+		NTL_PRINT(PRINT_APP, ok ? "[VTRANSFORM] Config loaded successfully" : "[VTRANSFORM] Config not found or invalid");
+	}
+	else
+	{
+		NTL_PRINT(PRINT_APP, "[VTRANSFORM] Virtual Transformations are DISABLED by feature flag - skipping config load");
+	}
+
+	NTL_PRINT(PRINT_APP, "Prepare Mob Appearance Override Manager");
+	CMobAppearanceOverrideManager* pMobAppearanceOverrideManager = new CMobAppearanceOverrideManager;
+	UNREFERENCED_PARAMETER(pMobAppearanceOverrideManager);
+	{
+		bool ok = g_pMobAppearanceOverrideManager->LoadConfigFromPath(".\\config\\MobAppearanceOverrides.cfg");
+		NTL_PRINT(PRINT_APP, ok ? "[MobAppearance] Config loaded" : "[MobAppearance] Config not found or invalid (manager disabled)");
+	}
+
+	// Prepare Mob Buffs Manager (config-driven mob buffs by world)
+	if (g_pFeatureFlags->IsMobBuffsEnabled())
+	{
+		NTL_PRINT(PRINT_APP, "Prepare Mob Buffs Manager");
+		CMobBuffsManager* pMobBuffsManager = new CMobBuffsManager;
+		UNREFERENCED_PARAMETER(pMobBuffsManager);
+		// Attempt to load default config; if missing, manager stays disabled
+		bool ok = g_pMobBuffsManager->LoadConfigFromIniPath(".\\config\\MobBuffs.cfg");
+		NTL_PRINT(PRINT_APP, ok ? "[MobBuffs] Config loaded" : "[MobBuffs] Config not found or invalid (manager disabled)");
+	}
+	else
+	{
+		NTL_PRINT(PRINT_APP, "[MobBuffs] Disabled by feature flag");
+	}
+
 	int rc = NTL_SUCCESS;
 
 	rc = m_clientAcceptor.Create(m_config.strClientAcceptAddr.c_str(), m_config.wClientAcceptPort, 1, m_config.wClientAcceptPort, SESSION_CLIENT, m_config.nMaxConnection, m_config.nMaxConnection, m_config.nMaxConnection, m_config.nMaxConnection);
@@ -349,7 +487,7 @@ int CGameServer::OnAppStart()
 
 	NTL_PRINT(PRINT_APP, "GAME SERVER READY ");
 
-	// Iniciar el hilo del socket de comandos
+	
 	static std::thread commandThread;
 	if (!g_CommandSocketRunning) {
 		commandThread = std::thread(CommandSocketThread, this);
@@ -781,8 +919,15 @@ BOOL CGameServer::OnCommandInput(std::string& sCmd)
 	else if (sCmd == "sessioninfo") {
 		// Display comprehensive session information with multi-instance awareness
 		int currentSessions = GetNetwork()->GetSessionList()->GetCurCount();
-		int maxSessions = GetNetwork()->GetSessionList()->GetMaxCount();
+		int peakSessions = GetNetwork()->GetSessionList()->GetMaxCount();
 		int configMaxSessions = m_config.nMaxConnection;
+		int totalCapacity = GetSessionCapacity();
+		float configUtil = configMaxSessions > 0 ? (float)currentSessions / (float)configMaxSessions * 100.0f : 0.0f;
+		int availableSlots = configMaxSessions - currentSessions;
+		if (availableSlots < 0)
+		{
+			availableSlots = 0;
+		}
 		
 		// Get current player count from ObjectManager
 		size_t playerCount = g_pObjectManager->GetPlayerCount();
@@ -796,11 +941,11 @@ BOOL CGameServer::OnCommandInput(std::string& sCmd)
 		
 		printf("[SESSION INFO - %s (Port: %d)]\n", instanceType, serverPort);
 		printf("Current Sessions: %d\n", currentSessions);
-		printf("Max Session Capacity: %d\n", maxSessions);
-		printf("Config Max Connections: %d\n", configMaxSessions);
-		printf("Session Utilization: %.1f%%\n", 
-			configMaxSessions > 0 ? (float)currentSessions / configMaxSessions * 100.0f : 0.0f);
-		printf("Available Slots: %d\n", configMaxSessions - currentSessions);
+		printf("Peak Sessions (since start): %d\n", peakSessions);
+		printf("Configured Max Connections: %d\n", configMaxSessions);
+		printf("Total Session Capacity (with headroom): %d\n", totalCapacity);
+		printf("Session Utilization: %.1f%%\n", configUtil);
+		printf("Available Slots: %d\n", availableSlots);
 		printf("Current Players: %zu\n", playerCount);
 		
 		// Multi-instance specific warnings
@@ -849,7 +994,6 @@ BOOL CGameServer::OnCommandInput(std::string& sCmd)
 		
 		// Get session counts before cleanup
 		int sessionsBefore = GetNetwork()->GetSessionList()->GetCurCount();
-		int maxSessions = GetNetwork()->GetSessionList()->GetMaxCount();
 		
 		// Force session list validation/cleanup
 		DWORD currentTime = GetTickCount();
@@ -863,11 +1007,19 @@ BOOL CGameServer::OnCommandInput(std::string& sCmd)
 		size_t playerCount = g_pObjectManager->GetPlayerCount();
 		
 		// Display results
+		int totalCapacity = GetSessionCapacity();
+		int configMaxSessions = m_config.nMaxConnection;
+		int availableConfigured = configMaxSessions - sessionsAfter;
+		if (availableConfigured < 0)
+		{
+			availableConfigured = 0;
+		}
 		printf("[SESSION CLEANUP COMPLETE]\n");
 		printf("Sessions before cleanup: %d\n", sessionsBefore);
 		printf("Sessions after cleanup: %d\n", sessionsAfter);
 		printf("Sessions removed: %d\n", sessionsRemoved);
-		printf("Available slots now: %d\n", maxSessions - sessionsAfter);
+		printf("Configured slots available now: %d\n", availableConfigured);
+		printf("Total capacity (with headroom): %d\n", totalCapacity);
 		printf("Current players: %zu\n", playerCount);
 		printf("Session overhead: %d\n", sessionsAfter - (int)playerCount);
 		
@@ -893,10 +1045,23 @@ BOOL CGameServer::OnCommandInput(std::string& sCmd)
 		
 		// Session information
 		int currentSessions = GetNetwork()->GetSessionList()->GetCurCount();
+		int peakSessions = GetNetwork()->GetSessionList()->GetMaxCount();
 		int configMaxSessions = m_config.nMaxConnection;
+		int totalCapacity = GetSessionCapacity();
 		size_t playerCount = g_pObjectManager->GetPlayerCount();
+		int availableSlots = configMaxSessions - currentSessions;
+		if (availableSlots < 0)
+		{
+			availableSlots = 0;
+		}
+		float configUtil = configMaxSessions > 0 ? (float)currentSessions / (float)configMaxSessions * 100.0f : 0.0f;
 		
 		printf("Current Sessions: %d\n", currentSessions);
+		printf("Peak Sessions (since start): %d\n", peakSessions);
+		printf("Configured Max Connections: %d\n", configMaxSessions);
+		printf("Total Capacity (with headroom): %d\n", totalCapacity);
+		printf("Session Utilization: %.1f%%\n", configUtil);
+		printf("Available Slots: %d\n", availableSlots);
 		printf("Current Players: %zu\n", playerCount);
 		printf("Session Overhead: %d\n", currentSessions - (int)playerCount);
 		
@@ -1115,35 +1280,77 @@ void CGameServer::DoUpdateSessionLog(DWORD dwNow)
 	if (dwNow - m_dwLastTimeSessionLogged >= 300000) // 5 minutes = 300,000 ms
 	{
 		int currentSessions = GetNetwork()->GetSessionList()->GetCurCount();
-		int maxSessions = GetNetwork()->GetSessionList()->GetMaxCount();
-		float utilization = maxSessions > 0 ? (float)currentSessions / maxSessions * 100.0f : 0.0f;
-		
+		int peakSessions = GetNetwork()->GetSessionList()->GetMaxCount(); // historical peak, not capacity
+		int cfgMaxClients = m_config.nMaxConnection;
+		int totalCapacity = GetSessionCapacity(); // configured max + safety headroom
+		float configUtil = cfgMaxClients > 0 ? (float)currentSessions / (float)cfgMaxClients * 100.0f : 0.0f;
+		float capacityUtil = totalCapacity > 0 ? (float)currentSessions / (float)totalCapacity * 100.0f : 0.0f;
+
 		// Include acceptor counters for deeper diagnostics
 		int accAccepting = m_clientAcceptor.GetAcceptingCount();
 		int accAccepted = m_clientAcceptor.GetAcceptedCount();
-		// Accepted-client utilization relative to configured client capacity
-		int cfgMaxClients = m_config.nMaxConnection;
 		float clientUtil = cfgMaxClients > 0 ? (float)accAccepted / (float)cfgMaxClients * 100.0f : 0.0f;
-		NTL_PRINT(PRINT_APP, "[SESSION MONITOR] Sessions: %d/%d (%.1f%%) | Clients(accepted): %d/%d (%.1f%%) | Avail(Sessions): %d | Acceptor accepting:%d accepted:%d total:%lu",
-			currentSessions, maxSessions, utilization,
-			accAccepted, cfgMaxClients, clientUtil,
-			maxSessions - currentSessions,
-			accAccepting, accAccepted, m_clientAcceptor.GetTotalAcceptCount());
-		
+		int availableConfigured = cfgMaxClients - currentSessions;
+		if (availableConfigured < 0)
+		{
+			availableConfigured = 0;
+		}
+
+		NTL_PRINT(PRINT_APP,
+			"[SESSION MONITOR] Active:%d | Peak:%d | ConfigCap:%d | Capacity:%d | Util(Config)=%.1f%% Util(Headroom)=%.1f%% | ClientsAccepted:%d/%d (%.1f%%) | Acceptor accepting:%d accepted:%d total:%lu | ConfigAvail:%d",
+			currentSessions,
+			peakSessions,
+			cfgMaxClients,
+			totalCapacity,
+			configUtil,
+			capacityUtil,
+			accAccepted,
+			cfgMaxClients,
+			clientUtil,
+			accAccepting,
+			accAccepted,
+			m_clientAcceptor.GetTotalAcceptCount(),
+			availableConfigured);
+
 		// Warn if accepted-client utilization is getting high
 		if (clientUtil >= 80.0f)
 		{
 			NTL_PRINT(PRINT_APP, "WARNING: High client utilization detected! May start refusing connections soon.");
 		}
-		
-		// Error if we're at capacity
-		if (currentSessions >= maxSessions)
+
+		// Warn if configured limit is approaching
+		if (configUtil >= 95.0f)
+		{
+			NTL_PRINT(PRINT_APP, "WARNING: Session usage above 95%% of configured limit (%d).", cfgMaxClients);
+		}
+
+		// Error if we're at or above the configured client limit
+		if (cfgMaxClients > 0 && currentSessions >= cfgMaxClients)
 		{
 			ERR_LOG(LOG_SYSTEM, "CRITICAL: Session capacity reached! Server will refuse new connections!");
 		}
 		
 		m_dwLastTimeSessionLogged = dwNow;
 	}
+}
+
+
+//-----------------------------------------------------------------------------------
+// Centralized channel-based feature gating (performance optimization)
+//-----------------------------------------------------------------------------------
+bool CGameServer::IsArenaChannel() const
+{
+	return CChannelUtility::IsArenaChannel(m_config.ChannelName);
+}
+
+bool CGameServer::IsEventsChannel() const
+{
+	return CChannelUtility::IsEventsChannel(m_config.ChannelName);
+}
+
+bool CGameServer::IsCustomDropEventChannel() const
+{
+	return CChannelUtility::IsCustomDropEventChannel(m_config.ChannelName);
 }
 
 

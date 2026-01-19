@@ -3,6 +3,7 @@
 #include "GameServer.h"
 #include <algorithm>
 #include "NtlRandom.h"
+#include "MobBuffsManager.h"
 #include "ObjectManager.h"
 #include "RangeCheck.h"
 #include "TableContainerManager.h"
@@ -21,6 +22,9 @@
 #include "StoneDropEvent.h"
 #include "CustomDropEvent.h"
 #include "Fairy Event.h"
+#include "EventManager.h"
+#include "BattlePassManager.h" // Battle Pass progression (mob kill XP)
+#include "MobAppearanceOverrideManager.h"
 #include <queue>
 
 
@@ -56,6 +60,8 @@ void CMonster::Initialize()
 
 	// CustomDropEvent
 	m_bEventDebuffImmune = false;
+
+	m_overrideAppearanceTblidx = INVALID_TBLIDX;
 }
 
 void CMonster::Destroy()
@@ -100,7 +106,7 @@ void CMonster::CopyToObjectInfo(sOBJECT_INFO * pObjectInfo, CHARACTERID playerCh
 	pObjectInfo->mobBrief.fSkillAnimationSpeedModifier = GetSkillAnimationSpeedModifier();
 	pObjectInfo->mobBrief.maxLp = GetMaxLP();
 	pObjectInfo->mobBrief.nicknameTblidx = INVALID_TBLIDX;
-	pObjectInfo->mobBrief.tblidx = GetTblidx();
+	pObjectInfo->mobBrief.tblidx = (m_overrideAppearanceTblidx != INVALID_TBLIDX) ? m_overrideAppearanceTblidx : GetTblidx();
 	pObjectInfo->mobBrief.wAttackSpeedRate = GetAttackSpeedRate();
 	pObjectInfo->mobBrief.wCurEP = GetCurEP();
 	pObjectInfo->mobBrief.wMaxEP = GetMaxEP();
@@ -110,6 +116,7 @@ void CMonster::CopyToObjectInfo(sOBJECT_INFO * pObjectInfo, CHARACTERID playerCh
 bool CMonster::CreateDataAndSpawn(WORLDID worldId, sMOB_TBLDAT* mobTbldat, sSPAWN_TBLDAT* spawnTbldat, bool bSpawnOnServerStart/* = false*/, BYTE bySpawnFuncFlag/* = SPAWN_FUNC_FLAG_RESPAWN*/)
 {
 	SetWorldID(worldId);
+	m_overrideAppearanceTblidx = INVALID_TBLIDX;
 
 	// Optional: apply CustomDropEvent mob replacement for spawn-table spawns
 	if (g_pCustomDropEvent && g_pCustomDropEvent->m_bOn && mobTbldat)
@@ -136,6 +143,34 @@ bool CMonster::CreateDataAndSpawn(WORLDID worldId, sMOB_TBLDAT* mobTbldat, sSPAW
 	}
 
 	m_pTbldat = mobTbldat;
+
+	if (g_pMobAppearanceOverrideManager && g_pMobAppearanceOverrideManager->IsEnabled() && mobTbldat)
+	{
+		CMobAppearanceOverrideManager::ReplacementRule rule;
+		if (g_pMobAppearanceOverrideManager->GetReplacement(mobTbldat->tblidx, rule))
+		{
+			sMOB_TBLDAT* pTarget = (sMOB_TBLDAT*)g_pTableContainer->GetMobTable()->FindData(rule.targetTblidx);
+			if (pTarget)
+			{
+				if (rule.useTargetStats)
+				{
+					if (g_pMobAppearanceOverrideManager->IsVerbose())
+						ERR_LOG(LOG_GENERAL, "[MobAppearance] Replace mob %u -> %u (using target stats)", mobTbldat->tblidx, pTarget->tblidx);
+					m_pTbldat = mobTbldat = pTarget;
+				}
+				else
+				{
+					m_overrideAppearanceTblidx = pTarget->tblidx;
+					if (g_pMobAppearanceOverrideManager->IsVerbose())
+						ERR_LOG(LOG_GENERAL, "[MobAppearance] Override appearance mob %u -> %u (keeping stats)", mobTbldat->tblidx, pTarget->tblidx);
+				}
+			}
+			else
+			{
+				ERR_LOG(LOG_GENERAL, "[MobAppearance] Replacement target %u not found for mob %u", rule.targetTblidx, mobTbldat->tblidx);
+			}
+		}
+	}
 
 	m_SpawnGroupID = spawnTbldat->spawnGroupId;
 
@@ -229,7 +264,15 @@ bool CMonster::CreateDataAndSpawn(WORLDID worldId, sMOB_TBLDAT* mobTbldat, sSPAW
 		GetCharAtt()->CalculateAll();
 		g_pCustomDropEvent->ApplyTitles(this);
 		g_pCustomDropEvent->ApplyBuffs(this);
-		g_pCustomDropEvent->ApplyModifiers(this);
+		// Apply config-driven MobBuffs (per world/mob), independent of CustomDropEvent
+		g_pMobBuffsManager->ApplyBuffs(this);
+		// Apply phase-aware modifiers based on world's current difficulty phase
+		// Only apply world phase if this mob has autophase configuration
+		CWorld* pWorld = GetCurWorld();
+		if (pWorld && g_pCustomDropEvent->HasAutoPhaseConfig(GetTblidx()))
+			g_pCustomDropEvent->ApplyModifiersWithPhase(this, pWorld->GetDifficultyPhase());
+		else
+			g_pCustomDropEvent->ApplyModifiers(this); // fallback: use base phase (0)
 		Spawn(bSpawnOnServerStart);
 		return true;
 	}
@@ -241,6 +284,7 @@ bool CMonster::CreateDataAndSpawn(WORLDID worldId, sMOB_TBLDAT* mobTbldat, sSPAW
 bool CMonster::CreateDataAndSpawn(sMOB_DATA& sData, sMOB_TBLDAT* mobTbldat, BYTE byActualLevel/* = INVALID_BYTE*/, BYTE byEffectLevel/* = INVALID_BYTE*/)
 {
 	SetWorldID(sData.worldID);
+	m_overrideAppearanceTblidx = INVALID_TBLIDX;
 
 	// Optional: apply CustomDropEvent mob replacement for script/GM spawns as well
 	if (g_pCustomDropEvent && g_pCustomDropEvent->m_bOn && mobTbldat)
@@ -265,6 +309,34 @@ bool CMonster::CreateDataAndSpawn(sMOB_DATA& sData, sMOB_TBLDAT* mobTbldat, BYTE
 	}
 
 	m_pTbldat = mobTbldat;
+
+	if (g_pMobAppearanceOverrideManager && g_pMobAppearanceOverrideManager->IsEnabled() && mobTbldat)
+	{
+		CMobAppearanceOverrideManager::ReplacementRule rule;
+		if (g_pMobAppearanceOverrideManager->GetReplacement(mobTbldat->tblidx, rule))
+		{
+			sMOB_TBLDAT* pTarget = (sMOB_TBLDAT*)g_pTableContainer->GetMobTable()->FindData(rule.targetTblidx);
+			if (pTarget)
+			{
+				if (rule.useTargetStats)
+				{
+					if (g_pMobAppearanceOverrideManager->IsVerbose())
+						ERR_LOG(LOG_GENERAL, "[MobAppearance] Replace mob %u -> %u (using target stats, sMOB_DATA)", mobTbldat->tblidx, pTarget->tblidx);
+					m_pTbldat = mobTbldat = pTarget;
+				}
+				else
+				{
+					m_overrideAppearanceTblidx = pTarget->tblidx;
+					if (g_pMobAppearanceOverrideManager->IsVerbose())
+						ERR_LOG(LOG_GENERAL, "[MobAppearance] Override appearance mob %u -> %u (keeping stats, sMOB_DATA)", mobTbldat->tblidx, pTarget->tblidx);
+				}
+			}
+			else
+			{
+				ERR_LOG(LOG_GENERAL, "[MobAppearance] Replacement target %u not found for mob %u (sMOB_DATA)", rule.targetTblidx, mobTbldat->tblidx);
+			}
+		}
+	}
 
 	m_SpawnGroupID = sData.spawnGroupId;
 
@@ -352,7 +424,15 @@ bool CMonster::CreateDataAndSpawn(sMOB_DATA& sData, sMOB_TBLDAT* mobTbldat, BYTE
 		GetCharAtt()->CalculateAll();
 		g_pCustomDropEvent->ApplyTitles(this);
 		g_pCustomDropEvent->ApplyBuffs(this);
-		g_pCustomDropEvent->ApplyModifiers(this);
+		// Apply config-driven MobBuffs (per world/mob), independent of CustomDropEvent
+		g_pMobBuffsManager->ApplyBuffs(this);
+		// Apply phase-aware modifiers based on world's current difficulty phase
+		// Only apply world phase if this mob has autophase configuration
+		CWorld* pWorld = GetCurWorld();
+		if (pWorld && g_pCustomDropEvent->HasAutoPhaseConfig(GetTblidx()))
+			g_pCustomDropEvent->ApplyModifiersWithPhase(this, pWorld->GetDifficultyPhase());
+		else
+			g_pCustomDropEvent->ApplyModifiers(this); // fallback: use base phase (0)
 		Spawn(false);
 		return true;
 	}
@@ -390,6 +470,7 @@ bool CMonster::DoTransformation(TBLIDX tblidx, ACTIONPATTERNTBLIDX actionPattern
 	m_dwAi_Bit_Flag = pMobTbldat->dwAi_Bit_Flag;
 	SetLevel(pMobTbldat->byLevel);
 	SetEffectiveLevel(pMobTbldat->byLevel);
+	m_overrideAppearanceTblidx = INVALID_TBLIDX;
 
 	bot_profile.sBotSubData.tblidxOnlyOneSkillUse = tblidxOnlyOneSkillUse;
 	LoadSkillTable(bot_profile.sBotSubData.tblidxOnlyOneSkillUse);
@@ -451,8 +532,13 @@ void CMonster::Spawn(bool bSpawnOnServerStart)
 	SetZeni(tbldat->dwDrop_Zenny);
 	SetCurEP(GetCharAtt()->GetMaxEP());
 	SetRunSpeed(tbldat->fRun_Speed);
-	// Re-apply event modifiers after base speeds set
-	g_pCustomDropEvent->ApplyModifiers(this);
+	// Re-apply event modifiers after base speeds set (with phase awareness)
+	// Only apply world phase if this mob has autophase configuration
+	CWorld* pWorld = GetCurWorld();
+	if (pWorld && g_pCustomDropEvent->HasAutoPhaseConfig(GetTblidx()))
+		g_pCustomDropEvent->ApplyModifiersWithPhase(this, pWorld->GetDifficultyPhase());
+	else
+		g_pCustomDropEvent->ApplyModifiers(this); // fallback: use base phase (0)
 	// Apply configured buffs when event is active
 	g_pCustomDropEvent->ApplyBuffs(this);
 	// Apply configured title attribute effects when event is active
@@ -614,10 +700,16 @@ bool CMonster::Faint(CCharacterObject* pkKiller, eFAINT_REASON byReason)
 {
 	if (CCharacterObject::Faint(pkKiller, byReason))
 	{
+		// Notify EventManager that this mob was killed (for round tracking)
+		if (g_pEventManager && g_pEventManager->IsEnabled())
+		{
+			g_pEventManager->OnMobKilled(GetID());
+		}
+
 		if (pkKiller && GetCurWorld() && (pkKiller->IsPC() || pkKiller->IsSummonPet()))
 		{
 			CPlayer* pKiller = (pkKiller->IsSummonPet() == false) ? (CPlayer*)pkKiller : ((CSummonPet*)pkKiller)->GetOwner();
-			
+
 			if (pKiller->GetLevel() > DBO_DRAGONBALL_EVENT_DROP_LEVEL_DIFF)
 			{
 				m_byKillerLevel = pKiller->GetLevel();
@@ -625,19 +717,53 @@ bool CMonster::Faint(CCharacterObject* pkKiller, eFAINT_REASON byReason)
 
 			m_hKillerCharID = pKiller->GetCharID();
 
+			// Track participation for EventManager (anti-AFK measure)
+			// Award damage credit equal to mob's max LP to the killer
+			if (g_pEventManager && g_pEventManager->IsEnabled())
+			{
+				g_pEventManager->OnPlayerDamageEventMob(pKiller->GetCharID(), GetMaxLP());
+				// Track kill for engagement features (combos, leaderboard, announcements)
+				const char* mobNameAnsi = "Mob";
+				if (GetTbldat())
+				{
+					// Prefer ANSI name if available, else fallback to wide char truncated
+					if (GetTbldat()->szNameText[0] != '\0')
+					{
+						mobNameAnsi = GetTbldat()->szNameText;
+					}
+					else if (GetTbldat()->wszNameText[0] != L'\0')
+					{
+						static char s_buf[DBO_MAX_LENGTH_BOT_NAME_TEXT + 1];
+						size_t out = 0; s_buf[0] = '\0';
+						wcstombs_s(&out, s_buf, GetTbldat()->wszNameText, _TRUNCATE);
+						if (s_buf[0] != '\0') mobNameAnsi = s_buf;
+					}
+				}
+				// Notify EventManager of the kill for tracking purposes
+				// (also used by combo system, so don't remove this)
+				g_pEventManager->OnPlayerKilledMob(pKiller, mobNameAnsi);
+			}
+
 			CreateKillReward(GetCurWorld()->GetRuleType() != GAMERULE_CCBATTLEDUNGEON);
 			g_pDynamicFieldSystemEvent->Update(this, pKiller);
 			g_pHoneyBeeEvent->Update(this, pKiller);
 			g_pStoneDropEvent->Update(this, pKiller);
 			g_pFairyEvent->Update(this, pKiller);
 			g_pCustomDropEvent->Update(this, pKiller);
+	
+			// Battle Pass hook – award XP for mob kill (safe if feature disabled or season inactive)
+			if (g_pBattlePassManager && g_pBattlePassManager->IsEnabled() && g_pBattlePassManager->IsMasterEnabled() && pKiller)
+			{
+				g_pBattlePassManager->OnMobKill(pKiller, GetTblidx());
+			}
+
 			int l_LevelGap = abs(pKiller->GetLevel() - GetLevel());
 			//printf("l_LevelGap %d \n", l_LevelGap);
 			if (l_LevelGap <= 10)
 			{
 				int killBonus = 0 + rand() % 10;
 				pKiller->UpdateNetPyPoints(pKiller->GetNetPyPoints() + killBonus, killBonus, true);
-			}			
+			}
 			FaintBuffReward(pKiller);
 
 			if (pKiller->GetTMQ())

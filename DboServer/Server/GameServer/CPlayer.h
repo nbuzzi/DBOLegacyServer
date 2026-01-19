@@ -148,6 +148,10 @@ private:
 
 	bool					m_bIsReviving;
 
+	// Budokai rejoin support
+	bool					m_bExpectingBudokaiChannelChange; // Flag to track legitimate budokai teleports vs crashes
+	DWORD					m_dwBudokaiTeleportTimestamp;     // Timestamp of last budokai teleport
+
 	DWORD					m_dwCombatModeTickCount;
 	DWORD					ResetBuffReduction;
 
@@ -162,6 +166,9 @@ private:
 	DWORD					m_dwCameraMoveCount; // how often camera has been moved (received from client because the server cant't track this)
 	DWORD					m_dwCameraMoveDifference;
 	bool					DiePowerTournament = false;
+
+	// CCBD Boss-Only Mode progression tracking
+	BYTE					m_byCCBDLastBossStageCleared; // Last boss floor cleared (5, 10, 15, 20...)
 private:
 
 	void				Initialize();
@@ -247,6 +254,11 @@ public:
 	inline void				SetIsReviving(bool bFlag) { m_bIsReviving = bFlag; }
 	inline bool				IsReviving() { return m_bIsReviving; }
 
+	// Budokai rejoin control
+	inline void				SetExpectingBudokaiChannelChange(bool bFlag, DWORD dwTimestamp = 0) { m_bExpectingBudokaiChannelChange = bFlag; m_dwBudokaiTeleportTimestamp = dwTimestamp; }
+	inline bool				IsExpectingBudokaiChannelChange() const { return m_bExpectingBudokaiChannelChange; }
+	inline DWORD			GetBudokaiTeleportTimestamp() const { return m_dwBudokaiTeleportTimestamp; }
+
 	inline bool				IsGameMaster() { return m_bIsGameMaster; }
 	inline BYTE				GetGMLevel() { return m_byGameMasterLevel; }
 
@@ -261,6 +273,10 @@ public:
 
 	inline void				SetWaguMachineCoin(DWORD cash) { m_dwWaguMachineCoin = cash; }
 	inline DWORD			GetWaguMachineCoin() { return m_dwWaguMachineCoin; }
+
+	// CCBD Boss-Only Mode progression
+	inline void				SetCCBDLastBossStageCleared(BYTE byStage) { m_byCCBDLastBossStageCleared = byStage; }
+	inline BYTE				GetCCBDLastBossStageCleared() const { return m_byCCBDLastBossStageCleared; }
 
 	inline void				SetAccountID(ACCOUNTID id) { uiAccountID = id; }
 	inline ACCOUNTID		GetAccountID() const { return uiAccountID; }
@@ -334,6 +350,7 @@ public:
 
 	inline void			SetExpReceiveDisabled(bool bFlag) { m_bReceiveExpDisabled = bFlag; }
 	inline bool			IsReceiveExpDisabled() { return m_bReceiveExpDisabled; }
+	inline bool			IsAfk() const { return m_bIsAfk; }
 
 	//
 	void				UpdatePvpZone(bool bStatus);

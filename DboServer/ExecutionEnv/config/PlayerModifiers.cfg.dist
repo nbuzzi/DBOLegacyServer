@@ -19,6 +19,34 @@
 # - Attack speed is a rate where lower is faster. A value < 1.0 increases attack speed.
 # - These modifiers are applied on every stat recalculation and are not persisted.
 
+# =============================================================================
+# AUTO-SCHEDULE CONFIGURATION
+# =============================================================================
+# Run PlayerModifiers automatically on a schedule
+
+AutoScheduleEnabled = 0              # 1 = enable auto-scheduling, 0 = disable
+AutoScheduleDaysPerWeek = 3          # How many days per week (1-7)
+AutoScheduleDurationHours = 3        # How long each session runs (in hours)
+AutoScheduleIntervalHours = 56       # Hours between sessions (168 = 1 week)
+AutoScheduleInitialDelayMinutes = 30 # Delay after server start before first session
+
+# =============================================================================
+# CHANNEL FILTERING (Only run on specific channels)
+# =============================================================================
+ChannelFilterEnabled = 0             # 1 = enable channel filtering, 0 = all channels
+AllowedChannels = 0,1,2              # Comma-separated channel numbers (e.g., 0,1,2)
+# OR use channel name matching:
+# ChannelNameContains = MODS         # Run on any channel with "MODS" in name
+
+# =============================================================================
+# ALWAYS-ON MODE (24/7 enabled, no scheduling)
+# =============================================================================
+AlwaysOn = 0                         # 1 = always enabled (overrides scheduling), 0 = use scheduling
+
+# =============================================================================
+# STAT MODIFIERS
+# =============================================================================
+
 # Example: modest global boost
 all modifiers: hp=1.05 physAtk=1.03 engAtk=1.03 physDef=1.02 engDef=1.02 runSpd=1.02
 
@@ -27,3 +55,24 @@ all modifiers: hp=1.05 physAtk=1.03 engAtk=1.03 physDef=1.02 engDef=1.02 runSpd=
 char 1001 modifiers: physAtk=1.25 engAtk=1.20 physCrit=1.15 physCritDmg=1.10
 # Character named "Goku" gets faster movement and guard
 name Goku modifiers: runSpd=1.20 guardRate=1.10
+
+# =============================================================================
+# EXAMPLE CONFIGURATIONS FOR SPECIFIC USE CASES
+# =============================================================================
+
+# Use Case 1: "MODS" Channel - Always-On Player Modifiers (24/7)
+# Uncomment these lines for a dedicated stat boost channel:
+# ChannelFilterEnabled = 1
+# ChannelNameContains = MODS
+# AlwaysOn = 1
+# all modifiers: hp=2.0 physAtk=1.5 engAtk=1.5 runSpd=1.3
+
+# Use Case 2: Scheduled Weekend Boosts (Channel 0 only)
+# Uncomment these lines for weekend-only boosts on channel 0:
+# AutoScheduleEnabled = 1
+# AutoScheduleDaysPerWeek = 2
+# AutoScheduleDurationHours = 48
+# AutoScheduleIntervalHours = 120
+# ChannelFilterEnabled = 1
+# AllowedChannels = 0
+# all modifiers: hp=1.5 physAtk=1.3 engAtk=1.3

@@ -351,6 +351,26 @@ public static class TableRegistry
                     new Field("UseLoc_Radius", ScalarType.Float),
                     new Field("RequiredQuestID", ScalarType.U32)
                 })),
+        // ServerConfig (name/value pairs packed via pack(4))
+        (new Regex("server_?config", RegexOptions.IgnoreCase | RegexOptions.Compiled),
+            new TableSchema(
+                name: "ServerConfig",
+                hasMargin: true,
+                fields: new []
+                {
+                    new Field("Tblidx", ScalarType.U32),
+                    new Field("Name", ScalarType.WStringVar),
+                    new Field("Value0", ScalarType.WStringVar),
+                    new Field("Value1", ScalarType.WStringVar),
+                    new Field("Value2", ScalarType.WStringVar),
+                    new Field("Value3", ScalarType.WStringVar),
+                    new Field("Value4", ScalarType.WStringVar),
+                    new Field("Value5", ScalarType.WStringVar),
+                    new Field("Value6", ScalarType.WStringVar),
+                    new Field("Value7", ScalarType.WStringVar),
+                    new Field("Value8", ScalarType.WStringVar),
+                    new Field("Value9", ScalarType.WStringVar)
+                })),
         // Merchant (full)
         (new Regex("merchant_data|table_?merchant|_table_?merchant", RegexOptions.IgnoreCase | RegexOptions.Compiled),
             new TableSchema(

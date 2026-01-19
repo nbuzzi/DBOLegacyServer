@@ -13,6 +13,7 @@
 #include "NtlMrPoPoMsg.h"
 #include "SubNeighborServerInfoManager.h"
 #include "NtlTokenizer.h"
+#include "NtlBitFlagManager.h"
 #include "TableContainerManager.h"
 #include "ItemTable.h"
 #include "ExpTable.h"
@@ -36,9 +37,81 @@
 #include "Guild.h"
 #include "BudokaiManager.h"
 #include "PlayerModifiers.h"
+#include "FeatureFlags.h"
+#include "DungeonConfig.h"
+#include "VirtualTransformationManager.h"
 #include "ArenaManager.h"
 #include "DojoManager.h"
+#include "EventManager.h"
+#include "BattlePassManager.h"
 #include <algorithm>
+#include <cctype>
+#include <vector>
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#include <WorldMapTable.h>
+#pragma comment(lib, "ws2_32.lib")
+
+// Windows headers define max/min macros; ensure we use std::max/std::min below.
+#ifdef max
+#undef max
+#endif
+#ifdef min
+#undef min
+#endif
+
+// Helper function to send commands to other GameServer channels via command socket
+static bool SendCommandToChannel(BYTE byTargetChannel, const std::string& sCmd, std::string* pResponse = nullptr)
+{
+	// Calculate target port (6666 + channel number)
+	int targetPort = 6666 + byTargetChannel;
+
+	WSADATA wsaData;
+	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
+		return false;
+
+	SOCKET sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+	if (sock == INVALID_SOCKET)
+	{
+		WSACleanup();
+		return false;
+	}
+
+	// Set timeout to avoid hanging
+	DWORD timeout = 3000; // 3 seconds
+	setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout, sizeof(timeout));
+	setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO, (const char*)&timeout, sizeof(timeout));
+
+	sockaddr_in serverAddr{};
+	serverAddr.sin_family = AF_INET;
+	serverAddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+	serverAddr.sin_port = htons(targetPort);
+
+	if (connect(sock, (sockaddr*)&serverAddr, sizeof(serverAddr)) == SOCKET_ERROR)
+	{
+		closesocket(sock);
+		WSACleanup();
+		return false;
+	}
+
+	std::string cmdWithNewline = sCmd + "\n";
+	send(sock, cmdWithNewline.c_str(), (int)cmdWithNewline.length(), 0);
+
+	char buffer[256] = { 0 };
+	int bytes = recv(sock, buffer, sizeof(buffer) - 1, 0);
+	bool success = (bytes > 0 && strstr(buffer, "OK") != nullptr);
+
+	if (pResponse && bytes > 0)
+	{
+		buffer[bytes] = '\0';
+		*pResponse = std::string(buffer);
+	}
+
+	closesocket(sock);
+	WSACleanup();
+
+	return success;
+}
 
 void gm_read_command(sUG_SERVER_COMMAND* sPacket, CPlayer* pPlayer)
 {
@@ -121,6 +194,7 @@ ACMD(do_dbann);
 ACMD(do_purge);
 ACMD(do_unstuck);
 ACMD(do_warfog);
+ACMD(do_revealmap);
 ACMD(do_upgrade);
 ACMD(do_setitemrank);
 ACMD(do_mute);
@@ -148,6 +222,7 @@ ACMD(do_notify);
 ACMD(do_resetskills);
 ACMD(do_setdark);
 ACMD(do_buff);
+ACMD(do_unbuff);
 ACMD(do_start_dbhunt);
 ACMD(do_stop_dbhunt);
 ACMD(do_start_dbscramble);
@@ -161,8 +236,11 @@ ACMD(do_reload_customdrop_cfg);
 ACMD(do_customdrop_chainspawns);
 ACMD(do_customdrop_healmul);
 ACMD(do_customdrop_buffduration);
+ACMD(do_setphase);
 ACMD(do_reload_playermods_cfg);
 ACMD(do_playermods_toggle);
+ACMD(do_vtransform);
+ACMD(do_vtransform_end);
 ACMD(do_reload_helpernpc_cfg);
 ACMD(do_helpernpc_metrics);
 ACMD(do_helpernpc_resetmetrics);
@@ -171,9 +249,21 @@ ACMD(do_arena);
 ACMD(do_arena_join_public);
 ACMD(do_arena_joinparty_public);
 ACMD(do_arena_joinguild_public);
+ACMD(do_event);
+ACMD(do_event_reload);
+ACMD(do_event_participate);
 ACMD(do_world_fight);
 ACMD(do_budokai);
 ACMD(do_dojo);
+ACMD(do_budokai_findteam);
+ACMD(do_budokai_start);
+ACMD(do_battlepass);
+ACMD(do_battlepass_setxp);
+ACMD(do_battlepass_addxp);
+ACMD(do_battlepass_status);
+ACMD(do_battlepass_flush);
+ACMD(do_battlepass_master);
+ACMD(do_ccbd_boss_mode);
 
 struct command_info cmd_info[] =
 {
@@ -189,78 +279,88 @@ struct command_info cmd_info[] =
 	{ L"@joinarena", do_arena_join_public, ADMIN_LEVEL_NONE }, // Alias
 	{ L"@arenajoinparty", do_arena_joinparty_public, ADMIN_LEVEL_NONE }, // Public: party join (leader only)
 	{ L"@arenajoinguild", do_arena_joinguild_public, ADMIN_LEVEL_NONE }, // Public: guild join (guild member only)
+	{ L"@participate", do_event_participate, ADMIN_LEVEL_NONE }, // Public: join EVENT channel
+	{ L"@findteam", do_budokai_findteam, ADMIN_LEVEL_NONE }, // Public: join Team Budokai matchmaking queue
+	{ L"@battlepass", do_battlepass, ADMIN_LEVEL_NONE }, // Show your Battle Pass progress
 
-	// GM
 
-	{ L"@pm", do_pm, ADMIN_LEVEL_GAME_MASTER },
-	{ L"@mute", do_mute, ADMIN_LEVEL_GAME_MASTER },
-	{ L"@unmute", do_unmute, ADMIN_LEVEL_GAME_MASTER },
-
-	// Admin
-
-	{ L"@hide", do_hide, ADMIN_LEVEL_ADMIN },
+	// Admin (Full GM access required)
+	{ L"@mute", do_mute, ADMIN_LEVEL_ADMIN },
+	{ L"@unmute", do_unmute, ADMIN_LEVEL_ADMIN },
 	{ L"@teleport", do_teleport, ADMIN_LEVEL_ADMIN },
+	{ L"@all", do_TeleportAll, ADMIN_LEVEL_ADMIN },
+	{ L"@setlevel", do_setlevel, ADMIN_LEVEL_ADMIN },
+	{ L"@setclass", do_setclass, ADMIN_LEVEL_ADMIN },
+	{ L"@fly", do_fly, ADMIN_LEVEL_ADMIN },
+	{ L"@addtitle", do_addtitle, ADMIN_LEVEL_ADMIN },
+	{ L"@deltitle", do_deltitle, ADMIN_LEVEL_ADMIN },
+	{ L"@big", do_big, ADMIN_LEVEL_ADMIN },
+	{ L"@startevent", do_startevent, ADMIN_LEVEL_ADMIN }, // 0 honey, 1 Fairy
+	{ L"@start_customdrop", do_start_customdrop, ADMIN_LEVEL_ADMIN },
+	{ L"@start_stonedrop", do_start_stonedrop, ADMIN_LEVEL_ADMIN },
+	{ L"@stop_stonedrop", do_stop_stonedrop, ADMIN_LEVEL_ADMIN },
+	{ L"@dc", do_dc, ADMIN_LEVEL_ADMIN },
+	{ L"@bann", do_bann, ADMIN_LEVEL_ADMIN },
+	{ L"@budokai", do_budokai, ADMIN_LEVEL_ADMIN },
+	{ L"@dojo", do_dojo, ADMIN_LEVEL_ADMIN },
+	{ L"@budokaistart", do_budokai_start, ADMIN_LEVEL_ADMIN }, // Start Budokai on channel 9 remotely
+	{ L"@createloot", do_createloot, ADMIN_LEVEL_ADMIN },
+	{ L"@additem", do_additem, ADMIN_LEVEL_ADMIN },
+	{ L"@event", do_event, ADMIN_LEVEL_ADMIN },
+	{ L"@budokaiinfo", do_budokaiinfo, ADMIN_LEVEL_ADMIN },
+	{ L"@hide", do_hide, ADMIN_LEVEL_ADMIN },
 	{ L"@setadult", do_setadult, ADMIN_LEVEL_ADMIN },
 	{ L"@appear", do_warp, ADMIN_LEVEL_ADMIN },
 	{ L"@cc", do_notify, ADMIN_LEVEL_ADMIN },
 	{ L"@call", do_call, ADMIN_LEVEL_ADMIN },
 	{ L"@setspeed", do_setspeed, ADMIN_LEVEL_ADMIN },
-	{ L"@setlevel", do_setlevel, ADMIN_LEVEL_ADMIN },
-	{ L"@setclass", do_setclass, ADMIN_LEVEL_ADMIN },
 	{ L"@changeclass", do_changeclass, ADMIN_LEVEL_GAME_MASTER },
 	{ L"@addmob", do_addmob, ADMIN_LEVEL_ADMIN },
 	{ L"@addmobgroup", do_addmobgroup, ADMIN_LEVEL_ADMIN },
 	{ L"@addnpc", do_addnpc, ADMIN_LEVEL_ADMIN },
-	{ L"@additem", do_additem, ADMIN_LEVEL_ADMIN },
 	{ L"@additem_group", do_additem_group, ADMIN_LEVEL_ADMIN },
 	{ L"@sessioninfo", do_sessioninfo, ADMIN_LEVEL_ADMIN },
 	{ L"@sessioncleanup", do_sessioncleanup, ADMIN_LEVEL_ADMIN },
-	{ L"@budokaiinfo", do_budokaiinfo, ADMIN_LEVEL_ADMIN },
 	{ L"@addskill", do_addskill, ADMIN_LEVEL_ADMIN },
 	{ L"@heal", do_r, ADMIN_LEVEL_ADMIN },
 	{ L"@setzenny", do_setzenny, ADMIN_LEVEL_ADMIN },
 	{ L"@delallitems", do_delallitems, ADMIN_LEVEL_ADMIN },
 	{ L"@shutdown", do_shutdown, ADMIN_LEVEL_ADMIN },
-	{ L"@dc", do_dc, ADMIN_LEVEL_ADMIN },
 	{ L"@kill", do_kill, ADMIN_LEVEL_ADMIN },
 	{ L"@god", do_god, ADMIN_LEVEL_ADMIN },
 	{ L"@invincible", do_invincible, ADMIN_LEVEL_ADMIN },
-	{ L"@bann", do_bann, ADMIN_LEVEL_ADMIN },
 	{ L"@dbann", do_dbann, ADMIN_LEVEL_ADMIN },
 	{ L"@purge", do_purge, ADMIN_LEVEL_ADMIN },
 	{ L"@notice", do_notice, ADMIN_LEVEL_ADMIN },
 	{ L"@world", do_world, ADMIN_LEVEL_ADMIN },
 	{ L"@warfog", do_warfog, ADMIN_LEVEL_ADMIN },
+	{ L"@revealmap", do_revealmap, ADMIN_LEVEL_ADMIN },
 	{ L"@upgrade", do_upgrade, ADMIN_LEVEL_ADMIN },
+	{ L"@battlepass_setxp", do_battlepass_setxp, ADMIN_LEVEL_ADMIN }, // Set current level XP (absolute, dev/admin)
+	{ L"@battlepass_addxp", do_battlepass_addxp, ADMIN_LEVEL_ADMIN }, // Add raw XP (bypasses action mapping)
+	{ L"@battlepass_master", do_battlepass_master, ADMIN_LEVEL_ADMIN }, // Toggle master enable flag
+	{ L"@battlepass_status", do_battlepass_status, ADMIN_LEVEL_ADMIN }, // Show extended Battle Pass system status
+	{ L"@battlepass_flush", do_battlepass_flush, ADMIN_LEVEL_ADMIN }, // Force immediate persistence flush
 	{ L"@setitemrank", do_setitemrank, ADMIN_LEVEL_ADMIN },
 	{ L"@go", do_go, ADMIN_LEVEL_ADMIN },
-	{ L"@addtitle", do_addtitle, ADMIN_LEVEL_ADMIN },
-	{ L"@deltitle", do_deltitle, ADMIN_LEVEL_ADMIN },
 	{ L"@setitemduration", do_setitemduration, ADMIN_LEVEL_ADMIN },
 	{ L"@bind", do_bind, ADMIN_LEVEL_ADMIN },
-	{ L"@startevent", do_startevent, ADMIN_LEVEL_ADMIN }, // 0 honey, 1 Fairy
 	{ L"@stopevent", do_stophoneybee, ADMIN_LEVEL_ADMIN }, // 0 Honey, 1 Fairy
 	{ L"@deleteguild", do_deleteguild, ADMIN_LEVEL_ADMIN },
 	{ L"@cancelah", do_cancelah, ADMIN_LEVEL_ADMIN },
 	{ L"@addmudosa", do_addmudosa, ADMIN_LEVEL_ADMIN },
 	{ L"@startgm", do_start, ADMIN_LEVEL_ADMIN },
-	{ L"@createloot", do_createloot, ADMIN_LEVEL_ADMIN },
 	{ L"@test", do_test, ADMIN_LEVEL_ADMIN },
-	{ L"@all", do_TeleportAll, ADMIN_LEVEL_ADMIN },
 	{ L"@PvpEvent", do_BatleEvent, ADMIN_LEVEL_ADMIN },
-	{ L"@big", do_big, ADMIN_LEVEL_ADMIN },
 	{ L"@level", do_setlevel2, ADMIN_LEVEL_ADMIN },
-	{ L"@fly", do_fly, ADMIN_LEVEL_ADMIN },
 	{ L"@resetskills", do_resetskills, ADMIN_LEVEL_ADMIN },
 	{ L"@setdark", do_setdark, ADMIN_LEVEL_GAME_MASTER},
 	{ L"@buff", do_buff, ADMIN_LEVEL_ADMIN },
+	{ L"@unbuff", do_unbuff, ADMIN_LEVEL_ADMIN },
 	{ L"@start_dbhunt",do_start_dbhunt,ADMIN_LEVEL_GAME_MASTER},
 	{ L"@stop_dbhunt",do_stop_dbhunt,ADMIN_LEVEL_GAME_MASTER},
 	{ L"@start_dbscramble",do_start_dbscramble,ADMIN_LEVEL_GAME_MASTER},
 	{ L"@stop_dbscramble",do_stop_dbscramble,ADMIN_LEVEL_GAME_MASTER},
-	{ L"@start_stonedrop", do_start_stonedrop, ADMIN_LEVEL_GAME_MASTER },
-	{ L"@stop_stonedrop", do_stop_stonedrop, ADMIN_LEVEL_GAME_MASTER },
-	{ L"@start_customdrop", do_start_customdrop, ADMIN_LEVEL_GAME_MASTER },
 	{ L"@stop_customdrop", do_stop_customdrop, ADMIN_LEVEL_GAME_MASTER },
 	{ L"@reload_customdrop", do_reload_customdrop_cfg, ADMIN_LEVEL_GAME_MASTER },
 	{ L"@reload_helpernpc", do_reload_helpernpc_cfg, ADMIN_LEVEL_GAME_MASTER },
@@ -270,15 +370,164 @@ struct command_info cmd_info[] =
 	{ L"@customdrop_chainspawns", do_customdrop_chainspawns, ADMIN_LEVEL_GAME_MASTER },
 	{ L"@customdrop_healmul", do_customdrop_healmul, ADMIN_LEVEL_GAME_MASTER },
 	{ L"@customdrop_buffduration", do_customdrop_buffduration, ADMIN_LEVEL_GAME_MASTER },
+	{ L"@setphase", do_setphase, ADMIN_LEVEL_GAME_MASTER },
 	{ L"@reload_playermods", do_reload_playermods_cfg, ADMIN_LEVEL_GAME_MASTER },
 	{ L"@playermods", do_playermods_toggle, ADMIN_LEVEL_GAME_MASTER },
+	{ L"@vtransform", do_vtransform, ADMIN_LEVEL_GAME_MASTER },
+	{ L"@vtransform_end", do_vtransform_end, ADMIN_LEVEL_GAME_MASTER },
 	{ L"@arena", do_arena, ADMIN_LEVEL_GAME_MASTER },
+	{ L"@event_reload", do_event_reload, ADMIN_LEVEL_GAME_MASTER },
 	{ L"@world_fight", do_world_fight, ADMIN_LEVEL_GAME_MASTER },
-	{ L"@dojo", do_dojo, ADMIN_LEVEL_GAME_MASTER },
-	{ L"@budokai", do_budokai, ADMIN_LEVEL_ADMIN },
+	{ L"@pm", do_pm, ADMIN_LEVEL_GAME_MASTER },
+	{ L"@ccbd_boss_mode", do_ccbd_boss_mode, ADMIN_LEVEL_GAME_MASTER }, // Toggle CCBD Boss-Only Mode (skip regular floors)
 
 	{ L"@qwasawedsadas", NULL, ADMIN_LEVEL_ADMIN }
 };
+
+// ------------------------------------------------------------
+// Battle Pass GM / Public helper commands
+// ------------------------------------------------------------
+ACMD(do_battlepass)
+{
+	if (!g_pBattlePassManager->IsMasterEnabled())
+	{
+		CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+		sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+		res->wOpCode = GU_SYSTEM_DISPLAY_TEXT;
+		res->byDisplayType = SERVER_TEXT_SYSNOTICE;
+		const wchar_t* txt = L"[BattlePass] System disabled (master switch).";
+		res->wMessageLengthInUnicode = (WORD)wcslen(txt);
+		wcsncpy_s(res->awchMessage, NTL_MAX_LENGTH_OF_CHAT_MESSAGE + 1, txt, _TRUNCATE);
+		packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+		pPlayer->SendPacket(&packet);
+		return;
+	}
+	auto* prog = g_pBattlePassManager->GetProgress(pPlayer->GetCharID());
+	wchar_t msg[256];
+	unsigned need = g_pBattlePassManager->GetXpForLevel(prog->level);
+	swprintf_s(msg, L"[BattlePass] Season %u Level %u (%u/%u XP) TotalXP=%u", prog->seasonId, prog->level, prog->xp, need, prog->totalXp);
+	CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+	sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+	res->wOpCode = GU_SYSTEM_DISPLAY_TEXT; res->byDisplayType = SERVER_TEXT_SYSNOTICE; res->wMessageLengthInUnicode = (WORD)wcslen(msg);
+	wcsncpy_s(res->awchMessage, NTL_MAX_LENGTH_OF_CHAT_MESSAGE + 1, msg, _TRUNCATE);
+	packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+	pPlayer->SendPacket(&packet);
+}
+
+// ADMIN: Set current level XP (not total). Does not recalc level.
+ACMD(do_battlepass_setxp)
+{
+	if (!g_pBattlePassManager->IsMasterEnabled()) return;
+	std::wstring tok = pToken->PeekNextToken(NULL, &iLine);
+	if (tok.empty()) return;
+	unsigned val = (unsigned)_wtoi(tok.c_str());
+	auto* prog = g_pBattlePassManager->GetProgress(pPlayer->GetCharID());
+	prog->xp = val;
+	CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+	sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+	res->wOpCode = GU_SYSTEM_DISPLAY_TEXT; res->byDisplayType = SERVER_TEXT_SYSNOTICE; const wchar_t* txt = L"[BattlePass] XP set.";
+	res->wMessageLengthInUnicode = (WORD)wcslen(txt); wcsncpy_s(res->awchMessage, NTL_MAX_LENGTH_OF_CHAT_MESSAGE + 1, txt, _TRUNCATE);
+	packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT)); pPlayer->SendPacket(&packet);
+}
+
+// ADMIN: Add raw XP (triggers level ups & mudosa rewards).
+ACMD(do_battlepass_addxp)
+{
+	if (!g_pBattlePassManager->IsMasterEnabled()) return;
+	std::wstring tok = pToken->PeekNextToken(NULL, &iLine);
+	if (tok.empty()) return;
+	unsigned add = (unsigned)_wtoi(tok.c_str());
+	if (add == 0) return;
+	// Reuse internal Award path by synthesizing a temporary action override
+	auto* prog = g_pBattlePassManager->GetProgress(pPlayer->GetCharID());
+	unsigned beforeLvl = prog->level;
+	unsigned beforeXp = prog->xp;
+	g_pBattlePassManager->AddActionXp(pPlayer, CBattlePassManager::Action::MOB_KILL, add); // customOverrideXp path used
+	wchar_t msg[256];
+	swprintf_s(msg, L"[BattlePass] Added %u XP (L%u %u->%u/%u).", add, prog->level, beforeXp, prog->xp, g_pBattlePassManager->GetXpForLevel(prog->level));
+	CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+	sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+	res->wOpCode = GU_SYSTEM_DISPLAY_TEXT; res->byDisplayType = SERVER_TEXT_SYSNOTICE; res->wMessageLengthInUnicode = (WORD)wcslen(msg);
+	wcsncpy_s(res->awchMessage, NTL_MAX_LENGTH_OF_CHAT_MESSAGE + 1, msg, _TRUNCATE);
+	packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+	pPlayer->SendPacket(&packet);
+}
+
+// ADMIN: Show Battle Pass system status (config + runtime counters summary size)
+ACMD(do_battlepass_status)
+{
+	CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+	sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+	res->wOpCode = GU_SYSTEM_DISPLAY_TEXT; res->byDisplayType = SERVER_TEXT_SYSNOTICE;
+	if (!g_pBattlePassManager->IsEnabled())
+	{
+		const wchar_t* txt = L"[BattlePass] Disabled (Enabled=0)";
+		res->wMessageLengthInUnicode = (WORD)wcslen(txt);
+		wcsncpy_s(res->awchMessage, NTL_MAX_LENGTH_OF_CHAT_MESSAGE + 1, txt, _TRUNCATE);
+		packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+		pPlayer->SendPacket(&packet);
+		return;
+	}
+	bool master = g_pBattlePassManager->IsMasterEnabled();
+	const CBattlePassManager::Config& cfg = g_pBattlePassManager->GetConfig();
+	wchar_t msg[256];
+	swprintf_s(msg, L"[BattlePass] Master=%s Season=%u DB=%s Flush=%us MinDelta=%u", master ? L"ON" : L"OFF", cfg.seasonId, cfg.useDatabase ? L"ON" : L"OFF", cfg.flushSeconds, cfg.minDeltaXp);
+	res->wMessageLengthInUnicode = (WORD)wcslen(msg);
+	wcsncpy_s(res->awchMessage, NTL_MAX_LENGTH_OF_CHAT_MESSAGE + 1, msg, _TRUNCATE);
+	packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+	pPlayer->SendPacket(&packet);
+}
+
+// ADMIN: Force immediate DB/file flush depending on mode
+ACMD(do_battlepass_flush)
+{
+	if (!g_pBattlePassManager->IsEnabled()) return;
+	if (!g_pBattlePassManager->IsMasterEnabled()) return;
+	if (g_pBattlePassManager->GetConfig().useDatabase)
+		g_pBattlePassManager->ForceFlushToDatabase();
+	else
+		g_pBattlePassManager->ForceAutosave();
+	CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+	sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+	res->wOpCode = GU_SYSTEM_DISPLAY_TEXT; res->byDisplayType = SERVER_TEXT_SYSNOTICE;
+	const wchar_t* txt = L"[BattlePass] Flush triggered.";
+	res->wMessageLengthInUnicode = (WORD)wcslen(txt);
+	wcsncpy_s(res->awchMessage, NTL_MAX_LENGTH_OF_CHAT_MESSAGE + 1, txt, _TRUNCATE);
+	packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+	pPlayer->SendPacket(&packet);
+}
+
+// ADMIN: Toggle or show master enable flag
+ACMD(do_battlepass_master)
+{
+	// Usage: @battlepass_master            -> show state
+	//        @battlepass_master on|off     -> set state
+	pToken->PopToPeek();
+	std::wstring sub = pToken->PeekNextToken(NULL, &iLine);
+	bool queryOnly = sub.empty();
+	bool newState = g_pBattlePassManager->IsMasterEnabled();
+	if (!queryOnly)
+	{
+		std::wstring lower = sub;
+		for (auto& ch : lower) ch = (wchar_t)towlower(ch);
+		if (lower == L"on" || lower == L"1" || lower == L"true") newState = true;
+		else if (lower == L"off" || lower == L"0" || lower == L"false") newState = false;
+		// apply: direct access to config (safe—admin only command)
+		g_pBattlePassManager->GetConfig().enabled; // no-op read to silence potential unused macro expansions
+		// We need a setter; modifying internal config via a helper lambda to keep minimal diff
+		g_pBattlePassManager->SetMasterEnable(newState);
+	}
+	bool finalState = g_pBattlePassManager->IsMasterEnabled();
+	wchar_t msg[96];
+	swprintf_s(msg, L"[BattlePass] MasterEnable is %s", finalState ? L"ON" : L"OFF");
+	CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+	sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+	res->wOpCode = GU_SYSTEM_DISPLAY_TEXT; res->byDisplayType = SERVER_TEXT_SYSNOTICE;
+	res->wMessageLengthInUnicode = (WORD)wcslen(msg);
+	wcsncpy_s(res->awchMessage, NTL_MAX_LENGTH_OF_CHAT_MESSAGE + 1, msg, _TRUNCATE);
+	packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+	pPlayer->SendPacket(&packet);
+}
 ACMD(do_arena)
 {
 	// Syntax:
@@ -670,6 +919,220 @@ ACMD(do_arena)
 	}
 }
 
+ACMD(do_event)
+{
+	// Syntax:
+	// @event start
+	// @event stop [abort]
+	// @event status
+	// @event beginnow
+	// @event nextround
+	// @event restartround
+	// @event mobsperwave [amount]
+	// @event purgemobs
+	pToken->PopToPeek();
+	std::wstring wsub = pToken->PeekNextToken(NULL, &iLine);
+	if (wsub.empty())
+	{
+		if (g_pEventManager)
+			g_pEventManager->StatusTo(pPlayer);
+		return;
+	}
+
+	std::string sub = ws2s(wsub);
+	for (auto& c : sub) c = (char)tolower(c);
+
+	if (sub == "start")
+	{
+		if (g_pEventManager)
+			g_pEventManager->Start();
+	}
+	else if (sub == "stop")
+	{
+		// optional: abort flag
+		pToken->PopToPeek();
+		std::wstring warg = pToken->PeekNextToken(NULL, &iLine);
+		std::string arg = ws2s(warg);
+		for (auto& c : arg) c = (char)tolower(c);
+		bool abort = (arg == "abort");
+		if (g_pEventManager)
+			g_pEventManager->Stop(abort);
+	}
+	else if (sub == "status")
+	{
+		if (g_pEventManager)
+			g_pEventManager->StatusTo(pPlayer);
+	}
+	else if (sub == "beginnow")
+	{
+		if (g_pEventManager)
+			g_pEventManager->BeginNow();
+	}
+	else if (sub == "nextround")
+	{
+		if (g_pEventManager)
+		{
+			if (g_pEventManager->GetState() == CEventManager::State::IN_ROUND)
+			{
+				g_pEventManager->CompleteCurrentRound();
+				CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+				sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+				res->wOpCode = GU_SYSTEM_DISPLAY_TEXT; res->byDisplayType = SERVER_TEXT_SYSTEM;
+				const wchar_t* wmsg = L"[EVENT] Skipping to next round...";
+				res->wMessageLengthInUnicode = (WORD)wcslen(wmsg);
+				NTL_SAFE_WCSCPY(res->awchMessage, wmsg);
+				packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+				pPlayer->SendPacket(&packet);
+			}
+			else
+			{
+				CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+				sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+				res->wOpCode = GU_SYSTEM_DISPLAY_TEXT; res->byDisplayType = SERVER_TEXT_SYSTEM;
+				const wchar_t* wmsg = L"[EVENT] No active round to skip.";
+				res->wMessageLengthInUnicode = (WORD)wcslen(wmsg);
+				NTL_SAFE_WCSCPY(res->awchMessage, wmsg);
+				packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+				pPlayer->SendPacket(&packet);
+			}
+		}
+	}
+	else if (sub == "restartround")
+	{
+		if (g_pEventManager)
+		{
+			if (g_pEventManager->GetState() == CEventManager::State::IN_ROUND)
+			{
+				// Force restart current round by going back one and then completing
+				unsigned int currentRound = g_pEventManager->GetCurrentRound();
+				if (currentRound > 0)
+				{
+					g_pEventManager->SetCurrentRound(currentRound - 1);
+				}
+				g_pEventManager->CompleteCurrentRound();
+				CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+				sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+				res->wOpCode = GU_SYSTEM_DISPLAY_TEXT; res->byDisplayType = SERVER_TEXT_SYSTEM;
+				const wchar_t* wmsg = L"[EVENT] Restarting current round...";
+				res->wMessageLengthInUnicode = (WORD)wcslen(wmsg);
+				NTL_SAFE_WCSCPY(res->awchMessage, wmsg);
+				packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+				pPlayer->SendPacket(&packet);
+			}
+			else
+			{
+				CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+				sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+				res->wOpCode = GU_SYSTEM_DISPLAY_TEXT; res->byDisplayType = SERVER_TEXT_SYSTEM;
+				const wchar_t* wmsg = L"[EVENT] No active round to restart.";
+				res->wMessageLengthInUnicode = (WORD)wcslen(wmsg);
+				NTL_SAFE_WCSCPY(res->awchMessage, wmsg);
+				packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+				pPlayer->SendPacket(&packet);
+			}
+		}
+	}
+	else if (sub == "mobsperwave")
+	{
+		// Get the amount parameter
+		pToken->PopToPeek();
+		std::wstring wamount = pToken->PeekNextToken(NULL, &iLine);
+
+		if (wamount.empty())
+		{
+			// Show current value
+			if (g_pEventManager)
+			{
+				CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+				sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+				res->wOpCode = GU_SYSTEM_DISPLAY_TEXT; res->byDisplayType = SERVER_TEXT_SYSTEM;
+				wchar_t wmsg[256];
+				swprintf_s(wmsg, L"[EVENT] Current MobsPerWave: %u. Usage: @event mobsperwave <amount>",
+					g_pEventManager->GetMobsPerWave());
+				res->wMessageLengthInUnicode = (WORD)wcslen(wmsg);
+				NTL_SAFE_WCSCPY(res->awchMessage, wmsg);
+				packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+				pPlayer->SendPacket(&packet);
+			}
+			return;
+		}
+
+		int amount = _wtoi(wamount.c_str());
+		if (amount <= 0 || amount > 1000)
+		{
+			CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+			sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+			res->wOpCode = GU_SYSTEM_DISPLAY_TEXT; res->byDisplayType = SERVER_TEXT_SYSTEM;
+			const wchar_t* wmsg = L"[EVENT] Invalid amount. Must be between 1 and 1000.";
+			res->wMessageLengthInUnicode = (WORD)wcslen(wmsg);
+			NTL_SAFE_WCSCPY(res->awchMessage, wmsg);
+			packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+			pPlayer->SendPacket(&packet);
+			return;
+		}
+
+		if (g_pEventManager)
+		{
+			g_pEventManager->SetMobsPerWave((unsigned int)amount);
+			CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+			sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+			res->wOpCode = GU_SYSTEM_DISPLAY_TEXT; res->byDisplayType = SERVER_TEXT_SYSTEM;
+			wchar_t wmsg[256];
+			swprintf_s(wmsg, L"[EVENT] MobsPerWave set to %d. Change will apply to next wave.", amount);
+			res->wMessageLengthInUnicode = (WORD)wcslen(wmsg);
+			NTL_SAFE_WCSCPY(res->awchMessage, wmsg);
+			packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+			pPlayer->SendPacket(&packet);
+		}
+	}
+	else if (sub == "purgemobs")
+	{
+		if (g_pEventManager)
+		{
+			g_pEventManager->DespawnAllEventMobs();
+			CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+			sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+			res->wOpCode = GU_SYSTEM_DISPLAY_TEXT; res->byDisplayType = SERVER_TEXT_SYSTEM;
+			const wchar_t* wmsg = L"[EVENT] All event mobs have been purged.";
+			res->wMessageLengthInUnicode = (WORD)wcslen(wmsg);
+			NTL_SAFE_WCSCPY(res->awchMessage, wmsg);
+			packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+			pPlayer->SendPacket(&packet);
+		}
+	}
+	else
+	{
+		CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+		sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+		res->wOpCode = GU_SYSTEM_DISPLAY_TEXT; res->byDisplayType = SERVER_TEXT_SYSTEM;
+		const wchar_t* wmsg = L"Usage: @event start | stop [abort] | status | beginnow | nextround | restartround | mobsperwave [amount] | purgemobs";
+		res->wMessageLengthInUnicode = (WORD)wcslen(wmsg);
+		NTL_SAFE_WCSCPY(res->awchMessage, wmsg);
+		packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+		pPlayer->SendPacket(&packet);
+	}
+}
+
+ACMD(do_event_reload)
+{
+	// Reload Events.cfg and reset auto scheduling. If InitialDelaySeconds=0, start immediately.
+	bool ok = false;
+	if (g_pEventManager)
+		ok = g_pEventManager->ReloadConfigFromDefault();
+
+	if (g_pEventManager)
+		g_pEventManager->ResetAutomation(true);
+
+	CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+	sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+	res->wOpCode = GU_SYSTEM_DISPLAY_TEXT; res->byDisplayType = SERVER_TEXT_SYSTEM;
+	const wchar_t* wmsg = ok ? L"[EVENT] Config reloaded; automation reset" : L"[EVENT] Failed to reload config; automation reset";
+	res->wMessageLengthInUnicode = (WORD)wcslen(wmsg);
+	NTL_SAFE_WCSCPY(res->awchMessage, wmsg);
+	packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+	pPlayer->SendPacket(&packet);
+}
+
 ACMD(do_world_fight)
 {
 	// Syntax:
@@ -854,6 +1317,98 @@ ACMD(do_budokai)
 			else if (which == "final") g_pBudokaiManager->SetFinalMatchMaxScore(v);
 		}
 	}
+}
+
+// @budokaistart - Start Budokai tournaments on channel 9 from any channel
+// Usage: @budokaistart <adultsolo|adultteam|juniorsolo|juniorteam>
+ACMD(do_budokai_start)
+{
+	pToken->PopToPeek();
+	std::wstring wtype = pToken->PeekNextToken(NULL, &iLine);
+
+	if (wtype.empty())
+	{
+		CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+		sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+		res->wOpCode = GU_SYSTEM_DISPLAY_TEXT;
+		res->byDisplayType = SERVER_TEXT_SYSTEM;
+		wcscpy_s(res->awchMessage, NTL_MAX_LENGTH_OF_CHAT_MESSAGE + 1,
+			L"Usage: @budokaistart <adultsolo|adultteam|juniorsolo|juniorteam>");
+		packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+		((CGameServer*)g_pApp)->Send(pPlayer->GetClientSessionID(), &packet);
+		return;
+	}
+
+	// Convert to lowercase for comparison
+	std::string type;
+	for (wchar_t wc : wtype)
+		type += (char)tolower((char)wc);
+
+	// Map user-friendly command to actual server command
+	std::string serverCmd;
+	std::string displayName;
+
+	if (type == "adultsolo")
+	{
+		serverCmd = "StartAdultSolo";
+		displayName = "Adult Solo Budokai";
+	}
+	else if (type == "adultteam" || type == "adultparty")
+	{
+		serverCmd = "StartAdultTeam";
+		displayName = "Adult Team Budokai";
+	}
+	else if (type == "juniorsolo")
+	{
+		serverCmd = "StartJuniorSolo";
+		displayName = "Junior Solo Budokai";
+	}
+	else if (type == "juniorteam" || type == "juniorparty")
+	{
+		serverCmd = "StartJuniorTeam";
+		displayName = "Junior Team Budokai";
+	}
+	else
+	{
+		CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+		sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+		res->wOpCode = GU_SYSTEM_DISPLAY_TEXT;
+		res->byDisplayType = SERVER_TEXT_SYSTEM;
+		wcscpy_s(res->awchMessage, NTL_MAX_LENGTH_OF_CHAT_MESSAGE + 1,
+			L"Invalid type! Use: adultsolo, adultteam, juniorsolo, or juniorteam");
+		packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+		((CGameServer*)g_pApp)->Send(pPlayer->GetClientSessionID(), &packet);
+		return;
+	}
+
+	// Send command to Budokai channel (channel 9)
+	const BYTE BUDOKAI_CHANNEL = 9;
+	std::string response;
+	bool success = SendCommandToChannel(BUDOKAI_CHANNEL, serverCmd, &response);
+
+	// Prepare response message
+	CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+	sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+	res->wOpCode = GU_SYSTEM_DISPLAY_TEXT;
+	res->byDisplayType = SERVER_TEXT_SYSTEM;
+
+	if (success)
+	{
+		char msg[NTL_MAX_LENGTH_OF_CHAT_MESSAGE + 1];
+		sprintf_s(msg, "[BUDOKAI] %s has been started on channel 9!", displayName.c_str());
+		std::wstring wmsg;
+		for (char c : std::string(msg))
+			wmsg += (wchar_t)c;
+		wcscpy_s(res->awchMessage, NTL_MAX_LENGTH_OF_CHAT_MESSAGE + 1, wmsg.c_str());
+	}
+	else
+	{
+		wcscpy_s(res->awchMessage, NTL_MAX_LENGTH_OF_CHAT_MESSAGE + 1,
+			L"[BUDOKAI] Failed to start - Is channel 9 (Budokai server) running?");
+	}
+
+	packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+	((CGameServer*)g_pApp)->Send(pPlayer->GetClientSessionID(), &packet);
 }
 
 // @dojo control for starting/stopping dojo wars from in-game GM
@@ -1378,6 +1933,41 @@ ACMD(do_arena_joinguild_public)
 	pPlayer->SendPacket(&packet);
 }
 
+ACMD(do_event_participate)
+{
+	UNREFERENCED_PARAMETER(iLine);
+	pToken->PopToPeek();
+
+	// Channel gating: only allow on EVENTS channels
+	{
+		CGameServer* app = (CGameServer*)g_pApp;
+		bool isDojo = app && app->IsDojoChannel();
+		bool nameOk = true;
+		if (app)
+		{
+			std::string got = app->m_config.ChannelName.c_str();
+			for (auto& c : got) c = (char)tolower(c);
+			nameOk = (got.find("events") != std::string::npos);
+		}
+		if (isDojo || !nameOk)
+		{
+			CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+			sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+			res->wOpCode = GU_SYSTEM_DISPLAY_TEXT;
+			res->byDisplayType = SERVER_TEXT_SYSTEM;
+			NTL_SAFE_WCSCPY(res->awchMessage, L"[EVENT] Participation is only available on EVENTS channels.");
+			packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+			pPlayer->SendPacket(&packet);
+			return;
+		}
+	}
+
+	// Add the caller as a participant if EventManager exists
+	if (g_pEventManager && pPlayer && pPlayer->IsInitialized())
+	{
+		g_pEventManager->AddParticipant(pPlayer);
+	}
+}
 
 ACMD(do_big)
 {
@@ -1511,6 +2101,47 @@ ACMD(do_reload_customdrop_cfg)
 		NTL_PRINT(PRINT_APP, _T("CustomDropEvent: config reloaded from %s"), s2ws(path).c_str());
 	else
 		NTL_PRINT(PRINT_APP, _T("CustomDropEvent: failed to reload config from %s"), s2ws(path).c_str());
+}
+
+// Set the current world's difficulty phase for progressive mob scaling
+// Usage: @setphase <0-5>
+// Phase 0 = default (no modifiers), 1-5 = progressive difficulty tiers
+ACMD(do_setphase)
+{
+	// Get phase parameter
+	pToken->PopToPeek();
+	std::wstring strToken = pToken->PeekNextToken(NULL, &iLine);
+	if (strToken.empty())
+	{
+		NTL_PRINT(PRINT_APP, _T("Usage: @setphase <0-5>  (0=default, 1-5=difficulty phases)"));
+		return;
+	}
+
+	int phase = _wtoi(strToken.c_str());
+	if (phase < 0 || phase > 5)
+	{
+		NTL_PRINT(PRINT_APP, _T("Invalid phase. Must be 0-5. (0=default, 1=90%%HP, 2=70%%HP, 3=50%%HP, etc.)"));
+		return;
+	}
+
+	// Get player's current world
+	CWorld* pWorld = pPlayer->GetCurWorld();
+	if (!pWorld)
+	{
+		NTL_PRINT(PRINT_APP, _T("Error: Could not get current world."));
+		return;
+	}
+
+	// Set the world's difficulty phase
+	pWorld->SetDifficultyPhase((BYTE)phase);
+
+	// Log for tracking
+	ERR_LOG(LOG_GENERAL, "[DifficultyPhase] World %u (tblidx %u) phase set to %u by %s",
+		pWorld->GetID(), pWorld->GetIdx(), phase, ws2s(pPlayer->GetCharName()).c_str());
+
+	// Notify the GM
+	NTL_PRINT(PRINT_APP, _T("World %u difficulty phase set to %u. New mob spawns will use phase-%u modifiers."),
+		pWorld->GetID(), phase, phase);
 }
 
 // Reload helper NPC configuration at runtime
@@ -1675,6 +2306,184 @@ ACMD(do_playermods_toggle)
 	}
 }
 
+ACMD(do_ccbd_boss_mode)
+{
+	// usage: @ccbd_boss_mode on|off (no arg prints state)
+	// When enabled, CCBD will skip regular floors and only allow boss fights (every 5 floors)
+	pToken->PopToPeek();
+	std::wstring strToken = pToken->PeekNextToken(NULL, &iLine);
+	std::string arg = ws2s(strToken);
+
+	if (!arg.empty())
+	{
+		bool on = (_stricmp(arg.c_str(), "on") == 0 || _stricmp(arg.c_str(), "1") == 0 || _stricmp(arg.c_str(), "true") == 0);
+		g_pDungeonConfig->SetCCBDBossOnlyModeEnabled(on);
+
+		// Send notification to the player
+		CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+		sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+		res->wOpCode = GU_SYSTEM_DISPLAY_TEXT;
+		res->byDisplayType = SERVER_TEXT_SYSNOTICE;
+
+		wchar_t msg[256];
+		swprintf_s(msg, L"[CCBD] Boss-Only Mode: %s", on ? L"ENABLED" : L"DISABLED");
+		if (on)
+			wcscat_s(msg, L" - Players will skip regular floors and fight only bosses (5, 10, 15, etc.)");
+
+		res->wMessageLengthInUnicode = (WORD)wcslen(msg);
+		wcsncpy_s(res->awchMessage, NTL_MAX_LENGTH_OF_CHAT_MESSAGE + 1, msg, _TRUNCATE);
+		packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+		pPlayer->SendPacket(&packet);
+
+		ERR_LOG(LOG_GENERAL, "[CCBD_BOSS_MODE] Setting changed to %s by GM %s (CharID: %u)",
+			on ? "ENABLED" : "DISABLED",
+			pPlayer->GetCharName(),
+			pPlayer->GetCharID());
+	}
+	else
+	{
+		// Display current status
+		bool isEnabled = g_pDungeonConfig->IsCCBDBossOnlyModeEnabled();
+
+		CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+		sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+		res->wOpCode = GU_SYSTEM_DISPLAY_TEXT;
+		res->byDisplayType = SERVER_TEXT_SYSNOTICE;
+
+		wchar_t msg[256];
+		swprintf_s(msg, L"[CCBD] Boss-Only Mode is currently: %s", isEnabled ? L"ENABLED" : L"DISABLED");
+
+		res->wMessageLengthInUnicode = (WORD)wcslen(msg);
+		wcsncpy_s(res->awchMessage, NTL_MAX_LENGTH_OF_CHAT_MESSAGE + 1, msg, _TRUNCATE);
+		packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+		pPlayer->SendPacket(&packet);
+	}
+}
+
+ACMD(do_vtransform)
+{
+	// Check if virtual transformations are enabled
+	if (!g_pFeatureFlags->IsVirtualTransformationsEnabled())
+	{
+		NTL_PRINT(PRINT_APP, _T("Virtual transformations are currently disabled by feature flag"));
+		return;
+	}
+
+	// usage: @vtransform <id> [target]
+	// Example: @vtransform 200 (transforms self to Human->Namek test)
+	pToken->PopToPeek();
+	std::wstring strToken = pToken->PeekNextToken(NULL, &iLine);
+	if (strToken.empty())
+	{
+		NTL_PRINT(PRINT_APP, _T("Usage: @vtransform <id> [target]"));
+		NTL_PRINT(PRINT_APP, _T("Available transforms:"));
+		NTL_PRINT(PRINT_APP, _T("  100 - Super Saiyan Blue"));
+		NTL_PRINT(PRINT_APP, _T("  101 - Ultra Instinct"));
+		NTL_PRINT(PRINT_APP, _T("  200 - Test: Human to Namek"));
+		NTL_PRINT(PRINT_APP, _T("  201 - Test: Human to Majin"));
+		return;
+	}
+
+	DWORD virtualId = (DWORD)_wtoi(strToken.c_str());
+	if (virtualId < 100)
+	{
+		NTL_PRINT(PRINT_APP, _T("Virtual transform IDs must be 100 or higher"));
+		return;
+	}
+
+	// Check for target parameter
+	pToken->PopToPeek();
+	std::wstring strTarget = pToken->PeekNextToken(NULL, &iLine);
+	CPlayer* pTargetPlayer = pPlayer;
+
+	if (!strTarget.empty())
+	{
+		// Find target player by name
+		pTargetPlayer = g_pObjectManager->FindByName((WCHAR*)strTarget.c_str());
+		if (!pTargetPlayer)
+		{
+			NTL_PRINT(PRINT_APP, _T("Player '%s' not found"), strTarget.c_str());
+			return;
+		}
+	}
+
+	if (!pTargetPlayer || !pTargetPlayer->IsInitialized())
+	{
+		NTL_PRINT(PRINT_APP, _T("Invalid target player"));
+		return;
+	}
+
+	// Debug: Check if transform exists before activating
+	const auto* checkTransform = g_pVirtualTransformManager->GetVirtualTransform(virtualId);
+	if (checkTransform)
+	{
+		NTL_PRINT(PRINT_APP, _T("DEBUG: Found transform %d: %s"), virtualId, checkTransform->name.c_str());
+	}
+	else
+	{
+		NTL_PRINT(PRINT_APP, _T("DEBUG: Transform %d NOT found in loaded transforms!"), virtualId);
+	}
+
+	if (g_pVirtualTransformManager->ActivateVirtualTransform(pTargetPlayer, virtualId))
+	{
+		const auto* transform = g_pVirtualTransformManager->GetVirtualTransform(virtualId);
+		if (transform)
+		{
+			NTL_PRINT(PRINT_APP, _T("Activated virtual transform %d (%s) for %s"),
+				virtualId, transform->name.c_str(), pTargetPlayer->GetCharName());
+		}
+		else
+		{
+			NTL_PRINT(PRINT_APP, _T("Activated virtual transform %d for %s"),
+				virtualId, pTargetPlayer->GetCharName());
+		}
+	}
+	else
+	{
+		NTL_PRINT(PRINT_APP, _T("Failed to activate virtual transform %d (not found in config)"), virtualId);
+	}
+}
+
+ACMD(do_vtransform_end)
+{
+	// Check if virtual transformations are enabled
+	if (!g_pFeatureFlags->IsVirtualTransformationsEnabled())
+	{
+		NTL_PRINT(PRINT_APP, _T("Virtual transformations are currently disabled by feature flag"));
+		return;
+	}
+
+	// usage: @vtransform_end [target]
+	pToken->PopToPeek();
+	std::wstring strTarget = pToken->PeekNextToken(NULL, &iLine);
+	CPlayer* pTargetPlayer = pPlayer;
+
+	if (!strTarget.empty())
+	{
+		pTargetPlayer = g_pObjectManager->FindByName((WCHAR*)strTarget.c_str());
+		if (!pTargetPlayer)
+		{
+			NTL_PRINT(PRINT_APP, _T("Player '%s' not found"), strTarget.c_str());
+			return;
+		}
+	}
+
+	if (!pTargetPlayer || !pTargetPlayer->IsInitialized())
+	{
+		NTL_PRINT(PRINT_APP, _T("Invalid target player"));
+		return;
+	}
+
+	if (g_pVirtualTransformManager->DeactivateVirtualTransform(pTargetPlayer))
+	{
+		NTL_PRINT(PRINT_APP, _T("Deactivated virtual transform for %s"), pTargetPlayer->GetCharName());
+	}
+	else
+	{
+		NTL_PRINT(PRINT_APP, _T("No virtual transform active for %s"), pTargetPlayer->GetCharName());
+	}
+}
+
 ACMD(do_buff)
 {
 	/*
@@ -1797,6 +2606,90 @@ ACMD(do_buff)
 	else
 	{
 		applyTo(cTarget);
+	}
+}
+
+ACMD(do_unbuff)
+{
+	/*
+		@unbuff BUFF_ID [RADIUS_METERS] [TARGET_NAME]
+		- Removes the specified buff from the target or everyone in range.
+	*/
+	pToken->PopToPeek();
+	std::wstring strToken = pToken->PeekNextToken(NULL, &iLine);
+	if (strToken.empty())
+		return;
+
+	int buffindex = (int)atof(ws2s(strToken).c_str());
+	if (buffindex <= 0)
+		return;
+
+	float fRadius = 0.0f;
+	std::wstring nameToken;
+	const wchar_t* wname = L"";
+
+	pToken->PopToPeek();
+	std::wstring strToken1 = pToken->PeekNextToken(NULL, &iLine);
+	if (!strToken1.empty())
+	{
+		std::string opt = ws2s(strToken1);
+		bool isNum = !opt.empty() && (isdigit((unsigned char)opt[0]) || opt[0] == '.' || opt[0] == '-');
+		if (isNum)
+		{
+			fRadius = (float)atof(opt.c_str());
+			pToken->PopToPeek();
+			std::wstring strToken2 = pToken->PeekNextToken(NULL, &iLine);
+			if (!strToken2.empty())
+			{
+				nameToken = strToken2;
+				wname = nameToken.c_str();
+			}
+		}
+		else
+		{
+			nameToken = strToken1;
+			wname = nameToken.c_str();
+		}
+	}
+
+	sSKILL_TBLDAT* pSkillTbldat = (sSKILL_TBLDAT*)g_pTableContainer->GetSkillTable()->FindData(buffindex);
+	if (!pSkillTbldat)
+		return;
+
+	CPlayer* cTarget = nullptr;
+	if (wname && *wname)
+		cTarget = g_pObjectManager->FindByName((WCHAR*)wname);
+	if (!cTarget || !cTarget->IsInitialized())
+		cTarget = pPlayer;
+
+	auto removeFrom = [&](CPlayer* tgt)
+		{
+			if (!tgt || !tgt->IsInitialized())
+				return;
+			tgt->GetBuffManager()->RemoveBlessBuff(pSkillTbldat->tblidx);
+		};
+
+	if (fRadius > 0.0f && cTarget->GetCurWorldCell())
+	{
+		CWorldCell* pCell = cTarget->GetCurWorldCell();
+		CWorldCell::QUADPAGE page = pCell->GetCellQuadPage(cTarget->GetCurLoc());
+		for (int dir = CWorldCell::QUADDIR_SELF; dir <= CWorldCell::QUADDIR_VERTICAL; dir++)
+		{
+			CWorldCell* pSibling = pCell->GetQuadSibling(page, (CWorldCell::QUADDIR)dir);
+			if (!pSibling)
+				continue;
+			CPlayer* pPlr = (CPlayer*)pSibling->GetObjectList()->GetFirst(OBJTYPE_PC);
+			while (pPlr && pPlr->IsInitialized())
+			{
+				if (cTarget->IsInRange(pPlr, fRadius))
+					removeFrom(pPlr);
+				pPlr = (CPlayer*)pSibling->GetObjectList()->GetNext(pPlr->GetWorldCellObjectLinker());
+			}
+		}
+	}
+	else
+	{
+		removeFrom(cTarget);
 	}
 }
 
@@ -2201,8 +3094,15 @@ ACMD(do_sessioninfo)
 
 	// Get current session counts from the network
 	int currentSessions = app->GetNetwork()->GetSessionList()->GetCurCount();
-	int maxSessions = app->GetNetwork()->GetSessionList()->GetMaxCount();
+	int peakSessions = app->GetNetwork()->GetSessionList()->GetMaxCount();
 	int configMaxSessions = app->m_config.nMaxConnection;
+	int totalCapacity = app->GetSessionCapacity();
+	float configUtil = configMaxSessions > 0 ? (float)currentSessions / (float)configMaxSessions * 100.0f : 0.0f;
+	int availableSlots = configMaxSessions - currentSessions;
+	if (availableSlots < 0)
+	{
+		availableSlots = 0;
+	}
 
 	// Get current player count from ObjectManager
 	size_t playerCount = g_pObjectManager->GetPlayerCount();
@@ -2219,8 +3119,9 @@ ACMD(do_sessioninfo)
 	sprintf_s(szMessage, sizeof(szMessage),
 		"[SESSION INFO - %s (Port: %d)]\n"
 		"Current Sessions: %d\n"
-		"Max Session Capacity: %d\n"
+		"Peak Sessions (since start): %d\n"
 		"Config Max Connections: %d\n"
+		"Total Session Capacity (with headroom): %d\n"
 		"Session Utilization: %.1f%%\n"
 		"Available Slots: %d\n"
 		"Player Objects: %zu\n"
@@ -2231,10 +3132,11 @@ ACMD(do_sessioninfo)
 		"%s",
 		instanceType, serverPort,
 		currentSessions,
-		maxSessions,
+		peakSessions,
 		configMaxSessions,
-		configMaxSessions > 0 ? (float)currentSessions / configMaxSessions * 100.0f : 0.0f,
-		configMaxSessions - currentSessions,
+		totalCapacity,
+		configUtil,
+		availableSlots,
 		playerCount,
 		currentSessions - (int)playerCount,
 		(serverPort == 30009) ? "BUDOKAI SERVER - Monitor tournament session cleanup!" : "Regular game channel",
@@ -2259,9 +3161,8 @@ ACMD(do_sessioninfo)
 	app->Send(pPlayer->GetClientSessionID(), &packet);
 
 	// Also log to console for server admin
-	NTL_PRINT(PRINT_APP, _T("GM %u requested session info: %d/%d sessions active (%.1f%% utilization)"),
-		pPlayer->GetCharID(), currentSessions, configMaxSessions,
-		configMaxSessions > 0 ? (float)currentSessions / configMaxSessions * 100.0f : 0.0f);
+	NTL_PRINT(PRINT_APP, _T("GM %u requested session info: %d active, peak %d, config %d (%.1f%% utilization)"),
+		pPlayer->GetCharID(), currentSessions, peakSessions, configMaxSessions, configUtil);
 }
 
 ACMD(do_sessioncleanup)
@@ -2291,11 +3192,13 @@ ACMD(do_sessioncleanup)
 		"Sessions before cleanup: %d\n"
 		"Sessions after cleanup: %d\n"
 		"Sessions removed: %d\n"
-		"Available slots now: %d",
+		"Configured slots available now: %d\n"
+		"Total capacity (with headroom): %d",
 		sessionsBefore,
 		sessionsAfter,
 		sessionsRemoved,
-		app->GetNetwork()->GetSessionList()->GetMaxCount() - sessionsAfter
+		std::max(0, app->m_config.nMaxConnection - sessionsAfter),
+		app->GetSessionCapacity()
 	);
 
 	// Send system message to the GM
@@ -2344,18 +3247,24 @@ ACMD(do_budokaiinfo)
 	else {
 		// Get session information
 		int currentSessions = app->GetNetwork()->GetSessionList()->GetCurCount();
-		int maxSessions = app->GetNetwork()->GetSessionList()->GetMaxCount();
+		int peakSessions = app->GetNetwork()->GetSessionList()->GetMaxCount();
 		int configMaxSessions = app->m_config.nMaxConnection;
+		int totalCapacity = app->GetSessionCapacity();
 		size_t playerCount = g_pObjectManager->GetPlayerCount();
 		int sessionOverhead = currentSessions - (int)playerCount;
+		int availableSlots = std::max(0, configMaxSessions - currentSessions);
+		float configUtil = configMaxSessions > 0 ? (float)currentSessions / (float)configMaxSessions * 100.0f : 0.0f;
 
 		sprintf_s(szMessage, sizeof(szMessage),
 			"[BUDOKAI TOURNAMENT SERVER]\n"
 			"Server Port: %d (Confirmed)\n"
 			"Current Sessions: %d\n"
+			"Peak Sessions (since start): %d\n"
 			"Current Players: %zu\n"
 			"Session Overhead: %d\n"
-			"Max Capacity: %d\n"
+			"Configured Max Connections: %d\n"
+			"Total Capacity (with headroom): %d\n"
+			"Session Utilization: %.1f%%\n"
 			"Available Slots: %d\n"
 			"\n[BUDOKAI STATUS]\n"
 			"%s"
@@ -2367,10 +3276,13 @@ ACMD(do_budokaiinfo)
 			"- Use @sessioncleanup if needed",
 			serverPort,
 			currentSessions,
+			peakSessions,
 			playerCount,
 			sessionOverhead,
 			configMaxSessions,
-			configMaxSessions - currentSessions,
+			totalCapacity,
+			configUtil,
+			availableSlots,
 			(g_pBudokaiManager) ? "Budokai Manager: ACTIVE" : "Budokai Manager: NULL (Issue?)",
 			(sessionOverhead > 20) ? "CRITICAL: High session overhead!" :
 			(sessionOverhead > 15) ? "WARNING: Elevated session overhead" :
@@ -2909,9 +3821,24 @@ ACMD(do_setlevel2)
 ACMD(do_hide)
 {
 	if (pPlayer->GetStateManager()->IsCharCondition(CHARCOND_TRANSPARENT))
+	{
 		pPlayer->GetStateManager()->RemoveConditionState(CHARCOND_TRANSPARENT, NULL, true);
+		pPlayer->SendCharStateStanding(false);
+		std::vector<CPlayer*> nearbyPlayers;
+		pPlayer->GetPcInRange(200.0f, nearbyPlayers);
+		for (CPlayer* pOther : nearbyPlayers)
+		{
+			if (!pOther || pOther == pPlayer)
+				continue;
+			// Reinsert the GM so players who arrived while hidden receive a fresh spawn packet
+			pPlayer->EncodeInsertPacket(pOther);
+		}
+	}
 	else
+	{
 		pPlayer->GetStateManager()->AddConditionState(CHARCOND_TRANSPARENT, NULL, true);
+		pPlayer->SendCharStateStanding(false);
+	}
 }
 
 ACMD(do_notice)
@@ -3637,6 +4564,117 @@ ACMD(do_warfog)
 		}
 
 		pObj = pNextObj;
+	}
+}
+
+ACMD(do_revealmap)
+{
+	CGameServer* app = (CGameServer*)g_pApp;
+
+	auto sendSystemText = [](CPlayer* receiver, const wchar_t* text)
+	{
+		if (!receiver || !text || !*text)
+			return;
+
+		CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+		sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+		res->wOpCode = GU_SYSTEM_DISPLAY_TEXT;
+		res->byDisplayType = SERVER_TEXT_SYSTEM;
+		res->wMessageLengthInUnicode = (WORD)wcslen(text);
+		wcsncpy_s(res->awchMessage, NTL_MAX_LENGTH_OF_CHAT_MESSAGE + 1, text, _TRUNCATE);
+		packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+		receiver->SendPacket(&packet);
+	};
+
+	pToken->PopToPeek();
+	std::wstring strToken = pToken->PeekNextToken(NULL, &iLine);
+
+	CPlayer* pTarget = pPlayer;
+	if (!strToken.empty())
+	{
+		CPlayer* found = g_pObjectManager->FindByName(strToken.c_str());
+		if (!found || !found->IsInitialized())
+		{
+			sendSystemText(pPlayer, L"[GM] Target player not found or not initialized.");
+			return;
+		}
+		pTarget = found;
+	}
+
+	CWorldMapTable* pWorldMapTable = g_pTableContainer->GetWorldMapTable();
+	if (!pWorldMapTable)
+	{
+		sendSystemText(pPlayer, L"[GM] World map data unavailable.");
+		return;
+	}
+
+	CNtlBitFlagManager flagMgr;
+	if (flagMgr.Create(pTarget->GetWarFogFlag(), NTL_MAX_COUNT_WAR_FOG) == false)
+	{
+		sendSystemText(pPlayer, L"[GM] Failed to prepare war fog buffer.");
+		return;
+	}
+
+	unsigned newlyRevealed = 0;
+	for (CTable::TABLEIT it = pWorldMapTable->Begin(); it != pWorldMapTable->End(); ++it)
+	{
+		sWORLD_MAP_TBLDAT* pWorldEntry = reinterpret_cast<sWORLD_MAP_TBLDAT*>(it->second);
+		if (!pWorldEntry)
+			continue;
+
+		for (int slot = 0; slot < DBO_WORLD_MAP_TABLE_COUNT_WORLD_WARFOG; ++slot)
+		{
+			const WORD warFogIndex = pWorldEntry->wWarfog[slot];
+			if (warFogIndex == INVALID_WORD || warFogIndex == 0)
+				continue;
+			if (warFogIndex >= NTL_MAX_COUNT_WAR_FOG)
+				continue;
+			if (flagMgr.IsSet(warFogIndex))
+				continue;
+
+			if (!flagMgr.Set(warFogIndex))
+				continue;
+
+			CNtlPacket packetQry(sizeof(sGQ_WAR_FOG_UPDATE_REQ));
+			sGQ_WAR_FOG_UPDATE_REQ* resQry = (sGQ_WAR_FOG_UPDATE_REQ*)packetQry.GetPacketData();
+			resQry->wOpCode = GQ_WAR_FOG_UPDATE_REQ;
+			resQry->charID = pTarget->GetCharID();
+			resQry->contentsTblidx = warFogIndex;
+			memcpy(resQry->sInfo.achWarFogFlag, flagMgr.GetRawData(), sizeof(resQry->sInfo.achWarFogFlag));
+			packetQry.SetPacketLen(sizeof(sGQ_WAR_FOG_UPDATE_REQ));
+			app->SendTo(app->GetQueryServerSession(), &packetQry);
+
+			++newlyRevealed;
+		}
+	}
+
+	if (newlyRevealed == 0)
+	{
+		wchar_t msg[NTL_MAX_LENGTH_OF_CHAT_MESSAGE + 1];
+		if (pTarget == pPlayer)
+			swprintf_s(msg, L"[GM] All world maps are already revealed.");
+		else
+			swprintf_s(msg, L"[GM] %ls already has all world maps revealed.", pTarget->GetCharName());
+		sendSystemText(pPlayer, msg);
+		return;
+	}
+
+	sCHAR_WAR_FOG_FLAG updatedFlag = {};
+	memcpy(updatedFlag.achWarFogFlag, flagMgr.GetRawData(), sizeof(updatedFlag.achWarFogFlag));
+	pTarget->SendWarfogInfo(&updatedFlag);
+
+	wchar_t msg[NTL_MAX_LENGTH_OF_CHAT_MESSAGE + 1];
+	if (pTarget == pPlayer)
+		swprintf_s(msg, L"[GM] Revealed %u additional world map sections.", newlyRevealed);
+	else
+		swprintf_s(msg, L"[GM] Revealed %u world map sections for %ls.", newlyRevealed, pTarget->GetCharName());
+	sendSystemText(pPlayer, msg);
+
+	if (pTarget != pPlayer)
+	{
+		wchar_t notify[NTL_MAX_LENGTH_OF_CHAT_MESSAGE + 1];
+		swprintf_s(notify, L"[GM] All world maps revealed by %ls.", pPlayer->GetCharName());
+		sendSystemText(pTarget, notify);
 	}
 }
 
@@ -4475,4 +5513,52 @@ ACMD(do_notify)
 	packet.SetPacketLen(sizeof(sGU_GUILD_GIVE_ZENNY_RES));
 	//app->Send(pPlayer->GetHandle(), &packet);
 	pPlayer->SendPacket(&packet);
+}
+
+//========================================
+// @findteam - Join Team Budokai matchmaking queue
+//========================================
+ACMD(do_budokai_findteam)
+{
+	UNREFERENCED_PARAMETER(iLine);
+	UNREFERENCED_PARAMETER(pToken);
+
+	if (!pPlayer || !pPlayer->IsInitialized())
+		return;
+
+	CGameServer* app = (CGameServer*)g_pApp;
+
+	// Helper function to send system message
+	auto SendMessage = [&](const WCHAR* msg) {
+		CNtlPacket packet(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+		sGU_SYSTEM_DISPLAY_TEXT* res = (sGU_SYSTEM_DISPLAY_TEXT*)packet.GetPacketData();
+		res->wOpCode = GU_SYSTEM_DISPLAY_TEXT;
+		res->byDisplayType = SERVER_TEXT_SYSTEM;
+		NTL_SAFE_WCSCPY(res->awchMessage, msg);
+		packet.SetPacketLen(sizeof(sGU_SYSTEM_DISPLAY_TEXT));
+		pPlayer->SendPacket(&packet);
+		};
+
+	// Check if player already has a party
+	if (pPlayer->GetParty() != NULL)
+	{
+		SendMessage(L"[Budokai Matchmaking] You are already in a party! Leave your party first to use matchmaking.");
+		return;
+	}
+
+	// Check if player is in a valid world (not in dungeon/instance)
+	CWorld* pWorld = pPlayer->GetCurWorld();
+	if (pWorld && pWorld->GetRuleType() != GAMERULE_NORMAL)
+	{
+		SendMessage(L"[Budokai Matchmaking] You can only use matchmaking from normal world zones.");
+		return;
+	}
+
+	// Join the matchmaking queue
+	g_pBudokaiManager->JoinMatchmakingQueue(pPlayer);
+
+	// Send confirmation message
+	SendMessage(L"[Budokai Matchmaking] You have joined the queue! You will be notified when a team of 5 players is formed.");
+
+	ERR_LOG(LOG_USER, "[MATCHMAKING] Player %u used @findteam command", (unsigned)pPlayer->GetCharID());
 }

@@ -15,11 +15,21 @@ int CClientSession::OnAccept()
 	
 	// Check session capacity and log current status for debugging
 	int currentSessions = app->GetNetwork()->GetSessionList()->GetCurCount();
-	int maxSessions = app->GetNetwork()->GetSessionList()->GetMaxCount();
-	
-	NTL_PRINT(PRINT_APP, "CClientSession::OnAccept() - Session %u connecting. Sessions: %d/%d (%.1f%%)", 
-		GetHandle(), currentSessions, maxSessions, 
-		maxSessions > 0 ? (float)currentSessions / maxSessions * 100.0f : 0.0f);
+	int peakSessions = app->GetNetwork()->GetSessionList()->GetMaxCount(); // historical peak
+	int configMax = app->m_config.nMaxConnection;
+	int totalCapacity = app->GetSessionCapacity();
+	float configUtil = configMax > 0 ? (float)currentSessions / (float)configMax * 100.0f : 0.0f;
+	float capacityUtil = totalCapacity > 0 ? (float)currentSessions / (float)totalCapacity * 100.0f : 0.0f;
+
+	NTL_PRINT(PRINT_APP,
+		"CClientSession::OnAccept() - Session %u connecting. Active:%d | Peak:%d | ConfigCap:%d | Capacity:%d | Util(Config)=%.1f%% Util(Headroom)=%.1f%%",
+		GetHandle(),
+		currentSessions,
+		peakSessions,
+		configMax,
+		totalCapacity,
+		configUtil,
+		capacityUtil);
 	
 	//NTL_PRINT(PRINT_APP, "CClientSession::OnAccept() \n");
 	cPlayer = NULL;

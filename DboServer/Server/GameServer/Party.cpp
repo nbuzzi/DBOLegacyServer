@@ -14,7 +14,8 @@
 #include "ItemDrop.h"
 #include "DiceManager.h"
 #include "HelperNpcManager.h"
-
+#include "BattlePassManager.h" // Battle Pass dungeon clear hook
+#include "DungeonConfig.h" // CCBD boss-only mode
 
 
 CPartyManager::CPartyManager()
@@ -514,7 +515,8 @@ void CParty::LeaveParty(CPlayer* player)
 
 	if(m_byMemberInfoCount == 1) //delete party if last member leaves
 	{
-		g_pPartyManager->DisbandParty(this);
+		// Don't delete 'this' from within member function - let the caller handle it
+		// Just return and signal that the party should be disbanded
 		return;
 	}
 
@@ -1829,16 +1831,31 @@ void CParty::DecidePartySelect()
 					WORLDID destWorldID = pWorld->GetTbldat()->outWorldTblidx;
 
 					g_pItemManager->CreateItem(pPlayer, m_rewardItemIdx, 1);
+
+					// FEATURE: BattlePass dungeon clear XP (CCBD) – award once when party exits after final stage
+					if (g_pBattlePassManager && g_pBattlePassManager->IsEnabled() && g_pBattlePassManager->IsMasterEnabled() && pPlayer && m_bLastStage)
+					{
+						// Pass 0 for dungeonId until real ID wiring is implemented
+						g_pBattlePassManager->OnDungeonClear(pPlayer, 0);
+					}
+					
 					pPlayer->StartTeleport(destLoc, pPlayer->GetCurDir(), destWorldID, TELEPORT_TYPE_WORLD_MOVE);
 
 				}
 			}
 			else
 			{
-				CNtlVector destLoc(g_pTableContainer->GetServerConfigTable()->GetServerConfigData()->sBattleDungeonData.sEnterLoc_NormalStage.sLoc);
-				CNtlVector destDir(g_pTableContainer->GetServerConfigTable()->GetServerConfigData()->sBattleDungeonData.sEnterLoc_NormalStage.sDir);
+				if (g_pDungeonConfig && g_pDungeonConfig->IsCCBDBossOnlyModeEnabled())
+				{
+					NTL_PRINT(PRINT_APP, "[CCBD Boss Mode] Skip normal stage teleport for player %u", pPlayer->GetCharID());
+				}
+				else
+				{
+					CNtlVector destLoc(g_pTableContainer->GetServerConfigTable()->GetServerConfigData()->sBattleDungeonData.sEnterLoc_NormalStage.sLoc);
+					CNtlVector destDir(g_pTableContainer->GetServerConfigTable()->GetServerConfigData()->sBattleDungeonData.sEnterLoc_NormalStage.sDir);
 
-				pPlayer->StartTeleport(destLoc, destDir, pPlayer->GetWorldID(), TELEPORT_TYPE_DEFAULT, g_pTableContainer->GetServerConfigTable()->GetServerConfigData()->sBattleDungeonData.directPlay_StageChange, true);
+					pPlayer->StartTeleport(destLoc, destDir, pPlayer->GetWorldID(), TELEPORT_TYPE_DEFAULT, g_pTableContainer->GetServerConfigTable()->GetServerConfigData()->sBattleDungeonData.directPlay_StageChange, true);
+				}
 			}
 		}
 	}

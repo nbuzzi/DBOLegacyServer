@@ -7,6 +7,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
+#include <map>
 
 class CMonster;
 class CCharacter;
@@ -40,11 +41,12 @@ public:
         float blockDmg;    // multiplier for BlockDamageRate
         float guardRate;   // multiplier for GuardRate
         int sizeRate;      // absolute size rate (client expects BYTE 1..20 typically, default 10)
+        bool restoreHP;    // if true, restore HP to 100% when applying this modifier (default false)
 
         Modifiers()
             : hp(1.f), physAtk(1.f), engAtk(1.f), physDef(1.f), engDef(1.f),
               atkSpd(1.f), runSpd(1.f), physCrit(1.f), engCrit(1.f), physCritDmg(1.f), engCritDmg(1.f),
-              attackRate(1.f), dodgeRate(1.f), blockRate(1.f), blockDmg(1.f), guardRate(1.f), sizeRate(0) {}
+              attackRate(1.f), dodgeRate(1.f), blockRate(1.f), blockDmg(1.f), guardRate(1.f), sizeRate(0), restoreHP(false) {}
         bool IsIdentity() const
         {
             return hp == 1.f && physAtk == 1.f && engAtk == 1.f && physDef == 1.f && engDef == 1.f &&
@@ -108,6 +110,10 @@ private:
     void CreateStackedDrop(CMonster *pMob, CCharacter *pPlayer, unsigned int dropId, BYTE count);
     bool LoadConfigInternal(const char *path);
     void ApplyAutoStartPolicy();
+    void ApplyModifierDelta(CMonster *pMob, const Modifiers &mod, bool preserveHpRatio);
+    bool TryGetPhaseModifiers(CMonster *pMob, BYTE phase, Modifiers &outMod) const;
+    bool ApplyBuffList(CMonster *pMob, const std::vector<BuffEntry> &entries) const;
+    void ApplyPhaseBuffUpgrade(CMonster *pMob, BYTE targetPhase);
 
 public:
     bool m_bOn;
@@ -119,9 +125,11 @@ public:
     void Update(CMonster *pMob, CCharacter *pPlayer);
     bool ReloadConfig(const char *path = ".\\config\\CustomDropEvent.cfg");
     void ApplyModifiers(CMonster *pMob);
+    void ApplyModifiersWithPhase(CMonster *pMob, BYTE byPhase);
     void ApplyBuffs(CMonster *pMob);
     void ApplyTitles(CMonster *pMob);
     void ApplyVisuals(CMonster *pMob);
+    void CheckAndUpdateWorldPhaseFromBossHP(CMonster *pBossMob);
     void SetAllowChainSpawns(bool allow) { m_allowChainSpawns = allow; }
     bool IsAllowChainSpawns() const { return m_allowChainSpawns; }
     void SetTotemHealMultiplier(float mul) { m_totemHealMultiplier = mul; }
@@ -133,6 +141,11 @@ public:
     bool IsDebuffImmunityEnabled() const { return m_debuffImmuneEnabled; }
     bool IsDebuffEffectBlocked(int code) const { return m_blockDebuffEffects.find(code) != m_blockDebuffEffects.end(); }
     size_t GetBlockedDebuffEffectCount() const { return m_blockDebuffEffects.size(); }
+    // Always-on mode (24/7 enabled, no time expiry)
+    void SetAlwaysOn(bool on) { m_alwaysOn = on; }
+    bool IsAlwaysOn() const { return m_alwaysOn; }
+    // Check if a mob has autophase configuration (for phase system)
+    bool HasAutoPhaseConfig(unsigned int mobTblidx) const;
 
 private:
     DBOTIME m_timeStart;
@@ -144,10 +157,14 @@ private:
     std::unordered_map<unsigned int, std::vector<DropEntry>> m_mobDrops;
     // mob tblidx -> modifiers
     std::unordered_map<unsigned int, Modifiers> m_mobMods;
+    // mob tblidx -> phase -> modifiers (phase-aware progressive difficulty)
+    std::unordered_map<unsigned int, std::unordered_map<BYTE, Modifiers>> m_mobModsByPhase;
     // mob tblidx -> spawn entries
     std::unordered_map<unsigned int, std::vector<SpawnEntry>> m_mobSpawns;
     // mob tblidx -> buff entries
     std::unordered_map<unsigned int, std::vector<BuffEntry>> m_mobBuffs;
+    // mob tblidx -> phase -> buff entries (applied when world difficulty reaches the phase)
+    std::unordered_map<unsigned int, std::unordered_map<BYTE, std::vector<BuffEntry>>> m_mobBuffsByPhase;
     // mob tblidx -> title entries (attribute effects from CharTitleTable applied to mobs)
     std::unordered_map<unsigned int, std::vector<TBLIDX>> m_mobTitles;
     // mob tblidx -> visual system effects to broadcast to clients (purely visual)
@@ -192,6 +209,15 @@ private:
     bool m_autoStartAllChannels;         // if true, applies to all channels
     std::unordered_set<BYTE> m_autoStartChannels; // specific channels which should auto-start
     bool m_autoStartPending;             // schedule StartEvent() on the next TickProcess
+    bool m_alwaysOn;                     // if true, always enabled (24/7 mode, no time expiry)
+
+    // Automatic phase transition configuration: mobId -> HP% -> Phase
+    // Example: mobId=68131410 at 90% HP → phase 1, at 70% HP → phase 2, at 50% HP → phase 3
+    std::unordered_map<unsigned int, std::map<int, BYTE>> m_autoPhaseTransitions;
+    // Track highest difficulty phase modifiers applied per mob handle
+    std::unordered_map<HOBJECT, BYTE> m_phaseModifierProgress;
+    // Track highest difficulty phase buffs applied per mob handle
+    std::unordered_map<HOBJECT, BYTE> m_phaseBuffProgress;
 
 public:
     // Returns replacement mob tblidx for given source, or 0 if none configured or exempted
@@ -218,6 +244,7 @@ public:
 
 private:
     bool LoadLevelsSidecar(const char* cfgPath);
+    bool TryResolveAutoPhase(unsigned int mobTblidx, DWORD curLP, DWORD maxLP, BYTE& outPhase) const;
 };
 
 #define GetCustomDropEvent() CCustomDropEvent::GetInstance()

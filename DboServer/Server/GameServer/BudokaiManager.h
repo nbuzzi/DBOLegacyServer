@@ -182,6 +182,15 @@ public:
 	BYTE                                GetMajorMatchMaxScore() const { return m_byMajorMatchMaxScore; }
 	BYTE                                GetFinalMatchMaxScore() const { return m_byFinalMatchMaxScore; }
 
+	void                                SetTeamMaxMembers(BYTE v);
+	BYTE                                GetTeamMaxMembers() const { return m_byTeamMaxMembers; }
+
+	// Schedule configuration
+	void                                SetAdultSoloSchedule(BYTE wday, BYTE hour);
+	void                                SetJuniorSoloSchedule(BYTE wday, BYTE hour);
+	void                                SetAdultPartySchedule(BYTE wday, BYTE hour);
+	void                                SetJuniorPartySchedule(BYTE wday, BYTE hour);
+
 	CBudokaiManager();
 	virtual ~CBudokaiManager();
 
@@ -348,6 +357,11 @@ public:
 	// Returns true if a teleport was initiated.
 	bool								TryRejoinPlayer(CPlayer* pPlayer);
 
+	// Random party matchmaking for Team Budokai
+	void								JoinMatchmakingQueue(CPlayer* pPlayer);
+	void								LeaveMatchmakingQueue(CHARACTERID charId);
+	void								ProcessMatchmakingQueue();
+
 private:
 
 	void								SetIndividualTeamType(CHARACTERID charId, TEAMTYPE teamType);
@@ -401,6 +415,18 @@ private:
 
 	std::map<JOINID, sBUDOKAI_JOIN_INFO>							m_mapJoinInfo;
 
+	// Random party matchmaking queue for Team Budokai
+	struct sMATCHMAKING_PLAYER
+	{
+		CHARACTERID		charId;
+		HOBJECT			hPlayer;
+		DWORD			dwQueueTimestamp;
+
+		sMATCHMAKING_PLAYER(CHARACTERID cid, HOBJECT hnd, DWORD ts)
+			: charId(cid), hPlayer(hnd), dwQueueTimestamp(ts) {}
+	};
+	std::vector<sMATCHMAKING_PLAYER>								m_vecMatchmakingQueue;
+
 	// ----
 
 	BYTE								m_byDojoRecommenders;	//amount of players which go straight to tournament without participating in prelim
@@ -430,6 +456,21 @@ private:
 	// Configurable caps (defaults aligned with legacy)
 	BYTE                                m_byMajorMatchMaxScore = 3;
 	BYTE                                m_byFinalMatchMaxScore = 4;
+	BYTE                                m_byTeamMaxMembers = NTL_MAX_MEMBER_IN_PARTY; // Default to 5
+
+	// Schedule configuration (wday: 0=Sunday, 1=Monday, ..., 6=Saturday)
+	// Adult Solo: Up to 9 time slots (use 255 for unused slots)
+	BYTE                                m_byAdultSoloWday[9] = {6, 4, 255, 255, 255, 255, 255, 255, 255};
+	BYTE                                m_byAdultSoloHour[9] = {18, 23, 0, 0, 0, 0, 0, 0, 0};
+	// Junior Solo: Single time slot
+	BYTE                                m_byJuniorSoloWday = 2;
+	BYTE                                m_byJuniorSoloHour = 14;
+	// Adult Party: Up to 3 time slots (use 255 for unused slots)
+	BYTE                                m_byAdultPartyWday[3] = {0, 255, 255};
+	BYTE                                m_byAdultPartyHour[3] = {13, 0, 0};
+	// Junior Party: Single time slot
+	BYTE                                m_byJuniorPartyWday = 5;
+	BYTE                                m_byJuniorPartyHour = 17;
 
 };
 

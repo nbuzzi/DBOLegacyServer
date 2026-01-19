@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Text;
 using System.Linq;
 using System.IO.Compression;
@@ -8,6 +9,13 @@ using RdfTableEditor.Model.Schema;
 
 public static class BinaryTableIO
 {
+    private static readonly Encoding AnsiEncoding;
+
+    static BinaryTableIO()
+    {
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        AnsiEncoding = Encoding.GetEncoding(949); // Korean (CP949) used by DBO assets
+    }
     // Entry point: read a table according to schema, handling special cases
     public static RdfDocument Read(Stream stream, TableSchema schema)
     {
@@ -429,7 +437,7 @@ public static class BinaryTableIO
                 }
             }
         }
-    doc = new RdfDocument { TableName = "TextAll" };
+        doc = new RdfDocument { TableName = "TextAll" };
         return false;
     }
 
@@ -459,7 +467,14 @@ public static class BinaryTableIO
                         {
                             var arr = ReadArray(br, f.Length, () => br.ReadByte());
                             row.SetArray(f.Name, arr);
-                            offset += f.Length * 1;
+                            offset += f.Length;
+                            break;
+                        }
+                        case ScalarType.S8:
+                        {
+                            var arr = ReadArray(br, f.Length, () => br.ReadSByte());
+                            row.SetArray(f.Name, arr);
+                            offset += f.Length;
                             break;
                         }
                         case ScalarType.U16:
@@ -469,9 +484,23 @@ public static class BinaryTableIO
                             offset += f.Length * 2;
                             break;
                         }
+                        case ScalarType.S16:
+                        {
+                            var arr = ReadArray(br, f.Length, () => br.ReadInt16());
+                            row.SetArray(f.Name, arr);
+                            offset += f.Length * 2;
+                            break;
+                        }
                         case ScalarType.U32:
                         {
                             var arr = ReadArray(br, f.Length, () => br.ReadUInt32());
+                            row.SetArray(f.Name, arr);
+                            offset += f.Length * 4;
+                            break;
+                        }
+                        case ScalarType.S32:
+                        {
+                            var arr = ReadArray(br, f.Length, () => br.ReadInt32());
                             row.SetArray(f.Name, arr);
                             offset += f.Length * 4;
                             break;
@@ -501,10 +530,16 @@ public static class BinaryTableIO
                         case ScalarType.U8:
                         case ScalarType.Bool:
                             row.SetScalar(f.Name, br.ReadByte()); offset += 1; break;
+                        case ScalarType.S8:
+                            row.SetScalar(f.Name, br.ReadSByte()); offset += 1; break;
                         case ScalarType.U16:
                             row.SetScalar(f.Name, br.ReadUInt16()); offset += 2; break;
+                        case ScalarType.S16:
+                            row.SetScalar(f.Name, br.ReadInt16()); offset += 2; break;
                         case ScalarType.U32:
                             row.SetScalar(f.Name, br.ReadUInt32()); offset += 4; break;
+                        case ScalarType.S32:
+                            row.SetScalar(f.Name, br.ReadInt32()); offset += 4; break;
                         case ScalarType.Float:
                             row.SetScalar(f.Name, br.ReadSingle()); offset += 4; break;
                         case ScalarType.Double:
@@ -599,11 +634,20 @@ public static class BinaryTableIO
                     case ScalarType.Bool:
                         foreach (var v in row.GetArray<byte>(f.Name, f.Length)) { bw.Write(v); offset += 1; }
                         break;
+                    case ScalarType.S8:
+                        foreach (var v in row.GetArray<sbyte>(f.Name, f.Length)) { bw.Write(v); offset += 1; }
+                        break;
                     case ScalarType.U16:
                         foreach (var v in row.GetArray<ushort>(f.Name, f.Length)) { bw.Write(v); offset += 2; }
                         break;
+                    case ScalarType.S16:
+                        foreach (var v in row.GetArray<short>(f.Name, f.Length)) { bw.Write(v); offset += 2; }
+                        break;
                     case ScalarType.U32:
                         foreach (var v in row.GetArray<uint>(f.Name, f.Length)) { bw.Write(v); offset += 4; }
+                        break;
+                    case ScalarType.S32:
+                        foreach (var v in row.GetArray<int>(f.Name, f.Length)) { bw.Write(v); offset += 4; }
                         break;
                     case ScalarType.Float:
                         foreach (var v in row.GetArray<float>(f.Name, f.Length)) { bw.Write(v); offset += 4; }
@@ -622,10 +666,16 @@ public static class BinaryTableIO
                     case ScalarType.U8:
                     case ScalarType.Bool:
                         bw.Write(Convert.ToByte(row.GetScalarOrDefault(f.Name, (byte)0))); offset += 1; break;
+                    case ScalarType.S8:
+                        bw.Write(Convert.ToSByte(row.GetScalarOrDefault(f.Name, (sbyte)0))); offset += 1; break;
                     case ScalarType.U16:
                         bw.Write(Convert.ToUInt16(row.GetScalarOrDefault(f.Name, (ushort)0))); offset += 2; break;
+                    case ScalarType.S16:
+                        bw.Write(Convert.ToInt16(row.GetScalarOrDefault(f.Name, (short)0))); offset += 2; break;
                     case ScalarType.U32:
                         bw.Write(Convert.ToUInt32(row.GetScalarOrDefault(f.Name, 0u))); offset += 4; break;
+                    case ScalarType.S32:
+                        bw.Write(Convert.ToInt32(row.GetScalarOrDefault(f.Name, 0))); offset += 4; break;
                     case ScalarType.Float:
                         bw.Write(Convert.ToSingle(row.GetScalarOrDefault(f.Name, 0f))); offset += 4; break;
                     case ScalarType.Double:
@@ -681,225 +731,328 @@ public static class BinaryTableIO
 
     private static void DetectItemNameTextVariant(BinaryReader br, TableSchema schema, RdfDocument doc)
     {
-        // Probe variable-length first: does a plausible WORD length + chars keep alignment?
         long start = br.BaseStream.Position;
-        long fileLen = br.BaseStream.Length;
-        try
-        {
-            br.BaseStream.Position = schema.HasMargin ? 1 : 0;
-            int rows = 0;
-            while (br.BaseStream.Position < fileLen)
-            {
-                long rowStart = br.BaseStream.Position;
-                int offset = 0;
-                foreach (var f in schema.Fields)
-                {
-                    int elemAlign = Math.Min(GetScalarAlignment(f), schema.PackAlignment);
-                    int pad = Padding(offset, elemAlign);
-                    if (pad > 0) { if (rowStart + offset + pad > fileLen) throw new EndOfStreamException(); br.BaseStream.Position += pad; offset += pad; }
 
-                    if (f.IsArray)
-                    {
-                        int sz = f.Type switch
-                        {
-                            ScalarType.U8 or ScalarType.Bool => 1,
-                            ScalarType.U16 => 2,
-                            ScalarType.U32 => 4,
-                            ScalarType.Float => 4,
-                            ScalarType.Double => 8,
-                            _ => 0
-                        };
-                        int need = sz * f.Length;
-                        if (rowStart + offset + need > fileLen) throw new EndOfStreamException();
-                        br.BaseStream.Position += need; offset += need;
-                    }
-                    else
-                    {
-                        if (string.Equals(f.Name, "NameText", StringComparison.Ordinal))
-                        {
-                            // Try variable WORD length
-                            if (rowStart + offset + 2 > fileLen) throw new EndOfStreamException();
-                            ushort wlen = br.ReadUInt16(); offset += 2;
-                            int need = wlen * 2;
-                            if (wlen > 300 || rowStart + offset + need > fileLen) throw new EndOfStreamException();
-                            br.BaseStream.Position += need; offset += need;
-                        }
-                        else
-                        {
-                            switch (f.Type)
-                            {
-                                case ScalarType.U8:
-                                case ScalarType.Bool:
-                                    if (rowStart + offset + 1 > fileLen) throw new EndOfStreamException();
-                                    br.BaseStream.Position += 1; offset += 1; break;
-                                case ScalarType.U16:
-                                    if (rowStart + offset + 2 > fileLen) throw new EndOfStreamException();
-                                    br.BaseStream.Position += 2; offset += 2; break;
-                                case ScalarType.U32:
-                                case ScalarType.Float:
-                                    if (rowStart + offset + 4 > fileLen) throw new EndOfStreamException();
-                                    br.BaseStream.Position += 4; offset += 4; break;
-                                case ScalarType.Double:
-                                    if (rowStart + offset + 8 > fileLen) throw new EndOfStreamException();
-                                    br.BaseStream.Position += 8; offset += 8; break;
-                                case ScalarType.AnsiStringFixed:
-                                {
-                                    int need = f.Length;
-                                    if (rowStart + offset + need > fileLen) throw new EndOfStreamException();
-                                    br.BaseStream.Position += need; offset += need; break;
-                                }
-                                case ScalarType.WStringFixed:
-                                {
-                                    int need = f.Length * 2;
-                                    if (rowStart + offset + need > fileLen) throw new EndOfStreamException();
-                                    br.BaseStream.Position += need; offset += need; break;
-                                }
-                                case ScalarType.WStringVar:
-                                {
-                                    if (rowStart + offset + 2 > fileLen) throw new EndOfStreamException();
-                                    var len = br.ReadUInt16(); offset += 2;
-                                    int need = len * 2;
-                                    if (rowStart + offset + need > fileLen) throw new EndOfStreamException();
-                                    br.BaseStream.Position += need; offset += need; break;
-                                }
-                            }
-                        }
-                    }
-                }
-                int tail = Padding(offset, schema.PackAlignment);
-                if (tail > 0)
+        int primaryHint = PeekItemNameLength(br, schema);
+        bool allowVariable = primaryHint < 0 || primaryHint <= 512;
+
+        var candidates = new List<ItemNameVariant>(3);
+        if (allowVariable)
+            candidates.Add(new ItemNameVariant("Variable", true, null));
+        candidates.Add(new ItemNameVariant("Fixed41", false, 41));
+        candidates.Add(new ItemNameVariant("Fixed65", false, 65));
+
+        ItemVariantStats? bestStats = null;
+        ItemNameVariant? bestVariant = null;
+
+        foreach (var candidate in candidates)
+        {
+            var stats = ProbeItemVariant(br, schema, candidate);
+            if (!stats.Success)
+                continue;
+
+            if (!candidate.IsVar)
+            {
+                int stride = EstimateRowStride(schema, candidate);
+                if (stride > 0 && stats.RowsRead > 0)
                 {
-                    if (rowStart + offset + tail > fileLen) throw new EndOfStreamException();
-                    br.BaseStream.Position += tail; offset += tail;
+                    double diff = Math.Abs(stats.AverageRowSize - stride);
+                    if (diff <= 4)
+                        stats.Score += 15.0;
+                    else if (diff <= 12)
+                        stats.Score += 8.0;
+                    else
+                        stats.Score -= diff * 2.5;
+
+                    if (stats.RowSizeMax - stats.RowSizeMin > 4)
+                        stats.Score -= 20.0;
                 }
-                rows++;
-                if (rows > 500000) break;
             }
-            // If we reached here without errors, variable-length seems plausible
-            doc.ItemNameTextIsVar = true;
-            doc.ItemNameTextChars = null;
+            else
+            {
+                if (!allowVariable)
+                    stats.Score -= 400.0;
+                else if (primaryHint > 512)
+                    stats.Score -= 200.0;
+            }
+
+            if (bestStats == null || stats.Score > bestStats.Score)
+            {
+                bestStats = stats;
+                bestVariant = candidate;
+            }
+        }
+
+        if (bestVariant == null)
+        {
+            doc.ItemNameTextIsVar = false;
+            doc.ItemNameTextChars = 41;
+            doc.ItemNameTextAnsiFallback = false;
             br.BaseStream.Position = start;
             return;
         }
-        catch
-        {
-            // Fall through to fixed-length probe
-        }
 
-        int[] candidates = new[] { 41, 65 };
-        int best = 41; int bestRows = -1;
-        foreach (var cand in candidates)
-        {
-            try
-            {
-                br.BaseStream.Position = schema.HasMargin ? 1 : 0;
-                int rows = 0;
-                while (br.BaseStream.Position < fileLen)
-                {
-                    long rowStart = br.BaseStream.Position; int offset = 0;
-                    foreach (var f in schema.Fields)
-                    {
-                        int elemAlign = Math.Min(GetScalarAlignment(f), schema.PackAlignment);
-                        int pad = Padding(offset, elemAlign);
-                        if (pad > 0) { if (rowStart + offset + pad > fileLen) throw new EndOfStreamException(); br.BaseStream.Position += pad; offset += pad; }
-                        if (f.IsArray)
-                        {
-                            int sz = f.Type switch
-                            {
-                                ScalarType.U8 or ScalarType.Bool => 1,
-                                ScalarType.U16 => 2,
-                                ScalarType.U32 => 4,
-                                ScalarType.Float => 4,
-                                ScalarType.Double => 8,
-                                _ => 0
-                            };
-                            int need = sz * f.Length;
-                            if (rowStart + offset + need > fileLen) throw new EndOfStreamException();
-                            br.BaseStream.Position += need; offset += need;
-                        }
-                        else
-                        {
-                            if (string.Equals(f.Name, "NameText", StringComparison.Ordinal))
-                            {
-                                int need = cand * 2;
-                                if (rowStart + offset + need > fileLen) throw new EndOfStreamException();
-                                br.BaseStream.Position += need; offset += need;
-                            }
-                            else
-                            {
-                                switch (f.Type)
-                                {
-                                    case ScalarType.U8:
-                                    case ScalarType.Bool:
-                                        if (rowStart + offset + 1 > fileLen) throw new EndOfStreamException();
-                                        br.BaseStream.Position += 1; offset += 1; break;
-                                    case ScalarType.U16:
-                                        if (rowStart + offset + 2 > fileLen) throw new EndOfStreamException();
-                                        br.BaseStream.Position += 2; offset += 2; break;
-                                    case ScalarType.U32:
-                                    case ScalarType.Float:
-                                        if (rowStart + offset + 4 > fileLen) throw new EndOfStreamException();
-                                        br.BaseStream.Position += 4; offset += 4; break;
-                                    case ScalarType.Double:
-                                        if (rowStart + offset + 8 > fileLen) throw new EndOfStreamException();
-                                        br.BaseStream.Position += 8; offset += 8; break;
-                                    case ScalarType.AnsiStringFixed:
-                                    {
-                                        int need = f.Length;
-                                        if (rowStart + offset + need > fileLen) throw new EndOfStreamException();
-                                        br.BaseStream.Position += need; offset += need; break;
-                                    }
-                                    case ScalarType.WStringFixed:
-                                    {
-                                        int need = f.Length * 2;
-                                        if (rowStart + offset + need > fileLen) throw new EndOfStreamException();
-                                        br.BaseStream.Position += need; offset += need; break;
-                                    }
-                                    case ScalarType.WStringVar:
-                                    {
-                                        if (rowStart + offset + 2 > fileLen) throw new EndOfStreamException();
-                                        var len = br.ReadUInt16(); offset += 2;
-                                        int need = len * 2;
-                                        if (rowStart + offset + need > fileLen) throw new EndOfStreamException();
-                                        br.BaseStream.Position += need; offset += need; break;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    int tail = Padding(offset, schema.PackAlignment);
-                    if (tail > 0)
-                    { if (rowStart + offset + tail > fileLen) throw new EndOfStreamException(); br.BaseStream.Position += tail; offset += tail; }
-                    rows++;
-                    if (rows > 500000) break;
-                }
-                if (rows > bestRows) { bestRows = rows; best = cand; }
-            }
-            catch { }
-        }
-        doc.ItemNameTextIsVar = false;
-        doc.ItemNameTextChars = best;
+        doc.ItemNameTextIsVar = bestVariant.IsVar;
+        doc.ItemNameTextChars = bestVariant.FixedChars;
+        doc.ItemNameTextAnsiFallback = false;
         br.BaseStream.Position = start;
     }
 
-    private static int GetScalarSize(Field f) => f.Type switch
+    private sealed record ItemNameVariant(string Name, bool IsVar, int? FixedChars);
+
+    private sealed class ItemVariantStats
     {
-        ScalarType.U8 or ScalarType.Bool => 1,
-        ScalarType.U16 => 2,
-        ScalarType.U32 => 4,
-        ScalarType.Float => 4,
-        ScalarType.Double => 8,
-        ScalarType.WStringFixed => f.Length * 2,
-        ScalarType.WStringVar => 2, // length prefix only
-        ScalarType.AnsiStringFixed => f.Length,
-        _ => 1
-    };
+        public bool Success { get; set; }
+        public int RowsRead { get; set; }
+        public int ValidTblidx { get; set; }
+        public int InvalidTblidx { get; set; }
+        public int MonotonicTransitions { get; set; }
+        public double IconPrintableRatio { get; set; }
+        public double Score { get; set; }
+        public long BytesConsumed { get; set; }
+        public int RowSizeMin { get; set; } = int.MaxValue;
+        public int RowSizeMax { get; set; }
+        public double AverageRowSize { get; set; }
+    }
+
+    private static ItemVariantStats ProbeItemVariant(BinaryReader br, TableSchema schema, ItemNameVariant variant, int sampleRows = 128)
+    {
+        long savedPos = br.BaseStream.Position;
+        long rowStartPos = schema.HasMargin ? 1 : 0;
+        if (rowStartPos > br.BaseStream.Length)
+            rowStartPos = br.BaseStream.Length;
+
+        br.BaseStream.Position = rowStartPos;
+
+        var stats = new ItemVariantStats();
+        var probeDoc = new RdfDocument
+        {
+            TableName = schema.Name,
+            ItemNameTextIsVar = variant.IsVar,
+            ItemNameTextChars = variant.FixedChars
+        };
+
+        uint prevTbl = 0;
+        bool havePrev = false;
+        int printableTotal = 0;
+        int printableValid = 0;
+        bool parseFailed = false;
+
+        for (int i = 0; i < sampleRows && br.BaseStream.Position < br.BaseStream.Length; i++)
+        {
+            var row = new RdfRow();
+            long before = br.BaseStream.Position;
+            if (!TryReadRow(br, schema, row, probeDoc))
+            {
+                parseFailed = true;
+                break;
+            }
+
+            stats.RowsRead++;
+
+            int rowBytes = (int)(br.BaseStream.Position - before);
+            stats.BytesConsumed += rowBytes;
+            if (rowBytes < stats.RowSizeMin) stats.RowSizeMin = rowBytes;
+            if (rowBytes > stats.RowSizeMax) stats.RowSizeMax = rowBytes;
+
+            if (row.TryGetScalar<uint>("Tblidx", out var tbl))
+            {
+                if (tbl > 0 && tbl < 1_000_000_000)
+                {
+                    stats.ValidTblidx++;
+                    if (havePrev && tbl >= prevTbl)
+                        stats.MonotonicTransitions++;
+                    prevTbl = tbl;
+                    havePrev = true;
+                }
+                else
+                {
+                    stats.InvalidTblidx++;
+                }
+            }
+            else
+            {
+                stats.InvalidTblidx++;
+            }
+
+            if (row.TryGetScalar<string>("Icon_Name", out var icon) && !string.IsNullOrEmpty(icon))
+            {
+                printableTotal += icon.Length;
+                printableValid += icon.Count(ch => ch >= 0x20 && ch < 0x7F);
+            }
+
+            if (br.BaseStream.Position == before)
+            {
+                parseFailed = true;
+                break;
+            }
+        }
+
+        if (printableTotal > 0)
+            stats.IconPrintableRatio = (double)printableValid / printableTotal;
+
+        if (stats.RowSizeMin == int.MaxValue)
+            stats.RowSizeMin = 0;
+        if (stats.RowsRead > 0)
+            stats.AverageRowSize = stats.BytesConsumed / (double)stats.RowsRead;
+
+        if (parseFailed)
+        {
+            stats.Success = false;
+        }
+        else if (stats.RowsRead == 0)
+        {
+            stats.Success = false;
+        }
+        else if (stats.ValidTblidx == 0)
+        {
+            stats.Success = false;
+        }
+        else if (stats.ValidTblidx < Math.Max(2, stats.RowsRead / 4))
+        {
+            stats.Success = false;
+        }
+        else if (stats.ValidTblidx > 1 && stats.MonotonicTransitions < (stats.ValidTblidx - 1) / 2)
+        {
+            stats.Success = false;
+        }
+        else
+        {
+            stats.Success = true;
+        }
+
+        double score;
+        if (stats.Success)
+        {
+            double monotonicRatio = stats.ValidTblidx > 1
+                ? (double)stats.MonotonicTransitions / (stats.ValidTblidx - 1)
+                : 0.0;
+            score = stats.ValidTblidx * 4;
+            score += stats.RowsRead;
+            score += monotonicRatio * 25.0;
+            if (stats.IconPrintableRatio > 0.6)
+                score += stats.IconPrintableRatio * 10.0;
+            score -= stats.InvalidTblidx * 6;
+            if (variant.IsVar)
+                score += 1.0;
+        }
+        else
+        {
+            score = double.NegativeInfinity;
+        }
+
+        stats.Score = score;
+
+        br.BaseStream.Position = savedPos;
+        return stats;
+    }
+
+    private static int PeekItemNameLength(BinaryReader br, TableSchema schema)
+    {
+        long saved = br.BaseStream.Position;
+        long basePos = schema.HasMargin ? 1 : 0;
+        if (basePos >= br.BaseStream.Length)
+            return -1;
+
+        if (TryComputeItemNameOffset(schema, out int offset))
+        {
+            long target = basePos + offset;
+            if (target + 2 <= br.BaseStream.Length)
+            {
+                br.BaseStream.Position = target;
+                ushort len = br.ReadUInt16();
+                br.BaseStream.Position = saved;
+                return len;
+            }
+        }
+
+        br.BaseStream.Position = saved;
+        return -1;
+    }
+
+    private static bool TryComputeItemNameOffset(TableSchema schema, out int offset)
+    {
+        offset = 0;
+        foreach (var field in schema.Fields)
+        {
+            int align = Math.Min(GetScalarAlignment(field), schema.PackAlignment);
+            offset += Padding(offset, align);
+
+            if (IsItemNameField(field))
+                return true;
+
+            offset += GetScalarSize(field);
+        }
+        return false;
+    }
+
+    private static bool IsItemNameField(Field field)
+    {
+        return string.Equals(field.Name, "NameText", StringComparison.Ordinal);
+    }
+
+    private static int EstimateRowStride(TableSchema schema, ItemNameVariant variant)
+    {
+        int offset = 0;
+        bool hasVariable = schema.Fields.Any(f => !f.IsArray && f.Type == ScalarType.WStringVar);
+
+        foreach (var field in schema.Fields)
+        {
+            int align = Math.Min(GetScalarAlignment(field), schema.PackAlignment);
+            offset += Padding(offset, align);
+
+            if (IsItemNameField(field))
+            {
+                if (variant.IsVar)
+                {
+                    offset += 2; // WORD length prefix
+                }
+                else
+                {
+                    int len = variant.FixedChars ?? field.Length;
+                    offset += len * 2;
+                }
+            }
+            else
+            {
+                offset += GetScalarSize(field);
+            }
+        }
+
+        if (!hasVariable && !variant.IsVar)
+        {
+            int tail = Padding(offset, schema.PackAlignment);
+            offset += tail;
+        }
+
+        return offset;
+    }
+
+    private static int GetScalarSize(Field field)
+    {
+        int elementCount = field.IsArray ? Math.Max(1, field.Length) : 1;
+
+        return field.Type switch
+        {
+            ScalarType.U8 or ScalarType.S8 or ScalarType.Bool => elementCount,
+            ScalarType.U16 or ScalarType.S16 => elementCount * 2,
+            ScalarType.U32 or ScalarType.S32 or ScalarType.Float => elementCount * 4,
+            ScalarType.Double => elementCount * 8,
+            ScalarType.WStringFixed => field.Length * 2,
+            ScalarType.WStringVar => elementCount * 2,
+            ScalarType.AnsiStringFixed => field.Length,
+            _ => elementCount
+        };
+    }
 
     private static int GetScalarAlignment(Field f) => f.Type switch
     {
         ScalarType.U8 or ScalarType.Bool => 1,
+        ScalarType.S8 => 1,
         ScalarType.U16 => 2,
+        ScalarType.S16 => 2,
         ScalarType.U32 => 4,
+        ScalarType.S32 => 4,
         ScalarType.Float => 4,
         ScalarType.Double => 8,
         ScalarType.WStringFixed => 2,
@@ -910,6 +1063,7 @@ public static class BinaryTableIO
 
     private static int Padding(int offset, int align)
     {
+        if (align <= 1) return 0;
         int mod = offset % align;
         return mod == 0 ? 0 : (align - mod);
     }
@@ -967,16 +1121,24 @@ public static class BinaryTableIO
         var bytes = br.ReadBytes(charCount);
         int end = Array.IndexOf<byte>(bytes, 0);
         var len = end >= 0 ? end : bytes.Length;
-        return Encoding.ASCII.GetString(bytes, 0, len);
+        if (len <= 0) return string.Empty;
+        return AnsiEncoding.GetString(bytes, 0, len);
     }
 
     private static void WriteFixedAnsi(BinaryWriter bw, string value, int charCount)
     {
-        var ascii = Encoding.ASCII.GetBytes(value ?? string.Empty);
-        var take = Math.Min(ascii.Length, Math.Max(1, charCount) - 1);
-        var buf = new byte[Math.Max(1, charCount)];
-        if (take > 0) Array.Copy(ascii, buf, take);
-        buf[take] = 0;
-        bw.Write(buf);
+        int bufferLength = Math.Max(1, charCount);
+        var buffer = new byte[bufferLength];
+        int maxPayload = bufferLength - 1; // leave room for null terminator
+
+        if (maxPayload > 0 && !string.IsNullOrEmpty(value))
+        {
+            var encoder = AnsiEncoding.GetEncoder();
+            var chars = value.AsSpan();
+            encoder.Convert(chars, buffer.AsSpan(0, maxPayload), true, out int charsUsed, out int bytesUsed, out bool _);
+            // Null terminator already zero-initialized
+        }
+
+        bw.Write(buffer);
     }
 }
