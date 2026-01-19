@@ -350,6 +350,7 @@ public:
 
 	inline void			SetExpReceiveDisabled(bool bFlag) { m_bReceiveExpDisabled = bFlag; }
 	inline bool			IsReceiveExpDisabled() { return m_bReceiveExpDisabled; }
+	inline bool			IsAfk() const { return m_bIsAfk; }
 
 	//
 	void				UpdatePvpZone(bool bStatus);

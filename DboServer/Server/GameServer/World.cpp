@@ -315,6 +315,10 @@ void CWorld::OnCreate() //only used when creating dungeon world
 {
 	CGameServer* app = (CGameServer*)g_pApp;
 
+	// Reset difficulty phase to 0 when creating a new dungeon world
+	// This ensures bosses with autophase configuration start at base phase
+	SetDifficultyPhase(0);
+
 	//dont spawn anything on dojo channel
 	if (app->IsDojoChannel() && GetTbldat()->byWorldRuleType != GAMERULE_MINORMATCH && GetTbldat()->byWorldRuleType != GAMERULE_MINORMATCH && GetTbldat()->byWorldRuleType != GAMERULE_MINORMATCH)
 		return;

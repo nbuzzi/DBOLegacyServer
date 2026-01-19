@@ -29,6 +29,7 @@
 #include "qg_opcodes.h"
 #include "tg_opcodes.h"
 #include "MobBuffsManager.h"
+#include "MobAppearanceOverrideManager.h"
 #include "mg_opcodes.h"
 #include "ScriptAlgoObjectManager.h"
 #include "DynamicFieldSystemEvent.h"
@@ -425,6 +426,14 @@ int CGameServer::OnAppStart()
 	else
 	{
 		NTL_PRINT(PRINT_APP, "[VTRANSFORM] Virtual Transformations are DISABLED by feature flag - skipping config load");
+	}
+
+	NTL_PRINT(PRINT_APP, "Prepare Mob Appearance Override Manager");
+	CMobAppearanceOverrideManager* pMobAppearanceOverrideManager = new CMobAppearanceOverrideManager;
+	UNREFERENCED_PARAMETER(pMobAppearanceOverrideManager);
+	{
+		bool ok = g_pMobAppearanceOverrideManager->LoadConfigFromPath(".\\config\\MobAppearanceOverrides.cfg");
+		NTL_PRINT(PRINT_APP, ok ? "[MobAppearance] Config loaded" : "[MobAppearance] Config not found or invalid (manager disabled)");
 	}
 
 	// Prepare Mob Buffs Manager (config-driven mob buffs by world)

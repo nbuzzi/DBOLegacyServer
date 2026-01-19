@@ -10,10 +10,11 @@ namespace CustomDropEventEditor
     {
         public Dictionary<uint, List<DropEntry>> Drops { get; } = new();
         public Dictionary<uint, Modifiers> Mods { get; } = new();
+        public Dictionary<uint, Dictionary<byte, Modifiers>> ModsByPhase { get; } = new(); // mobId -> phase -> modifiers
         public Dictionary<uint, List<SpawnEntry>> Spawns { get; } = new(); // key 0 = all
         public Dictionary<uint, List<BuffEntry>> Buffs { get; } = new(); // key 0 = all
         public Dictionary<uint, List<uint>> Titles { get; } = new(); // key 0 = all
-    public Dictionary<uint, List<VisualEntry>> Visuals { get; } = new(); // key 0 = all
+        public Dictionary<uint, List<VisualEntry>> Visuals { get; } = new(); // key 0 = all
 
         public static ConfigModel Load(string path)
         {
@@ -72,8 +73,35 @@ namespace CustomDropEventEditor
 
                 if (isMods)
                 {
+                    // Check for phase=N prefix in the key (e.g., "123 modifiers phase=2")
+                    byte phase = 0;
+                    if (parts.Length >= 3)
+                    {
+                        var phaseStr = parts[2];
+                        if (phaseStr.StartsWith("phase=", StringComparison.OrdinalIgnoreCase))
+                        {
+                            var phaseNum = phaseStr.Substring(6);
+                            byte.TryParse(phaseNum, out phase);
+                        }
+                    }
+
                     var m = Modifiers.Parse(value);
-                    model.Mods[id] = m;
+
+                    if (phase > 0)
+                    {
+                        // Phase-specific modifiers
+                        if (!model.ModsByPhase.TryGetValue(id, out var phaseDict))
+                        {
+                            phaseDict = new Dictionary<byte, Modifiers>();
+                            model.ModsByPhase[id] = phaseDict;
+                        }
+                        phaseDict[phase] = m;
+                    }
+                    else
+                    {
+                        // Regular (non-phase) modifiers
+                        model.Mods[id] = m;
+                    }
                 }
                 else if (isSpawn)
                 {
@@ -281,12 +309,22 @@ namespace CustomDropEventEditor
                 sw.Write("all titles: ");
                 WriteTitleList(sw, gTitles);
             }
-            // Mods
+            // Mods (non-phase)
             foreach (var (id, m) in Mods.OrderBy(k => k.Key))
             {
                 if (id == 0) continue;
                 sw.Write($"{id} modifiers: ");
                 sw.WriteLine(m.ToString());
+            }
+
+            // Phase-specific mods
+            foreach (var (id, phaseDict) in ModsByPhase.OrderBy(k => k.Key))
+            {
+                foreach (var (phase, m) in phaseDict.OrderBy(p => p.Key))
+                {
+                    sw.Write($"{id} modifiers phase={phase}: ");
+                    sw.WriteLine(m.ToString());
+                }
             }
             // Drops
             foreach (var (id, list) in Drops.OrderBy(k => k.Key))
@@ -414,7 +452,8 @@ namespace CustomDropEventEditor
         public float BlockRate { get; set; } = 1f;
         public float BlockDmg { get; set; } = 1f;
         public float GuardRate { get; set; } = 1f;
-    public int SizeRate { get; set; } = 10;
+        public int SizeRate { get; set; } = 10;
+        public bool RestoreHP { get; set; } = false; // Restore HP to 100% when this modifier is applied
 
         public static Modifiers Parse(string value)
         {
@@ -448,6 +487,7 @@ namespace CustomDropEventEditor
                     case "blockDmg": m.BlockDmg = vf; break;
                     case "guardRate": m.GuardRate = vf; break;
                     case "sizeRate": m.SizeRate = vi; break;
+                    case "restoreHP": m.RestoreHP = (vi != 0); break; // 0=false, 1=true
                 }
             }
             return m;
@@ -455,7 +495,7 @@ namespace CustomDropEventEditor
 
         public override string ToString()
         {
-            return string.Join(" ", new[]
+            var parts = new List<string>
             {
                 $"hp={Hp.ToString(CultureInfo.InvariantCulture)}",
                 $"physAtk={PhysAtk.ToString(CultureInfo.InvariantCulture)}",
@@ -473,8 +513,16 @@ namespace CustomDropEventEditor
                 $"blockRate={BlockRate.ToString(CultureInfo.InvariantCulture)}",
                 $"blockDmg={BlockDmg.ToString(CultureInfo.InvariantCulture)}",
                 $"guardRate={GuardRate.ToString(CultureInfo.InvariantCulture)}",
-                $"sizeRate={SizeRate.ToString(CultureInfo.InvariantCulture)}",
-            });
+                $"sizeRate={SizeRate.ToString(CultureInfo.InvariantCulture)}"
+            };
+
+            // Only add restoreHP if it's true (to keep config files clean)
+            if (RestoreHP)
+            {
+                parts.Add("restoreHP=1");
+            }
+
+            return string.Join(" ", parts);
         }
     }
 }

@@ -41,11 +41,12 @@ public:
         float blockDmg;    // multiplier for BlockDamageRate
         float guardRate;   // multiplier for GuardRate
         int sizeRate;      // absolute size rate (client expects BYTE 1..20 typically, default 10)
+        bool restoreHP;    // if true, restore HP to 100% when applying this modifier (default false)
 
         Modifiers()
             : hp(1.f), physAtk(1.f), engAtk(1.f), physDef(1.f), engDef(1.f),
               atkSpd(1.f), runSpd(1.f), physCrit(1.f), engCrit(1.f), physCritDmg(1.f), engCritDmg(1.f),
-              attackRate(1.f), dodgeRate(1.f), blockRate(1.f), blockDmg(1.f), guardRate(1.f), sizeRate(0) {}
+              attackRate(1.f), dodgeRate(1.f), blockRate(1.f), blockDmg(1.f), guardRate(1.f), sizeRate(0), restoreHP(false) {}
         bool IsIdentity() const
         {
             return hp == 1.f && physAtk == 1.f && engAtk == 1.f && physDef == 1.f && engDef == 1.f &&
@@ -143,6 +144,8 @@ public:
     // Always-on mode (24/7 enabled, no time expiry)
     void SetAlwaysOn(bool on) { m_alwaysOn = on; }
     bool IsAlwaysOn() const { return m_alwaysOn; }
+    // Check if a mob has autophase configuration (for phase system)
+    bool HasAutoPhaseConfig(unsigned int mobTblidx) const;
 
 private:
     DBOTIME m_timeStart;

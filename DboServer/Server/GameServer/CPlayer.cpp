@@ -551,6 +551,9 @@ void CPlayer::LeaveGame()
 	if (CSummonPet* pPet = GetSummonPet())
 		pPet->Despawn();
 
+	if (g_pEventManager)
+		g_pEventManager->OnPlayerDisconnected(this);
+
 	app->GetGameMain()->GetWorldManager()->LeaveObject(this);
 
 	SetClientSessionID(INVALID_HSESSION);
@@ -856,6 +859,9 @@ void CPlayer::TickProcess(DWORD dwTickDiff, float fMultiple)
 
 	//QUESTS UPDATE
 	GetQuests()->Update(dwTickDiff);
+
+	if (g_pEventManager)
+		g_pEventManager->OnPlayerTick(this, dwTickDiff);
 
 
 	if (GetAirState() == AIR_STATE_ON)

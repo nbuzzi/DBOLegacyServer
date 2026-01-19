@@ -7,6 +7,7 @@
 #include "NtlCharacter.h"
 #include "NtlParty.h"
 #include "NtlMail.h"
+#include "NtlEventDef.h"
 #include "NtlBudokai.h"
 #include "NtlMatch.h"
 #include "NtlDragonBall.h"
@@ -35,10 +36,10 @@ enum eOPCODE_GQ
 	GQ_ITEM_USE_REQ,
 	GQ_ITEM_UPGRADE_REQ,
 	GQ_ITEM_IDENTIFY_REQ,
-	GQ_ITEM_CREATE_EX_REQ,						// ¾ÆÀÌÅÛ »ý¼º È®ÀåÇü(¿©·¯°³ »ý¼º °¡´É)
-	GQ_ITEM_DELETE_EX_REQ,						// ¾ÆÀÌÅÛ »èÁ¦ È®ÀåÇü(¿©·¯°³ »èÁ¦ °¡´É)
-	GQ_ITEM_AUTO_EQUIP_REQ,						// ¾ÆÀÌÅÛ ÀÚµ¿ ÀåÂø(Quest¿¡¼­ »ç¿ë)
-	GQ_ITEM_AUTO_EQUIP_ROLLBACK_REQ,			// ¾ÆÀÌÅÛ ÀÚµ¿ ÀåÂø RollBack(Quest¿¡¼­ »ç¿ë)
+	GQ_ITEM_CREATE_EX_REQ,						// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ È®ï¿½ï¿½ï¿½ï¿½(ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½)
+	GQ_ITEM_DELETE_EX_REQ,						// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ È®ï¿½ï¿½ï¿½ï¿½(ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½)
+	GQ_ITEM_AUTO_EQUIP_REQ,						// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Úµï¿½ ï¿½ï¿½ï¿½ï¿½(Questï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½)
+	GQ_ITEM_AUTO_EQUIP_ROLLBACK_REQ,			// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Úµï¿½ ï¿½ï¿½ï¿½ï¿½ RollBack(Questï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½)
 
 	GQ_ITEM_PICK_REQ,
 	GQ_ZENNY_PICK_REQ,
@@ -89,30 +90,30 @@ enum eOPCODE_GQ
 	GQ_UPDATE_CHAR_ZENNY_REQ,
 	GQ_UPDATE_CHAR_NETPY_REQ,
 
-	GQ_QUEST_ITEM_CREATE_REQ,					// Äù½ºÆ® ¾ÆÀÌÅÛ »ý¼º
-	GQ_QUEST_ITEM_DELETE_REQ,					// Äù½ºÆ® ¾ÆÀÌÅÛ »èÁ¦
-	GQ_QUEST_ITEM_MOVE_REQ,						// Äù½ºÆ® ¾ÆÀÌÅÛ ÀÌµ¿
-	GQ_QUEST_PROGRESS_DATA_CREATE_REQ,			// Äù½ºÆ® ÁøÇà Á¤º¸ »ý¼º
-	GQ_QUEST_PROGRESS_DATA_DELETE_REQ,			// Äù½ºÆ® ÁøÇà Á¤º¸ »èÁ¦
-	GQ_QUEST_COMPLETE_DATA_UPDATE_REQ,			// Äù½ºÆ® ¿Ï·á Á¤º¸ ¾÷µ¥ÀÌÆ®
-	GQ_QUEST_DATA_RESET_REQ,					// Äù½ºÆ® Á¤º¸¸¦ ÁöÁ¤µÈ ¹üÀ§¸¸Å­ ¸®¼ÂÇÑ´Ù.
-	GQ_QUEST_STATE_UPDATE_REQ,					// »óÅÂÀÇ º¯°æ
-	GQ_QUEST_TSP_UPDATE_REQ,					// TS Æ÷ÀÎÅÍÀÇ º¯°æ
-	GQ_QUEST_EXCEPTION_TIMER_UPDATE_REQ,		// ¿¹¿Ü Å¸ÀÌ¸ÓÀÇ µî·Ï ¹× »èÁ¦-> µî·Ï ¹× »èÁ¦??
-	GQ_QUEST_SSM_UPDATE_REQ,					// ¸Þ¸ð¸® ½½·ÔÀÇ ¾÷µ¥ÀÌÆ®
-	GQ_QUEST_SERVER_EVENT_UPDATE_REQ,			// ¼­¹ö ÀÌº¥Æ® µ¥ÀÌÅÍÀÇ ¾÷µ¥ÀÌÆ®
-	GQ_QUEST_EXC_CLIENT_GROUP_REQ,				// Å¬¶óÀÌ¾ðÆ® ½ÇÇà ±×·ì ¾ÆÀÌµð
-	GQ_QUEST_INFO_UPDATE_REQ,					// Äù½ºÆ® Á¤º¸ Ãâ·Â µ¥ÀÌÅÍÀÇ ¾÷µ¥ÀÌÆ®
+	GQ_QUEST_ITEM_CREATE_REQ,					// ï¿½ï¿½ï¿½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+	GQ_QUEST_ITEM_DELETE_REQ,					// ï¿½ï¿½ï¿½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+	GQ_QUEST_ITEM_MOVE_REQ,						// ï¿½ï¿½ï¿½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ìµï¿½
+	GQ_QUEST_PROGRESS_DATA_CREATE_REQ,			// ï¿½ï¿½ï¿½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+	GQ_QUEST_PROGRESS_DATA_DELETE_REQ,			// ï¿½ï¿½ï¿½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+	GQ_QUEST_COMPLETE_DATA_UPDATE_REQ,			// ï¿½ï¿½ï¿½ï¿½Æ® ï¿½Ï·ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®
+	GQ_QUEST_DATA_RESET_REQ,					// ï¿½ï¿½ï¿½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Å­ ï¿½ï¿½ï¿½ï¿½ï¿½Ñ´ï¿½.
+	GQ_QUEST_STATE_UPDATE_REQ,					// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+	GQ_QUEST_TSP_UPDATE_REQ,					// TS ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+	GQ_QUEST_EXCEPTION_TIMER_UPDATE_REQ,		// ï¿½ï¿½ï¿½ï¿½ Å¸ï¿½Ì¸ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½-> ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½??
+	GQ_QUEST_SSM_UPDATE_REQ,					// ï¿½Þ¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®
+	GQ_QUEST_SERVER_EVENT_UPDATE_REQ,			// ï¿½ï¿½ï¿½ï¿½ ï¿½Ìºï¿½Æ® ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®
+	GQ_QUEST_EXC_CLIENT_GROUP_REQ,				// Å¬ï¿½ï¿½ï¿½Ì¾ï¿½Æ® ï¿½ï¿½ï¿½ï¿½ ï¿½×·ï¿½ ï¿½ï¿½ï¿½Ìµï¿½
+	GQ_QUEST_INFO_UPDATE_REQ,					// ï¿½ï¿½ï¿½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®
 
 	GQ_QUICK_SLOT_UPDATE_REQ,	// QuikSlot Add or Update
 	GQ_QUICK_SLOT_DEL_REQ,
 
-	GQ_SAVE_SPAWNED_SUMMON_PET_DATA_REQ,		// ¼ÒÈ¯µÇ¾î ÀÖ´Â summon petÀÇ ÀúÀå
-	GQ_SAVE_SPAWNED_ITEM_PET_DATA_REQ,			// ¼ÒÈ¯µÇ¾î ÀÖ´Â item petÀÇ ÀúÀå
-	GQ_DELETE_SPAWNED_SUMMON_PET_DATA_REQ,		// ¼ÒÈ¯µÇ¾î ÀÖ´Â summon petÀÇ »èÁ¦
-	GQ_DELETE_SPAWNED_ITEM_PET_DATA_REQ,		// ¼ÒÈ¯µÇ¾î ÀÖ´Â item petÀÇ »èÁ¦
-	GQ_LOAD_SPAWNED_PET_DATA_REQ,				// ¼ÒÈ¯µÇ¾î ÀÖ´Â Æê Á¤º¸ ¿äÃ»
-	GQ_DELETE_ALL_TEMPORARY_PET_DATA_REQ,		// ÀÓ½Ã·Î ÀúÀåµÈ Æê Á¤º¸ÀÇ »èÁ¦
+	GQ_SAVE_SPAWNED_SUMMON_PET_DATA_REQ,		// ï¿½ï¿½È¯ï¿½Ç¾ï¿½ ï¿½Ö´ï¿½ summon petï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+	GQ_SAVE_SPAWNED_ITEM_PET_DATA_REQ,			// ï¿½ï¿½È¯ï¿½Ç¾ï¿½ ï¿½Ö´ï¿½ item petï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+	GQ_DELETE_SPAWNED_SUMMON_PET_DATA_REQ,		// ï¿½ï¿½È¯ï¿½Ç¾ï¿½ ï¿½Ö´ï¿½ summon petï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+	GQ_DELETE_SPAWNED_ITEM_PET_DATA_REQ,		// ï¿½ï¿½È¯ï¿½Ç¾ï¿½ ï¿½Ö´ï¿½ item petï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+	GQ_LOAD_SPAWNED_PET_DATA_REQ,				// ï¿½ï¿½È¯ï¿½Ç¾ï¿½ ï¿½Ö´ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ã»
+	GQ_DELETE_ALL_TEMPORARY_PET_DATA_REQ,		// ï¿½Ó½Ã·ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 
 	GQ_CHAR_PUNISH_REQ,
 
@@ -134,10 +135,10 @@ enum eOPCODE_GQ
 	GQ_RANKBATTLE_SCORE_UPDATE_REQ,		// RankBattle Score Update
 	GQ_TUTORIAL_DATA_UPDATE_REQ,		// Tutorial Data Update
 
-	GQ_TMQ_DAYRECORD_RESET_REQ,			// DayRecord ¸®¼Â ¿äÃ»
-	GQ_TMQ_DAYRECORD_UPDATE_REQ,		// DayRecord ±â·Ï ¿äÃ»
-	GQ_TMQ_DAYRECORD_LIST_REQ,			// DayRecord ¸®½ºÆ® ¿äÃ»(°Ô½ÃÆÇ)
-	GQ_TMQ_DAYRECORD_REQ,				// DayRecord ¿äÃ»
+	GQ_TMQ_DAYRECORD_RESET_REQ,			// DayRecord ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ã»
+	GQ_TMQ_DAYRECORD_UPDATE_REQ,		// DayRecord ï¿½ï¿½ï¿½ ï¿½ï¿½Ã»
+	GQ_TMQ_DAYRECORD_LIST_REQ,			// DayRecord ï¿½ï¿½ï¿½ï¿½Æ® ï¿½ï¿½Ã»(ï¿½Ô½ï¿½ï¿½ï¿½)
+	GQ_TMQ_DAYRECORD_REQ,				// DayRecord ï¿½ï¿½Ã»
 
 	GQ_MAIL_START_REQ,
 	GQ_MAIL_SEND_REQ,
@@ -179,39 +180,39 @@ enum eOPCODE_GQ
 	GQ_RANKPOINT_RESET_REQ,
 	GQ_RANKBATTLE_ALLOW_REQ,
 
-	// ÃµÇÏÁ¦ÀÏ¹«µµÈ¸ °³ÀÎ
+	// Ãµï¿½ï¿½ï¿½ï¿½ï¿½Ï¹ï¿½ï¿½ï¿½È¸ ï¿½ï¿½ï¿½ï¿½
 	GQ_BUDOKAI_INDIVIDUAL_ALLOW_REGISTER_REQ,
 	GQ_BUDOKAI_JOIN_INDIVIDUAL_REQ,
 	GQ_BUDOKAI_LEAVE_INDIVIDUAL_REQ,
 	GQ_BUDOKAI_INDIVIDUAL_SELECTION_REQ,
 	GQ_BUDOKAI_INDIVIDUAL_LIST_REQ,
-	GQ_BUDOKAI_TOURNAMENT_INDIVIDUAL_ADD_ENTRY_LIST_REQ,	// Åä³Ê¸ÕÆ® ÁøÃâÀÚ Ãß°¡
-	GQ_BUDOKAI_TOURNAMENT_INDIVIDUAL_ENTRY_LIST_REQ,		// Åä³Ê¸ÕÆ® ÁøÃâÀÚ ¸®½ºÆ® ¿äÃ»
-	GQ_BUDOKAI_TOURNAMENT_INDIVIDUAL_ADD_MATCH_RESULT_REQ,	// Åä³Ê¸ÕÆ® °æ±â °á°ú Ãß°¡
-	GQ_BUDOKAI_TOURNAMENT_INDIVIDUAL_MATCH_RESULT_REQ,		// Åä³Ê¸ÕÆ® °æ±â °á°ú ¸®½ºÆ® ¿äÃ»
+	GQ_BUDOKAI_TOURNAMENT_INDIVIDUAL_ADD_ENTRY_LIST_REQ,	// ï¿½ï¿½Ê¸ï¿½Æ® ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ß°ï¿½
+	GQ_BUDOKAI_TOURNAMENT_INDIVIDUAL_ENTRY_LIST_REQ,		// ï¿½ï¿½Ê¸ï¿½Æ® ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Æ® ï¿½ï¿½Ã»
+	GQ_BUDOKAI_TOURNAMENT_INDIVIDUAL_ADD_MATCH_RESULT_REQ,	// ï¿½ï¿½Ê¸ï¿½Æ® ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ß°ï¿½
+	GQ_BUDOKAI_TOURNAMENT_INDIVIDUAL_MATCH_RESULT_REQ,		// ï¿½ï¿½Ê¸ï¿½Æ® ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Æ® ï¿½ï¿½Ã»
 
-	// ÃµÇÏÁ¦ÀÏ¹«µµÈ¸ ÆÀ
+	// Ãµï¿½ï¿½ï¿½ï¿½ï¿½Ï¹ï¿½ï¿½ï¿½È¸ ï¿½ï¿½
 	GQ_BUDOKAI_TEAM_ALLOW_REGISTER_REQ,
 	GQ_BUDOKAI_JOIN_TEAM_REQ,
 	GQ_BUDOKAI_LEAVE_TEAM_REQ,
 	GQ_BUDOKAI_LEAVE_TEAM_MEMBER_REQ,
 	GQ_BUDOKAI_TEAM_SELECTION_REQ,
 	GQ_BUDOKAI_TEAM_LIST_REQ,
-	GQ_BUDOKAI_TOURNAMENT_TEAM_ADD_ENTRY_LIST_REQ,		// Åä³Ê¸ÕÆ® ÁøÃâÆÀ Ãß°¡
-	GQ_BUDOKAI_TOURNAMENT_TEAM_ENTRY_LIST_REQ,			// Åä³Ê¸ÕÆ® ÁøÃâÆÀ ¸®½ºÆ® ¿äÃ»
-	GQ_BUDOKAI_TOURNAMENT_TEAM_ADD_MATCH_RESULT_REQ,	// Åä³Ê¸ÕÆ® °æ±â °á°ú Ãß°¡
-	GQ_BUDOKAI_TOURNAMENT_TEAM_MATCH_RESULT_REQ,		// Åä³Ê¸ÕÆ® °æ±â °á°ú ¸®½ºÆ® ¿äÃ»
+	GQ_BUDOKAI_TOURNAMENT_TEAM_ADD_ENTRY_LIST_REQ,		// ï¿½ï¿½Ê¸ï¿½Æ® ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ß°ï¿½
+	GQ_BUDOKAI_TOURNAMENT_TEAM_ENTRY_LIST_REQ,			// ï¿½ï¿½Ê¸ï¿½Æ® ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Æ® ï¿½ï¿½Ã»
+	GQ_BUDOKAI_TOURNAMENT_TEAM_ADD_MATCH_RESULT_REQ,	// ï¿½ï¿½Ê¸ï¿½Æ® ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ß°ï¿½
+	GQ_BUDOKAI_TOURNAMENT_TEAM_MATCH_RESULT_REQ,		// ï¿½ï¿½Ê¸ï¿½Æ® ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Æ® ï¿½ï¿½Ã»
 
-	GQ_BUDOKAI_JOIN_INFO_REQ,							// Âü°¡ Á¤º¸ ¿äÃ»
-	GQ_BUDOKAI_JOIN_STATE_REQ,							// Âü°¡ »óÅÂ ¿äÃ»
-	GQ_BUDOKAI_HISTORY_WRITE_REQ,						// °³ÀÎÀü season history ÀúÀå ¿äÃ»
-	GQ_BUDOKAI_HISTORY_WINNER_PLAYER_REQ,				// ÇØ´ç season ÀÇ player info ¿äÃ»
-	GQ_BUDOKAI_JOIN_STATE_LIST_REQ,						// Âü°¡ »óÅÂ ¸®½ºÆ® ¿äÃ»
+	GQ_BUDOKAI_JOIN_INFO_REQ,							// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ã»
+	GQ_BUDOKAI_JOIN_STATE_REQ,							// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ã»
+	GQ_BUDOKAI_HISTORY_WRITE_REQ,						// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ season history ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ã»
+	GQ_BUDOKAI_HISTORY_WINNER_PLAYER_REQ,				// ï¿½Ø´ï¿½ season ï¿½ï¿½ player info ï¿½ï¿½Ã»
+	GQ_BUDOKAI_JOIN_STATE_LIST_REQ,						// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Æ® ï¿½ï¿½Ã»
 	GQ_BUDOKAI_SET_OPEN_TIME_REQ,						// Set Open Time
 
-	GQ_MATCH_REWARD_REQ,					// °æ±â º¸»ó
+	GQ_MATCH_REWARD_REQ,					// ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 
-	GQ_SCOUTER_ITEM_SELL_REQ,				// ½ºÄ«¿ìÅÍ¸¦ ÅëÇÑ ¾ÆÀÌÅÛ ÆÇ¸Å
+	GQ_SCOUTER_ITEM_SELL_REQ,				// ï¿½ï¿½Ä«ï¿½ï¿½ï¿½Í¸ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ç¸ï¿½
 
 	GQ_SHOP_EVENTITEM_BUY_REQ,				// [7/14/2008 SGpro]
 	GQ_SHOP_GAMBLE_BUY_REQ,				// [7/14/2008 SGpro]
@@ -257,10 +258,10 @@ enum eOPCODE_GQ
 
 	GQ_CASHITEM_HLSHOP_REFRESH_REQ,
 	GQ_CASHITEM_INFO_REQ,
-	GQ_CASHITEM_MOVE_REQ,			// ÀÎº¥À¸·Î ÀÌµ¿
-	GQ_CASHITEM_DEL_REQ,			// »ç¿ë½Ã »èÁ¦
-	GQ_CASHITEM_UNPACK_REQ,			// ÇÑ°³°¡ ¿©·¯°³ÀÇ Á¤º¸·Î º¯°æ
-	GQ_CASHITEM_BUY_REQ,			// ¾ÆÀÌÅÛ Ãß°¡
+	GQ_CASHITEM_MOVE_REQ,			// ï¿½Îºï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ìµï¿½
+	GQ_CASHITEM_DEL_REQ,			// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+	GQ_CASHITEM_UNPACK_REQ,			// ï¿½Ñ°ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+	GQ_CASHITEM_BUY_REQ,			// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ß°ï¿½
 
 	GQ_GMT_UPDATE_REQ,
 
@@ -465,16 +466,16 @@ END_PROTOCOL()
 BEGIN_PROTOCOL(GQ_ITEM_UPGRADE_REQ)
 	HOBJECT			handle;
 	CHARACTERID		charID;				// CHARID
-	ITEMID			itemID;				// ¾÷±×·¹ÀÌµå ÇÒ ¾ÆÀÌÅÛÀÇ ¾ÆÀÌµð		-> Grade ¾÷µ¥ÀÌÆ®
-	ITEMID			stonitemID;			// ½ºÅæ ¾ÆÀÌµð							-> »èÁ¦,½ºÅÃº¯°æ
-	BYTE			byStack;			// ½ºÅæ »ç¿ëÈÄ ½ºÅÃ°¹¼ö					-> º¯°æµÉ ½ºÅÃ
-	BYTE			byGrade;			// º¯°æµÉ ±×·¹ÀÌµå						-> º¯°æµÉ ±×·¹ÀÌµå
-	BYTE			byItemPlace;		// ¾÷±×·¹ÀÌµå ÇÒ ¾ÆÀÌÅÛÀÇ ÄÁÅ×ÀÌ³Ê À§Ä¡ 
-	BYTE			byItemPos;			// ¾÷±×·¹ÀÌµå ÇÒ ¾ÆÀÌÅÛÀÇ À§Ä¡
-	BYTE			byStonPlace;		// È£ÀÌÆ÷ÀÌ½ºÅæ ÄÁÅ×ÀÌ³Ê À§Ä¡
-	BYTE			byStonPos;			// È£ÀÌÆ÷ÀÌ½ºÅæ À§Ä¡
-	bool			bType;				// true »èÁ¦ false ¾÷±×·¹ÀÌµå
-	BYTE			byBattleAttribute;	// ¾÷µ¥ÀÌÆ® ÇÒ ¼Ó¼º
+	ITEMID			itemID;				// ï¿½ï¿½ï¿½×·ï¿½ï¿½Ìµï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ìµï¿½		-> Grade ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®
+	ITEMID			stonitemID;			// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ìµï¿½							-> ï¿½ï¿½ï¿½ï¿½,ï¿½ï¿½ï¿½Ãºï¿½ï¿½ï¿½
+	BYTE			byStack;			// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ã°ï¿½ï¿½ï¿½					-> ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+	BYTE			byGrade;			// ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½×·ï¿½ï¿½Ìµï¿½						-> ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½×·ï¿½ï¿½Ìµï¿½
+	BYTE			byItemPlace;		// ï¿½ï¿½ï¿½×·ï¿½ï¿½Ìµï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ì³ï¿½ ï¿½ï¿½Ä¡ 
+	BYTE			byItemPos;			// ï¿½ï¿½ï¿½×·ï¿½ï¿½Ìµï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ä¡
+	BYTE			byStonPlace;		// È£ï¿½ï¿½ï¿½ï¿½ï¿½Ì½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ì³ï¿½ ï¿½ï¿½Ä¡
+	BYTE			byStonPos;			// È£ï¿½ï¿½ï¿½ï¿½ï¿½Ì½ï¿½ï¿½ï¿½ ï¿½ï¿½Ä¡
+	bool			bType;				// true ï¿½ï¿½ï¿½ï¿½ false ï¿½ï¿½ï¿½×·ï¿½ï¿½Ìµï¿½
+	BYTE			byBattleAttribute;	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® ï¿½ï¿½ ï¿½Ó¼ï¿½
 	ITEMID			idCoreItem;
 	BYTE			byCorePlace;
 	BYTE			byCorePos;
@@ -490,21 +491,21 @@ END_PROTOCOL()
 BEGIN_PROTOCOL(GQ_ITEM_CREATE_EX_REQ)
 	HOBJECT					handle;
 	CHARACTERID				charId;
-	BYTE					byRequestType;	// ¾ÆÀÌÅÛ »ý¼º Å¸ÀÔ eITEM_CREATE_TYPE
-	uITEM_CREATE_SUB_DATA	uSubData;		// Ãß°¡ Á¤º¸
-	BYTE					byUpdateCount;	// Stack º¯°æ°¹¼ö
+	BYTE					byRequestType;	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ Å¸ï¿½ï¿½ eITEM_CREATE_TYPE
+	uITEM_CREATE_SUB_DATA	uSubData;		// ï¿½ß°ï¿½ ï¿½ï¿½ï¿½ï¿½
+	BYTE					byUpdateCount;	// Stack ï¿½ï¿½ï¿½æ°¹ï¿½ï¿½
 	sITEM_BASIC_DATA		asUpdateData[ITEM_CREATE_EX_MAX_COUNT];
-	BYTE					byItemCount;	// ¾ÆÀÌÅÛ °¹¼ö
-	sITEM_DATA				aItem[1];		// ¾ÆÀÌÅÛ Á¤º¸
+	BYTE					byItemCount;	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+	sITEM_DATA				aItem[1];		// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 END_PROTOCOL()
 //------------------------------------------------------------------
 BEGIN_PROTOCOL(GQ_ITEM_DELETE_EX_REQ)
 	HOBJECT					handle;
 	CHARACTERID				charId;
-	BYTE					byRequestType;	// ¾ÆÀÌÅÛ »ý¼º Å¸ÀÔ eITEM_CREATE_TYPE
-	uITEM_DELETE_SUB_DATA	uSubData;		// Ãß°¡ Á¤º¸
-	BYTE					byItemCount;	// ¾ÆÀÌÅÛ °¹¼ö
-	sITEM_DELETE_DATA		aItem[1];		// ¾ÆÀÌÅÛ Á¤º¸
+	BYTE					byRequestType;	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ Å¸ï¿½ï¿½ eITEM_CREATE_TYPE
+	uITEM_DELETE_SUB_DATA	uSubData;		// ï¿½ß°ï¿½ ï¿½ï¿½ï¿½ï¿½
+	BYTE					byItemCount;	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+	sITEM_DELETE_DATA		aItem[1];		// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 END_PROTOCOL()
 //------------------------------------------------------------------
 BEGIN_PROTOCOL(GQ_ITEM_AUTO_EQUIP_REQ)
@@ -525,7 +526,7 @@ BEGIN_PROTOCOL(GQ_ITEM_PICK_REQ)
 	HOBJECT					handle;
 	CHARACTERID				charID;
 	HOBJECT					itemhandle;
-	bool					bIsNew;		// 1: »ý¼º 0: ¾÷µ¥ÀÌÆ®(°ãÄ¡±â)
+	bool					bIsNew;		// 1: ï¿½ï¿½ï¿½ï¿½ 0: ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®(ï¿½ï¿½Ä¡ï¿½ï¿½)
 	sITEM_DATA				sItemData;
 END_PROTOCOL()
 //------------------------------------------------------------------
@@ -535,8 +536,8 @@ BEGIN_PROTOCOL(GQ_ZENNY_PICK_REQ)
 	HOBJECT					itemhandle;
 	CHARACTERID				charId;
 	DWORD					dwZenny; //dwOrgZenny + dwBonusZenny
-	DWORD					dwOrgZenny; //¿ø·¡ ¹ÞÀ» Zenny
-	DWORD					dwBonusZenny;//Ãß°¡ È¹µæ Zenny
+	DWORD					dwOrgZenny; //ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ Zenny
+	DWORD					dwBonusZenny;//ï¿½ß°ï¿½ È¹ï¿½ï¿½ Zenny
 END_PROTOCOL()
 //------------------------------------------------------------------
 BEGIN_PROTOCOL(GQ_SKILL_ADD_REQ)
@@ -762,8 +763,8 @@ BEGIN_PROTOCOL(GQ_BANK_ZENNY_REQ)
 	HOBJECT					npchandle;		// NpcHandle
 	CHARACTERID				charId;
 	ACCOUNTID				accountID;
-	DWORD					dwZenny;		// »©°Å³ª ³ÖÀ» ¾×¼ö
-	bool					bIsSave;		// 1 Àº ³ÖÀ» °æ¿ì 0 Àº »©´Â°æ¿ì
+	DWORD					dwZenny;		// ï¿½ï¿½ï¿½Å³ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½×¼ï¿½
+	bool					bIsSave;		// 1 ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ 0 ï¿½ï¿½ ï¿½ï¿½ï¿½Â°ï¿½ï¿½
 	DWORD					dwPlayerZeni;
 END_PROTOCOL()
 //------------------------------------------------------------------
@@ -778,7 +779,7 @@ BEGIN_PROTOCOL(GQ_BANK_BUY_REQ)
 	CHARACTERID				charId;					// Owner Serial
 	BYTE					byPlace;				// eCONTAINER_TYPE
 	BYTE					byPosition;	
-	BYTE					byRank;					// 0 1 2 3 //Ã¢°íÁ¾·ù·Î ¾µ°ÍÀÓ
+	BYTE					byRank;					// 0 1 2 3 //Ã¢ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 	BYTE					byDurationType;
 	DBOTIME					nUseStartTime;
 	DBOTIME					nUseEndTime;
@@ -802,10 +803,10 @@ END_PROTOCOL()
 //------------------------------------------------------------------
 BEGIN_PROTOCOL(GQ_PARTY_LOOTING_ITEM_REQ)
 	// The item owner can be found out with using 'sItemData.charId'.
-	// ¾ÆÀÌÅÛÀ» °¡Áú ÇÃ·¹ÀÌ¾î´Â 'sItemData.charId'·Î ¾Ë¾Æ³¾ ¼ö ÀÖ´Ù.
+	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ã·ï¿½ï¿½Ì¾ï¿½ï¿½ 'sItemData.charId'ï¿½ï¿½ ï¿½Ë¾Æ³ï¿½ ï¿½ï¿½ ï¿½Ö´ï¿½.
 	// by YOSHIKI(2007-03-09)
 	HOBJECT				itemhandle;
-	bool				bIsNew;		// 1: »ý¼º 0: ¾÷µ¥ÀÌÆ®(°ãÄ¡±â)
+	bool				bIsNew;		// 1: ï¿½ï¿½ï¿½ï¿½ 0: ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®(ï¿½ï¿½Ä¡ï¿½ï¿½)
 	sITEM_DATA			sItemData;
 	bool				bByAutoDistribution;
 
@@ -885,10 +886,10 @@ END_PROTOCOL()
 BEGIN_PROTOCOL( GQ_QUEST_ITEM_MOVE_REQ)
 HOBJECT						handle;
 CHARACTERID					charId;
-TBLIDX						dwSrcTblidx;	// ¾ÆÀÌÅÛÀÌ ¾øÀ» °æ¿ì INVALID_TBLIDX
-BYTE						bySrcPos;		// ÀÌµ¿µÇ±â ÀüÀÇ ¿øº»ÀÇ À§Ä¡
-TBLIDX						dwDestTblidx;	// ¾ÆÀÌÅÛÀÌ ¾øÀ» °æ¿ì INVALID_TBLIDX
-BYTE						byDestPos;		// ÀÌµ¿µÇ±â ÀüÀÇ ¸ñÀûÁöÀÇ À§Ä¡
+TBLIDX						dwSrcTblidx;	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ INVALID_TBLIDX
+BYTE						bySrcPos;		// ï¿½Ìµï¿½ï¿½Ç±ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ä¡
+TBLIDX						dwDestTblidx;	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ INVALID_TBLIDX
+BYTE						byDestPos;		// ï¿½Ìµï¿½ï¿½Ç±ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ä¡
 END_PROTOCOL()
 //------------------------------------------------------------------
 BEGIN_PROTOCOL( GQ_QUEST_PROGRESS_DATA_CREATE_REQ )
@@ -902,7 +903,7 @@ END_PROTOCOL()
 BEGIN_PROTOCOL( GQ_QUEST_PROGRESS_DATA_DELETE_REQ )
 HOBJECT						handle;
 CHARACTERID					charId;
-QUESTID						questID; // Äù½ºÆ® ¾ÆÀÌµð
+QUESTID						questID; // ï¿½ï¿½ï¿½ï¿½Æ® ï¿½ï¿½ï¿½Ìµï¿½
 BYTE						bySlotId;
 END_PROTOCOL()
 //------------------------------------------------------------------
@@ -918,39 +919,39 @@ BEGIN_PROTOCOL( GQ_QUEST_DATA_RESET_REQ )
 	HOBJECT						handle;
 	DWORD						dwTimeStamp;
 	CHARACTERID					charId;
-	bool						bCompleteQuestData;	// ¿Ï·á Á¤º¸ »èÁ¦ ¿©ºÎ
-	bool						bProgressQuestData;	// ÁøÇà Á¤º¸ »èÁ¦ ¿©ºÎ
-	QUESTID						startResetQID;		// »èÁ¦ ¹üÀ§
-	QUESTID						endResetQID;		// »èÁ¦ ¹üÀ§
-	BYTE						byCount;			// Data°¹¼ö
+	bool						bCompleteQuestData;	// ï¿½Ï·ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+	bool						bProgressQuestData;	// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+	QUESTID						startResetQID;		// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+	QUESTID						endResetQID;		// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+	BYTE						byCount;			// Dataï¿½ï¿½ï¿½ï¿½
 	sCOMPLETE_QUEST_BIT_INFO	asData[eCOMPLETE_QUEST_QUEST_STRUCT_COUNT];	
 END_PROTOCOL()
 //------------------------------------------------------------------
-BEGIN_PROTOCOL( GQ_QUEST_STATE_UPDATE_REQ )			// »óÅÂÀÇ º¯°æ
+BEGIN_PROTOCOL( GQ_QUEST_STATE_UPDATE_REQ )			// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	HOBJECT						handle;
 	DWORD						dwTimeStamp;
 	CHARACTERID					charId;
 	QUESTID						qId;					// Trigger ID(Quest ID)
-	WORD						wTSState;				// º¯°æ ÇÒ »óÅÂ °ª
+	WORD						wTSState;				// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½
 END_PROTOCOL()
 //------------------------------------------------------------------
-BEGIN_PROTOCOL( GQ_QUEST_TSP_UPDATE_REQ )			// TS Æ÷ÀÎÅÍÀÇ º¯°æ
+BEGIN_PROTOCOL( GQ_QUEST_TSP_UPDATE_REQ )			// TS ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	HOBJECT						handle;
 	DWORD						dwTimeStamp;
 	CHARACTERID					charId;
 	QUESTID						qId;					// Trigger ID(Quest ID)
-	sMAIN_TSP					sMainTSP;				// TS Æ÷ÀÎÅÍ
+	sMAIN_TSP					sMainTSP;				// TS ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 END_PROTOCOL()
 //------------------------------------------------------------------
-BEGIN_PROTOCOL( GQ_QUEST_EXCEPTION_TIMER_UPDATE_REQ )// ¿¹¿Ü Å¸ÀÌ¸ÓÀÇ ¾÷µ¥ÀÌÆ®
+BEGIN_PROTOCOL( GQ_QUEST_EXCEPTION_TIMER_UPDATE_REQ )// ï¿½ï¿½ï¿½ï¿½ Å¸ï¿½Ì¸ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®
 	HOBJECT						handle;
 	DWORD						dwTimeStamp;
 	CHARACTERID					charId;
 	QUESTID						qId;					// Trigger ID(Quest ID)
-	sEXCEPT_TIMER_SLOT			sExceptTimerSlot;		// ¿¹¿Ü Å¸ÀÌ¸Ó Á¤º¸
+	sEXCEPT_TIMER_SLOT			sExceptTimerSlot;		// ï¿½ï¿½ï¿½ï¿½ Å¸ï¿½Ì¸ï¿½ ï¿½ï¿½ï¿½ï¿½
 END_PROTOCOL()
 //------------------------------------------------------------------
-BEGIN_PROTOCOL( GQ_QUEST_SSM_UPDATE_REQ )			// ¸Þ¸ð¸® ½½·ÔÀÇ ¾÷µ¥ÀÌÆ®
+BEGIN_PROTOCOL( GQ_QUEST_SSM_UPDATE_REQ )			// ï¿½Þ¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®
 	HOBJECT						handle;
 	DWORD						dwTimeStamp;
 	CHARACTERID					charId;
@@ -959,22 +960,22 @@ BEGIN_PROTOCOL( GQ_QUEST_SSM_UPDATE_REQ )			// ¸Þ¸ð¸® ½½·ÔÀÇ ¾÷µ¥ÀÌÆ®
 	DWORD						dwValue;
 END_PROTOCOL()
 //------------------------------------------------------------------
-BEGIN_PROTOCOL( GQ_QUEST_SERVER_EVENT_UPDATE_REQ )	// ¼­¹ö ÀÌº¥Æ® µ¥ÀÌÅÍÀÇ ¾÷µ¥ÀÌÆ®
+BEGIN_PROTOCOL( GQ_QUEST_SERVER_EVENT_UPDATE_REQ )	// ï¿½ï¿½ï¿½ï¿½ ï¿½Ìºï¿½Æ® ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®
 HOBJECT						handle;
 CHARACTERID					charId;
 QUESTID						qId;					// Trigger ID(Quest ID)
 sSTOC_EVT_DB_DATA			sSvrEvt;				// Server Event Data
 END_PROTOCOL()
 //------------------------------------------------------------------
-BEGIN_PROTOCOL( GQ_QUEST_EXC_CLIENT_GROUP_REQ )// °­Á¦ ÀÌµ¿ Æ÷ÀÎÅÍÀÇ ¾÷µ¥ÀÌÆ®
+BEGIN_PROTOCOL( GQ_QUEST_EXC_CLIENT_GROUP_REQ )// ï¿½ï¿½ï¿½ï¿½ ï¿½Ìµï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®
 	HOBJECT						handle;
 	DWORD						dwTimeStamp;
 	CHARACTERID					charId;
 	QUESTID						qId;					// Trigger ID(Quest ID)
-	NTL_TS_TG_ID				tgExcCGroup;			// ½ÇÇàÇÒ Å¬¶óÀÌ¾ðÆ® ±×·ì ¾ÆÀÌµð
+	NTL_TS_TG_ID				tgExcCGroup;			// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Å¬ï¿½ï¿½ï¿½Ì¾ï¿½Æ® ï¿½×·ï¿½ ï¿½ï¿½ï¿½Ìµï¿½
 END_PROTOCOL()
 //------------------------------------------------------------------
-BEGIN_PROTOCOL( GQ_QUEST_INFO_UPDATE_REQ )			// Äù½ºÆ® Á¤º¸ Ãâ·Â µ¥ÀÌÅÍÀÇ ¾÷µ¥ÀÌÆ®
+BEGIN_PROTOCOL( GQ_QUEST_INFO_UPDATE_REQ )			// ï¿½ï¿½ï¿½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®
 	HOBJECT						handle;
 	DWORD						dwTimeStamp;
 	CHARACTERID					charId;
@@ -987,8 +988,8 @@ BEGIN_PROTOCOL( GQ_QUICK_SLOT_UPDATE_REQ )
 	HOBJECT						handle;
 	CHARACTERID					charId;
 	TBLIDX						tblidx;					
-	BYTE						bySlotID;				// QuickSlot ¾ÆÀÌµð
-	BYTE						byType;					// ¾ÆÀÌÅÛÀÎ°¡ ½ºÅ³ÀÎ°¡ ¼Ò¼È¾×¼ðÀÎ°¡?
+	BYTE						bySlotID;				// QuickSlot ï¿½ï¿½ï¿½Ìµï¿½
+	BYTE						byType;					// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î°ï¿½ ï¿½ï¿½Å³ï¿½Î°ï¿½ ï¿½Ò¼È¾×¼ï¿½ï¿½Î°ï¿½?
 	BYTE						byPlace;
 	BYTE						byPos;
 	ITEMID						itemID;
@@ -997,7 +998,7 @@ END_PROTOCOL()
 BEGIN_PROTOCOL( GQ_QUICK_SLOT_DEL_REQ )
 	HOBJECT						handle;
 	CHARACTERID					charId;
-	BYTE						bySlotID;				// QuickSlot ¾ÆÀÌµð
+	BYTE						bySlotID;				// QuickSlot ï¿½ï¿½ï¿½Ìµï¿½
 	bool						bIsServer;
 END_PROTOCOL()
 //------------------------------------------------------------------
@@ -1055,13 +1056,13 @@ BEGIN_PROTOCOL( GQ_TRADE_REQ )
 	HOBJECT						handle;	
 	HOBJECT						hTarget;
 	CHARACTERID					charID;
-	CHARACTERID					dstcharID;	// ¿Å°ÜÁú Ä³¸¯ÅÍ ¾ÆÀÌµð
+	CHARACTERID					dstcharID;	// ï¿½Å°ï¿½ï¿½ï¿½ Ä³ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ìµï¿½
 	BYTE						byGiveCount;
 	BYTE						byTakeCount;
 	sTRADE_INVEN				asGiveData[TRADE_INVEN_MAX_COUNT];
 	sTRADE_INVEN				asTakeData[TRADE_INVEN_MAX_COUNT];
-	DWORD						dwGiveZenny;	// ÁÙ Á¦´Ï
-	DWORD						dwTakeZenny;	// ¹ÞÀ» Á¦´Ï
+	DWORD						dwGiveZenny;	// ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+	DWORD						dwTakeZenny;	// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 END_PROTOCOL()
 //------------------------------------------------------------------
 BEGIN_PROTOCOL( GQ_TUTORIAL_HINT_UPDATE_REQ )
@@ -1112,7 +1113,7 @@ BEGIN_PROTOCOL( GQ_PRIVATESHOP_ITEM_BUYING_REQ )
 	BYTE							byCount;
 	sPRIVATESHOP_ITEM_POS_DATA		asPrivateShopItemPos[NTL_MAX_BUY_SHOPPING_CART];
 	sINVEN_ITEM_POS_DATA			asEmpty[NTL_MAX_BUY_SHOPPING_CART];
-	BYTE							byPrivateShopState; //¼¥ »óÅÂ¿¡ µû¶ó ÈÄÃ³¸®°¡ ´Þ¶óÁø´Ù(¾ÆÀÌÅÛ »ç±â, ÈïÁ¤ Áï½Ã ¾ÆÀÌÅÛ »ç±â)
+	BYTE							byPrivateShopState; //ï¿½ï¿½ ï¿½ï¿½ï¿½Â¿ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ã³ï¿½ï¿½ï¿½ï¿½ ï¿½Þ¶ï¿½ï¿½ï¿½ï¿½ï¿½(ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½, ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½)
 END_PROTOCOL()
 //------------------------------------------------------------------
 BEGIN_PROTOCOL( GQ_PRIVATESHOP_ITEM_INSERT_REQ )
@@ -1147,8 +1148,8 @@ END_PROTOCOL()
 BEGIN_PROTOCOL( GQ_PRIVATESHOP_CREATE_REQ )
 	HOBJECT						handle;
 	CHARACTERID					charID;
-	__int64						nCashShopStartTime; //À¯·á ¼¥ÀÌ µÈ ³¯Â¥
-	__int64						nCashShopEndTime;	//À¯·á ¼¥ ¸¸·áÀÏ
+	__int64						nCashShopStartTime; //ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½Â¥
+	__int64						nCashShopEndTime;	//ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 END_PROTOCOL()
 //------------------------------------------------------------------
 BEGIN_PROTOCOL( GQ_PRIVATESHOP_UPDATE_REQ )
@@ -1156,32 +1157,32 @@ BEGIN_PROTOCOL( GQ_PRIVATESHOP_UPDATE_REQ )
 	CHARACTERID					charID;
 	WCHAR						wcPrivateShopName[NTL_MAX_PRIVATESHOP_NAME_IN_UNICODE + 1];
 	WCHAR						wcNotice[NTL_MAX_PRIVATESHOP_NOTICE_IN_UNICODE + 1];
-	bool						bIsOwnerEmpty; //trueÀÌ¸é ÁÖÀÎÀÌ ÀÚ¸®¸¦ ºñ¿î°Í	
+	bool						bIsOwnerEmpty; //trueï¿½Ì¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ú¸ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½	
 END_PROTOCOL()
 //------------------------------------------------------------------
 BEGIN_PROTOCOL( GQ_RANKBATTLE_SCORE_UPDATE_REQ )
 HOBJECT						handle;
 CHARACTERID					charID;
-BYTE						byBattleMode;		// eRANKBATTLE_MODE 0:°³ÀÎ 1:ÆÄÆ¼
+BYTE						byBattleMode;		// eRANKBATTLE_MODE 0:ï¿½ï¿½ï¿½ï¿½ 1:ï¿½ï¿½Æ¼
 sRANKBATTLE_SCORE_INFO		sScoreInfo;
-DWORD						dwMudosaPoint;		// ¹«µµ»ç Æ÷ÀÎÆ® : update °ªÀÌ MAX_MUDOSA_POINT º¸´Ù Å¬ °æ¿ì ¹«µµ»ç Æ÷ÀÎÆ® °ªÀ» MAX_MUDOSA_POINT·Î ¼³Á¤ÇÑ´Ù.
+DWORD						dwMudosaPoint;		// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Æ® : update ï¿½ï¿½ï¿½ï¿½ MAX_MUDOSA_POINT ï¿½ï¿½ï¿½ï¿½ Å¬ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½ MAX_MUDOSA_POINTï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ñ´ï¿½.
 END_PROTOCOL()
 //------------------------------------------------------------------
 BEGIN_PROTOCOL( GQ_TUTORIAL_DATA_UPDATE_REQ )
 HOBJECT						handle;
 CHARACTERID					charId;
-bool						bTutorialFlag;		// Æ©Åä¸®¾ó ÇÃ·¡±× °ª
+bool						bTutorialFlag;		// Æ©ï¿½ä¸®ï¿½ï¿½ ï¿½Ã·ï¿½ï¿½ï¿½ ï¿½ï¿½
 END_PROTOCOL()
 //------------------------------------------------------------------
 BEGIN_PROTOCOL( GQ_TMQ_DAYRECORD_RESET_REQ )
-	DWORD						dwDay;				// ³â¿ùÀÏ (ex.20071116) °ú °°ÀÌ Àü¼ÛµÊ
+	DWORD						dwDay;				// ï¿½ï¿½ï¿½ï¿½ï¿½ (ex.20071116) ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ûµï¿½
 	TBLIDX						tmqTblidx;
 	BYTE						byDifficult;		// eTIMEQUEST_DIFFICULTY
 END_PROTOCOL()
 //------------------------------------------------------------------
 BEGIN_PROTOCOL( GQ_TMQ_DAYRECORD_UPDATE_REQ )
-	WORLDID						worldId;		// res ¿¡¼­ TMQ ¿¡ Àç Á¢±Ù ÇÏ±â À§ÇÔ
-	PARTYID						partyId;		// res ¿¡¼­ TMQ ¿¡ Àç Á¢±Ù ¹× È®ÀÎÀ» ÇÏ±â À§ÇÔ
+	WORLDID						worldId;		// res ï¿½ï¿½ï¿½ï¿½ TMQ ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ï±ï¿½ ï¿½ï¿½ï¿½ï¿½
+	PARTYID						partyId;		// res ï¿½ï¿½ï¿½ï¿½ TMQ ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ È®ï¿½ï¿½ï¿½ï¿½ ï¿½Ï±ï¿½ ï¿½ï¿½ï¿½ï¿½
 	TBLIDX						tmqTblidx;		// tmq tblidx
 	BYTE						byDifficult;	// difficult
 	DWORD						dwClearTime;	// Clear Time
@@ -1205,58 +1206,58 @@ END_PROTOCOL()
 //------------------------------------------------------------------
 BEGIN_PROTOCOL( GQ_MAIL_START_REQ )
 	HOBJECT						handle;
-	HOBJECT						hObject;	// ¸ÞÀÏ¼Û¼ö½ÅÅ¾ ¿ÀºêÁ§Æ® (½ºÄ«¿ìÆ®ÆÄÃ÷ Âø¿ë½Ã INVALID_OBJECT )
+	HOBJECT						hObject;	// ï¿½ï¿½ï¿½Ï¼Û¼ï¿½ï¿½ï¿½Å¾ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® (ï¿½ï¿½Ä«ï¿½ï¿½Æ®ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ INVALID_OBJECT )
 	CHARACTERID					charID;
 END_PROTOCOL()
 //------------------------------------------------------------------
 BEGIN_PROTOCOL( GQ_MAIL_SEND_REQ )
 	HOBJECT						handle;
-	HOBJECT						hObject;	// ¸ÞÀÏ¼Û¼ö½ÅÅ¾ ¿ÀºêÁ§Æ® (½ºÄ«¿ìÆ®ÆÄÃ÷ Âø¿ë½Ã INVALID_OBJECT )
+	HOBJECT						hObject;	// ï¿½ï¿½ï¿½Ï¼Û¼ï¿½ï¿½ï¿½Å¾ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® (ï¿½ï¿½Ä«ï¿½ï¿½Æ®ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ INVALID_OBJECT )
 	CHARACTERID					charID;
-	WCHAR						wszName[NTL_MAX_SIZE_CHAR_NAME + 1];	// ¹ÞÀ» Ä³¸¯ ÀÌ¸§
+	WCHAR						wszName[NTL_MAX_SIZE_CHAR_NAME + 1];	// ï¿½ï¿½ï¿½ï¿½ Ä³ï¿½ï¿½ ï¿½Ì¸ï¿½
 	BYTE						byMailType;	// eMAIL_TYPE	
-	sINVEN_ITEM_POS_DATA		sItemData;	// ¾ÆÀÌÅÛÁ¤º¸
+	sINVEN_ITEM_POS_DATA		sItemData;	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 	DWORD						dwZenny;		// Req or Give Zenny
 	BYTE						byDay;		// Valid expiration date up to 10 days
-	WCHAR						wszTargetName[NTL_MAX_SIZE_CHAR_NAME + 1];	// ¹ÞÀ» Ä³¸¯ ÀÌ¸§
+	WCHAR						wszTargetName[NTL_MAX_SIZE_CHAR_NAME + 1];	// ï¿½ï¿½ï¿½ï¿½ Ä³ï¿½ï¿½ ï¿½Ì¸ï¿½
 	BYTE						byTextSize;
-	WCHAR						wszText[NTL_MAX_LENGTH_OF_MAIL_MESSAGE + 1];	// ¸ÞÀÏ³»¿ë
+	WCHAR						wszText[NTL_MAX_LENGTH_OF_MAIL_MESSAGE + 1];	// ï¿½ï¿½ï¿½Ï³ï¿½ï¿½ï¿½
 END_PROTOCOL()
 //------------------------------------------------------------------
 BEGIN_PROTOCOL( GQ_MAIL_READ_REQ )
 	HOBJECT						handle;
-	HOBJECT						hObject;	// ¸ÞÀÏ¼Û¼ö½ÅÅ¾ ¿ÀºêÁ§Æ® (½ºÄ«¿ìÆ®ÆÄÃ÷ Âø¿ë½Ã INVALID_OBJECT )
+	HOBJECT						hObject;	// ï¿½ï¿½ï¿½Ï¼Û¼ï¿½ï¿½ï¿½Å¾ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® (ï¿½ï¿½Ä«ï¿½ï¿½Æ®ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ INVALID_OBJECT )
 	CHARACTERID					charID;
-	MAILID						mailID;	// ¸ÞÀÏ ¾ÆÀÌµð
+	MAILID						mailID;	// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ìµï¿½
 END_PROTOCOL()
 //------------------------------------------------------------------
 BEGIN_PROTOCOL( GQ_MAIL_DEL_REQ )
 	HOBJECT						handle;
-	HOBJECT						hObject;	// ¸ÞÀÏ¼Û¼ö½ÅÅ¾ ¿ÀºêÁ§Æ® (½ºÄ«¿ìÆ®ÆÄÃ÷ Âø¿ë½Ã INVALID_OBJECT )
+	HOBJECT						hObject;	// ï¿½ï¿½ï¿½Ï¼Û¼ï¿½ï¿½ï¿½Å¾ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® (ï¿½ï¿½Ä«ï¿½ï¿½Æ®ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ INVALID_OBJECT )
 	CHARACTERID					charID;
-	MAILID						mailID;	// ¸ÞÀÏ ¾ÆÀÌµð
+	MAILID						mailID;	// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ìµï¿½
 END_PROTOCOL()
 //------------------------------------------------------------------
 BEGIN_PROTOCOL( GQ_MAIL_RETURN_REQ )
 	HOBJECT						handle;
-	HOBJECT						hObject;	// ¸ÞÀÏ¼Û¼ö½ÅÅ¾ ¿ÀºêÁ§Æ® (½ºÄ«¿ìÆ®ÆÄÃ÷ Âø¿ë½Ã INVALID_OBJECT )
+	HOBJECT						hObject;	// ï¿½ï¿½ï¿½Ï¼Û¼ï¿½ï¿½ï¿½Å¾ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® (ï¿½ï¿½Ä«ï¿½ï¿½Æ®ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ INVALID_OBJECT )
 	CHARACTERID					charID;
-	MAILID						mailID;	// ¸ÞÀÏ ¾ÆÀÌµð
+	MAILID						mailID;	// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ìµï¿½
 END_PROTOCOL()
 //------------------------------------------------------------------
 BEGIN_PROTOCOL( GQ_MAIL_RELOAD_REQ )
 	HOBJECT						handle;
-	HOBJECT						hObject;	// ¸ÞÀÏ¼Û¼ö½ÅÅ¾ ¿ÀºêÁ§Æ® (½ºÄ«¿ìÆ®ÆÄÃ÷ Âø¿ë½Ã INVALID_OBJECT )
+	HOBJECT						hObject;	// ï¿½ï¿½ï¿½Ï¼Û¼ï¿½ï¿½ï¿½Å¾ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® (ï¿½ï¿½Ä«ï¿½ï¿½Æ®ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ INVALID_OBJECT )
 	CHARACTERID					charID;
-	bool						bIsSchedule;	// ½ºÄÉÁÙ¿¡ ÀÇÇÑ ¸®·Îµå ÀÎ°¡ À¯Àú ¿äÃ»ÀÎ°¡? 0:User 1:½ºÄÉÁÙ
+	bool						bIsSchedule;	// ï¿½ï¿½ï¿½ï¿½ï¿½Ù¿ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Îµï¿½ ï¿½Î°ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ã»ï¿½Î°ï¿½? 0:User 1:ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 END_PROTOCOL()
 //------------------------------------------------------------------
 BEGIN_PROTOCOL( GQ_MAIL_LOAD_REQ )
 	HOBJECT						handle;
-	HOBJECT						hObject;	// ¸ÞÀÏ¼Û¼ö½ÅÅ¾ ¿ÀºêÁ§Æ® (½ºÄ«¿ìÆ®ÆÄÃ÷ Âø¿ë½Ã INVALID_OBJECT )
+	HOBJECT						hObject;	// ï¿½ï¿½ï¿½Ï¼Û¼ï¿½ï¿½ï¿½Å¾ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® (ï¿½ï¿½Ä«ï¿½ï¿½Æ®ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ INVALID_OBJECT )
 	CHARACTERID					charID;
 	BYTE						byCount;
-	MAILID						aMailID[NTL_MAX_MAIL_SLOT_COUNT];	// ¸ÞÀÏ ¾ÆÀÌµð
+	MAILID						aMailID[NTL_MAX_MAIL_SLOT_COUNT];	// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ìµï¿½
 END_PROTOCOL()
 //------------------------------------------------------------------
 BEGIN_PROTOCOL( GQ_MAIL_ITEM_RECEIVE_REQ )
@@ -1270,9 +1271,9 @@ END_PROTOCOL()
 //------------------------------------------------------------------
 BEGIN_PROTOCOL( GQ_MAIL_LOCK_REQ )
 	HOBJECT						handle;
-	HOBJECT						hObject;	// ¸ÞÀÏ¼Û¼ö½ÅÅ¾ ¿ÀºêÁ§Æ® (½ºÄ«¿ìÆ®ÆÄÃ÷ Âø¿ë½Ã INVALID_OBJECT )
+	HOBJECT						hObject;	// ï¿½ï¿½ï¿½Ï¼Û¼ï¿½ï¿½ï¿½Å¾ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® (ï¿½ï¿½Ä«ï¿½ï¿½Æ®ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ INVALID_OBJECT )
 	CHARACTERID					charID;
-	MAILID						mailID;	// ¸ÞÀÏ ¾ÆÀÌµð
+	MAILID						mailID;	// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ìµï¿½
 	bool						bIsLock;		// Lock 1: Unlock: 0
 END_PROTOCOL()
 //------------------------------------------------------------------
@@ -1281,20 +1282,20 @@ BEGIN_PROTOCOL( GQ_MAIL_EVENT_SEND_REQ )
 	CHARACTERID 				targetCharID;
 	BYTE 						byMailType;	// eMAIL_TYPE
 	BYTE 						bySenderType;
-	sITEM_DATA					sItemData;	// ¾ÆÀÌÅÛÁ¤º¸
+	sITEM_DATA					sItemData;	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 	DWORD						dwZenny;		// Req or Give Zenny
-	BYTE						byDay;		// À¯È¿¸¸·á³¯Â¥ ÃÖ´ë 10ÀÏ
-	WCHAR 						wszSenderName[NTL_MAX_SIZE_CHAR_NAME + 1];	// Ä³¸¯ ÀÌ¸§
+	BYTE						byDay;		// ï¿½ï¿½È¿ï¿½ï¿½ï¿½á³¯Â¥ ï¿½Ö´ï¿½ 10ï¿½ï¿½
+	WCHAR 						wszSenderName[NTL_MAX_SIZE_CHAR_NAME + 1];	// Ä³ï¿½ï¿½ ï¿½Ì¸ï¿½
 	BYTE						byTextSize;
-	WCHAR						wszText[NTL_MAX_LENGTH_OF_MAIL_MESSAGE + 1];	// ¸ÞÀÏ³»¿ë
+	WCHAR						wszText[NTL_MAX_LENGTH_OF_MAIL_MESSAGE + 1];	// ï¿½ï¿½ï¿½Ï³ï¿½ï¿½ï¿½
 END_PROTOCOL()
 //------------------------------------------------------------------
 BEGIN_PROTOCOL( GQ_MAIL_MULTI_DEL_REQ )
 	HOBJECT						handle;
-	HOBJECT						hObject;	// ¸ÞÀÏ¼Û¼ö½ÅÅ¾ ¿ÀºêÁ§Æ® (½ºÄ«¿ìÆ®ÆÄÃ÷ Âø¿ë½Ã INVALID_OBJECT )
+	HOBJECT						hObject;	// ï¿½ï¿½ï¿½Ï¼Û¼ï¿½ï¿½ï¿½Å¾ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® (ï¿½ï¿½Ä«ï¿½ï¿½Æ®ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ INVALID_OBJECT )
 	CHARACTERID					charID;
 	BYTE						byCount;
-	MAILID						aMailID[NTL_MAX_COUNT_OF_MULTI_DEL];	// ¸ÞÀÏ ¾ÆÀÌµð
+	MAILID						aMailID[NTL_MAX_COUNT_OF_MULTI_DEL];	// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ìµï¿½
 END_PROTOCOL()
 //------------------------------------------------------------------
 BEGIN_PROTOCOL( GQ_CHAR_AWAY_REQ )
@@ -1390,9 +1391,9 @@ BEGIN_PROTOCOL(GQ_GUILD_BANK_ZENNY_REQ)
 	HOBJECT					npchandle;		// NpcHandle
 	CHARACTERID				charId;
 	GUILDID					guildID;
-	DWORD					dwZenny;		// »©°Å³ª ³ÖÀ» ¾×¼ö
-	bool					bIsSave;		// 1 Àº ³ÖÀ» °æ¿ì 0 Àº »©´Â°æ¿ì
-	BYTE					byType;			// eDBO_GUILD_ZENNY_UPDATE_TYPE º¯°æÁÖÃ¼
+	DWORD					dwZenny;		// ï¿½ï¿½ï¿½Å³ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½×¼ï¿½
+	bool					bIsSave;		// 1 ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ 0 ï¿½ï¿½ ï¿½ï¿½ï¿½Â°ï¿½ï¿½
+	BYTE					byType;			// eDBO_GUILD_ZENNY_UPDATE_TYPE ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã¼
 END_PROTOCOL()
 //------------------------------------------------------------------
 BEGIN_PROTOCOL(GQ_SHOP_ITEM_IDENTIFY_REQ)
@@ -1409,7 +1410,7 @@ BEGIN_PROTOCOL(GQ_BUDOKAI_DATA_REQ)
 END_PROTOCOL()
 //------------------------------------------------------------------
 BEGIN_PROTOCOL(GQ_BUDOKAI_INIT_DATA_REQ)
-	bool							bIsFirstUpdate;		// true : ¼­¹ö¸¦ Ã³À½ °¡µ¿ÇÏ¿© DB¿¡ µ¥ÀÌÅ¸°¡ ¾ø´Â °æ¿ì, false : »õ·Î¿î ½ÃÁðÀ» ½ÃÀÛÇÏ°ÔµÈ °æ¿ì
+	bool							bIsFirstUpdate;		// true : ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Ã³ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï¿ï¿½ DBï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Å¸ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½, false : ï¿½ï¿½ï¿½Î¿ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï°Ôµï¿½ ï¿½ï¿½ï¿½
 	sBUDOKAI_UPDATEDB_INITIALIZE	sInitData;
 END_PROTOCOL()
 //------------------------------------------------------------------
@@ -1417,7 +1418,7 @@ BEGIN_PROTOCOL(GQ_BUDOKAI_UPDATE_STATE_REQ)				// Main State
 	sBUDOKAI_STATE_DATA				sStateData;
 END_PROTOCOL()
 //------------------------------------------------------------------
-BEGIN_PROTOCOL(GQ_BUDOKAI_UPDATE_MATCH_STATE_REQ)		// °³ÀÎÀü ¹× ÆÀÀü State
+BEGIN_PROTOCOL(GQ_BUDOKAI_UPDATE_MATCH_STATE_REQ)		// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ State
 	BYTE							byMatchType;		// eBUDOKAI_MATCH_TYPE
 	sBUDOKAI_MATCHSTATE_DATA		sStateData;
 END_PROTOCOL()
@@ -1450,9 +1451,9 @@ BEGIN_PROTOCOL(GQ_BUDOKAI_LEAVE_INDIVIDUAL_REQ)
 END_PROTOCOL()
 //------------------------------------------------------------------
 BEGIN_PROTOCOL(GQ_BUDOKAI_INDIVIDUAL_SELECTION_REQ)
-	// pcÀÇ ÁøÇà »óÅÂ¸¦ ¾÷µ¥ÀÌÆ® ÇÏ±â À§ÇÑ Á¤º¸
+	// pcï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Â¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® ï¿½Ï±ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	BYTE					byWinnerJoinResult;	// = BUDOKAI_JOIN_RESULT_MINORMATCH
-	BYTE					byLoserResultCondition;	// JoinResult °ªÀÌ byLoserResultConditionÀÎ ¸ðµç ·¹ÄÚµåÀÇ JoinState¸¦ byLoserJoinState·Î ¹Ù²Û´Â´Ù.
+	BYTE					byLoserResultCondition;	// JoinResult ï¿½ï¿½ï¿½ï¿½ byLoserResultConditionï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Úµï¿½ï¿½ï¿½ JoinStateï¿½ï¿½ byLoserJoinStateï¿½ï¿½ ï¿½Ù²Û´Â´ï¿½.
 	BYTE					byLoserJoinState;	// = BUDOKAI_JOIN_STATE_DROPOUT
 END_PROTOCOL()
 //------------------------------------------------------------------
@@ -1463,9 +1464,9 @@ BEGIN_PROTOCOL(GQ_BUDOKAI_TOURNAMENT_INDIVIDUAL_ADD_ENTRY_LIST_REQ)
 	WORD					wJoinId;
 	BYTE					byMatchIndex;
 
-	// pcÀÇ ÁøÇà »óÅÂ¸¦ ¾÷µ¥ÀÌÆ® ÇÏ±â À§ÇÑ Á¤º¸
+	// pcï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Â¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® ï¿½Ï±ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	BYTE					byWinnerJoinResult;	// = BUDOKAI_JOIN_RESULT_ENTER_32
-	BYTE					byLoserResultCondition;	// JoinResult °ªÀÌ byLoserResultConditionÀÎ ¸ðµç ·¹ÄÚµåÀÇ JoinState¸¦ byLoserJoinState·Î ¹Ù²Û´Â´Ù.
+	BYTE					byLoserResultCondition;	// JoinResult ï¿½ï¿½ï¿½ï¿½ byLoserResultConditionï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Úµï¿½ï¿½ï¿½ JoinStateï¿½ï¿½ byLoserJoinStateï¿½ï¿½ ï¿½Ù²Û´Â´ï¿½.
 	BYTE					byLoserJoinState;	// = BUDOKAI_JOIN_STATE_DROPOUT
 END_PROTOCOL()
 //------------------------------------------------------------------
@@ -1475,9 +1476,9 @@ END_PROTOCOL()
 BEGIN_PROTOCOL(GQ_BUDOKAI_TOURNAMENT_INDIVIDUAL_ADD_MATCH_RESULT_REQ)
 	sBUDOKAI_TOURNAMENT_MATCH_DATA	sMatchData;
 
-	// pcÀÇ ÁøÇà »óÅÂ¸¦ ¾÷µ¥ÀÌÆ® ÇÏ±â À§ÇÑ Á¤º¸
+	// pcï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Â¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® ï¿½Ï±ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	BYTE					byWinnerJoinResult;	// eBUDOKAI_JOIN_RESULT
-	BYTE					byLoserResultCondition;	// JoinResult °ªÀÌ byLoserResultConditionÀÎ ¸ðµç ·¹ÄÚµåÀÇ JoinState¸¦ byLoserJoinState·Î ¹Ù²Û´Â´Ù.
+	BYTE					byLoserResultCondition;	// JoinResult ï¿½ï¿½ï¿½ï¿½ byLoserResultConditionï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Úµï¿½ï¿½ï¿½ JoinStateï¿½ï¿½ byLoserJoinStateï¿½ï¿½ ï¿½Ù²Û´Â´ï¿½.
 	BYTE					byLoserJoinState;	// = BUDOKAI_JOIN_STATE_DROPOUT
 END_PROTOCOL()
 //------------------------------------------------------------------
@@ -1495,25 +1496,25 @@ BEGIN_PROTOCOL(GQ_BUDOKAI_JOIN_TEAM_REQ)
 	BYTE						byMemberCount;
 	CHARACTERID					aMembers[NTL_MAX_MEMBER_IN_PARTY];
 	float						fPoint;
-	sBUDOKAI_TEAM_POINT_INFO	aTeamInfo[NTL_MAX_MEMBER_IN_PARTY];	// °ÔÀÓ¼­¹ö¿¡¼­ »ç¿ëÇÏ±â À§ÇÑ Á¤º¸
+	sBUDOKAI_TEAM_POINT_INFO	aTeamInfo[NTL_MAX_MEMBER_IN_PARTY];	// ï¿½ï¿½ï¿½Ó¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Ï±ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 END_PROTOCOL()
 //------------------------------------------------------------------
-BEGIN_PROTOCOL(GQ_BUDOKAI_LEAVE_TEAM_REQ)			// ÆÀ ¸®´õÀÇ Ãë¼Ò
+BEGIN_PROTOCOL(GQ_BUDOKAI_LEAVE_TEAM_REQ)			// ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½
 	HOBJECT					handle;
 	CHARACTERID				charId;
 END_PROTOCOL()
 //------------------------------------------------------------------
-BEGIN_PROTOCOL(GQ_BUDOKAI_LEAVE_TEAM_MEMBER_REQ)	// ÆÀ ¸â¹öÀÇ Ãë¼Ò
+BEGIN_PROTOCOL(GQ_BUDOKAI_LEAVE_TEAM_MEMBER_REQ)	// ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½
 	HOBJECT					handle;
 	CHARACTERID				charId;
-	float					fPoint;		// »èÁ¦ Æ÷ÀÎÆ®
+	float					fPoint;		// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Æ®
 	WCHAR					wszMemberName[NTL_MAX_SIZE_CHAR_NAME + 1];
 END_PROTOCOL()
 //------------------------------------------------------------------
 BEGIN_PROTOCOL(GQ_BUDOKAI_TEAM_SELECTION_REQ)
-	// pcÀÇ ÁøÇà »óÅÂ¸¦ ¾÷µ¥ÀÌÆ® ÇÏ±â À§ÇÑ Á¤º¸
+	// pcï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Â¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® ï¿½Ï±ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	BYTE					byWinnerJoinResult;	// = BUDOKAI_JOIN_RESULT_MINORMATCH
-	BYTE					byLoserResultCondition;	// JoinResult °ªÀÌ byLoserResultConditionÀÎ ¸ðµç ·¹ÄÚµåÀÇ JoinState¸¦ byLoserJoinState·Î ¹Ù²Û´Â´Ù.
+	BYTE					byLoserResultCondition;	// JoinResult ï¿½ï¿½ï¿½ï¿½ byLoserResultConditionï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Úµï¿½ï¿½ï¿½ JoinStateï¿½ï¿½ byLoserJoinStateï¿½ï¿½ ï¿½Ù²Û´Â´ï¿½.
 	BYTE					byLoserJoinState;	// = BUDOKAI_JOIN_STATE_DROPOUT
 END_PROTOCOL()
 //------------------------------------------------------------------
@@ -1524,9 +1525,9 @@ BEGIN_PROTOCOL(GQ_BUDOKAI_TOURNAMENT_TEAM_ADD_ENTRY_LIST_REQ)
 	WORD					wJoinId;
 	BYTE					byMatchIndex;
 
-	// pcÀÇ ÁøÇà »óÅÂ¸¦ ¾÷µ¥ÀÌÆ® ÇÏ±â À§ÇÑ Á¤º¸
+	// pcï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Â¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® ï¿½Ï±ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	BYTE					byWinnerJoinResult;	// = BUDOKAI_JOIN_RESULT_ENTER16
-	BYTE					byLoserResultCondition;	// JoinResult °ªÀÌ byLoserResultConditionÀÎ ¸ðµç ·¹ÄÚµåÀÇ JoinState¸¦ byLoserJoinState·Î ¹Ù²Û´Â´Ù.
+	BYTE					byLoserResultCondition;	// JoinResult ï¿½ï¿½ï¿½ï¿½ byLoserResultConditionï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Úµï¿½ï¿½ï¿½ JoinStateï¿½ï¿½ byLoserJoinStateï¿½ï¿½ ï¿½Ù²Û´Â´ï¿½.
 	BYTE					byLoserJoinState;	// = BUDOKAI_JOIN_STATE_DROPOUT
 END_PROTOCOL()
 //------------------------------------------------------------------
@@ -1536,9 +1537,9 @@ END_PROTOCOL()
 BEGIN_PROTOCOL(GQ_BUDOKAI_TOURNAMENT_TEAM_ADD_MATCH_RESULT_REQ)
 	sBUDOKAI_TOURNAMENT_MATCH_DATA	sMatchData;
 
-	// pcÀÇ ÁøÇà »óÅÂ¸¦ ¾÷µ¥ÀÌÆ® ÇÏ±â À§ÇÑ Á¤º¸
+	// pcï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Â¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® ï¿½Ï±ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	BYTE					byWinnerJoinResult;	// eBUDOKAI_JOIN_RESULT
-	BYTE					byLoserResultCondition;	// JoinResult °ªÀÌ byLoserResultConditionÀÎ ¸ðµç ·¹ÄÚµåÀÇ JoinState¸¦ byLoserJoinState·Î ¹Ù²Û´Â´Ù.
+	BYTE					byLoserResultCondition;	// JoinResult ï¿½ï¿½ï¿½ï¿½ byLoserResultConditionï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Úµï¿½ï¿½ï¿½ JoinStateï¿½ï¿½ byLoserJoinStateï¿½ï¿½ ï¿½Ù²Û´Â´ï¿½.
 	BYTE					byLoserJoinState;	// = BUDOKAI_JOIN_STATE_DROPOUT
 END_PROTOCOL()
 //------------------------------------------------------------------
@@ -1553,7 +1554,7 @@ END_PROTOCOL()
 BEGIN_PROTOCOL(GQ_BUDOKAI_JOIN_STATE_REQ)
 	HOBJECT					handle;
 	CHARACTERID				charId;
-	bool					bIsClientReq;	// true : Å¬¶óÀÌ¾ðÆ®ÀÇ ¿äÃ»(res Àü¼Û), false : °ÔÀÓ ¼­¹öÀÇ ¿äÃ»(nfy Àü¼Û)
+	bool					bIsClientReq;	// true : Å¬ï¿½ï¿½ï¿½Ì¾ï¿½Æ®ï¿½ï¿½ ï¿½ï¿½Ã»(res ï¿½ï¿½ï¿½ï¿½), false : ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ã»(nfy ï¿½ï¿½ï¿½ï¿½)
 END_PROTOCOL()
 //------------------------------------------------------------------
 BEGIN_PROTOCOL(GQ_BUDOKAI_HISTORY_WRITE_REQ)
@@ -1562,10 +1563,10 @@ BEGIN_PROTOCOL(GQ_BUDOKAI_HISTORY_WRITE_REQ)
 END_PROTOCOL()
 //------------------------------------------------------------------
 BEGIN_PROTOCOL(GQ_BUDOKAI_HISTORY_WINNER_PLAYER_REQ)
-	WORD					wSeasonCount;			// ÇØ´ç season ÀÇ player info ¿äÃ»
+	WORD					wSeasonCount;			// ï¿½Ø´ï¿½ season ï¿½ï¿½ player info ï¿½ï¿½Ã»
 	BYTE					byBudokaiType;			// eBUDOKAI_TYPE
 	BYTE					byMatchType;			// eBUDOKAI_MATCH_TYPE
-	BYTE					byJoinResult;			// JoinResult º¸´Ù Å©°Å³ª °°Àº °ª¸¸ ·ÎµåÇÑ´Ù.
+	BYTE					byJoinResult;			// JoinResult ï¿½ï¿½ï¿½ï¿½ Å©ï¿½Å³ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Îµï¿½ï¿½Ñ´ï¿½.
 END_PROTOCOL()
 //------------------------------------------------------------------
 BEGIN_PROTOCOL(GQ_BUDOKAI_JOIN_STATE_LIST_REQ)
@@ -1702,7 +1703,7 @@ BEGIN_PROTOCOL( GQ_HOIPOIMIX_JOB_RESET_REQ )
 	BYTE				byRecipeType;
 END_PROTOCOL()
 //------------------------------------------------------------------
-BEGIN_PROTOCOL(GQ_HOIPOIMIX_ITEM_MAKE_REQ)			// ¾ÆÀÌÅÛ ¸¸µé±â
+BEGIN_PROTOCOL(GQ_HOIPOIMIX_ITEM_MAKE_REQ)			// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½
 HOBJECT					handle;
 CHARACTERID				charId;
 HOBJECT					objHandle;
@@ -1745,9 +1746,9 @@ END_PROTOCOL()
 //------------------------------------------------------------------
 BEGIN_PROTOCOL(GQ_DOJO_BANK_ZENNY_UPDATE_REQ)
 	GUILDID					guildId;
-	DWORD					dwZenny;		// »©°Å³ª ³ÖÀ» ¾×¼ö
-	bool					bIsSave;		// 1 Àº ³ÖÀ» °æ¿ì 0 Àº »©´Â°æ¿ì
-	BYTE					byType;			// eDBO_GUILD_ZENNY_UPDATE_TYPE º¯°æÁÖÃ¼
+	DWORD					dwZenny;		// ï¿½ï¿½ï¿½Å³ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½×¼ï¿½
+	bool					bIsSave;		// 1 ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ 0 ï¿½ï¿½ ï¿½ï¿½ï¿½Â°ï¿½ï¿½
+	BYTE					byType;			// eDBO_GUILD_ZENNY_UPDATE_TYPE ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã¼
 END_PROTOCOL()
 //------------------------------------------------------------------
 BEGIN_PROTOCOL( GQ_WORLD_SCHEDULE_SET_REQ )
@@ -1856,8 +1857,8 @@ BEGIN_PROTOCOL(GQ_CASHITEM_UNPACK_REQ)
 	CHARACTERID		charId;
 	ACCOUNTID		accountId;
 	QWORD			qwProductId;
-	BYTE			byCount;			// UnPackÇØ¼­ ³Ö¾îÁÙ ¾ÆÀÌÅÛ ¼ýÀÚ
-	sCASHITEM_BRIEF	asInfo[1];			// UnPackÇØ¼­ ³ª¿Ã CASHITEM
+	BYTE			byCount;			// UnPackï¿½Ø¼ï¿½ ï¿½Ö¾ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+	sCASHITEM_BRIEF	asInfo[1];			// UnPackï¿½Ø¼ï¿½ ï¿½ï¿½ï¿½ï¿½ CASHITEM
 END_PROTOCOL()
 //------------------------------------------------------------------
 BEGIN_PROTOCOL(GQ_CASHITEM_BUY_REQ)
@@ -1865,7 +1866,7 @@ HOBJECT			handle;
 ACCOUNTID		accountId;
 CHARACTERID		characterId;
 TBLIDX			HLSitemTblidx;
-BYTE			byCount;			// UnPackÇØ¼­ ³Ö¾îÁÙ ¾ÆÀÌÅÛ ¼ýÀÚ
+BYTE			byCount;			// UnPackï¿½Ø¼ï¿½ ï¿½Ö¾ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 DWORD			dwPrice;
 DWORD			dwDuration;
 END_PROTOCOL()

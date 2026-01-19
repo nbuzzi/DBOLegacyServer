@@ -49,6 +49,13 @@
 68131411 modifiers phase=3: hp=2.0 physAtk=2.0 atkSpd=0.65 sizeRate=11
 ```
 
+**HP Restoration Control (NEW)**:
+By default, phase transitions do NOT restore mob HP to 100%. The mob keeps its current HP percentage.
+To enable HP restoration on a specific phase:
+```cfg
+68131410 modifiers phase=2: hp=1.6 physAtk=1.6 restoreHP=1  # Restore to 100% HP at phase 2
+```
+
 ### Global Phase Modifiers
 Apply to all mobs by using ID `0`:
 ```cfg

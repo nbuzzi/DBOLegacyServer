@@ -16,6 +16,7 @@
 #include "UseItemTable.h"
 #include "DynamicFieldSystemEvent.h"
 #include "DragonballScramble.h"
+#include "EventManager.h"
 
 
 void CQueryServerSession::RecvCreateItemRes(CNtlPacket* pPacket)
@@ -3212,46 +3213,46 @@ void CQueryServerSession::RecvEventRewardLoadInfo(CNtlPacket * pPacket)
 
 void CQueryServerSession::RecvEventRewardLoadRes(CNtlPacket * pPacket)
 {
-	sQG_EVENT_REWARD_LOAD_RES * req = (sQG_EVENT_REWARD_LOAD_RES*)pPacket->GetPacketData();
+	//sQG_EVENT_REWARD_LOAD_RES * req = (sQG_EVENT_REWARD_LOAD_RES*)pPacket->GetPacketData();
 
-	CPlayer* pOwner = g_pObjectManager->GetPC(req->handle);
-	if (!pOwner || !pOwner->IsInitialized())
-		return; //dont need to log I guess
+	//CPlayer* pOwner = g_pObjectManager->GetPC(req->handle);
+	//if (!pOwner || !pOwner->IsInitialized())
+	//	return; //dont need to log I guess
 
-	if (pOwner->GetCharID() != req->charId)
-		return;
+	//if (pOwner->GetCharID() != req->charId)
+	//	return;
 
-	CNtlPacket packet(sizeof(sGU_EVENT_REWARD_LOAD_RES));
-	sGU_EVENT_REWARD_LOAD_RES* res = (sGU_EVENT_REWARD_LOAD_RES*)packet.GetPacketData();
-	res->wOpCode = GU_EVENT_REWARD_LOAD_RES;
-	res->wResultCode = req->wResultCode;
-	res->byCount = req->byCount;
+	//CNtlPacket packet(sizeof(sGU_EVENT_REWARD_LOAD_RES));
+	//sGU_EVENT_REWARD_LOAD_RES* res = (sGU_EVENT_REWARD_LOAD_RES*)packet.GetPacketData();
+	//res->wOpCode = GU_EVENT_REWARD_LOAD_RES;
+	//res->wResultCode = req->wResultCode;
+	//res->byCount = req->byCount;
 
-	if (req->wResultCode == GAME_SUCCESS)
-	{
-		pOwner->ClearEventRewardMap(); //clear existing map
+	//if (req->wResultCode == GAME_SUCCESS)
+	//{
+	//	pOwner->ClearEventRewardMap(); //clear existing map
 
-		CNtlPacket packetInfo(sizeof(sGU_EVENT_REWARD_LOAD_INFO));
-		sGU_EVENT_REWARD_LOAD_INFO* resInfo = (sGU_EVENT_REWARD_LOAD_INFO*)packetInfo.GetPacketData();
-		resInfo->wOpCode = GU_EVENT_REWARD_LOAD_INFO;
-		resInfo->nCount = (int)req->byCount;
+	//	CNtlPacket packetInfo(sizeof(sGU_EVENT_REWARD_LOAD_INFO));
+	//	sGU_EVENT_REWARD_LOAD_INFO* resInfo = (sGU_EVENT_REWARD_LOAD_INFO*)packetInfo.GetPacketData();
+	//	resInfo->wOpCode = GU_EVENT_REWARD_LOAD_INFO;
+	//	resInfo->nCount = (int)req->byCount;
 
-		for (BYTE i = 0; i < req->byCount; i++)
-		{
-			resInfo->aInfo[i].charId = (req->asInfo[i].charId == 0) ? pOwner->GetCharID() : req->asInfo[i].charId;
-			resInfo->aInfo[i].eventTblidx = req->asInfo[i].eventTblidx;
+	//	for (BYTE i = 0; i < req->byCount; i++)
+	//	{
+	//		resInfo->aInfo[i].charId = (req->asInfo[i].charId == 0) ? pOwner->GetCharID() : req->asInfo[i].charId;
+	//		resInfo->aInfo[i].eventTblidx = req->asInfo[i].eventTblidx;
 
-			// insert into players map
-			req->asNameInfo[i].charId = resInfo->aInfo[i].charId;
-			pOwner->InsertEventReward(req->asInfo[i].eventTblidx, req->asNameInfo[i]);
-		}
+	//		// insert into players map
+	//		req->asNameInfo[i].charId = resInfo->aInfo[i].charId;
+	//		pOwner->InsertEventReward(req->asInfo[i].eventTblidx, req->asNameInfo[i]);
+	//	}
 
-		memcpy(res->asNameInfo, req->asNameInfo, sizeof(sEVENT_PC_NAME) * req->byCount);
+	//	memcpy(res->asNameInfo, req->asNameInfo, sizeof(sEVENT_PC_NAME) * req->byCount);
 
-		g_pApp->Send(pOwner->GetClientSessionID(), &packetInfo);
-	}
+	//	g_pApp->Send(pOwner->GetClientSessionID(), &packetInfo);
+	//}
 
-	g_pApp->Send(pOwner->GetClientSessionID(), &packet);
+	//g_pApp->Send(pOwner->GetClientSessionID(), &packet);
 }
 
 void CQueryServerSession::RecvEventRewardSelectRes(CNtlPacket * pPacket)

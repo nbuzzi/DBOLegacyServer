@@ -1,0 +1,12 @@
+# MobAppearanceOverrides.cfg.sample
+# Copy this file to your GameServer runtime folder as .\config\MobAppearanceOverrides.cfg
+# and tweak the entries below to suit your channel.
+
+settings: Enabled=1 Verbose=0
+
+# Example 1: swap a single mob (source 6001001) to use the visuals from human mob 6010000
+mob=6001001 replace=6010000 keepStats=1
+
+# Example 2: fallback rule that makes every mob display as 6010000 and use its stats
+# mob=0 replace=6010000 useTargetStats=1
+

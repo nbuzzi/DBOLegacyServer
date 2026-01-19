@@ -56,6 +56,34 @@ public:
 			  spawnPosX(0), spawnPosY(0), spawnPosZ(0) {}
 	};
 
+	struct ActionReward
+	{
+		enum class Type : unsigned char
+		{
+			PLAYTIME = 0
+		};
+
+		enum class GrantMode : unsigned char
+		{
+			ONCE = 0,
+			REPEATABLE
+		};
+
+		CNtlString id;                // Identifier configured in INI
+		CNtlString label;             // Human-friendly label for messaging
+		Type type;                    // Which action this reward tracks
+		GrantMode mode;               // Grant behavior (once or repeatable)
+		unsigned int eventTblidx;     // Event reward entry to register in DB
+		unsigned int thresholdSeconds;// Seconds required to satisfy condition
+		unsigned int cooldownSeconds; // Cooldown between repeated grants (0 = threshold-based)
+		unsigned int minLevel;        // Minimum player level (0 = no requirement)
+		bool countWhileAfk;           // Allow AFK time to contribute toward threshold
+
+		ActionReward()
+			: type(Type::PLAYTIME), mode(GrantMode::ONCE), eventTblidx(0),
+			  thresholdSeconds(0), cooldownSeconds(0), minLevel(0), countWhileAfk(false) {}
+	};
+
 	struct Config
 	{
 		bool enabled;
@@ -138,6 +166,10 @@ public:
 		bool helperEnableHealing;                 // Enable healing capability
 		bool helperEnableBuffing;                 // Enable buffing capability
 		bool helperEnableAttacking;               // Enable attacking capability
+		bool actionRewardsEnabled;                // Enable tracking of free action rewards
+		bool actionRewardsRequireEventChannel;    // Restrict tracking to configured channels
+		bool actionRewardsAnnounce;               // Notify players when rewards unlock
+		std::vector<ActionReward> actionRewards;  // Configured action reward definitions
 
 		Config()
 			: enabled(false), channelNameContains("EVENTS"),
@@ -166,10 +198,11 @@ public:
 			  partyBonusMultiplier(1.2f), enableTeamCompetition(false),
 			  teamCompetitionBonusMudosa(3000),
 			  mobPoolEnabled(false), mobPoolFile(".\\config\\Mobs.txt"), randomMobsPerRound(1),
-			  autoResurrectEnabled(true), maxDeathsBeforeElimination(30), autoResurrectDelayMs(3000),
-			  eventHelpersEnabled(true), helpersPerPlayer(1), helperMobId(3416101),
-			  helperFollowDistance(3.0f), helperEnableHealing(true), helperEnableBuffing(true),
-			  helperEnableAttacking(true) {}
+			autoResurrectEnabled(true), maxDeathsBeforeElimination(30), autoResurrectDelayMs(3000),
+			eventHelpersEnabled(true), helpersPerPlayer(1), helperMobId(3416101),
+			helperFollowDistance(3.0f), helperEnableHealing(true), helperEnableBuffing(true),
+			helperEnableAttacking(true), actionRewardsEnabled(true),
+			actionRewardsRequireEventChannel(false), actionRewardsAnnounce(true) {}
 	};
 
 public:
@@ -226,6 +259,9 @@ public:
 	void OnPlayerKilledMob(CPlayer* pKiller, const char* mobName);
 	// Called when a player dies during the event
 	void OnPlayerDeath(CPlayer* pPlayer);
+	// Activity tracking hooks for free rewards
+	void OnPlayerTick(CPlayer* pPlayer, unsigned long dwTickDiff);
+	void OnPlayerDisconnected(CPlayer* pPlayer);
 
 	// Mob cleanup (can be called by GM command)
 	void DespawnAllEventMobs();
@@ -279,6 +315,18 @@ private:
 	const wchar_t* GetTeamColor(Team team);
 	// Automation scheduling helper when event ends or is cancelled
 	void ScheduleAutoAfterTermination(bool cancelledNoParticipants);
+	// Action reward helpers
+	void ParseActionRewards(CNtlIniFile& file);
+	bool ParseActionRewardEntry(CNtlIniFile& file, unsigned int index, ActionReward& outReward);
+	bool ShouldTrackPlayerForRewards(CPlayer* pPlayer) const;
+	void EnsureActionStateCapacity(unsigned int charId);
+	void ResetAllActionStates();
+	bool TryGrantActionReward(CPlayer* pPlayer, size_t rewardIndex);
+	void NotifyActionRewardGranted(CPlayer* pPlayer, const ActionReward& rewardDef) const;
+	void RecordActionRewardGrant(CPlayer* pPlayer, const ActionReward& rewardDef) const;
+	static std::wstring ToWide(const CNtlString& value);
+	static ActionReward::Type ResolveActionType(const CNtlString& value);
+	static ActionReward::GrantMode ResolveGrantMode(const CNtlString& value);
 
 	// Automation
 	enum class AutoState : unsigned char { OFF = 0, WAIT_NEXT, ENROLLMENT_OPEN, WAIT_RESTART };
@@ -355,6 +403,18 @@ private:
 	// Event helpers tracking
 	std::vector<HOBJECT> m_eventHelpers;                               // Helper mob handles
 	std::unordered_map<unsigned int, HOBJECT> m_playerHelpers;         // charId -> helper handle
+
+	struct ActionRewardState
+	{
+		unsigned long accumulatedMs;
+		unsigned long lastGrantMs;
+		unsigned int grantsCompleted;
+
+		ActionRewardState()
+			: accumulatedMs(0), lastGrantMs(0), grantsCompleted(0) {}
+	};
+
+	std::unordered_map<unsigned int, std::vector<ActionRewardState>> m_actionRewardStates; // charId -> reward states
 
 	// Helper management functions
 	void SpawnEventHelpers();

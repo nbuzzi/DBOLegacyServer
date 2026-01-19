@@ -73,6 +73,7 @@ public:
 	void					SetBankLoaded(bool bFlag) { m_bIsBankLoaded = bFlag; }
 
 	bool					HasEventReward(TBLIDX rewardTblidx, CHARACTERID charId);
+	inline void				AddEventReward(TBLIDX rewardTblidx, const sEVENT_PC_NAME& info) { m_mapEventReward.insert(std::make_pair(rewardTblidx, info)); }
 	inline void				EraseEventReward(TBLIDX rewardTblidx) { m_mapEventReward.erase(rewardTblidx); }
 	inline void				ClearEventReward() { m_mapEventReward.clear(); }
 

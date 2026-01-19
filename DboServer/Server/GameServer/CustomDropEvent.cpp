@@ -414,6 +414,8 @@ bool CCustomDropEvent::LoadConfigInternal(const char* path)
 						m.guardRate = val;
 					else if (_stricmp(key, "sizeRate") == 0)
 						m.sizeRate = (int)val;
+					else if (_stricmp(key, "restoreHP") == 0)
+						m.restoreHP = (val != 0.0f); // Any non-zero value = true
 				}
 				t = strtok(nullptr, " \t\n\r");
 			}
@@ -1498,26 +1500,58 @@ void CCustomDropEvent::ApplyModifierDelta(CMonster* pMob, const Modifiers& mod, 
 		newMaxLp = 1;
 	att->SetMaxLP((int)newMaxLp);
 
+	// Determine HP behavior: restoreHP flag takes priority, then preserveHpRatio parameter
 	int newCurLp = (int)newMaxLp;
-	if (preserveHpRatio && oldMaxLp > 0)
+	if (mod.restoreHP)
 	{
+		// Explicitly restore to full HP
+		newCurLp = (int)newMaxLp;
+	}
+	else if (preserveHpRatio && oldMaxLp > 0)
+	{
+		// Preserve HP ratio
 		float hpRatio = (float)pMob->GetCurLP() / (float)oldMaxLp;
 		hpRatio = std::max(0.0f, std::min(hpRatio, 1.0f));
 		newCurLp = (int)((float)newMaxLp * hpRatio);
 		if (newCurLp < 1)
 			newCurLp = 1;
 	}
+	// else: restore to full HP (default behavior when neither flag is set)
+
 	if (newCurLp > (int)newMaxLp)
 		newCurLp = (int)newMaxLp;
 	pMob->SetCurLP(newCurLp);
 
 	WORD physAtk = att->GetPhysicalOffence();
-	att->SetPhysicalOffence((WORD)((float)physAtk * mod.physAtk));
+	float newPhysAtk = (float)physAtk * mod.physAtk;
+	if (newPhysAtk > 65535.0f)
+	{
+		// ERR_LOG(LOG_GENERAL, "[CustomDropEvent] PhysAtk overflow: mob %u base=%u mult=%.1f result=%.0f (capped at 65535)",
+		// 	pMob->GetTblidx(), physAtk, mod.physAtk, newPhysAtk);
+		newPhysAtk = 65535.0f; // Prevent WORD overflow
+	}
+	att->SetPhysicalOffence((WORD)newPhysAtk);
+
 	WORD energyAtk = att->GetEnergyOffence();
-	att->SetEnergyOffence((WORD)((float)energyAtk * mod.engAtk));
+	float newEngAtk = (float)energyAtk * mod.engAtk;
+	if (newEngAtk > 65535.0f)
+	{
+		// ERR_LOG(LOG_GENERAL, "[CustomDropEvent] EngAtk overflow: mob %u base=%u mult=%.1f result=%.0f (capped at 65535)",
+		// 	pMob->GetTblidx(), energyAtk, mod.engAtk, newEngAtk);
+		newEngAtk = 65535.0f; // Prevent WORD overflow
+	}
+	att->SetEnergyOffence((WORD)newEngAtk);
 
 	WORD physDef = att->GetPhysicalDefence();
-	att->SetPhysicalDefence((WORD)((float)physDef * mod.physDef));
+	float newPhysDef = (float)physDef * mod.physDef;
+	if (newPhysDef > 65535.0f)
+	{
+		// ERR_LOG(LOG_GENERAL, "[CustomDropEvent] PhysDef overflow: mob %u base=%u mult=%.1f result=%.0f (capped at 65535)",
+		// 	pMob->GetTblidx(), physDef, mod.physDef, newPhysDef);
+		newPhysDef = 65535.0f; // Prevent WORD overflow
+	}
+	att->SetPhysicalDefence((WORD)newPhysDef);
+
 	WORD energyDef = att->GetEnergyDefence();
 	float targetEnergyDef = (float)energyDef * mod.engDef;
 	float diffEnergyDef = targetEnergyDef - (float)energyDef;
@@ -1529,7 +1563,14 @@ void CCustomDropEvent::ApplyModifierDelta(CMonster* pMob, const Modifiers& mod, 
 	if (mod.atkSpd != 1.f)
 	{
 		WORD cur = att->GetAttackSpeedRate();
-		WORD target = (WORD)((float)cur * mod.atkSpd);
+		float targetFloat = (float)cur * mod.atkSpd;
+		if (targetFloat > 65535.0f)
+		{
+			// ERR_LOG(LOG_GENERAL, "[CustomDropEvent] AtkSpd overflow: mob %u base=%u mult=%.1f result=%.0f (capped at 65535)",
+			// 	pMob->GetTblidx(), cur, mod.atkSpd, targetFloat);
+			targetFloat = 65535.0f;
+		}
+		WORD target = (WORD)targetFloat;
 		if (target > cur)
 			att->CalculateAttackSpeedRate((float)(target - cur), SYSTEM_EFFECT_APPLY_TYPE_VALUE, true);
 		else if (target < cur)
@@ -1865,6 +1906,16 @@ void CCustomDropEvent::ApplyModifiers(CMonster* pMob)
 {
 	if (!m_bOn)
 		return;
+
+	// Check if modifiers have already been applied to this mob instance
+	// This prevents double-application when mobs are created and then immediately respawned
+	HOBJECT mobHandle = pMob->GetID();
+	if (m_phaseModifierProgress.find(mobHandle) != m_phaseModifierProgress.end())
+	{
+		// Modifiers already applied to this mob, skip to prevent stacking
+		return;
+	}
+
 	// Merge global (id=0) modifiers with per-mob, multiplicatively. sizeRate from specific overrides if set; otherwise use global if set.
 	Modifiers m; // start with identity
 	auto itAll = m_mobMods.find(0);
@@ -1876,6 +1927,7 @@ void CCustomDropEvent::ApplyModifiers(CMonster* pMob)
 		m.physCritDmg *= g.physCritDmg; m.engCritDmg *= g.engCritDmg; m.attackRate *= g.attackRate; m.dodgeRate *= g.dodgeRate;
 		m.blockRate *= g.blockRate; m.blockDmg *= g.blockDmg; m.guardRate *= g.guardRate;
 		if (g.sizeRate > 0) m.sizeRate = g.sizeRate;
+		if (g.restoreHP) m.restoreHP = true; // Inherit restoreHP flag
 	}
 	auto it = m_mobMods.find(pMob->GetTblidx());
 	if (it != m_mobMods.end())
@@ -1886,6 +1938,7 @@ void CCustomDropEvent::ApplyModifiers(CMonster* pMob)
 		m.physCritDmg *= s.physCritDmg; m.engCritDmg *= s.engCritDmg; m.attackRate *= s.attackRate; m.dodgeRate *= s.dodgeRate;
 		m.blockRate *= s.blockRate; m.blockDmg *= s.blockDmg; m.guardRate *= s.guardRate;
 		if (s.sizeRate > 0) m.sizeRate = s.sizeRate;
+		if (s.restoreHP) m.restoreHP = true; // Inherit restoreHP flag
 	}
 	if (itAll == m_mobMods.end() && it == m_mobMods.end())
 		return;
@@ -1902,6 +1955,15 @@ void CCustomDropEvent::ApplyModifiersWithPhase(CMonster* pMob, BYTE byPhase)
 		return;
 	if (!pMob)
 		return;
+
+	// Check if this phase has already been applied to prevent double-application
+	HOBJECT mobHandle = pMob->GetID();
+	auto it = m_phaseModifierProgress.find(mobHandle);
+	if (it != m_phaseModifierProgress.end() && it->second >= byPhase)
+	{
+		// Same or higher phase already applied, skip to prevent stacking
+		return;
+	}
 
 	BYTE phaseToApply = byPhase;
 	CWorld* pWorldForPhase = pMob->GetCurWorld();
@@ -1960,6 +2022,7 @@ void CCustomDropEvent::ApplyModifiersWithPhase(CMonster* pMob, BYTE byPhase)
 			m.blockDmg *= pm.blockDmg;
 			m.guardRate *= pm.guardRate;
 			if (pm.sizeRate > 0) m.sizeRate = pm.sizeRate;
+			if (pm.restoreHP) m.restoreHP = true; // Inherit restoreHP flag
 			hasPhaseModifiers = true;
 		}
 	}
@@ -1992,6 +2055,7 @@ void CCustomDropEvent::ApplyModifiersWithPhase(CMonster* pMob, BYTE byPhase)
 				m.blockDmg *= pm.blockDmg;
 				m.guardRate *= pm.guardRate;
 				if (pm.sizeRate > 0) m.sizeRate = pm.sizeRate;
+				if (pm.restoreHP) m.restoreHP = true; // Inherit restoreHP flag
 				hasPhaseModifiers = true;
 			}
 		}
@@ -2013,21 +2077,64 @@ void CCustomDropEvent::ApplyModifiersWithPhase(CMonster* pMob, BYTE byPhase)
 		return;
 
 	// Max LP
-	DWORD maxLp = att->GetMaxLP();
-	DWORD newMaxLp = (DWORD)((float)maxLp * m.hp);
+	DWORD oldMaxLp = att->GetMaxLP();
+	DWORD newMaxLp = (DWORD)((float)oldMaxLp * m.hp);
 	att->SetMaxLP((int)newMaxLp);
-	pMob->SetCurLP((int)newMaxLp);
+
+	// Only restore HP to 100% if explicitly requested via restoreHP=1
+	if (m.restoreHP)
+	{
+		pMob->SetCurLP((int)newMaxLp);
+	}
+	else
+	{
+		// Preserve HP ratio when not restoring
+		if (oldMaxLp > 0)
+		{
+			float hpRatio = (float)pMob->GetCurLP() / (float)oldMaxLp;
+			int newCurLp = (int)((float)newMaxLp * hpRatio);
+			if (newCurLp < 1) newCurLp = 1;
+			pMob->SetCurLP(newCurLp);
+		}
+		else
+		{
+			pMob->SetCurLP((int)newMaxLp);
+		}
+	}
 
 	// Physical/Energy Offence
 	WORD physAtk = att->GetPhysicalOffence();
+	float newPhysAtk = (float)physAtk * m.physAtk;
+	if (newPhysAtk > 65535.0f)
+	{
+		// ERR_LOG(LOG_GENERAL, "[CustomDropEvent] PhysAtk overflow: mob %u base=%u mult=%.1f result=%.0f (capped at 65535)",
+		// 	pMob->GetTblidx(), physAtk, m.physAtk, newPhysAtk);
+		newPhysAtk = 65535.0f; // Prevent WORD overflow
+	}
+	att->SetPhysicalOffence((WORD)newPhysAtk);
+
 	WORD energyAtk = att->GetEnergyOffence();
-	att->SetPhysicalOffence((WORD)((float)physAtk * m.physAtk));
-	att->SetEnergyOffence((WORD)((float)energyAtk * m.engAtk));
+	float newEngAtk = (float)energyAtk * m.engAtk;
+	if (newEngAtk > 65535.0f)
+	{
+		// ERR_LOG(LOG_GENERAL, "[CustomDropEvent] EngAtk overflow: mob %u base=%u mult=%.1f result=%.0f (capped at 65535)",
+		// 	pMob->GetTblidx(), energyAtk, m.engAtk, newEngAtk);
+		newEngAtk = 65535.0f; // Prevent WORD overflow
+	}
+	att->SetEnergyOffence((WORD)newEngAtk);
 
 	// Physical/Energy Defence
 	WORD physDef = att->GetPhysicalDefence();
+	float newPhysDef = (float)physDef * m.physDef;
+	if (newPhysDef > 65535.0f)
+	{
+		// ERR_LOG(LOG_GENERAL, "[CustomDropEvent] PhysDef overflow: mob %u base=%u mult=%.1f result=%.0f (capped at 65535)",
+		// 	pMob->GetTblidx(), physDef, m.physDef, newPhysDef);
+		newPhysDef = 65535.0f; // Prevent WORD overflow
+	}
+	att->SetPhysicalDefence((WORD)newPhysDef);
+
 	WORD energyDef = att->GetEnergyDefence();
-	att->SetPhysicalDefence((WORD)((float)physDef * m.physDef));
 	{
 		float target = (float)energyDef * m.engDef;
 		float diff = target - (float)energyDef;
@@ -2199,6 +2306,9 @@ void CCustomDropEvent::ApplyModifiersWithPhase(CMonster* pMob, BYTE byPhase)
 			ERR_LOG(LOG_GENERAL, "[CustomDropEvent] Cleared combat-blocking flags on mob %u (world %u)", (unsigned)pMob->GetTblidx(), (unsigned)pMob->GetWorldID());
 		}
 	}
+
+	// Track that phase modifiers have been applied to this mob
+	m_phaseModifierProgress[pMob->GetID()] = phaseToApply;
 }
 
 void CCustomDropEvent::ApplyBuffs(CMonster* pMob)
@@ -2368,4 +2478,19 @@ bool CCustomDropEvent::TryResolveAutoPhase(unsigned int mobTblidx, DWORD curLP, 
 
 	outPhase = phase;
 	return true;
+}
+
+// Check if a mob has autophase configuration
+// This is used to determine if a mob should use world-based phase modifiers
+bool CCustomDropEvent::HasAutoPhaseConfig(unsigned int mobTblidx) const
+{
+	// Check if this specific mob has autophase transitions configured
+	if (m_autoPhaseTransitions.find(mobTblidx) != m_autoPhaseTransitions.end())
+		return true;
+
+	// Check if there's a global (mobId=0) autophase configuration
+	if (m_autoPhaseTransitions.find(0) != m_autoPhaseTransitions.end())
+		return true;
+
+	return false;
 }

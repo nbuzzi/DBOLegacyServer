@@ -1,8 +1,8 @@
 {
   "project_name": "DBO Legacy",
   "webhooks": {
-    "patch_notes": "https://discord.com/api/webhooks/1423408648763215972/AFW7v9h3xtUS6Y3aqblz1Wp8QEwIC52K-Yw31uq46YvQSkt_-EDdarfpY-Y-MPuY8YQR",
-    "announcements": "https://discord.com/api/webhooks/1423408906578825336/AY_JharAl89hnJsYf9KKrdX3iRK5CnIFOk2y-XZTQyiyZY52_0A6hfsu1u1yY_uc97w0"
+    "patch_notes": "",
+    "announcements": ""
   },
   "format_rules": {
     "always_include": [

@@ -75,6 +75,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="ArenaManager.cpp" />
+    <ClCompile Include="MobAppearanceOverrideManager.cpp" />
     <ClCompile Include="MobBuffsManager.cpp" />
     <ClCompile Include="EventManager.cpp" />
     <ClCompile Include="ActionPattern.cpp" />
@@ -755,6 +756,7 @@
     <ClCompile Include="WpsScriptAlgoCondition_CCBD_pattern.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="MobAppearanceOverrideManager.h" />
     <ClInclude Include="MobBuffsManager.h" />
     <ClInclude Include="ArenaManager.h" />
     <ClInclude Include="EventManager.h" />

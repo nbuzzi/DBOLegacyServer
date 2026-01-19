@@ -24,11 +24,21 @@
 #include <vector>
 #include <fstream>
 #include <regex>
+#include <cctype>
+#include <limits>
 #include <PortalTable.h>
 
 // Guard against Windows GDI macro collision (GetObject) only; keep original ERR_LOG implementation from logging system.
 #ifdef GetObject
 #undef GetObject
+#endif
+
+// Windows headers define max/min macros; ensure we use std::max/std::min below.
+#ifdef max
+#undef max
+#endif
+#ifdef min
+#undef min
 #endif
 
 static unsigned long ToMs(unsigned int seconds) { return seconds * 1000UL; }
@@ -122,7 +132,7 @@ bool CEventManager::ComputeDestForWorld(unsigned int worldTblidx, float override
 	// For dynamic worlds (dungeons), use world table's default position unless we have a specific override
 	if (pWorldTbldat->bDynamic)
 	{
-		NTL_PRINT(PRINT_APP, "[EVENT] World %u is dynamic, using position lookup", worldTblidx);
+		NTL_PRINT(PRINT_APP, _T("[EVENT] World %u is dynamic, using position lookup"), worldTblidx);
 
 		// First check if config override is provided (TeleportPosX/Y/Z in Events.cfg)
 		if (!(overrideX == 0.f && overrideY == 0.f && overrideZ == 0.f))
@@ -130,7 +140,7 @@ bool CEventManager::ComputeDestForWorld(unsigned int worldTblidx, float override
 			outDest.x = overrideX;
 			outDest.y = overrideY;
 			outDest.z = overrideZ;
-			NTL_PRINT(PRINT_APP, "[EVENT] Using config override position for world %u: (%.2f,%.2f,%.2f)",
+			NTL_PRINT(PRINT_APP, _T("[EVENT] Using config override position for world %u: (%.2f,%.2f,%.2f)"),
 				worldTblidx, outDest.x, outDest.y, outDest.z);
 			return true;
 		}
@@ -149,7 +159,7 @@ bool CEventManager::ComputeDestForWorld(unsigned int worldTblidx, float override
 			outDest.x = it->second.x;
 			outDest.y = it->second.y;
 			outDest.z = it->second.z;
-			NTL_PRINT(PRINT_APP, "[EVENT] Using hardcoded safe position for world %u: (%.2f,%.2f,%.2f)",
+			NTL_PRINT(PRINT_APP, _T("[EVENT] Using hardcoded safe position for world %u: (%.2f,%.2f,%.2f)"),
 				worldTblidx, outDest.x, outDest.y, outDest.z);
 			return true;
 		}
@@ -160,7 +170,7 @@ bool CEventManager::ComputeDestForWorld(unsigned int worldTblidx, float override
 			outDest.x = pWorldTbldat->vDefaultLoc.x;
 			outDest.y = pWorldTbldat->vDefaultLoc.y;
 			outDest.z = pWorldTbldat->vDefaultLoc.z;
-			NTL_PRINT(PRINT_APP, "[EVENT] Using vDefaultLoc for world %u: (%.2f,%.2f,%.2f)",
+			NTL_PRINT(PRINT_APP, _T("[EVENT] Using vDefaultLoc for world %u: (%.2f,%.2f,%.2f)"),
 				worldTblidx, outDest.x, outDest.y, outDest.z);
 			return true;
 		}
@@ -171,7 +181,7 @@ bool CEventManager::ComputeDestForWorld(unsigned int worldTblidx, float override
 			outDest.x = pWorldTbldat->vStart1Loc.x;
 			outDest.y = pWorldTbldat->vStart1Loc.y;
 			outDest.z = pWorldTbldat->vStart1Loc.z;
-			NTL_PRINT(PRINT_APP, "[EVENT] Using vStart1Loc for world %u: (%.2f,%.2f,%.2f)",
+			NTL_PRINT(PRINT_APP, _T("[EVENT] Using vStart1Loc for world %u: (%.2f,%.2f,%.2f)"),
 				worldTblidx, outDest.x, outDest.y, outDest.z);
 			return true;
 		}
@@ -180,7 +190,7 @@ bool CEventManager::ComputeDestForWorld(unsigned int worldTblidx, float override
 		outDest.x = 0.0f;
 		outDest.y = 0.0f;
 		outDest.z = 0.0f;
-		NTL_PRINT(PRINT_APP, "[EVENT] WARNING: No position data for world %u, using origin", worldTblidx);
+		NTL_PRINT(PRINT_APP, _T("[EVENT] WARNING: No position data for world %u, using origin"), worldTblidx);
 		return true;
 	}
 
@@ -205,7 +215,7 @@ bool CEventManager::ComputeDestForWorld(unsigned int worldTblidx, float override
 		CNtlVector endBoundary = pWorld->GetEndBoundary();
 
 		// Log boundaries for debugging
-		NTL_PRINT(PRINT_APP, "[EVENT] World %u boundaries: start(%.2f,%.2f,%.2f) end(%.2f,%.2f,%.2f)",
+		NTL_PRINT(PRINT_APP, _T("[EVENT] World %u boundaries: start(%.2f,%.2f,%.2f) end(%.2f,%.2f,%.2f)"),
 			worldTblidx, startBoundary.x, startBoundary.y, startBoundary.z,
 			endBoundary.x, endBoundary.y, endBoundary.z);
 
@@ -227,17 +237,17 @@ bool CEventManager::ComputeDestForWorld(unsigned int worldTblidx, float override
 			outDest.z = (startBoundary.z + endBoundary.z) / 2.0f;
 			usedBoundaryCenter = true;
 
-			NTL_PRINT(PRINT_APP, "[EVENT] Using world boundary center for world %u: (%.2f,%.2f,%.2f)",
+			NTL_PRINT(PRINT_APP, _T("[EVENT] Using world boundary center for world %u: (%.2f,%.2f,%.2f)"),
 				worldTblidx, outDest.x, outDest.y, outDest.z);
 		}
 		else
 		{
-			NTL_PRINT(PRINT_APP, "[EVENT] World %u has invalid boundaries, using fallback", worldTblidx);
+			NTL_PRINT(PRINT_APP, _T("[EVENT] World %u has invalid boundaries, using fallback"), worldTblidx);
 		}
 	}
 	else
 	{
-		NTL_PRINT(PRINT_APP, "[EVENT] World instance not found for tblidx %u, using fallback", worldTblidx);
+		NTL_PRINT(PRINT_APP, _T("[EVENT] World instance not found for tblidx %u, using fallback"), worldTblidx);
 	}
 
 	// Fallback: use vDefaultLoc if boundary center not available
@@ -537,8 +547,10 @@ bool CEventManager::LoadConfigFromIniPath(const char* iniPath)
 	if (file.Read("Event", "HelperEnableAttacking", helperAttacking))
 		m_cfg.helperEnableAttacking = (helperAttacking != 0);
 
-	EVENT_VLOG(m_cfg, LOG_GENERAL, "[EVENT] Loaded config: enabled=%d channel='%s' rounds=%u",
-		(int)m_cfg.enabled, m_cfg.channelNameContains.c_str(), (unsigned)m_cfg.rounds.size());
+	ParseActionRewards(file);
+
+	EVENT_VLOG(m_cfg, LOG_GENERAL, "[EVENT] Loaded config: enabled=%d channel='%s' rounds=%u actionRewards=%u",
+		(int)m_cfg.enabled, m_cfg.channelNameContains.c_str(), (unsigned)m_cfg.rounds.size(), (unsigned)m_cfg.actionRewards.size());
 
 	return true;
 }
@@ -563,6 +575,109 @@ void CEventManager::ParseWorldListCsv(const CNtlString& csv)
 	}
 
 	EVENT_VLOG(m_cfg, LOG_GENERAL, "[EVENT] Loaded %u worlds for rotation", (unsigned)m_cfg.worldTblidxList.size());
+}
+
+void CEventManager::ParseActionRewards(CNtlIniFile& file)
+{
+	int enabled = m_cfg.actionRewardsEnabled ? 1 : 0;
+	if (file.Read("ActionRewards", "Enabled", enabled))
+		m_cfg.actionRewardsEnabled = (enabled != 0);
+
+	int requireChannel = m_cfg.actionRewardsRequireEventChannel ? 1 : 0;
+	if (file.Read("ActionRewards", "RequireEventChannel", requireChannel))
+		m_cfg.actionRewardsRequireEventChannel = (requireChannel != 0);
+
+	int announce = m_cfg.actionRewardsAnnounce ? 1 : 0;
+	if (file.Read("ActionRewards", "Announce", announce))
+		m_cfg.actionRewardsAnnounce = (announce != 0);
+
+	unsigned int count = 0;
+	file.Read("ActionRewards", "Count", count);
+
+	m_cfg.actionRewards.clear();
+	for (unsigned int idx = 1; idx <= count; ++idx)
+	{
+		ActionReward reward;
+		if (ParseActionRewardEntry(file, idx, reward))
+			m_cfg.actionRewards.push_back(reward);
+	}
+
+	if (m_cfg.actionRewards.empty())
+	{
+		m_actionRewardStates.clear();
+	}
+	else
+	{
+		ResetAllActionStates();
+	}
+}
+
+bool CEventManager::ParseActionRewardEntry(CNtlIniFile& file, unsigned int index, ActionReward& outReward)
+{
+	char key[64];
+
+	_snprintf_s(key, _TRUNCATE, "Reward%uId", index);
+	CNtlString id = file.Read("ActionRewards", key);
+	if (id.c_str() == nullptr || id.c_str()[0] == '\0')
+	{
+		ERR_LOG(LOG_GENERAL, _T("[EVENT] ActionReward #%u missing Id"), index);
+		return false;
+	}
+	outReward.id = id;
+
+	_snprintf_s(key, _TRUNCATE, "Reward%uLabel", index);
+	CNtlString label = file.Read("ActionRewards", key);
+	if (label.c_str() && label.c_str()[0] != '\0')
+		outReward.label = label;
+	else
+		outReward.label = id;
+
+	_snprintf_s(key, _TRUNCATE, "Reward%uType", index);
+	CNtlString typeStr = file.Read("ActionRewards", key);
+	if (typeStr.c_str() && typeStr.c_str()[0] != '\0')
+		outReward.type = ResolveActionType(typeStr);
+	else
+		outReward.type = ActionReward::Type::PLAYTIME;
+
+	_snprintf_s(key, _TRUNCATE, "Reward%uMode", index);
+	CNtlString modeStr = file.Read("ActionRewards", key);
+	if (modeStr.c_str() && modeStr.c_str()[0] != '\0')
+		outReward.mode = ResolveGrantMode(modeStr);
+	else
+		outReward.mode = ActionReward::GrantMode::ONCE;
+
+	unsigned int value = 0;
+	_snprintf_s(key, _TRUNCATE, "Reward%uEventTblidx", index);
+	if (file.Read("ActionRewards", key, value))
+		outReward.eventTblidx = value;
+
+	value = 0;
+	_snprintf_s(key, _TRUNCATE, "Reward%uThresholdSeconds", index);
+	if (file.Read("ActionRewards", key, value))
+		outReward.thresholdSeconds = value;
+
+	value = 0;
+	_snprintf_s(key, _TRUNCATE, "Reward%uCooldownSeconds", index);
+	if (file.Read("ActionRewards", key, value))
+		outReward.cooldownSeconds = value;
+
+	value = 0;
+	_snprintf_s(key, _TRUNCATE, "Reward%uMinLevel", index);
+	if (file.Read("ActionRewards", key, value))
+		outReward.minLevel = value;
+
+	int boolValue = 0;
+	_snprintf_s(key, _TRUNCATE, "Reward%uCountWhileAfk", index);
+	if (file.Read("ActionRewards", key, boolValue))
+		outReward.countWhileAfk = (boolValue != 0);
+
+	if (outReward.eventTblidx == 0 || outReward.thresholdSeconds == 0)
+	{
+		ERR_LOG(LOG_GENERAL, _T("[EVENT] ActionReward '%S' invalid (eventTblidx=%u threshold=%u)"), outReward.id.c_str(), outReward.eventTblidx, outReward.thresholdSeconds);
+		return false;
+	}
+
+	return true;
 }
 
 void CEventManager::ParseRoundsCsv(const CNtlString& csv)
@@ -1518,6 +1633,10 @@ void CEventManager::SpawnRoundMobs(const EventRound& round)
 		}
 	}
 
+	// Reset world difficulty phase to 0 at the start of each round
+	// This ensures bosses with autophase start at base phase and scale with HP
+	pWorld->SetDifficultyPhase(0);
+
 	// Get spawn position for current round (used as fallback)
 	float spawnX, spawnY, spawnZ;
 	GetSpawnPosForRound(m_currentRound, spawnX, spawnY, spawnZ);
@@ -1918,7 +2037,7 @@ void CEventManager::TeleportParticipantsToWorld(unsigned int worldTblidx, float 
 	CGameServer* app = (CGameServer*)g_pApp;
 	if (!app)
 	{
-		ERR_LOG(LOG_GENERAL, _T("[EVENT] TeleportParticipantsToWorld failed: app is null"));
+		ERR_LOG(LOG_GENERAL, _T("%s"), _T("[EVENT] TeleportParticipantsToWorld failed: app is null"));
 		return;
 	}
 
@@ -2586,14 +2705,48 @@ bool CEventManager::IsChannelValid()
 	if (m_cfg.channelNameContains.c_str()[0] == '\0')
 		return true;
 
-	std::string want = m_cfg.channelNameContains.c_str();
-	std::string got = app->m_config.ChannelName.c_str();
+	std::string want = m_cfg.channelNameContains.c_str() ? m_cfg.channelNameContains.c_str() : "";
+	std::string got = app->m_config.ChannelName.c_str() ? app->m_config.ChannelName.c_str() : "";
 
-	std::transform(want.begin(), want.end(), want.begin(), ::tolower);
-	std::transform(got.begin(), got.end(), got.begin(), ::tolower);
+	std::transform(want.begin(), want.end(), want.begin(), [](unsigned char ch) { return (char)std::tolower(ch); });
+	std::transform(got.begin(), got.end(), got.begin(), [](unsigned char ch) { return (char)std::tolower(ch); });
 
 	// Allow both configured channel and TEST channel
 	return got.find(want) != std::string::npos || got.find("test") != std::string::npos;
+}
+
+CEventManager::ActionReward::Type CEventManager::ResolveActionType(const CNtlString& value)
+{
+	std::string temp = value.c_str() ? value.c_str() : "";
+	std::transform(temp.begin(), temp.end(), temp.begin(), [](unsigned char ch) { return (char)std::toupper(ch); });
+	if (temp == "PLAYTIME")
+		return ActionReward::Type::PLAYTIME;
+
+	ERR_LOG(LOG_GENERAL, _T("[EVENT] Unknown ActionReward type '%S'. Defaulting to PLAYTIME."), temp.c_str());
+	return ActionReward::Type::PLAYTIME;
+}
+
+CEventManager::ActionReward::GrantMode CEventManager::ResolveGrantMode(const CNtlString& value)
+{
+	std::string temp = value.c_str() ? value.c_str() : "";
+	std::transform(temp.begin(), temp.end(), temp.begin(), [](unsigned char ch) { return (char)std::toupper(ch); });
+	if (temp == "REPEATABLE")
+		return ActionReward::GrantMode::REPEATABLE;
+	return ActionReward::GrantMode::ONCE;
+}
+
+std::wstring CEventManager::ToWide(const CNtlString& value)
+{
+	std::wstring out;
+	if (value.c_str() == nullptr)
+		return out;
+	const char* src = value.c_str();
+	while (*src)
+	{
+		out.push_back((wchar_t)(unsigned char)*src);
+		++src;
+	}
+	return out;
 }
 
 void CEventManager::BroadcastSystem(const wchar_t* msg, unsigned char byType)
@@ -2806,6 +2959,180 @@ void CEventManager::OnPlayerDeath(CPlayer* pPlayer)
 	swprintf_s(msg, L"[EVENT] You died! Respawning in %u seconds... (%u lives remaining)",
 		m_cfg.autoResurrectDelayMs / 1000, remaining);
 	SendSystemTo(pPlayer, msg);
+}
+
+//--------------------------------------------------------------------------------------//
+//	ACTION REWARD TRACKING
+//--------------------------------------------------------------------------------------//
+
+void CEventManager::OnPlayerTick(CPlayer* pPlayer, unsigned long dwTickDiff)
+{
+	if (!pPlayer || dwTickDiff == 0)
+		return;
+
+	if (!ShouldTrackPlayerForRewards(pPlayer))
+		return;
+
+	EnsureActionStateCapacity(pPlayer->GetCharID());
+	auto it = m_actionRewardStates.find(pPlayer->GetCharID());
+	if (it == m_actionRewardStates.end())
+		return;
+
+	std::vector<ActionRewardState>& states = it->second;
+	if (states.size() != m_cfg.actionRewards.size())
+		return;
+
+	for (size_t idx = 0; idx < m_cfg.actionRewards.size(); ++idx)
+	{
+		const ActionReward& def = m_cfg.actionRewards[idx];
+		ActionRewardState& state = states[idx];
+
+		if (def.minLevel != 0 && pPlayer->GetLevel() < def.minLevel)
+		{
+			state.accumulatedMs = 0;
+			continue;
+		}
+
+		if (!def.countWhileAfk && pPlayer->IsAfk())
+			continue;
+
+		unsigned long& current = state.accumulatedMs;
+		if (current <= std::numeric_limits<unsigned long>::max() - dwTickDiff)
+			current += dwTickDiff;
+		else
+			current = std::numeric_limits<unsigned long>::max();
+
+		TryGrantActionReward(pPlayer, idx);
+	}
+}
+
+void CEventManager::OnPlayerDisconnected(CPlayer* pPlayer)
+{
+	if (!pPlayer || !pPlayer->IsInitialized())
+		return;
+	m_actionRewardStates.erase(pPlayer->GetCharID());
+}
+
+bool CEventManager::ShouldTrackPlayerForRewards(CPlayer* pPlayer) const
+{
+	if (!pPlayer || !pPlayer->IsInitialized())
+		return false;
+	if (!m_cfg.actionRewardsEnabled)
+		return false;
+	if (m_cfg.actionRewards.empty())
+		return false;
+	if (m_cfg.actionRewardsRequireEventChannel && !const_cast<CEventManager*>(this)->IsChannelValid())
+		return false;
+	return true;
+}
+
+void CEventManager::EnsureActionStateCapacity(unsigned int charId)
+{
+	if (m_cfg.actionRewards.empty())
+		return;
+
+	std::vector<ActionRewardState>& states = m_actionRewardStates[charId];
+	if (states.size() != m_cfg.actionRewards.size())
+		states.assign(m_cfg.actionRewards.size(), ActionRewardState());
+}
+
+void CEventManager::ResetAllActionStates()
+{
+	if (m_cfg.actionRewards.empty())
+	{
+		m_actionRewardStates.clear();
+		return;
+	}
+
+	for (auto& entry : m_actionRewardStates)
+	{
+		entry.second.assign(m_cfg.actionRewards.size(), ActionRewardState());
+	}
+}
+
+bool CEventManager::TryGrantActionReward(CPlayer* pPlayer, size_t rewardIndex)
+{
+	if (!pPlayer || !pPlayer->IsInitialized() || rewardIndex >= m_cfg.actionRewards.size())
+		return false;
+
+	auto it = m_actionRewardStates.find(pPlayer->GetCharID());
+	if (it == m_actionRewardStates.end() || rewardIndex >= it->second.size())
+		return false;
+
+	ActionRewardState& state = it->second[rewardIndex];
+	const ActionReward& def = m_cfg.actionRewards[rewardIndex];
+
+	if (def.eventTblidx == 0)
+		return false;
+	if (def.mode == ActionReward::GrantMode::ONCE && state.grantsCompleted > 0)
+		return false;
+	if (pPlayer->HasEventReward(def.eventTblidx, pPlayer->GetCharID()))
+		return false;
+
+	unsigned long requiredMs = def.thresholdSeconds * 1000UL;
+	if (requiredMs == 0 || state.accumulatedMs < requiredMs)
+		return false;
+
+	unsigned long now = GetTickCount();
+	if (def.cooldownSeconds > 0 && state.lastGrantMs != 0)
+	{
+		unsigned long elapsed = (now >= state.lastGrantMs) ? (now - state.lastGrantMs) : (0xFFFFFFFFUL - state.lastGrantMs + now + 1UL);
+		if (elapsed < def.cooldownSeconds * 1000UL)
+			return false;
+	}
+
+	if (!def.countWhileAfk && pPlayer->IsAfk())
+		return false;
+
+	// Reward thresholds met – record immediately (no new packets allowed)
+	state.lastGrantMs = now;
+	state.grantsCompleted++;
+	if (def.mode == ActionReward::GrantMode::REPEATABLE && def.cooldownSeconds == 0 && state.accumulatedMs >= requiredMs)
+		state.accumulatedMs -= requiredMs;
+	else
+		state.accumulatedMs = 0;
+
+	RecordActionRewardGrant(pPlayer, def);
+	NotifyActionRewardGranted(pPlayer, def);
+
+	return true;
+}
+
+void CEventManager::NotifyActionRewardGranted(CPlayer* pPlayer, const ActionReward& rewardDef) const
+{
+	if (!m_cfg.actionRewardsAnnounce || !pPlayer || !pPlayer->IsInitialized())
+		return;
+
+	std::wstring label = ToWide(rewardDef.label);
+	if (label.empty())
+		label = ToWide(rewardDef.id);
+	if (label.empty())
+		label = L"Reward";
+
+	wchar_t msg[256];
+	swprintf_s(msg, L"[EVENT] Free reward unlocked: %ls. Visit the Event Manager NPC to claim it.", label.c_str());
+	const_cast<CEventManager*>(this)->SendSystemTo(pPlayer, msg);
+}
+
+void CEventManager::RecordActionRewardGrant(CPlayer* pPlayer, const ActionReward& rewardDef) const
+{
+	if (!pPlayer || !pPlayer->IsInitialized())
+		return;
+
+	const char* label = rewardDef.label.c_str();
+	if (!label || *label == '\0')
+		label = rewardDef.id.c_str();
+
+	EVENT_VLOG(m_cfg, LOG_GENERAL, "[EVENT][ActionReward] Granted '%s' to %S (charId=%u accountId=%u)",
+		label ? label : "?", pPlayer->GetCharName(), pPlayer->GetCharID(), pPlayer->GetAccountID());
+
+	CNtlString labelStr(label ? label : "?");
+	std::wstring labelWide = ToWide(labelStr);
+	if (labelWide.empty())
+		labelWide = L"?";
+
+	NTL_PRINT(PRINT_APP, _T("[EVENT][ActionReward] Granted '%ls' to %s (charId=%u accountId=%u)"),
+		labelWide.c_str(), pPlayer->GetCharName(), pPlayer->GetCharID(), pPlayer->GetAccountID());
 }
 
 void CEventManager::ProcessKillCombo(unsigned int charId)
@@ -3164,7 +3491,7 @@ void CEventManager::SpawnEventHelpers()
 
 	if (m_cfg.helperMobId == 0)
 	{
-		ERR_LOG(LOG_GENERAL, _T("[EVENT] Cannot spawn helpers: helperMobId is 0. Please configure a valid mob ID."));
+		ERR_LOG(LOG_GENERAL, _T("%s"), _T("[EVENT] Cannot spawn helpers: helperMobId is 0. Please configure a valid mob ID."));
 		return;
 	}
 
